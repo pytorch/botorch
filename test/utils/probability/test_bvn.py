@@ -6,8 +6,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from itertools import count
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -24,11 +26,11 @@ from torch import Tensor
 
 
 def run_gaussian_estimator(
-    estimator: Callable[[Tensor], tuple[Tensor, Union[Tensor, float, int]]],
+    estimator: Callable[[Tensor], tuple[Tensor, Tensor | float | int]],
     sqrt_cov: Tensor,
     num_samples: int,
-    batch_limit: Optional[int] = None,
-    seed: Optional[int] = None,
+    batch_limit: int | None = None,
+    seed: int | None = None,
 ) -> Tensor:
 
     if batch_limit is None:
@@ -70,7 +72,7 @@ class TestBVN(BotorchTestCase):
         mc_atol_multiplier: float = 4.0,
         seed: int = 1,
         dtype: torch.dtype = torch.float64,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ):
         super().setUp()
         self.dtype = dtype

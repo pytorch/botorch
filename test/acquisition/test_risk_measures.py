@@ -5,8 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from typing import Optional
-
 import torch
 from botorch.acquisition.objective import LinearMCObjective
 from botorch.acquisition.risk_measures import (
@@ -21,7 +19,7 @@ from torch import Tensor
 
 
 class NotSoAbstractRiskMeasure(RiskMeasureMCObjective):
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         prepared_samples = self._prepare_samples(samples)
         return prepared_samples.sum(dim=-1)
 

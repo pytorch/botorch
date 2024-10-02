@@ -15,8 +15,6 @@ multi-fidelity Bayesian Optimization.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from botorch.models.deterministic import DeterministicModel
 from torch import Tensor
@@ -45,7 +43,7 @@ class AffineFidelityCostModel(DeterministicModel):
 
     def __init__(
         self,
-        fidelity_weights: Optional[dict[int, float]] = None,
+        fidelity_weights: dict[int, float] | None = None,
         fixed_cost: float = 0.01,
     ) -> None:
         r"""

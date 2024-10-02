@@ -114,7 +114,7 @@ class TestFitGPyTorchMLLScipy(BotorchTestCase):
                 njev=1,
                 nhev=1,
                 nit=1,
-                message="ABNORMAL_TERMINATION_IN_LNSRCH".encode(),
+                message=b"ABNORMAL_TERMINATION_IN_LNSRCH",
             )
             with catch_warnings(record=True) as ws, debug(True):
                 fit.fit_gpytorch_mll_scipy(mll, options=options)

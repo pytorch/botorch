@@ -8,8 +8,9 @@ r"""General-purpose optimization utilities."""
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from logging import debug as logging_debug
-from typing import Callable, Optional
 from warnings import warn_explicit, WarningMessage
 
 import numpy as np
@@ -17,7 +18,7 @@ from linear_operator.utils.errors import NanError, NotPSDError
 
 
 def _handle_numerical_errors(
-    error: RuntimeError, x: np.ndarray, dtype: Optional[np.dtype] = None
+    error: RuntimeError, x: np.ndarray, dtype: np.dtype | None = None
 ) -> tuple[np.ndarray, np.ndarray]:
     if isinstance(error, NotPSDError):
         raise error
@@ -34,8 +35,8 @@ def _handle_numerical_errors(
 
 def _warning_handler_template(
     w: WarningMessage,
-    debug: Optional[Callable[[WarningMessage], bool]] = None,
-    rethrow: Optional[Callable[[WarningMessage], bool]] = None,
+    debug: Callable[[WarningMessage], bool] | None = None,
+    rethrow: Callable[[WarningMessage], bool] | None = None,
 ) -> bool:
     r"""Helper for making basic warning handlers. Typically used with functools.partial.
 

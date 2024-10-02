@@ -17,7 +17,7 @@ import itertools
 import warnings
 from abc import ABC
 from copy import deepcopy
-from typing import Any, Optional, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -66,7 +66,7 @@ class GPyTorchModel(Model, ABC):
 
     @staticmethod
     def _validate_tensor_args(
-        X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None, strict: bool = True
+        X: Tensor, Y: Tensor, Yvar: Tensor | None = None, strict: bool = True
     ) -> None:
         r"""Checks that `Y` and `Yvar` have an explicit output dimension if strict.
         Checks that the dtypes of the inputs match, and warns if using float.
@@ -156,10 +156,10 @@ class GPyTorchModel(Model, ABC):
     def posterior(
         self,
         X: Tensor,
-        observation_noise: Union[bool, Tensor] = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        observation_noise: bool | Tensor = False,
+        posterior_transform: PosteriorTransform | None = None,
         **kwargs: Any,
-    ) -> Union[GPyTorchPosterior, TransformedPosterior]:
+    ) -> GPyTorchPosterior | TransformedPosterior:
         r"""Computes the posterior over model outputs at the provided points.
 
         Args:
@@ -204,7 +204,7 @@ class GPyTorchModel(Model, ABC):
         return posterior
 
     def condition_on_observations(
-        self, X: Tensor, Y: Tensor, noise: Optional[Tensor] = None, **kwargs: Any
+        self, X: Tensor, Y: Tensor, noise: Tensor | None = None, **kwargs: Any
     ) -> Model:
         r"""Condition the model on new observations.
 
@@ -325,8 +325,8 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         return self._input_batch_shape
 
     def _transform_tensor_args(
-        self, X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Tensor, Optional[Tensor]]:
+        self, X: Tensor, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor, Tensor | None]:
         r"""Transforms tensor arguments: for single output models, the output
         dimension is squeezed and for multi-output models, the output dimension is
         transformed into the left-most batch dimension.
@@ -358,7 +358,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         self,
         X: Tensor,
         mvn: MultivariateNormal,
-        observation_noise: Union[bool, Tensor] = False,
+        observation_noise: bool | Tensor = False,
     ) -> MultivariateNormal:
         """Adds the observation noise to the posterior.
 
@@ -405,10 +405,10 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
-        observation_noise: Union[bool, Tensor] = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
-    ) -> Union[GPyTorchPosterior, TransformedPosterior]:
+        output_indices: list[int] | None = None,
+        observation_noise: bool | Tensor = False,
+        posterior_transform: PosteriorTransform | None = None,
+    ) -> GPyTorchPosterior | TransformedPosterior:
         r"""Computes the posterior over model outputs at the provided points.
 
         Args:
@@ -631,10 +631,10 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
-        observation_noise: Union[bool, Tensor] = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
-    ) -> Union[GPyTorchPosterior, PosteriorList]:
+        output_indices: list[int] | None = None,
+        observation_noise: bool | Tensor = False,
+        posterior_transform: PosteriorTransform | None = None,
+    ) -> GPyTorchPosterior | PosteriorList:
         r"""Computes the posterior over model outputs at the provided points.
         If any model returns a MultitaskMultivariateNormal posterior, then that
         will be split into individual MVNs per task, with inter-task covariance
@@ -776,7 +776,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         X: Tensor,
         mvn: MultivariateNormal,
         num_outputs: int,
-        observation_noise: Union[bool, Tensor],
+        observation_noise: bool | Tensor,
     ) -> MultivariateNormal:
         """Adds the observation noise to the posterior.
 
@@ -836,10 +836,10 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
-        observation_noise: Union[bool, Tensor] = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
-    ) -> Union[GPyTorchPosterior, TransformedPosterior]:
+        output_indices: list[int] | None = None,
+        observation_noise: bool | Tensor = False,
+        posterior_transform: PosteriorTransform | None = None,
+    ) -> GPyTorchPosterior | TransformedPosterior:
         r"""Computes the posterior over model outputs at the provided points.
 
         Args:

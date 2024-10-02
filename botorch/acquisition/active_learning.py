@@ -23,8 +23,6 @@ Active learning acquisition functions.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from botorch import settings
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -53,9 +51,9 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
         self,
         model: Model,
         mc_points: Tensor,
-        sampler: Optional[MCSampler] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        sampler: MCSampler | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
     ) -> None:
         r"""q-Integrated Negative Posterior Variance.
 
@@ -140,7 +138,7 @@ class PairwiseMCPosteriorVariance(MCAcquisitionFunction):
         self,
         model: Model,
         objective: MCAcquisitionObjective,
-        sampler: Optional[MCSampler] = None,
+        sampler: MCSampler | None = None,
     ) -> None:
         r"""Pairwise Monte Carlo Posterior Variance
 

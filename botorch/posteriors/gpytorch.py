@@ -11,7 +11,7 @@ Posterior module to be used with GPyTorch models.
 from __future__ import annotations
 
 from contextlib import ExitStack
-from typing import Optional, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -125,7 +125,7 @@ class GPyTorchPosterior(TorchPosterior):
             samples = samples.unsqueeze(-1)
         return samples
 
-    def rsample(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
+    def rsample(self, sample_shape: torch.Size | None = None) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
         Args:
@@ -193,7 +193,7 @@ def scalarize_posterior_gpytorch(
     posterior: GPyTorchPosterior,
     weights: Tensor,
     offset: float = 0.0,
-) -> tuple[Tensor, Union[Tensor, LinearOperator]]:
+) -> tuple[Tensor, Tensor | LinearOperator]:
     r"""Helper function for `scalarize_posterior`, producing a mean and
     variance.
 
@@ -271,7 +271,7 @@ def scalarize_posterior_gpytorch(
 
 
 def scalarize_posterior(
-    posterior: Union[GPyTorchPosterior, PosteriorList],
+    posterior: GPyTorchPosterior | PosteriorList,
     weights: Tensor,
     offset: float = 0.0,
 ) -> GPyTorchPosterior:

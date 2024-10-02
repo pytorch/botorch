@@ -30,7 +30,7 @@ References
 from __future__ import annotations
 
 import math
-from typing import Any, Optional, Union
+from typing import Any
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -82,9 +82,7 @@ from linear_operator.operators import (
 from torch import Tensor
 
 
-def get_task_value_remapping(
-    task_values: Tensor, dtype: torch.dtype
-) -> Optional[Tensor]:
+def get_task_value_remapping(task_values: Tensor, dtype: torch.dtype) -> Tensor | None:
     """Construct an mapping of discrete task values to contiguous int-valued floats.
 
     Args:
@@ -140,16 +138,16 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         train_X: Tensor,
         train_Y: Tensor,
         task_feature: int,
-        train_Yvar: Optional[Tensor] = None,
-        mean_module: Optional[Module] = None,
-        covar_module: Optional[Module] = None,
-        likelihood: Optional[Likelihood] = None,
-        task_covar_prior: Optional[Prior] = None,
-        output_tasks: Optional[list[int]] = None,
-        rank: Optional[int] = None,
-        all_tasks: Optional[list[int]] = None,
-        outcome_transform: Optional[Union[OutcomeTransform, _DefaultType]] = DEFAULT,
-        input_transform: Optional[InputTransform] = None,
+        train_Yvar: Tensor | None = None,
+        mean_module: Module | None = None,
+        covar_module: Module | None = None,
+        likelihood: Likelihood | None = None,
+        task_covar_prior: Prior | None = None,
+        output_tasks: list[int] | None = None,
+        rank: int | None = None,
+        all_tasks: list[int] | None = None,
+        outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
+        input_transform: InputTransform | None = None,
     ) -> None:
         r"""Multi-Task GP model using an ICM kernel.
 
@@ -319,7 +317,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         cls,
         train_X: Tensor,
         task_feature: int,
-        output_tasks: Optional[list[int]] = None,
+        output_tasks: list[int] | None = None,
     ) -> tuple[list[int], int, int]:
         if train_X.ndim != 2:
             # Currently, batch mode MTGPs are blocked upstream in GPyTorch
@@ -337,12 +335,12 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
     @classmethod
     def construct_inputs(
         cls,
-        training_data: Union[SupervisedDataset, MultiTaskDataset],
+        training_data: SupervisedDataset | MultiTaskDataset,
         task_feature: int,
-        output_tasks: Optional[list[int]] = None,
-        task_covar_prior: Optional[Prior] = None,
-        prior_config: Optional[dict] = None,
-        rank: Optional[int] = None,
+        output_tasks: list[int] | None = None,
+        task_covar_prior: Prior | None = None,
+        prior_config: dict | None = None,
+        rank: int | None = None,
     ) -> dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dataset and other args.
 
@@ -429,12 +427,12 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        likelihood: Optional[MultitaskGaussianLikelihood] = None,
-        data_covar_module: Optional[Module] = None,
-        task_covar_prior: Optional[Prior] = None,
-        rank: Optional[int] = None,
-        input_transform: Optional[InputTransform] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
+        likelihood: MultitaskGaussianLikelihood | None = None,
+        data_covar_module: Module | None = None,
+        task_covar_prior: Prior | None = None,
+        rank: int | None = None,
+        input_transform: InputTransform | None = None,
+        outcome_transform: OutcomeTransform | None = None,
         **kwargs: Any,
     ) -> None:
         r"""
@@ -569,9 +567,9 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
-        observation_noise: Union[bool, Tensor] = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        output_indices: list[int] | None = None,
+        observation_noise: bool | Tensor = False,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> MultitaskGPPosterior:
         self.eval()
 

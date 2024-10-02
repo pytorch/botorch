@@ -581,4 +581,4 @@ class TestOptimizePosteriorSamples(BotorchTestCase):
 
             # Check that the all found optima are larger than the observations
             # This is not 100% deterministic, but just about.
-            self.assertTrue(torch.all((f_opt > Y.max(dim=-2).values)))
+            self.assertTrue(torch.all(f_opt > Y.max(dim=-2).values))

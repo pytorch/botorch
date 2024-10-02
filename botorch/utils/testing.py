@@ -12,7 +12,7 @@ from abc import abstractproperty
 from collections import OrderedDict
 from collections.abc import Sequence
 from itertools import product
-from typing import Any, Optional
+from typing import Any
 from unittest import mock, TestCase
 
 import torch
@@ -307,7 +307,7 @@ class MockPosterior(Posterior):
 
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         """Mock sample by repeating self._samples. If base_samples is provided,
         do a shape check but return the same mock samples."""
@@ -346,8 +346,8 @@ class MockModel(Model, FantasizeMixin):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        output_indices: list[int] | None = None,
+        posterior_transform: PosteriorTransform | None = None,
         observation_noise: bool | torch.Tensor = False,
     ) -> MockPosterior:
         if posterior_transform is not None:
@@ -369,7 +369,7 @@ class MockModel(Model, FantasizeMixin):
         pass
 
     def load_state_dict(
-        self, state_dict: Optional[OrderedDict] = None, strict: bool = False
+        self, state_dict: OrderedDict | None = None, strict: bool = False
     ) -> None:
         pass
 
@@ -384,7 +384,7 @@ class MockAcquisitionFunction:
     def __call__(self, X):
         return X[..., 0].max(dim=-1).values
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None):
+    def set_X_pending(self, X_pending: Tensor | None = None):
         self.X_pending = X_pending
 
 
@@ -482,7 +482,7 @@ def _get_max_violation_of_bounds(samples: torch.Tensor, bounds: torch.Tensor) ->
 
 def _get_max_violation_of_constraints(
     samples: torch.Tensor,
-    constraints: Optional[list[tuple[Tensor, Tensor, float]]],
+    constraints: list[tuple[Tensor, Tensor, float]] | None,
     equality: bool,
 ) -> float:
     r"""

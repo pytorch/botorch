@@ -6,7 +6,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+
+from typing import Any
 
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
 from botorch.models.model_list_gp_regression import ModelListGP
@@ -51,14 +53,14 @@ def draw_kernel_feature_paths(
 
 def _draw_kernel_feature_paths_fallback(
     num_inputs: int,
-    mean_module: Optional[Module],
+    mean_module: Module | None,
     covar_module: Kernel,
     sample_shape: Size,
     num_features: int = 1024,
     map_generator: TKernelFeatureMapGenerator = gen_kernel_features,
-    input_transform: Optional[TInputTransform] = None,
-    output_transform: Optional[TOutputTransform] = None,
-    weight_generator: Optional[Callable[[Size], Tensor]] = None,
+    input_transform: TInputTransform | None = None,
+    output_transform: TOutputTransform | None = None,
+    weight_generator: Callable[[Size], Tensor] | None = None,
 ) -> GeneralizedLinearPath:
 
     # Generate a kernel feature map
@@ -109,7 +111,7 @@ def _draw_kernel_feature_paths_ExactGP(
 @DrawKernelFeaturePaths.register(ModelListGP)
 def _draw_kernel_feature_paths_list(
     model: ModelListGP,
-    join: Optional[Callable[[list[Tensor]], Tensor]] = None,
+    join: Callable[[list[Tensor]], Tensor] | None = None,
     **kwargs: Any,
 ) -> PathList:
     paths = [draw_kernel_feature_paths(m, **kwargs) for m in model.models]

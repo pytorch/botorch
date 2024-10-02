@@ -11,7 +11,6 @@ Synthetic functions for multi-fidelity optimization benchmarks.
 from __future__ import annotations
 
 import math
-from typing import Optional
 
 import torch
 from botorch.test_functions.synthetic import SyntheticTestFunction
@@ -75,7 +74,7 @@ class AugmentedHartmann(SyntheticTestFunction):
     _optimizers = [(0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573, 1.0)]
     _check_grad_at_opt = False
 
-    def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+    def __init__(self, noise_std: float | None = None, negate: bool = False) -> None:
         r"""
         Args:
             noise_std: Standard deviation of the observation noise.
@@ -127,7 +126,7 @@ class AugmentedRosenbrock(SyntheticTestFunction):
     _optimal_value = 0.0
 
     def __init__(
-        self, dim=3, noise_std: Optional[float] = None, negate: bool = False
+        self, dim=3, noise_std: float | None = None, negate: bool = False
     ) -> None:
         r"""
         Args:

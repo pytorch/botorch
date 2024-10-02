@@ -10,7 +10,7 @@ Cross-validation utilities using batch evaluation mode.
 
 from __future__ import annotations
 
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -27,19 +27,19 @@ class CVFolds(NamedTuple):
     test_X: Tensor
     train_Y: Tensor
     test_Y: Tensor
-    train_Yvar: Optional[Tensor] = None
-    test_Yvar: Optional[Tensor] = None
+    train_Yvar: Tensor | None = None
+    test_Yvar: Tensor | None = None
 
 
 class CVResults(NamedTuple):
     model: GPyTorchModel
     posterior: GPyTorchPosterior
     observed_Y: Tensor
-    observed_Yvar: Optional[Tensor] = None
+    observed_Yvar: Tensor | None = None
 
 
 def gen_loo_cv_folds(
-    train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+    train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor | None = None
 ) -> CVFolds:
     r"""Generate LOO CV folds w.r.t. to `n`.
 
@@ -112,9 +112,9 @@ def batch_cross_validation(
     model_cls: type[GPyTorchModel],
     mll_cls: type[MarginalLogLikelihood],
     cv_folds: CVFolds,
-    fit_args: Optional[dict[str, Any]] = None,
+    fit_args: dict[str, Any] | None = None,
     observation_noise: bool = False,
-    model_init_kwargs: Optional[dict[str, Any]] = None,
+    model_init_kwargs: dict[str, Any] | None = None,
 ) -> CVResults:
     r"""Perform cross validation by using GPyTorch batch mode.
 

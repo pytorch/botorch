@@ -11,7 +11,6 @@ The base class for sampler modules to be used with MC-evaluated acquisition func
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import torch
 from botorch.exceptions.errors import InputDataError
@@ -45,7 +44,7 @@ class MCSampler(Module, ABC):
     def __init__(
         self,
         sample_shape: torch.Size,
-        seed: Optional[int] = None,
+        seed: int | None = None,
     ) -> None:
         r"""Abstract base class for samplers.
 

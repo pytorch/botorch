@@ -19,7 +19,8 @@ from __future__ import annotations
 
 import math
 import warnings
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import torch
@@ -53,14 +54,14 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
         self,
         model: Model,
         batch_sizes: list[int],
-        num_fantasies: Optional[list[int]] = None,
-        samplers: Optional[list[MCSampler]] = None,
-        valfunc_cls: Optional[list[Optional[type[AcquisitionFunction]]]] = None,
-        valfunc_argfacs: Optional[list[Optional[TAcqfArgConstructor]]] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        inner_mc_samples: Optional[list[int]] = None,
-        X_pending: Optional[Tensor] = None,
+        num_fantasies: list[int] | None = None,
+        samplers: list[MCSampler] | None = None,
+        valfunc_cls: list[type[AcquisitionFunction] | None] | None = None,
+        valfunc_argfacs: list[TAcqfArgConstructor | None] | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        inner_mc_samples: list[int] | None = None,
+        X_pending: Tensor | None = None,
         collapse_fantasy_base_samples: bool = True,
     ) -> None:
         r"""q-Multi-Step Look-Ahead (one-shot optimization).
@@ -317,14 +318,14 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
 def _step(
     model: Model,
     Xs: list[Tensor],
-    samplers: list[Optional[MCSampler]],
-    valfunc_cls: list[Optional[type[AcquisitionFunction]]],
-    valfunc_argfacs: list[Optional[TAcqfArgConstructor]],
-    inner_samplers: list[Optional[MCSampler]],
+    samplers: list[MCSampler | None],
+    valfunc_cls: list[type[AcquisitionFunction] | None],
+    valfunc_argfacs: list[TAcqfArgConstructor | None],
+    inner_samplers: list[MCSampler | None],
     objective: MCAcquisitionObjective,
-    posterior_transform: Optional[PosteriorTransform],
-    running_val: Optional[Tensor] = None,
-    sample_weights: Optional[Tensor] = None,
+    posterior_transform: PosteriorTransform | None,
+    running_val: Tensor | None = None,
+    sample_weights: Tensor | None = None,
     step_index: int = 0,
 ) -> Tensor:
     r"""Recursive multi-step look-ahead computation.
@@ -424,13 +425,13 @@ def _step(
 
 def _compute_stage_value(
     model: Model,
-    valfunc_cls: Optional[type[AcquisitionFunction]],
+    valfunc_cls: type[AcquisitionFunction] | None,
     X: Tensor,
     objective: MCAcquisitionObjective,
-    posterior_transform: Optional[PosteriorTransform],
-    inner_sampler: Optional[MCSampler] = None,
-    arg_fac: Optional[TAcqfArgConstructor] = None,
-) -> Optional[Tensor]:
+    posterior_transform: PosteriorTransform | None,
+    inner_sampler: MCSampler | None = None,
+    arg_fac: TAcqfArgConstructor | None = None,
+) -> Tensor | None:
     r"""Compute the stage value of a multi-step look-ahead policy.
 
     Args:
@@ -471,7 +472,7 @@ def _compute_stage_value(
 
 def _construct_sample_weights(
     prev_weights: Tensor, sampler: MCSampler
-) -> Optional[Tensor]:
+) -> Tensor | None:
     r"""Iteratively construct tensor of sample weights for multi-step look-ahead.
 
     Args:
@@ -501,10 +502,10 @@ def _construct_sample_weights(
 
 def _construct_inner_samplers(
     batch_sizes: list[int],
-    valfunc_cls: list[Optional[type[AcquisitionFunction]]],
-    inner_mc_samples: list[Optional[int]],
-    objective: Optional[MCAcquisitionObjective] = None,
-) -> list[Optional[MCSampler]]:
+    valfunc_cls: list[type[AcquisitionFunction] | None],
+    inner_mc_samples: list[int | None],
+    objective: MCAcquisitionObjective | None = None,
+) -> list[MCSampler | None]:
     r"""Check validity of inputs and construct inner samplers.
 
     Helper function to be used internally for constructing inner samplers.
@@ -562,7 +563,7 @@ def _construct_inner_samplers(
 
 
 def _get_induced_fantasy_model(
-    model: Model, Xs: list[Tensor], samplers: list[Optional[MCSampler]]
+    model: Model, Xs: list[Tensor], samplers: list[MCSampler | None]
 ) -> Model:
     r"""Recursive computation of the fantasy model induced by an input tree.
 

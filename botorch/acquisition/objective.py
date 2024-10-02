@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Callable, Optional, TYPE_CHECKING, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -107,7 +108,7 @@ class ScalarizedPosteriorTransform(PosteriorTransform):
         return self.offset + Y @ self.weights
 
     def forward(
-        self, posterior: Union[GPyTorchPosterior, PosteriorList]
+        self, posterior: GPyTorchPosterior | PosteriorList
     ) -> GPyTorchPosterior:
         r"""Compute the posterior of the affine transformation.
 
@@ -137,7 +138,7 @@ class ExpectationPosteriorTransform(PosteriorTransform):
     this operates over the q-batch dimension.
     """
 
-    def __init__(self, n_w: int, weights: Optional[Tensor] = None) -> None:
+    def __init__(self, n_w: int, weights: Tensor | None = None) -> None:
         r"""A posterior transform calculating the expectation over the q-batch
         dimension.
 
@@ -242,7 +243,7 @@ class MCAcquisitionObjective(Module, ABC):
     _is_mo: bool = False
 
     @abstractmethod
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Evaluate the objective on the samples.
 
         Args:
@@ -265,7 +266,7 @@ class MCAcquisitionObjective(Module, ABC):
         pass  # pragma: no cover
 
     def __call__(
-        self, samples: Tensor, X: Optional[Tensor] = None, *args, **kwargs
+        self, samples: Tensor, X: Tensor | None = None, *args, **kwargs
     ) -> Tensor:
         output = super().__call__(samples=samples, X=X, *args, **kwargs)
         # q-batch dimension is at -1 for single-output objectives and at
@@ -294,7 +295,7 @@ class IdentityMCObjective(MCAcquisitionObjective):
         >>> objective = identity_objective(samples)
     """
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         return samples.squeeze(-1)
 
 
@@ -324,7 +325,7 @@ class LinearMCObjective(MCAcquisitionObjective):
             raise ValueError("weights must be a one-dimensional tensor.")
         self.register_buffer("weights", weights)
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Evaluate the linear objective on the samples.
 
         Args:
@@ -356,7 +357,7 @@ class GenericMCObjective(MCAcquisitionObjective):
         >>> objective = generic_objective(samples)
     """
 
-    def __init__(self, objective: Callable[[Tensor, Optional[Tensor]], Tensor]) -> None:
+    def __init__(self, objective: Callable[[Tensor, Tensor | None], Tensor]) -> None:
         r"""
         Args:
             objective: A callable `f(samples, X)` mapping a
@@ -367,7 +368,7 @@ class GenericMCObjective(MCAcquisitionObjective):
         super().__init__()
         self.objective = objective
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Evaluate the objective on the samples.
 
         Args:
@@ -411,10 +412,10 @@ class ConstrainedMCObjective(GenericMCObjective):
 
     def __init__(
         self,
-        objective: Callable[[Tensor, Optional[Tensor]], Tensor],
+        objective: Callable[[Tensor, Tensor | None], Tensor],
         constraints: list[Callable[[Tensor], Tensor]],
-        infeasible_cost: Union[Tensor, float] = 0.0,
-        eta: Union[Tensor, float] = 1e-3,
+        infeasible_cost: Tensor | float = 0.0,
+        eta: Tensor | float = 1e-3,
     ) -> None:
         r"""
         Args:
@@ -442,7 +443,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         self.register_buffer("eta", eta)
         self.register_buffer("infeasible_cost", torch.as_tensor(infeasible_cost))
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Evaluate the feasibility-weighted objective on the samples.
 
         Args:
@@ -489,8 +490,8 @@ class LearnedObjective(MCAcquisitionObjective):
     def __init__(
         self,
         pref_model: Model,
-        sample_shape: Optional[torch.Size] = None,
-        seed: Optional[int] = None,
+        sample_shape: torch.Size | None = None,
+        seed: int | None = None,
     ):
         r"""
         Args:
@@ -524,7 +525,7 @@ class LearnedObjective(MCAcquisitionObjective):
             self.sampler = IIDNormalSampler(sample_shape=sample_shape, seed=seed)
             self.sampler.batch_range_override = (1, -1)
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Sample each element of samples.
 
         Args:

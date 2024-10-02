@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from typing import Optional
 
 import numpy
 import torch
@@ -42,13 +41,13 @@ class OrthogonalAdditiveKernel(Kernel):
         dim: int,
         quad_deg: int = 32,
         second_order: bool = False,
-        batch_shape: Optional[torch.Size] = None,
-        dtype: Optional[torch.dtype] = None,
-        device: Optional[torch.device] = None,
+        batch_shape: torch.Size | None = None,
+        dtype: torch.dtype | None = None,
+        device: torch.device | None = None,
         coeff_constraint: Interval = _positivity_constraint,
-        offset_prior: Optional[Prior] = None,
-        coeffs_1_prior: Optional[Prior] = None,
-        coeffs_2_prior: Optional[Prior] = None,
+        offset_prior: Prior | None = None,
+        coeffs_1_prior: Prior | None = None,
+        coeffs_2_prior: Prior | None = None,
     ):
         """
         Args:
@@ -160,7 +159,7 @@ class OrthogonalAdditiveKernel(Kernel):
         return self.coeff_constraint.transform(self.raw_coeffs_1)
 
     @property
-    def coeffs_2(self) -> Optional[Tensor]:
+    def coeffs_2(self) -> Tensor | None:
         """Returns the upper-triangular tensor of second-order coefficients.
 
         NOTE: We only keep track of the upper triangular part of raw second order
@@ -304,8 +303,8 @@ def leggauss(
     deg: int,
     a: float = -1.0,
     b: float = 1.0,
-    dtype: Optional[torch.dtype] = None,
-    device: Optional[torch.device] = None,
+    dtype: torch.dtype | None = None,
+    device: torch.device | None = None,
 ) -> tuple[Tensor, Tensor]:
     """Computes Gauss-Legendre quadrature nodes and weights. Wraps
     `numpy.polynomial.legendre.leggauss` and returns Torch Tensors.

@@ -12,7 +12,7 @@ should be defined here to avoid relative imports.
 from __future__ import annotations
 
 import math
-from typing import Any, Optional, Union
+from typing import Any
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -58,7 +58,7 @@ def get_model(
     train_Y: Tensor,
     standardize_model: bool = False,
     use_model_list: bool = False,
-) -> Union[SingleTaskGP, ModelListGP]:
+) -> SingleTaskGP | ModelListGP:
     num_objectives = train_Y.shape[-1]
 
     if standardize_model:
@@ -173,11 +173,11 @@ def standardize_moments(
 
 
 def gen_multi_task_dataset(
-    yvar: Optional[float] = None,
-    task_values: Optional[list[int]] = None,
+    yvar: float | None = None,
+    task_values: list[int] | None = None,
     skip_task_features_in_datasets: bool = False,
     **tkwargs,
-) -> tuple[MultiTaskDataset, tuple[Tensor, Tensor, Optional[Tensor]]]:
+) -> tuple[MultiTaskDataset, tuple[Tensor, Tensor, Tensor | None]]:
     """Constructs a multi-task dataset with two tasks, each with 10 data points.
 
     Args:

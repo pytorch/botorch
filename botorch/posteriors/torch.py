@@ -10,7 +10,7 @@ Posterior module to be used with PyTorch distributions.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from botorch.posteriors.posterior import Posterior
@@ -42,7 +42,7 @@ class TorchPosterior(Posterior):
 
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 

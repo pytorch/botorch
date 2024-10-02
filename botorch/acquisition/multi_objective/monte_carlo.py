@@ -26,7 +26,7 @@ References
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import torch
 from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
@@ -57,13 +57,13 @@ class qExpectedHypervolumeImprovement(
     def __init__(
         self,
         model: Model,
-        ref_point: Union[list[float], Tensor],
+        ref_point: list[float] | Tensor,
         partitioning: NondominatedPartitioning,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        X_pending: Optional[Tensor] = None,
-        eta: Union[Tensor, float] = 1e-3,
+        sampler: MCSampler | None = None,
+        objective: MCMultiOutputObjective | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        X_pending: Tensor | None = None,
+        eta: Tensor | float = 1e-3,
         fat: bool = False,
     ) -> None:
         r"""q-Expected Hypervolume Improvement supporting m>=2 outcomes.
@@ -135,7 +135,7 @@ class qExpectedHypervolumeImprovement(
         SubsetIndexCachingMixin.__init__(self)
         self.fat = fat
 
-    def _compute_qehvi(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def _compute_qehvi(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Compute the expected (feasible) hypervolume improvement given MC samples.
 
         Args:
@@ -236,13 +236,13 @@ class qNoisyExpectedHypervolumeImprovement(
     def __init__(
         self,
         model: Model,
-        ref_point: Union[list[float], Tensor],
+        ref_point: list[float] | Tensor,
         X_baseline: Tensor,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        X_pending: Optional[Tensor] = None,
-        eta: Union[Tensor, float] = 1e-3,
+        sampler: MCSampler | None = None,
+        objective: MCMultiOutputObjective | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        X_pending: Tensor | None = None,
+        eta: Tensor | float = 1e-3,
         fat: bool = False,
         prune_baseline: bool = False,
         alpha: float = 0.0,
@@ -250,7 +250,7 @@ class qNoisyExpectedHypervolumeImprovement(
         max_iep: int = 0,
         incremental_nehvi: bool = True,
         cache_root: bool = True,
-        marginalize_dim: Optional[int] = None,
+        marginalize_dim: int | None = None,
     ) -> None:
         r"""q-Noisy Expected Hypervolume Improvement supporting m>=2 outcomes.
 

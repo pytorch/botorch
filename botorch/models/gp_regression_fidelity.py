@@ -25,7 +25,9 @@ without having to do too many expensive high-fidelity evaluations.
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+
+from typing import Any
 
 import torch
 from botorch.exceptions.errors import UnsupportedError

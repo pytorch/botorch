@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import torch
 from botorch import settings
@@ -35,7 +35,7 @@ class CostAwareUtility(Module, ABC):
 
     @abstractmethod
     def forward(
-        self, X: Tensor, deltas: Tensor, sampler: Optional[MCSampler] = None
+        self, X: Tensor, deltas: Tensor, sampler: MCSampler | None = None
     ) -> Tensor:
         r"""Evaluate the cost-aware utility on the candidates and improvements.
 
@@ -67,7 +67,7 @@ class GenericCostAwareUtility(CostAwareUtility):
         self._cost_callable: Callable[[Tensor, Tensor], Tensor] = cost
 
     def forward(
-        self, X: Tensor, deltas: Tensor, sampler: Optional[MCSampler] = None
+        self, X: Tensor, deltas: Tensor, sampler: MCSampler | None = None
     ) -> Tensor:
         r"""Evaluate the cost function on the candidates and improvements.
 
@@ -109,9 +109,9 @@ class InverseCostWeightedUtility(CostAwareUtility):
 
     def __init__(
         self,
-        cost_model: Union[DeterministicModel, GPyTorchModel],
+        cost_model: DeterministicModel | GPyTorchModel,
         use_mean: bool = True,
-        cost_objective: Optional[MCAcquisitionObjective] = None,
+        cost_objective: MCAcquisitionObjective | None = None,
         min_cost: float = 1e-2,
     ) -> None:
         r"""Cost-aware utility that weights increase in utility by inverse cost.
@@ -153,8 +153,8 @@ class InverseCostWeightedUtility(CostAwareUtility):
         self,
         X: Tensor,
         deltas: Tensor,
-        sampler: Optional[MCSampler] = None,
-        X_evaluation_mask: Optional[Tensor] = None,
+        sampler: MCSampler | None = None,
+        X_evaluation_mask: Tensor | None = None,
     ) -> Tensor:
         r"""Evaluate the cost function on the candidates and improvements. Note
         that negative values of `deltas` are instead scaled by the cost, and not

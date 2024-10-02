@@ -11,8 +11,9 @@ Some basic data transformation helpers.
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import torch
 from botorch.utils.safe_math import logmeanexp
@@ -119,7 +120,7 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
     return X * (bounds[1] - bounds[0]) + bounds[0]
 
 
-def normalize_indices(indices: Optional[list[int]], d: int) -> Optional[list[int]]:
+def normalize_indices(indices: list[int] | None, d: int) -> list[int] | None:
     r"""Normalize a list of indices to ensure that they are positive.
 
     Args:
@@ -226,7 +227,7 @@ def is_ensemble(model: Model) -> bool:
 
 
 def t_batch_mode_transform(
-    expected_q: Optional[int] = None,
+    expected_q: int | None = None,
     assert_output_shape: bool = True,
 ) -> Callable[
     [Callable[[AcquisitionFunction, Any], Any]],

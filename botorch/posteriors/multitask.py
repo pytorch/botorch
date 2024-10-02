@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional, Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -22,8 +21,8 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         train_diff: Tensor,
         test_mean: Tensor,
         train_train_covar: LinearOperator,
-        train_noise: Union[LinearOperator, Tensor],
-        test_noise: Optional[Union[LinearOperator, Tensor]] = None,
+        train_noise: LinearOperator | Tensor,
+        test_noise: LinearOperator | Tensor | None = None,
     ):
         r"""
         Posterior class for a Kronecker Multi-task GP model using with ICM kernel.
@@ -184,8 +183,8 @@ class MultitaskGPPosterior(GPyTorchPosterior):
     def rsample_from_base_samples(
         self,
         sample_shape: torch.Size,
-        base_samples: Optional[Tensor],
-        train_diff: Optional[Tensor] = None,
+        base_samples: Tensor | None,
+        train_diff: Tensor | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients) using base samples.
 
@@ -255,7 +254,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
 
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
@@ -275,7 +274,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         )
 
     def _draw_from_base_covar(
-        self, covar: Union[Tensor, LinearOperator], base_samples: Tensor
+        self, covar: Tensor | LinearOperator, base_samples: Tensor
     ) -> Tensor:
         # Now reparameterize those base samples
         if not isinstance(covar, LinearOperator):

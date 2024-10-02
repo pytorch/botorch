@@ -7,12 +7,12 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 
 from functools import lru_cache
 from math import pi
 from numbers import Number
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 import torch
 from botorch.utils.safe_math import logdiffexp
@@ -80,10 +80,10 @@ def case_dispatcher(
 
 @lru_cache(maxsize=None)
 def get_constants(
-    values: Union[Number, Iterator[Number]],
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
-) -> Union[Tensor, tuple[Tensor, ...]]:
+    values: Number | Iterator[Number],
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
+) -> Tensor | tuple[Tensor, ...]:
     r"""Returns scalar-valued Tensors containing each of the given constants.
     Used to expedite tensor operations involving scalar arithmetic. Note that
     the returned Tensors should not be modified in-place."""
@@ -94,16 +94,16 @@ def get_constants(
 
 
 def get_constants_like(
-    values: Union[Number, Iterator[Number]],
+    values: Number | Iterator[Number],
     ref: Tensor,
-) -> Union[Tensor, Iterator[Tensor]]:
+) -> Tensor | Iterator[Tensor]:
     return get_constants(values, device=ref.device, dtype=ref.dtype)
 
 
 def gen_positional_indices(
     shape: torch.Size,
     dim: int,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
 ) -> Iterator[torch.LongTensor]:
     ndim = len(shape)
     _dim = ndim + dim if dim < 0 else dim
@@ -119,7 +119,7 @@ def gen_positional_indices(
 def build_positional_indices(
     shape: torch.Size,
     dim: int,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
 ) -> LongTensor:
     return sum(gen_positional_indices(shape=shape, dim=dim, device=device))
 
@@ -259,10 +259,10 @@ def log_prob_normal_in(a: Tensor, b: Tensor) -> Tensor:
 
 def swap_along_dim_(
     values: Tensor,
-    i: Union[int, LongTensor],
-    j: Union[int, LongTensor],
+    i: int | LongTensor,
+    j: int | LongTensor,
     dim: int,
-    buffer: Optional[Tensor] = None,
+    buffer: Tensor | None = None,
 ) -> Tensor:
     r"""Swaps Tensor slices in-place along dimension `dim`.
 

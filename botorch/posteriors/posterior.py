@@ -11,7 +11,6 @@ Abstract base module for all botorch posteriors.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Optional
 
 import torch
 from torch import Tensor
@@ -48,7 +47,7 @@ class Posterior(ABC):
     @abstractmethod
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
@@ -63,7 +62,7 @@ class Posterior(ABC):
         """
         pass  # pragma: no cover
 
-    def sample(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
+    def sample(self, sample_shape: torch.Size | None = None) -> Tensor:
         r"""Sample from the posterior without gradients.
 
         Args:

@@ -24,7 +24,7 @@ see [Genz2016numerical]_ and [Trinh2015bivariate]_.
 
 from __future__ import annotations
 
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 from warnings import warn
 
 import torch
@@ -56,7 +56,7 @@ class mvnxpbState(TypedDict):
     piv_chol: PivotedCholesky
     plug_ins: Tensor
     log_prob: Tensor
-    log_prob_extra: Optional[Tensor]
+    log_prob_extra: Tensor | None
 
 
 class MVNXPB:
@@ -101,7 +101,7 @@ class MVNXPB:
             batch_shape + [n], float("nan"), device=device, dtype=dtype
         )
         self.log_prob = torch.zeros(batch_shape, device=device, dtype=dtype)
-        self.log_prob_extra: Optional[Tensor] = None
+        self.log_prob_extra: Tensor | None = None
 
     @classmethod
     def build(
@@ -112,7 +112,7 @@ class MVNXPB:
         piv_chol: PivotedCholesky,
         plug_ins: Tensor,
         log_prob: Tensor,
-        log_prob_extra: Optional[Tensor] = None,
+        log_prob_extra: Tensor | None = None,
     ) -> MVNXPB:
         r"""Creates an MVNXPB instance from raw arguments. Unlike MVNXPB.__init__,
         this methods does not preprocess or copy terms.
@@ -137,7 +137,7 @@ class MVNXPB:
         new.log_prob_extra = log_prob_extra
         return new
 
-    def solve(self, num_steps: Optional[int] = None, eps: float = 1e-10) -> Tensor:
+    def solve(self, num_steps: int | None = None, eps: float = 1e-10) -> Tensor:
         r"""Runs the MVNXPB solver instance for a fixed number of steps.
 
         Calculates a bivariate conditional approximation to P(X \in bounds), where
@@ -242,7 +242,7 @@ class MVNXPB:
 
         return self.log_prob
 
-    def select_pivot(self) -> Optional[LongTensor]:
+    def select_pivot(self) -> LongTensor | None:
         r"""GGE variable prioritization strategy from [Gibson1994monte]_.
 
         Returns the index of the random variable least likely to satisfy its bounds
@@ -342,8 +342,8 @@ class MVNXPB:
         bounds: Tensor,
         cross_covariance_matrix: Tensor,
         disable_pivoting: bool = False,
-        jitter: Optional[float] = None,
-        max_tries: Optional[int] = None,
+        jitter: float | None = None,
+        max_tries: int | None = None,
     ) -> MVNXPB:
         r"""Augment an `n`-dimensional MVNXPB instance to include `m` additional random
         variables.

@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Optional
 
 from botorch.models.transforms.input import (
     ChainedInputTransform,
@@ -20,8 +19,8 @@ from torch import Tensor
 
 def get_rounding_input_transform(
     one_hot_bounds: Tensor,
-    integer_indices: Optional[list[int]] = None,
-    categorical_features: Optional[dict[int, int]] = None,
+    integer_indices: list[int] | None = None,
+    categorical_features: dict[int, int] | None = None,
     initialization: bool = False,
     return_numeric: bool = False,
     approximate: bool = False,

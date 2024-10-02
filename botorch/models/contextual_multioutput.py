@@ -13,7 +13,7 @@ References
     Advances in Neural Information Processing Systems 33, NeurIPS 2020.
 """
 
-from typing import Any, Optional, Union
+from typing import Any
 
 import torch
 from botorch.models.multitask import MultiTaskGP
@@ -42,17 +42,17 @@ class LCEMGP(MultiTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         task_feature: int,
-        train_Yvar: Optional[Tensor] = None,
-        mean_module: Optional[Module] = None,
-        covar_module: Optional[Module] = None,
-        likelihood: Optional[Likelihood] = None,
-        context_cat_feature: Optional[Tensor] = None,
-        context_emb_feature: Optional[Tensor] = None,
-        embs_dim_list: Optional[list[int]] = None,
-        output_tasks: Optional[list[int]] = None,
-        all_tasks: Optional[list[int]] = None,
+        train_Yvar: Tensor | None = None,
+        mean_module: Module | None = None,
+        covar_module: Module | None = None,
+        likelihood: Likelihood | None = None,
+        context_cat_feature: Tensor | None = None,
+        context_emb_feature: Tensor | None = None,
+        embs_dim_list: list[int] | None = None,
+        output_tasks: list[int] | None = None,
+        all_tasks: list[int] | None = None,
         outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
-        input_transform: Optional[InputTransform] = None,
+        input_transform: InputTransform | None = None,
     ) -> None:
         r"""
         Args:
@@ -211,12 +211,12 @@ class LCEMGP(MultiTaskGP):
     @classmethod
     def construct_inputs(
         cls,
-        training_data: Union[SupervisedDataset, MultiTaskDataset],
+        training_data: SupervisedDataset | MultiTaskDataset,
         task_feature: int,
-        output_tasks: Optional[list[int]] = None,
-        context_cat_feature: Optional[Tensor] = None,
-        context_emb_feature: Optional[Tensor] = None,
-        embs_dim_list: Optional[list[int]] = None,
+        output_tasks: list[int] | None = None,
+        context_cat_feature: Tensor | None = None,
+        context_emb_feature: Tensor | None = None,
+        embs_dim_list: list[int] | None = None,
         **kwargs,
     ) -> dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dataset and other args.

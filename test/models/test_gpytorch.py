@@ -6,7 +6,6 @@
 
 import itertools
 import warnings
-from typing import Optional
 
 import torch
 from botorch import settings
@@ -62,7 +61,7 @@ class SimpleInputTransform(InputTransform, torch.nn.Module):
 class SimpleBatchedMultiOutputGPyTorchModel(
     BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin
 ):
-    _batch_shape: Optional[torch.Size] = None
+    _batch_shape: torch.Size | None = None
 
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
         r"""

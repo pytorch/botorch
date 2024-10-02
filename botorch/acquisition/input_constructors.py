@@ -12,8 +12,8 @@ constructors programmatically from a consistent input format.
 from __future__ import annotations
 
 import inspect
-from collections.abc import Hashable, Iterable, Sequence
-from typing import Any, Callable, List, Optional, TypeVar, Union
+from collections.abc import Callable, Hashable, Iterable, Sequence
+from typing import Any, TypeVar, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -130,7 +130,7 @@ TOptimizeObjectiveKwargs = Union[
 
 
 def _field_is_shared(
-    datasets: Union[Iterable[SupervisedDataset], dict[Hashable, SupervisedDataset]],
+    datasets: Iterable[SupervisedDataset] | dict[Hashable, SupervisedDataset],
     fieldname: str,
 ) -> bool:
     r"""Determines whether or not a given field is shared by all datasets."""
@@ -157,8 +157,8 @@ def _field_is_shared(
 def _get_dataset_field(
     dataset: MaybeDict[SupervisedDataset],
     fieldname: str,
-    transform: Optional[Callable[[BotorchContainer], Any]] = None,
-    join_rule: Optional[Callable[[Sequence[Any]], Any]] = None,
+    transform: Callable[[BotorchContainer], Any] | None = None,
+    join_rule: Callable[[Sequence[Any]], Any] | None = None,
     first_only: bool = False,
     assert_shared: bool = False,
 ) -> Any:
@@ -278,8 +278,8 @@ def _register_acqf_input_constructor(
 @acqf_input_constructor(PosteriorMean)
 def construct_inputs_posterior_mean(
     model: Model,
-    posterior_transform: Optional[PosteriorTransform] = None,
-) -> dict[str, Union[Model, Optional[PosteriorTransform]]]:
+    posterior_transform: PosteriorTransform | None = None,
+) -> dict[str, Model | PosteriorTransform | None]:
     r"""Construct kwargs for PosteriorMean acquisition function.
 
     Args:
@@ -302,8 +302,8 @@ def construct_inputs_posterior_mean(
 def construct_inputs_best_f(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
-    posterior_transform: Optional[PosteriorTransform] = None,
-    best_f: Optional[Union[float, Tensor]] = None,
+    posterior_transform: PosteriorTransform | None = None,
+    best_f: float | Tensor | None = None,
     maximize: bool = True,
 ) -> dict[str, Any]:
     r"""Construct kwargs for the acquisition functions requiring `best_f`.
@@ -337,8 +337,8 @@ def construct_inputs_best_f(
 @acqf_input_constructor(UpperConfidenceBound)
 def construct_inputs_ucb(
     model: Model,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    beta: Union[float, Tensor] = 0.2,
+    posterior_transform: PosteriorTransform | None = None,
+    beta: float | Tensor = 0.2,
     maximize: bool = True,
 ) -> dict[str, Any]:
     r"""Construct kwargs for `UpperConfidenceBound`.
@@ -395,12 +395,12 @@ def construct_inputs_noisy_ei(
 @acqf_input_constructor(qSimpleRegret)
 def construct_inputs_qSimpleRegret(
     model: Model,
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_pending: Optional[Tensor] = None,
-    sampler: Optional[MCSampler] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    X_baseline: Optional[Tensor] = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    X_pending: Tensor | None = None,
+    sampler: MCSampler | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    X_baseline: Tensor | None = None,
 ) -> dict[str, Any]:
     r"""Construct kwargs for qSimpleRegret.
 
@@ -449,13 +449,13 @@ def construct_inputs_qSimpleRegret(
 def construct_inputs_qEI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_pending: Optional[Tensor] = None,
-    sampler: Optional[MCSampler] = None,
-    best_f: Optional[Union[float, Tensor]] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    eta: Union[Tensor, float] = 1e-3,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    X_pending: Tensor | None = None,
+    sampler: MCSampler | None = None,
+    best_f: float | Tensor | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    eta: Tensor | float = 1e-3,
 ) -> dict[str, Any]:
     r"""Construct kwargs for the `qExpectedImprovement` constructor.
 
@@ -507,13 +507,13 @@ def construct_inputs_qEI(
 def construct_inputs_qLogEI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_pending: Optional[Tensor] = None,
-    sampler: Optional[MCSampler] = None,
-    best_f: Optional[Union[float, Tensor]] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    eta: Union[Tensor, float] = 1e-3,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    X_pending: Tensor | None = None,
+    sampler: MCSampler | None = None,
+    best_f: float | Tensor | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    eta: Tensor | float = 1e-3,
     fat: bool = True,
     tau_max: float = TAU_MAX,
     tau_relu: float = TAU_RELU,
@@ -571,15 +571,15 @@ def construct_inputs_qLogEI(
 def construct_inputs_qNEI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_pending: Optional[Tensor] = None,
-    sampler: Optional[MCSampler] = None,
-    X_baseline: Optional[Tensor] = None,
-    prune_baseline: Optional[bool] = True,
-    cache_root: Optional[bool] = True,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    eta: Union[Tensor, float] = 1e-3,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    X_pending: Tensor | None = None,
+    sampler: MCSampler | None = None,
+    X_baseline: Tensor | None = None,
+    prune_baseline: bool | None = True,
+    cache_root: bool | None = True,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    eta: Tensor | float = 1e-3,
 ) -> dict[str, Any]:
     r"""Construct kwargs for the `qNoisyExpectedImprovement` constructor.
 
@@ -637,15 +637,15 @@ def construct_inputs_qNEI(
 def construct_inputs_qLogNEI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_pending: Optional[Tensor] = None,
-    sampler: Optional[MCSampler] = None,
-    X_baseline: Optional[Tensor] = None,
-    prune_baseline: Optional[bool] = True,
-    cache_root: Optional[bool] = True,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    eta: Union[Tensor, float] = 1e-3,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    X_pending: Tensor | None = None,
+    sampler: MCSampler | None = None,
+    X_baseline: Tensor | None = None,
+    prune_baseline: bool | None = True,
+    cache_root: bool | None = True,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    eta: Tensor | float = 1e-3,
     fat: bool = True,
     tau_max: float = TAU_MAX,
     tau_relu: float = TAU_RELU,
@@ -711,14 +711,14 @@ def construct_inputs_qLogNEI(
 def construct_inputs_qPI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_pending: Optional[Tensor] = None,
-    sampler: Optional[MCSampler] = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    X_pending: Tensor | None = None,
+    sampler: MCSampler | None = None,
     tau: float = 1e-3,
-    best_f: Optional[Union[float, Tensor]] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    eta: Union[Tensor, float] = 1e-3,
+    best_f: float | Tensor | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    eta: Tensor | float = 1e-3,
 ) -> dict[str, Any]:
     r"""Construct kwargs for the `qProbabilityOfImprovement` constructor.
 
@@ -776,12 +776,12 @@ def construct_inputs_qPI(
 @acqf_input_constructor(qLowerConfidenceBound, qUpperConfidenceBound)
 def construct_inputs_qUCB(
     model: Model,
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_pending: Optional[Tensor] = None,
-    sampler: Optional[MCSampler] = None,
-    X_baseline: Optional[Tensor] = None,
-    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    X_pending: Tensor | None = None,
+    sampler: MCSampler | None = None,
+    X_baseline: Tensor | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
     beta: float = 0.2,
 ) -> dict[str, Any]:
     r"""Construct kwargs for the `qUpperConfidenceBound` constructor.
@@ -844,10 +844,10 @@ def construct_inputs_EHVI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    alpha: Optional[float] = None,
-    Y_pmean: Optional[Tensor] = None,
+    posterior_transform: PosteriorTransform | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    alpha: float | None = None,
+    Y_pmean: Tensor | None = None,
 ) -> dict[str, Any]:
     r"""Construct kwargs for `ExpectedHypervolumeImprovement` constructor."""
     num_objectives = objective_thresholds.shape[0]
@@ -901,11 +901,11 @@ def construct_inputs_qEHVI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
-    objective: Optional[MCMultiOutputObjective] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    alpha: Optional[float] = None,
-    sampler: Optional[MCSampler] = None,
-    X_pending: Optional[Tensor] = None,
+    objective: MCMultiOutputObjective | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    alpha: float | None = None,
+    sampler: MCSampler | None = None,
+    X_pending: Tensor | None = None,
     eta: float = 1e-3,
     mc_samples: int = 128,
     qmc: bool = True,
@@ -980,12 +980,12 @@ def construct_inputs_qNEHVI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
-    objective: Optional[MCMultiOutputObjective] = None,
-    X_baseline: Optional[Tensor] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    alpha: Optional[float] = None,
-    sampler: Optional[MCSampler] = None,
-    X_pending: Optional[Tensor] = None,
+    objective: MCMultiOutputObjective | None = None,
+    X_baseline: Tensor | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    alpha: float | None = None,
+    sampler: MCSampler | None = None,
+    X_pending: Tensor | None = None,
     eta: float = 1e-3,
     fat: bool = False,
     mc_samples: int = 128,
@@ -1052,12 +1052,12 @@ def construct_inputs_qLogNEHVI(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     objective_thresholds: Tensor,
-    objective: Optional[MCMultiOutputObjective] = None,
-    X_baseline: Optional[Tensor] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    alpha: Optional[float] = None,
-    sampler: Optional[MCSampler] = None,
-    X_pending: Optional[Tensor] = None,
+    objective: MCMultiOutputObjective | None = None,
+    X_baseline: Tensor | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    alpha: float | None = None,
+    sampler: MCSampler | None = None,
+    X_pending: Tensor | None = None,
     eta: float = 1e-3,
     fat: bool = True,
     mc_samples: int = 128,
@@ -1103,15 +1103,15 @@ def construct_inputs_qLogNEHVI(
 def construct_inputs_qLogNParEGO(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
-    scalarization_weights: Optional[Tensor] = None,
-    objective: Optional[MCMultiOutputObjective] = None,
-    X_pending: Optional[Tensor] = None,
-    sampler: Optional[MCSampler] = None,
-    X_baseline: Optional[Tensor] = None,
-    prune_baseline: Optional[bool] = True,
-    cache_root: Optional[bool] = True,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    eta: Union[Tensor, float] = 1e-3,
+    scalarization_weights: Tensor | None = None,
+    objective: MCMultiOutputObjective | None = None,
+    X_pending: Tensor | None = None,
+    sampler: MCSampler | None = None,
+    X_baseline: Tensor | None = None,
+    prune_baseline: bool | None = True,
+    cache_root: bool | None = True,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    eta: Tensor | float = 1e-3,
     fat: bool = True,
     tau_max: float = TAU_MAX,
     tau_relu: float = TAU_RELU,
@@ -1182,7 +1182,7 @@ def construct_inputs_qMES(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     bounds: list[tuple[float, float]],
-    posterior_transform: Optional[PosteriorTransform] = None,
+    posterior_transform: PosteriorTransform | None = None,
     candidate_size: int = 1000,
     maximize: bool = True,
     # TODO: qMES also supports other inputs, such as num_fantasies
@@ -1202,8 +1202,8 @@ def construct_inputs_qMES(
 
 
 def construct_inputs_mf_base(
-    target_fidelities: dict[int, Union[int, float]],
-    fidelity_weights: Optional[dict[int, float]] = None,
+    target_fidelities: dict[int, int | float],
+    fidelity_weights: dict[int, float] | None = None,
     cost_intercept: float = 1.0,
     num_trace_observations: int = 0,
 ) -> dict[str, Any]:
@@ -1242,8 +1242,8 @@ def construct_inputs_qKG(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     bounds: list[tuple[float, float]],
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
     num_fantasies: int = 64,
     with_current_value: bool = False,
     **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
@@ -1281,8 +1281,8 @@ def construct_inputs_qHVKG(
     training_data: MaybeDict[SupervisedDataset],
     bounds: list[tuple[float, float]],
     objective_thresholds: Tensor,
-    objective: Optional[MCMultiOutputObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
+    objective: MCMultiOutputObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
     num_fantasies: int = 8,
     num_pareto: int = 10,
     **optimize_objective_kwargs: TOptimizeObjectiveKwargs,
@@ -1326,10 +1326,10 @@ def construct_inputs_qMFKG(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     bounds: list[tuple[float, float]],
-    target_fidelities: dict[int, Union[int, float]],
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    fidelity_weights: Optional[dict[int, float]] = None,
+    target_fidelities: dict[int, int | float],
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    fidelity_weights: dict[int, float] | None = None,
     cost_intercept: float = 1.0,
     num_trace_observations: int = 0,
     num_fantasies: int = 64,
@@ -1372,11 +1372,11 @@ def construct_inputs_qMFHVKG(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     bounds: list[tuple[float, float]],
-    target_fidelities: dict[int, Union[int, float]],
+    target_fidelities: dict[int, int | float],
     objective_thresholds: Tensor,
-    objective: Optional[MCMultiOutputObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    fidelity_weights: Optional[dict[int, float]] = None,
+    objective: MCMultiOutputObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    fidelity_weights: dict[int, float] | None = None,
     cost_intercept: float = 1.0,
     num_trace_observations: int = 0,
     num_fantasies: int = 8,
@@ -1442,9 +1442,9 @@ def construct_inputs_qMFMES(
     model: Model,
     training_data: MaybeDict[SupervisedDataset],
     bounds: list[tuple[float, float]],
-    target_fidelities: dict[int, Union[int, float]],
+    target_fidelities: dict[int, int | float],
     num_fantasies: int = 64,
-    fidelity_weights: Optional[dict[int, float]] = None,
+    fidelity_weights: dict[int, float] | None = None,
     cost_intercept: float = 1.0,
     num_trace_observations: int = 0,
     candidate_size: int = 1000,
@@ -1472,11 +1472,11 @@ def construct_inputs_qMFMES(
 @acqf_input_constructor(AnalyticExpectedUtilityOfBestOption)
 def construct_inputs_analytic_eubo(
     model: Model,
-    pref_model: Optional[Model] = None,
-    previous_winner: Optional[Tensor] = None,
-    sample_multiplier: Optional[float] = 1.0,
-    objective: Optional[LearnedObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
+    pref_model: Model | None = None,
+    previous_winner: Tensor | None = None,
+    sample_multiplier: float | None = 1.0,
+    objective: LearnedObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
 ) -> dict[str, Any]:
     r"""Construct kwargs for the `AnalyticExpectedUtilityOfBestOption` constructor.
 
@@ -1531,12 +1531,12 @@ def construct_inputs_analytic_eubo(
 @acqf_input_constructor(qExpectedUtilityOfBestOption)
 def construct_inputs_qeubo(
     model: Model,
-    pref_model: Optional[Model] = None,
-    sample_multiplier: Optional[float] = 1.0,
-    sampler: Optional[MCSampler] = None,
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    X_pending: Optional[Tensor] = None,
+    pref_model: Model | None = None,
+    sample_multiplier: float | None = 1.0,
+    sampler: MCSampler | None = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    X_pending: Tensor | None = None,
 ) -> dict[str, Any]:
     r"""Construct kwargs for the `qExpectedUtilityOfBestOption` (qEUBO) constructor.
 
@@ -1590,7 +1590,7 @@ def construct_inputs_qeubo(
 
 def get_best_f_analytic(
     training_data: MaybeDict[SupervisedDataset],
-    posterior_transform: Optional[PosteriorTransform] = None,
+    posterior_transform: PosteriorTransform | None = None,
 ) -> Tensor:
     if isinstance(training_data, dict) and not _field_is_shared(
         training_data, fieldname="X"
@@ -1615,10 +1615,10 @@ def get_best_f_analytic(
 
 def get_best_f_mc(
     training_data: MaybeDict[SupervisedDataset],
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    model: Optional[Model] = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    model: Model | None = None,
 ) -> Tensor:
     """
     Computes the maximum value of the objective over the training data.
@@ -1692,17 +1692,17 @@ def optimize_objective(
     model: Model,
     bounds: Tensor,
     q: int,
-    acq_function: Optional[AcquisitionFunction] = None,
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    linear_constraints: Optional[tuple[Tensor, Tensor]] = None,
-    fixed_features: Optional[dict[int, float]] = None,
+    acq_function: AcquisitionFunction | None = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    linear_constraints: tuple[Tensor, Tensor] | None = None,
+    fixed_features: dict[int, float] | None = None,
     qmc: bool = True,
     mc_samples: int = 512,
-    seed_inner: Optional[int] = None,
-    optimizer_options: Optional[dict[str, Any]] = None,
-    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
-    batch_initial_conditions: Optional[Tensor] = None,
+    seed_inner: int | None = None,
+    optimizer_options: dict[str, Any] | None = None,
+    post_processing_func: Callable[[Tensor], Tensor] | None = None,
+    batch_initial_conditions: Tensor | None = None,
     sequential: bool = False,
 ) -> tuple[Tensor, Tensor]:
     r"""Optimize an objective under the given model.
@@ -1803,7 +1803,7 @@ def construct_inputs_qJES(
     num_optima: int = 64,
     maximize: bool = True,
     condition_noiseless: bool = True,
-    X_pending: Optional[Tensor] = None,
+    X_pending: Tensor | None = None,
     estimation_type: str = "LB",
     num_samples: int = 64,
 ):
@@ -1831,9 +1831,9 @@ def construct_inputs_qJES(
 @acqf_input_constructor(qBayesianActiveLearningByDisagreement)
 def construct_inputs_BALD(
     model: Model,
-    X_pending: Optional[Tensor] = None,
-    sampler: Optional[MCSampler] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
+    X_pending: Tensor | None = None,
+    sampler: MCSampler | None = None,
+    posterior_transform: PosteriorTransform | None = None,
 ):
     inputs = {
         "model": model,
@@ -1849,8 +1849,8 @@ def construct_inputs_NIPV(
     model: Model,
     bounds: list[tuple[float, float]],
     num_mc_points: int = 128,
-    X_pending: Optional[Tensor] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
+    X_pending: Tensor | None = None,
+    posterior_transform: PosteriorTransform | None = None,
 ) -> dict[str, Any]:
     """Construct inputs for qNegIntegratedPosteriorVariance."""
     bounds = torch.as_tensor(bounds).to(model.train_targets).T
@@ -1866,7 +1866,7 @@ def construct_inputs_NIPV(
 
 def _get_ref_point(
     objective_thresholds: Tensor,
-    objective: Optional[MCMultiOutputObjective] = None,
+    objective: MCMultiOutputObjective | None = None,
 ) -> Tensor:
 
     if objective is None:

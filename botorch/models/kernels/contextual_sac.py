@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
@@ -44,7 +44,7 @@ class SACKernel(Kernel):
         self,
         decomposition: dict[str, list[int]],
         batch_shape: torch.Size,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> None:
         r"""
         Args:
@@ -85,7 +85,7 @@ class SACKernel(Kernel):
         self.kernel_dict = ModuleDict(self.kernel_dict)
 
     @property
-    def device(self) -> Optional[torch.device]:
+    def device(self) -> torch.device | None:
         return self._device
 
     def forward(

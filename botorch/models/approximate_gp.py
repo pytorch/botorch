@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import copy
 import warnings
-from typing import Optional, Union
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -92,8 +91,8 @@ class ApproximateGPyTorchModel(GPyTorchModel):
 
     def __init__(
         self,
-        model: Optional[ApproximateGP] = None,
-        likelihood: Optional[Likelihood] = None,
+        model: ApproximateGP | None = None,
+        likelihood: Likelihood | None = None,
         num_outputs: int = 1,
         *args,
         **kwargs,
@@ -148,9 +147,9 @@ class ApproximateGPyTorchModel(GPyTorchModel):
     def posterior(
         self,
         X,
-        output_indices: Optional[list[int]] = None,
+        output_indices: list[int] | None = None,
         observation_noise: bool = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> GPyTorchPosterior:
         if output_indices is not None:
             raise NotImplementedError(  # pragma: no cover
@@ -196,15 +195,15 @@ class _SingleTaskVariationalGP(ApproximateGP):
     def __init__(
         self,
         train_X: Tensor,
-        train_Y: Optional[Tensor] = None,
+        train_Y: Tensor | None = None,
         num_outputs: int = 1,
         learn_inducing_points=True,
-        covar_module: Optional[Kernel] = None,
-        mean_module: Optional[Mean] = None,
-        variational_distribution: Optional[_VariationalDistribution] = None,
+        covar_module: Kernel | None = None,
+        mean_module: Mean | None = None,
+        variational_distribution: _VariationalDistribution | None = None,
         variational_strategy: type[_VariationalStrategy] = VariationalStrategy,
-        inducing_points: Optional[Union[Tensor, int]] = None,
-        inducing_point_allocator: Optional[InducingPointAllocator] = None,
+        inducing_points: Tensor | int | None = None,
+        inducing_point_allocator: InducingPointAllocator | None = None,
     ) -> None:
         r"""
         Args:
@@ -335,16 +334,16 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
     def __init__(
         self,
         train_X: Tensor,
-        train_Y: Optional[Tensor] = None,
-        likelihood: Optional[Likelihood] = None,
+        train_Y: Tensor | None = None,
+        likelihood: Likelihood | None = None,
         num_outputs: int = 1,
         learn_inducing_points: bool = True,
-        covar_module: Optional[Kernel] = None,
-        mean_module: Optional[Mean] = None,
-        variational_distribution: Optional[_VariationalDistribution] = None,
+        covar_module: Kernel | None = None,
+        mean_module: Mean | None = None,
+        variational_distribution: _VariationalDistribution | None = None,
         variational_strategy: type[_VariationalStrategy] = VariationalStrategy,
-        inducing_points: Optional[Union[Tensor, int]] = None,
-        inducing_point_allocator: Optional[InducingPointAllocator] = None,
+        inducing_points: Tensor | int | None = None,
+        inducing_point_allocator: InducingPointAllocator | None = None,
         outcome_transform: OutcomeTransform | None = None,
         input_transform: InputTransform | None = None,
     ) -> None:

@@ -35,7 +35,6 @@ The implementation here differentiates itself from the original implementations 
 from __future__ import annotations
 
 import math
-from typing import Optional, Union
 
 import torch
 from botorch.utils.sampling import PolytopeSampler
@@ -55,13 +54,13 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
 
     def __init__(
         self,
-        inequality_constraints: Optional[tuple[Tensor, Tensor]] = None,
-        bounds: Optional[Tensor] = None,
-        interior_point: Optional[Tensor] = None,
-        fixed_indices: Optional[Union[list[int], Tensor]] = None,
-        mean: Optional[Tensor] = None,
-        covariance_matrix: Optional[Union[Tensor, LinearOperator]] = None,
-        covariance_root: Optional[Union[Tensor, LinearOperator]] = None,
+        inequality_constraints: tuple[Tensor, Tensor] | None = None,
+        bounds: Tensor | None = None,
+        interior_point: Tensor | None = None,
+        fixed_indices: list[int] | Tensor | None = None,
+        mean: Tensor | None = None,
+        covariance_matrix: Tensor | LinearOperator | None = None,
+        covariance_root: Tensor | LinearOperator | None = None,
         check_feasibility: bool = False,
         burnin: int = 0,
         thinning: int = 0,
@@ -183,12 +182,12 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
         self,
         A: Tensor,
         b: Tensor,
-        interior_point: Optional[Tensor],
-        fixed_indices: Union[list[int], Tensor],
-        mean: Optional[Tensor],
-        covariance_matrix: Optional[Tensor],
-        covariance_root: Optional[Tensor],
-    ) -> tuple[Optional[Tensor], Optional[Tensor]]:
+        interior_point: Tensor | None,
+        fixed_indices: list[int] | Tensor,
+        mean: Tensor | None,
+        covariance_matrix: Tensor | None,
+        covariance_root: Tensor | None,
+    ) -> tuple[Tensor | None, Tensor | None]:
         """Modifies the constraint system (A, b) due to fixed indices and assigns
         the modified constraints system to `self._Az`, `self._bz`. NOTE: Needs to be
         called prior to `self._standardization_initialization` in the constructor.
@@ -493,7 +492,7 @@ class LinearEllipticalSliceSampler(PolytopeSampler):
 
 
 def get_index_tensors(
-    fixed_indices: Union[list[int], Tensor], d: int
+    fixed_indices: list[int] | Tensor, d: int
 ) -> tuple[Tensor, Tensor]:
     """Converts `fixed_indices` to a `d`-dim integral Tensor that is True at indices
     that are contained in `fixed_indices` and False otherwise.

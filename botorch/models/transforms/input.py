@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
+from collections.abc import Callable, Iterable
+from typing import Any
 from warnings import warn
 
 import numpy as np
@@ -160,7 +161,7 @@ class BatchBroadcastedInputTransform(InputTransform, ModuleDict):
 
     def __init__(
         self,
-        transforms: List[InputTransform],
+        transforms: list[InputTransform],
         broadcast_index: int = -3,
     ) -> None:
         r"""A transform list that is broadcasted across a batch dimension specified by
@@ -266,7 +267,7 @@ class BatchBroadcastedInputTransform(InputTransform, ModuleDict):
             dim=self.broadcast_index,
         )
 
-    def _Xs_and_transforms(self, X: Tensor) -> Iterable[Tuple[Tensor, InputTransform]]:
+    def _Xs_and_transforms(self, X: Tensor) -> Iterable[tuple[Tensor, InputTransform]]:
         r"""Returns an iterable of sub-tensors of X and their associated transforms.
 
         Args:
@@ -446,7 +447,7 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         d: int,
         coefficient: Tensor,
         offset: Tensor,
-        indices: Optional[Union[list[int], Tensor]] = None,
+        indices: list[int] | Tensor | None = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -627,15 +628,15 @@ class Normalize(AffineInputTransform):
     def __init__(
         self,
         d: int,
-        indices: Optional[Union[list[int], Tensor]] = None,
-        bounds: Optional[Tensor] = None,
+        indices: list[int] | Tensor | None = None,
+        bounds: Tensor | None = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
         reverse: bool = False,
         min_range: float = 1e-8,
-        learn_bounds: Optional[bool] = None,
+        learn_bounds: bool | None = None,
         almost_zero: float = 1e-12,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
@@ -776,7 +777,7 @@ class InputStandardize(AffineInputTransform):
     def __init__(
         self,
         d: int,
-        indices: Optional[Union[list[int], Tensor]] = None,
+        indices: list[int] | Tensor | None = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -898,8 +899,8 @@ class Round(InputTransform, Module):
 
     def __init__(
         self,
-        integer_indices: Union[list[int], LongTensor, None] = None,
-        categorical_features: Optional[dict[int, int]] = None,
+        integer_indices: list[int] | LongTensor | None = None,
+        categorical_features: dict[int, int] | None = None,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
@@ -1073,9 +1074,9 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         transform_on_fantasize: bool = True,
         reverse: bool = False,
         eps: float = 1e-7,
-        concentration1_prior: Optional[Prior] = None,
-        concentration0_prior: Optional[Prior] = None,
-        batch_shape: Optional[torch.Size] = None,
+        concentration1_prior: Prior | None = None,
+        concentration0_prior: Prior | None = None,
+        batch_shape: torch.Size | None = None,
     ) -> None:
         r"""Initialize transform.
 
@@ -1146,7 +1147,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             )
             self.register_constraint(param_name=p_name, constraint=constraint)
 
-    def _set_concentration(self, i: int, value: Union[float, Tensor]) -> None:
+    def _set_concentration(self, i: int, value: float | Tensor) -> None:
         if not torch.is_tensor(value):
             value = torch.as_tensor(value).to(self.concentration0)
         self.initialize(**{f"concentration{i}": value})
@@ -1258,10 +1259,10 @@ class AppendFeatures(InputTransform, Module):
 
     def __init__(
         self,
-        feature_set: Optional[Tensor] = None,
-        f: Optional[Callable[[Tensor], Tensor]] = None,
-        indices: Optional[list[int]] = None,
-        fkwargs: Optional[dict[str, Any]] = None,
+        feature_set: Tensor | None = None,
+        f: Callable[[Tensor], Tensor] | None = None,
+        indices: list[int] | None = None,
+        fkwargs: dict[str, Any] | None = None,
         skip_expand: bool = False,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
@@ -1376,7 +1377,7 @@ class InteractionFeatures(AppendFeatures):
 
     def __init__(
         self,
-        indices: Optional[list[int]] = None,
+        indices: list[int] | None = None,
     ) -> None:
         r"""Initializes the InteractionFeatures transform.
 
@@ -1480,9 +1481,9 @@ class InputPerturbation(InputTransform, Module):
 
     def __init__(
         self,
-        perturbation_set: Union[Tensor, Callable[[Tensor], Tensor]],
-        bounds: Optional[Tensor] = None,
-        indices: Optional[list[int]] = None,
+        perturbation_set: Tensor | Callable[[Tensor], Tensor],
+        bounds: Tensor | None = None,
+        indices: list[int] | None = None,
         multiplicative: bool = False,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
@@ -1599,7 +1600,7 @@ class OneHotToNumeric(InputTransform, Module):
     def __init__(
         self,
         dim: int,
-        categorical_features: Optional[dict[int, int]] = None,
+        categorical_features: dict[int, int] | None = None,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,

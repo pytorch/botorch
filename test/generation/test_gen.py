@@ -230,11 +230,9 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             " and message ABNORMAL_TERMINATION_IN_LNSRCH."
         )
         expected_warning_raised = any(
-            (
-                issubclass(w.category, OptimizationWarning)
-                and expected_msg in str(w.message)
-                for w in ws
-            )
+            issubclass(w.category, OptimizationWarning)
+            and expected_msg in str(w.message)
+            for w in ws
         )
         self.assertTrue(expected_warning_raised)
 
@@ -300,11 +298,9 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 acquisition_function=MockAcquisitionFunction(),
             )
         expected_warning_raised = any(
-            (
-                issubclass(w.category, OptimizationWarning)
-                and expected_msg in str(w.message)
-                for w in ws
-            )
+            issubclass(w.category, OptimizationWarning)
+            and expected_msg in str(w.message)
+            for w in ws
         )
         self.assertTrue(expected_warning_raised)
 

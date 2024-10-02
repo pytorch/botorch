@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import time
 import warnings
+from collections.abc import Callable
 from functools import partial
-from typing import Any, Callable, NoReturn, Optional, Union
+from typing import Any, NoReturn
 
 import numpy as np
 import torch
@@ -45,14 +46,14 @@ TGenCandidates = Callable[[Tensor, AcquisitionFunction, Any], tuple[Tensor, Tens
 def gen_candidates_scipy(
     initial_conditions: Tensor,
     acquisition_function: AcquisitionFunction,
-    lower_bounds: Optional[Union[float, Tensor]] = None,
-    upper_bounds: Optional[Union[float, Tensor]] = None,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[list[tuple[Callable, bool]]] = None,
-    options: Optional[dict[str, Any]] = None,
-    fixed_features: Optional[dict[int, Optional[float]]] = None,
-    timeout_sec: Optional[float] = None,
+    lower_bounds: float | Tensor | None = None,
+    upper_bounds: float | Tensor | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None = None,
+    options: dict[str, Any] | None = None,
+    fixed_features: dict[int, float | None] | None = None,
+    timeout_sec: float | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using `scipy.optimize.minimize`.
 
@@ -300,13 +301,13 @@ def gen_candidates_scipy(
 def gen_candidates_torch(
     initial_conditions: Tensor,
     acquisition_function: AcquisitionFunction,
-    lower_bounds: Optional[Union[float, Tensor]] = None,
-    upper_bounds: Optional[Union[float, Tensor]] = None,
+    lower_bounds: float | Tensor | None = None,
+    upper_bounds: float | Tensor | None = None,
     optimizer: type[Optimizer] = torch.optim.Adam,
-    options: Optional[dict[str, Union[float, str]]] = None,
-    callback: Optional[Callable[[int, Tensor, Tensor], NoReturn]] = None,
-    fixed_features: Optional[dict[int, Optional[float]]] = None,
-    timeout_sec: Optional[float] = None,
+    options: dict[str, float | str] | None = None,
+    callback: Callable[[int, Tensor, Tensor], NoReturn] | None = None,
+    fixed_features: dict[int, float | None] | None = None,
+    timeout_sec: float | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using a `torch.optim` optimizer.
 

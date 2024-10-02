@@ -5,11 +5,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from contextlib import ExitStack, nullcontext
 from copy import deepcopy
 from itertools import filterfalse, product
-from typing import Callable, Optional
 from unittest.mock import MagicMock, patch
 from warnings import catch_warnings, warn, WarningMessage
 
@@ -40,7 +39,7 @@ class MockOptimizer:
         self,
         randomize_requires_grad: bool = True,
         warnings: Iterable[WarningMessage] = (),
-        exception: Optional[BaseException] = None,
+        exception: BaseException | None = None,
     ):
         r"""Class used to mock `optimizer` argument to `fit_gpytorch_mll."""
         self.randomize_requires_grad = randomize_requires_grad
@@ -49,7 +48,7 @@ class MockOptimizer:
         self.call_count = 0
         self.state_dicts = []
 
-    def __call__(self, mll, closure: Optional[Callable] = None) -> OptimizationResult:
+    def __call__(self, mll, closure: Callable | None = None) -> OptimizationResult:
         self.call_count += 1
         for w in self.warnings:
             warn(str(w.message), w.category)

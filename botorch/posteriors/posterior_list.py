@@ -11,7 +11,7 @@ Abstract base module for all botorch posteriors.
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from botorch.posteriors.fully_bayesian import GaussianMixturePosterior, MCMC_DIM
@@ -154,7 +154,7 @@ class PosteriorList(Posterior):
         """
         return self._reshape_and_cat(tensors=[p.variance for p in self.posteriors])
 
-    def rsample(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
+    def rsample(self, sample_shape: torch.Size | None = None) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
         Args:

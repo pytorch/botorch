@@ -17,8 +17,9 @@ References:
 """
 
 import warnings
+from collections.abc import Callable
 from copy import deepcopy
-from typing import Any, Callable, Optional
+from typing import Any
 
 import torch
 from botorch import settings
@@ -77,15 +78,15 @@ class qHypervolumeKnowledgeGradient(
         ref_point: Tensor,
         num_fantasies: int = 8,
         num_pareto: int = 10,
-        sampler: Optional[ListSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        inner_sampler: Optional[MCSampler] = None,
-        X_evaluation_mask: Optional[list[Tensor]] = None,
-        X_pending: Optional[Tensor] = None,
-        X_pending_evaluation_mask: Optional[Tensor] = None,
-        current_value: Optional[Tensor] = None,
+        sampler: ListSampler | None = None,
+        objective: MCMultiOutputObjective | None = None,
+        inner_sampler: MCSampler | None = None,
+        X_evaluation_mask: list[Tensor] | None = None,
+        X_pending: Tensor | None = None,
+        X_pending_evaluation_mask: Tensor | None = None,
+        current_value: Tensor | None = None,
         use_posterior_mean: bool = True,
-        cost_aware_utility: Optional[CostAwareUtility] = None,
+        cost_aware_utility: CostAwareUtility | None = None,
     ) -> None:
         r"""q-Hypervolume Knowledge Gradient.
 
@@ -311,17 +312,17 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
         target_fidelities: dict[int, float],
         num_fantasies: int = 8,
         num_pareto: int = 10,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        inner_sampler: Optional[MCSampler] = None,
-        X_pending: Optional[Tensor] = None,
-        X_evaluation_mask: Optional[Tensor] = None,
-        X_pending_evaluation_mask: Optional[Tensor] = None,
-        current_value: Optional[Tensor] = None,
-        cost_aware_utility: Optional[CostAwareUtility] = None,
+        sampler: MCSampler | None = None,
+        objective: MCMultiOutputObjective | None = None,
+        inner_sampler: MCSampler | None = None,
+        X_pending: Tensor | None = None,
+        X_evaluation_mask: Tensor | None = None,
+        X_pending_evaluation_mask: Tensor | None = None,
+        current_value: Tensor | None = None,
+        cost_aware_utility: CostAwareUtility | None = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
-        valfunc_cls: Optional[type[AcquisitionFunction]] = None,
-        valfunc_argfac: Optional[Callable[[Model], dict[str, Any]]] = None,
+        valfunc_cls: type[AcquisitionFunction] | None = None,
+        valfunc_argfac: Callable[[Model], dict[str, Any]] | None = None,
         use_posterior_mean: bool = True,
         **kwargs: Any,
     ) -> None:
@@ -492,11 +493,11 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
 def _get_hv_value_function(
     model: Model,
     ref_point: Tensor,
-    objective: Optional[MCMultiOutputObjective] = None,
-    sampler: Optional[MCSampler] = None,
-    project: Optional[Callable[[Tensor], Tensor]] = None,
-    valfunc_cls: Optional[type[AcquisitionFunction]] = None,
-    valfunc_argfac: Optional[Callable[[Model], dict[str, Any]]] = None,
+    objective: MCMultiOutputObjective | None = None,
+    sampler: MCSampler | None = None,
+    project: Callable[[Tensor], Tensor] | None = None,
+    valfunc_cls: type[AcquisitionFunction] | None = None,
+    valfunc_argfac: Callable[[Model], dict[str, Any]] | None = None,
     use_posterior_mean: bool = False,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function).

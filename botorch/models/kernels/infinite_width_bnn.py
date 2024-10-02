@@ -6,8 +6,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from gpytorch.constraints import Positive
 from gpytorch.kernels import Kernel
@@ -36,10 +34,10 @@ class InfiniteWidthBNNKernel(Kernel):
     def __init__(
         self,
         depth: int = 3,
-        batch_shape: Optional[torch.Size] = None,
-        active_dims: Optional[tuple[int, ...]] = None,
+        batch_shape: torch.Size | None = None,
+        active_dims: tuple[int, ...] | None = None,
         acos_eps: float = 1e-7,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ) -> None:
         r"""
         Args:
@@ -157,8 +155,8 @@ class InfiniteWidthBNNKernel(Kernel):
         self,
         x1: Tensor,
         x2: Tensor,
-        diag: Optional[bool] = False,
-        last_dim_is_batch: Optional[bool] = False,
+        diag: bool | None = False,
+        last_dim_is_batch: bool | None = False,
         **params,
     ) -> Tensor:
         """

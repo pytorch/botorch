@@ -24,7 +24,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Optional, Union
 
 import torch
 from botorch.models.transforms.utils import (
@@ -43,8 +42,8 @@ class OutcomeTransform(Module, ABC):
 
     @abstractmethod
     def forward(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Transform the outcomes in a model's training targets
 
         Args:
@@ -78,8 +77,8 @@ class OutcomeTransform(Module, ABC):
         )
 
     def untransform(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Un-transform previously transformed outcomes
 
         Args:
@@ -140,8 +139,8 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
         super().__init__(OrderedDict(transforms))
 
     def forward(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Transform the outcomes in a model's training targets
 
         Args:
@@ -173,8 +172,8 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
         )
 
     def untransform(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Un-transform previously transformed outcomes
 
         Args:
@@ -198,7 +197,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
         A `ChainedOutcomeTransform` is linear only if all of the component transforms
         are linear.
         """
-        return all((octf._is_linear for octf in self.values()))
+        return all(octf._is_linear for octf in self.values())
 
     def untransform_posterior(self, posterior: Posterior) -> Posterior:
         r"""Un-transform a posterior
@@ -226,7 +225,7 @@ class Standardize(OutcomeTransform):
     def __init__(
         self,
         m: int,
-        outputs: Optional[list[int]] = None,
+        outputs: list[int] | None = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         min_stdv: float = 1e-8,
     ) -> None:
@@ -251,8 +250,8 @@ class Standardize(OutcomeTransform):
         self._min_stdv = min_stdv
 
     def forward(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Standardize outcomes.
 
         If the module is in train mode, this updates the module state (i.e. the
@@ -340,8 +339,8 @@ class Standardize(OutcomeTransform):
         return new_tf
 
     def untransform(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Un-standardize outcomes.
 
         Args:
@@ -372,7 +371,7 @@ class Standardize(OutcomeTransform):
 
     def untransform_posterior(
         self, posterior: Posterior
-    ) -> Union[GPyTorchPosterior, TransformedPosterior]:
+    ) -> GPyTorchPosterior | TransformedPosterior:
         r"""Un-standardize the posterior.
 
         Args:
@@ -455,7 +454,7 @@ class Log(OutcomeTransform):
     log-transformed outcomes and un-transform the model posterior of that GP.
     """
 
-    def __init__(self, outputs: Optional[list[int]] = None) -> None:
+    def __init__(self, outputs: list[int] | None = None) -> None:
         r"""Log-transform outcomes.
 
         Args:
@@ -488,8 +487,8 @@ class Log(OutcomeTransform):
         return new_tf
 
     def forward(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Log-transform outcomes.
 
         Args:
@@ -521,8 +520,8 @@ class Log(OutcomeTransform):
         return Y_tf, Yvar
 
     def untransform(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Un-transform log-transformed outcomes
 
         Args:
@@ -583,7 +582,7 @@ class Power(OutcomeTransform):
     power-transformed outcomes and un-transform the model posterior of that GP.
     """
 
-    def __init__(self, power: float, outputs: Optional[list[int]] = None) -> None:
+    def __init__(self, power: float, outputs: list[int] | None = None) -> None:
         r"""Power-transform outcomes.
 
         Args:
@@ -617,8 +616,8 @@ class Power(OutcomeTransform):
         return new_tf
 
     def forward(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Power-transform outcomes.
 
         Args:
@@ -650,8 +649,8 @@ class Power(OutcomeTransform):
         return Y_tf, Yvar
 
     def untransform(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Un-transform power-transformed outcomes
 
         Args:
@@ -709,7 +708,7 @@ class Bilog(OutcomeTransform):
     constraints as it magnifies values near zero and flattens extreme values.
     """
 
-    def __init__(self, outputs: Optional[list[int]] = None) -> None:
+    def __init__(self, outputs: list[int] | None = None) -> None:
         r"""Bilog-transform outcomes.
 
         Args:
@@ -742,8 +741,8 @@ class Bilog(OutcomeTransform):
         return new_tf
 
     def forward(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Bilog-transform outcomes.
 
         Args:
@@ -774,8 +773,8 @@ class Bilog(OutcomeTransform):
         return Y_tf, Yvar
 
     def untransform(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         r"""Un-transform bilog-transformed outcomes
 
         Args:

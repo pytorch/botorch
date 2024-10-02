@@ -17,8 +17,6 @@ References
 """
 from __future__ import annotations
 
-from typing import Optional
-
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.monte_carlo import SampleReducingMCAcquisitionFunction
 from botorch.exceptions.errors import BotorchError
@@ -43,7 +41,7 @@ class PriorGuidedAcquisitionFunction(AcquisitionFunction):
         prior_module: Module,
         log: bool = False,
         prior_exponent: float = 1.0,
-        X_pending: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
     ) -> None:
         r"""Initialize the prior-guided acquisition function.
 

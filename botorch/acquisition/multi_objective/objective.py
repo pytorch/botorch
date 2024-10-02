@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Optional
 
 import torch
 from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective
@@ -28,7 +27,7 @@ class MCMultiOutputObjective(MCAcquisitionObjective):
     _is_mo: bool = True
 
     @abstractmethod
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Evaluate the multi-output objective on the samples.
 
         Args:
@@ -72,7 +71,7 @@ class IdentityMCMultiOutputObjective(MCMultiOutputObjective):
     """
 
     def __init__(
-        self, outcomes: Optional[list[int]] = None, num_outcomes: Optional[int] = None
+        self, outcomes: list[int] | None = None, num_outcomes: int | None = None
     ) -> None:
         r"""Initialize Objective.
 
@@ -95,7 +94,7 @@ class IdentityMCMultiOutputObjective(MCMultiOutputObjective):
                 outcomes = normalize_indices(outcomes, num_outcomes)
             self.register_buffer("outcomes", torch.tensor(outcomes, dtype=torch.long))
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         if hasattr(self, "outcomes"):
             return samples.index_select(-1, self.outcomes.to(device=samples.device))
         return samples
@@ -114,8 +113,8 @@ class WeightedMCMultiOutputObjective(IdentityMCMultiOutputObjective):
     def __init__(
         self,
         weights: Tensor,
-        outcomes: Optional[list[int]] = None,
-        num_outcomes: Optional[int] = None,
+        outcomes: list[int] | None = None,
+        num_outcomes: int | None = None,
     ) -> None:
         r"""Initialize Objective.
 
@@ -137,7 +136,7 @@ class WeightedMCMultiOutputObjective(IdentityMCMultiOutputObjective):
             )
         self.register_buffer("weights", weights)
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         samples = super().forward(samples=samples)
         return samples * self.weights.to(samples)
 
@@ -148,7 +147,7 @@ class FeasibilityWeightedMCMultiOutputObjective(MCMultiOutputObjective):
         model: Model,
         X_baseline: Tensor,
         constraint_idcs: list[int],
-        objective: Optional[MCMultiOutputObjective] = None,
+        objective: MCMultiOutputObjective | None = None,
     ) -> None:
         r"""Construct a feasibility-weighted objective.
 
@@ -185,9 +184,7 @@ class FeasibilityWeightedMCMultiOutputObjective(MCMultiOutputObjective):
                 X=X_baseline, model=model, objective=lambda y, X: y
             )[objective_idcs]
 
-            def apply_feasibility_weights(
-                Y: Tensor, X: Optional[Tensor] = None
-            ) -> Tensor:
+            def apply_feasibility_weights(Y: Tensor, X: Tensor | None = None) -> Tensor:
                 return apply_constraints(
                     obj=Y[..., objective_idcs],
                     constraints=[lambda Y: -Y[..., i] for i in constraint_idcs],
@@ -205,5 +202,5 @@ class FeasibilityWeightedMCMultiOutputObjective(MCMultiOutputObjective):
             self.objective = objective
             self._verify_output_shape = objective._verify_output_shape
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         return self.objective(self.apply_feasibility_weights(samples), X=X)

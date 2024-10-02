@@ -12,8 +12,8 @@ When adding tests for a new input constructor, please add a new case to
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from functools import reduce
-from typing import Callable
 from unittest import mock
 from unittest.mock import MagicMock
 

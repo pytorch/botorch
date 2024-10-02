@@ -643,10 +643,8 @@ class TestOptimizeAcqf(BotorchTestCase):
             "`batch_initial_conditions.`"
         )
         expected_warning_raised = any(
-            (
-                issubclass(w.category, RuntimeWarning) and message in str(w.message)
-                for w in ws
-            )
+            issubclass(w.category, RuntimeWarning) and message in str(w.message)
+            for w in ws
         )
         self.assertTrue(expected_warning_raised)
 
@@ -690,10 +688,8 @@ class TestOptimizeAcqf(BotorchTestCase):
             "_IN_LNSRCH.')]\nTrying again with a new set of initial conditions."
         )
         expected_warning_raised = any(
-            (
-                issubclass(w.category, RuntimeWarning) and message in str(w.message)
-                for w in ws
-            )
+            issubclass(w.category, RuntimeWarning) and message in str(w.message)
+            for w in ws
         )
         self.assertTrue(expected_warning_raised)
         # check if it succeeded on restart -- the maximum value of sin(1/x) is 1
@@ -714,10 +710,8 @@ class TestOptimizeAcqf(BotorchTestCase):
                 retry_on_optimization_warning=False,
             )
         expected_warning_raised = any(
-            (
-                issubclass(w.category, RuntimeWarning) and message in str(w.message)
-                for w in ws
-            )
+            issubclass(w.category, RuntimeWarning) and message in str(w.message)
+            for w in ws
         )
         self.assertFalse(expected_warning_raised)
 
@@ -765,16 +759,12 @@ class TestOptimizeAcqf(BotorchTestCase):
             "of initial conditions."
         )
         first_expected_warning_raised = any(
-            (
-                issubclass(w.category, RuntimeWarning) and message_1 in str(w.message)
-                for w in ws
-            )
+            issubclass(w.category, RuntimeWarning) and message_1 in str(w.message)
+            for w in ws
         )
         second_expected_warning_raised = any(
-            (
-                issubclass(w.category, RuntimeWarning) and message_2 in str(w.message)
-                for w in ws
-            )
+            issubclass(w.category, RuntimeWarning) and message_2 in str(w.message)
+            for w in ws
         )
         self.assertTrue(first_expected_warning_raised)
         self.assertTrue(second_expected_warning_raised)
