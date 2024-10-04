@@ -22,6 +22,7 @@ BoTorch API Reference
    settings
    logging
    test_functions
+   test_utils
    exceptions
    utils
 
