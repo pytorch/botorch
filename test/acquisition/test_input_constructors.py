@@ -109,6 +109,7 @@ from botorch.models import MultiTaskGP, SaasFullyBayesianSingleTaskGP, SingleTas
 from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.test_utils.mock import fast_optimize
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
@@ -1845,6 +1846,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
             },
         )
 
+    @fast_optimize
     def test_constructors_can_instantiate(self) -> None:
         for key, (classes, input_constructor_kwargs) in self.cases.items():
             with self.subTest(
