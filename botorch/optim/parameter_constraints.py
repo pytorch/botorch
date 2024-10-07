@@ -11,7 +11,6 @@ Utility functions for constrained optimization.
 from __future__ import annotations
 
 from collections.abc import Callable
-
 from functools import partial
 from typing import Union
 
@@ -26,6 +25,7 @@ ScipyConstraintDict = dict[
     str, Union[str, Callable[[np.ndarray], float], Callable[[np.ndarray], np.ndarray]]
 ]
 NLC_TOL = -1e-6
+INTRA_POINT_CONST_ERR: str = "Only intra-point constraints are supported."
 
 
 def make_scipy_bounds(
@@ -601,3 +601,58 @@ def make_scipy_nonlinear_inequality_constraints(
             shapeX=shapeX,
         )
     return scipy_nonlinear_inequality_constraints
+
+
+def evaluate_feasibility(
+    X: Tensor,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None = None,
+) -> Tensor:
+    r"""Evaluate feasibility of a set of points. Only supports intra-point constraints.
+
+    Args:
+        X: A tensor of points of shape `batch_shape x d`.
+        inequality_constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
+            `coefficients` should be torch tensors. See the docstring of
+            `make_scipy_linear_constraints` for an example.
+        equality_constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an equality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`. See the docstring of
+            `make_scipy_linear_constraints` for an example.
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. The first element in the tuple is a callable
+            representing a constraint of the form `callable(x) >= 0`. The `callable()`
+            takes in an one-dimensional tensor of shape `d` and returns a scalar. The
+            second element is a boolean, indicating if it is an intra-point or
+            inter-point constraint (`True` for intra-point. `False` for
+            inter-point). Only `True` is supported here. For more information on
+            intra-point vs inter-point constraints, see the docstring of the
+            `inequality_constraints` argument to `optimize_acqf()`.
+
+    Returns:
+        A boolean tensor of shape `batch` denoting whether each point is feasible.
+    """
+    is_feasible = torch.ones(X.shape[:-1], device=X.device, dtype=torch.bool)
+    if inequality_constraints is not None:
+        for idx, coef, rhs in inequality_constraints:
+            if idx.ndim != 1:
+                raise UnsupportedError(INTRA_POINT_CONST_ERR)
+            is_feasible &= (X[..., idx] * coef).sum(dim=-1) >= rhs
+    if equality_constraints is not None:
+        for idx, coef, rhs in equality_constraints:
+            if idx.ndim != 1:
+                raise UnsupportedError(INTRA_POINT_CONST_ERR)
+            is_feasible &= (X[..., idx] * coef).sum(dim=-1) == rhs
+    if nonlinear_inequality_constraints is not None:
+        for const, intra in nonlinear_inequality_constraints:
+            if not intra:
+                raise UnsupportedError(INTRA_POINT_CONST_ERR)
+            is_feasible &= torch.tensor(
+                [const(x) >= NLC_TOL for x in X.view(-1, X.shape[-1])],
+                device=X.device,
+                dtype=torch.bool,
+            ).view_as(is_feasible)
+    return is_feasible
