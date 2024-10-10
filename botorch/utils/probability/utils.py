@@ -375,3 +375,33 @@ def compute_log_prob_feas_from_bounds(
         dist_u = (con_upper - means[..., i]) / sigmas[..., i]
         log_prob = log_prob + log_prob_normal_in(a=dist_l, b=dist_u).sum(dim=-1)
     return log_prob
+
+
+def percentile_of_score(data: Tensor, score: Tensor, dim: int = -1) -> Tensor:
+    """Compute the percentile rank of `score` relative to `data`.
+    For example, if this function returns 70 then 70% of the
+    values in `data` are below `score`.
+
+    This implementation is based on `scipy.stats.percentileofscore`,
+    with `kind='rank'` and `nan_policy='propagate'`, which is the default.
+
+    Args:
+        data: A `... x n x output_shape`-dim Tensor of data.
+        score: A `... x 1 x output_shape`-dim Tensor of scores.
+
+    Returns:
+        A `... x output_shape`-dim Tensor of percentile ranks.
+    """
+    # based on scipy.stats.percentileofscore
+    left = torch.count_nonzero(data < score, dim=dim)
+    right = torch.count_nonzero(data <= score, dim=dim)
+    plus1 = left < right
+    perct = (left + right + plus1) * (50.0 / data.shape[dim])
+    # perct shape: `... x output_shape`
+    # fill in nans due to current trial progression being nan
+    nan_mask = torch.broadcast_to(torch.isnan(score.squeeze(dim)), perct.shape)
+    perct[nan_mask] = torch.nan
+    # fill in nans due to previous trial progressions being nan
+    nan_mask = torch.broadcast_to(torch.any(torch.isnan(data), dim=dim), perct.shape)
+    perct[nan_mask] = torch.nan
+    return perct

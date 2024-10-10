@@ -6,6 +6,10 @@
 
 from __future__ import annotations
 
+import itertools
+
+import numpy as np
+
 import torch
 from botorch.utils.probability import ndtr, utils
 from botorch.utils.probability.utils import (
@@ -14,11 +18,13 @@ from botorch.utils.probability.utils import (
     log_ndtr,
     log_phi,
     log_prob_normal_in,
+    percentile_of_score,
     phi,
     standard_normal_log_hazard,
 )
 from botorch.utils.testing import BotorchTestCase
 from numpy.polynomial.legendre import leggauss as numpy_leggauss
+from scipy.stats import percentileofscore as percentile_of_score_scipy
 
 
 class TestProbabilityUtils(BotorchTestCase):
@@ -321,3 +327,67 @@ class TestProbabilityUtils(BotorchTestCase):
 
         with self.assertRaisesRegex(TypeError, expected_regex=float16_msg):
             log_ndtr(torch.tensor(1.0, dtype=torch.float16, device=self.device))
+
+    def test_percentile_of_score(self) -> None:
+        # compare to scipy.stats.percentileofscore with default settings
+        # `kind='rank'` and `nan_policy='propagate'`
+        torch.manual_seed(12345)
+        n = 10
+        for (
+            dtype,
+            data_batch_shape,
+            score_batch_shape,
+            output_shape,
+        ) in itertools.product(
+            (torch.float, torch.double),
+            ((), (1,), (2,), (2, 3)),
+            ((), (1,), (2,), (2, 3)),
+            ((), (1,), (2,), (2, 3)),
+        ):
+            # calculate shapes
+            data_shape = data_batch_shape + (n,) + output_shape
+            score_shape = score_batch_shape + (1,) + output_shape
+            dim = -1 - len(output_shape)
+            # generate data
+            data = torch.rand(*data_shape, dtype=dtype, device=self.device)
+            score = torch.rand(*score_shape, dtype=dtype, device=self.device)
+            # insert random nans to test nan policy
+            data[data < 0.01] = torch.nan
+            score[score < 0.01] = torch.nan
+            # calculate percentile ranks using torch
+            try:
+                perct_torch = percentile_of_score(data, score, dim=dim).cpu().numpy()
+            except RuntimeError:
+                # confirm RuntimeError is raised because shapes cannot be broadcasted
+                with self.assertRaises(ValueError):
+                    np.broadcast_shapes(data_batch_shape, score_batch_shape)
+                continue
+            # check shape
+            broadcast_shape = np.broadcast_shapes(data_batch_shape, score_batch_shape)
+            expected_perct_shape = broadcast_shape + output_shape
+            self.assertEqual(perct_torch.shape, expected_perct_shape)
+            # calculate percentile ranks using scipy.stats.percentileofscore
+            # scipy.stats.percentileofscore does not support broadcasting
+            # loop over batch and output shapes instead
+            perct_scipy = np.zeros_like(perct_torch)
+            data_scipy = np.broadcast_to(
+                data.cpu().numpy(), broadcast_shape + (n,) + output_shape
+            )
+            score_scipy = np.broadcast_to(
+                score.cpu().numpy(), broadcast_shape + (1,) + output_shape
+            )
+            broadcast_idx_prod = list(
+                itertools.product(*[list(range(d)) for d in broadcast_shape])
+            )
+            output_idx_prod = list(
+                itertools.product(*[list(range(d)) for d in output_shape])
+            )
+            for broadcast_idx in broadcast_idx_prod:
+                for output_idx in output_idx_prod:
+                    data_idx = broadcast_idx + (slice(None),) + output_idx
+                    score_idx = broadcast_idx + (0,) + output_idx
+                    perct_idx = broadcast_idx + output_idx
+                    perct_scipy[perct_idx] = percentile_of_score_scipy(
+                        data_scipy[data_idx], score_scipy[score_idx]
+                    )
+            self.assertTrue(np.array_equal(perct_torch, perct_scipy, equal_nan=True))
