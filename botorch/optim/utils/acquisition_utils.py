@@ -8,6 +8,7 @@ r"""Utilities for maximizing acquisition functions."""
 
 from __future__ import annotations
 
+from typing import Mapping
 from warnings import warn
 
 import torch
@@ -63,7 +64,7 @@ def columnwise_clamp(
 
 
 def fix_features(
-    X: Tensor, fixed_features: dict[int, float | None] | None = None
+    X: Tensor, fixed_features: Mapping[int, float | None] | None = None
 ) -> Tensor:
     r"""Fix feature values in a Tensor.
 
@@ -71,7 +72,7 @@ def fix_features(
 
     Args:
         X: input Tensor with shape `... x p`, where `p` is the number of features
-        fixed_features: A dictionary with keys as column indices and values
+        fixed_features: A mapping with keys as column indices and values
             equal to what the feature should be set to in `X`. If the value is
             None, that column is just considered fixed. Keys should be in the
             range `[0, p - 1]`.

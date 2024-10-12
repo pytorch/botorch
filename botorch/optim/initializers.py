@@ -72,7 +72,7 @@ TGenInitialConditions = Callable[
 
 def transform_constraints(
     constraints: list[tuple[Tensor, Tensor, float]] | None, q: int, d: int
-) -> list[tuple[Tensor, Tensor, float]]:
+) -> list[tuple[Tensor, Tensor, float]] | None:
     r"""Transform constraints to sample from a d*q-dimensional space instead of a
     d-dimensional state.
 
@@ -90,7 +90,8 @@ def transform_constraints(
         d: Dimensionality of the problem.
 
     Returns:
-        List[Tuple[Tensor, Tensor, float]]: List of transformed constraints.
+        List[Tuple[Tensor, Tensor, float]]: List of transformed constraints, if
+        there are constraints. Returns `None` otherwise.
     """
     if constraints is None:
         return None
@@ -182,7 +183,7 @@ def sample_q_batches_from_polytope(
     bounds: Tensor,
     n_burnin: int,
     n_thinning: int,
-    seed: int,
+    seed: int | None = None,
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
 ) -> Tensor:
@@ -412,16 +413,15 @@ def gen_batch_initial_conditions(
             with torch.no_grad():
                 if batch_limit is None:
                     batch_limit = X_rnd.shape[0]
-                Y_rnd_list = []
-                start_idx = 0
-                while start_idx < X_rnd.shape[0]:
-                    end_idx = min(start_idx + batch_limit, X_rnd.shape[0])
-                    Y_rnd_curr = acq_function(
-                        X_rnd[start_idx:end_idx].to(device=device)
-                    ).cpu()
-                    Y_rnd_list.append(Y_rnd_curr)
-                    start_idx += batch_limit
-                Y_rnd = torch.cat(Y_rnd_list)
+                # Evaluate the acquisition function on `X_rnd` using `batch_limit`
+                # sized chunks.
+                Y_rnd = torch.cat(
+                    [
+                        acq_function(x_.to(device=device)).cpu()
+                        for x_ in X_rnd.split(split_size=batch_limit, dim=0)
+                    ],
+                    dim=0,
+                )
             batch_initial_conditions = init_func(
                 X=X_rnd, Y=Y_rnd, n=num_restarts, **init_kwargs
             ).to(device=device)
@@ -435,6 +435,7 @@ def gen_batch_initial_conditions(
         "Unable to find non-zero acquisition function values - initial conditions "
         "are being selected randomly.",
         BadInitialCandidatesWarning,
+        stacklevel=2,
     )
     return batch_initial_conditions
 
@@ -939,6 +940,7 @@ def initialize_q_batch(X: Tensor, Y: Tensor, n: int, eta: float = 1.0) -> Tensor
             "All acquisition values for raw samples points are the same for "
             "at least one batch. Choosing initial conditions at random.",
             BadInitialCandidatesWarning,
+            stacklevel=3,
         )
         return X[torch.randperm(n=n_samples, device=X.device)][:n]
 
@@ -1010,6 +1012,7 @@ def initialize_q_batch_nonneg(
             "All acquisition values for raw sampled points are nonpositive, so "
             "initial conditions are being selected randomly.",
             BadInitialCandidatesWarning,
+            stacklevel=3,
         )
         return X[torch.randperm(n=n_samples, device=X.device)][:n]
 
@@ -1074,6 +1077,7 @@ def sample_points_around_best(
             warnings.warn(
                 "Failed to sample around previous best points.",
                 BotorchWarning,
+                stacklevel=3,
             )
             return
         mean = posterior.mean
