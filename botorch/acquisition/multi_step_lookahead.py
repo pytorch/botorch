@@ -656,8 +656,8 @@ def warmstart_multistep(
     )
 
     with torch.no_grad():
-        Y_full = acq_function(X_full)
-    X_init = initialize_q_batch(X=X_full, Y=Y_full, n=num_restarts, eta=1.0)
+        acq_vals = acq_function(X_full)
+    X_init, _ = initialize_q_batch(X=X_full, acq_vals=acq_vals, n=num_restarts, eta=1.0)
     return X_init[:raw_samples]
 
 
