@@ -8,7 +8,6 @@ r"""Model fitting routines."""
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable, Sequence
 from copy import deepcopy
 from functools import partial
@@ -18,6 +17,7 @@ from warnings import catch_warnings, simplefilter, warn_explicit, WarningMessage
 
 from botorch.exceptions.errors import ModelFittingError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
+from botorch.logging import logger
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
@@ -158,7 +158,7 @@ def _fit_fallback(
             `optimizer`. Any unfiltered warnings (those for which `warning_handler`
             returns `False`) will be rethrown and trigger a model fitting retry.
         caught_exception_types: A tuple of exception types whose instances should
-            be redirected to `logging.DEBUG`.
+            be logged at the `DEBUG` level.
         **ignore: This function ignores unrecognized keyword arguments.
 
     Returns:
@@ -229,20 +229,18 @@ def _fit_fallback(
                             f"Fit attempt #{attempt}: Current MLL {current_mll} did "
                             f"not beat best MLL so far {best_mll}."
                         )
-                    logging.log(logging.DEBUG, msg=message)
+                    logger.debug(message)
 
                 # Ensure mll is in the right mode if going for another attempt.
                 mll = mll if mll.training else mll.train()
                 if not success:
-                    logging.log(
-                        logging.DEBUG,
+                    logger.debug(
                         f"Fit attempt #{attempt} of {max_attempts} triggered retry "
                         f"policy {'.' if attempt == max_attempts else '; retrying...'}",
                     )
 
             except caught_exception_types as err:
-                logging.log(
-                    logging.DEBUG,
+                logger.debug(
                     f"Fit attempt #{attempt} of {max_attempts} failed with exception:\n"
                     f"{err}",
                 )

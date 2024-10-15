@@ -283,8 +283,9 @@ class TestFitFallback(BotorchTestCase):
         optimizer = MockOptimizer(exception=NotPSDError("not_psd"))
         with catch_warnings():
             # Test behavior when encountering a caught exception
-            with self.assertLogs(level="DEBUG") as logs, self.assertRaises(
-                ModelFittingError
+            with (
+                self.assertLogs(logger="botorch", level="DEBUG") as logs,
+                self.assertRaises(ModelFittingError),
             ):
                 fit._fit_fallback(
                     mll,
@@ -318,7 +319,7 @@ class TestFitFallback(BotorchTestCase):
         mll = next(iter(self.mlls.values()))
         optimizer = MockOptimizer()
         max_attempts = 10
-        with patch("botorch.fit.logging.log") as mock_log:
+        with patch("botorch.fit.logger.debug") as mock_log:
             fit._fit_fallback(
                 mll,
                 None,
@@ -334,7 +335,7 @@ class TestFitFallback(BotorchTestCase):
         # We have an increasing sequence of best MLL values.
         mll_vals = []
         for call in mock_log.call_args_list:
-            message = call.kwargs["msg"]
+            message = call.args[0]
             mll_val = message.split(" ")[-1][:-1]
             mll_vals.append(float(mll_val))
         self.assertEqual(mll_vals, sorted(mll_vals))
@@ -419,9 +420,10 @@ class TestFitFallbackApproximate(BotorchTestCase):
                 optimizer=fit_gpytorch_mll_torch,
             )
 
-        with patch.object(fit, "_fit_fallback") as mock_fallback, patch.object(
-            fit, "get_loss_closure_with_grads"
-        ) as mock_get_closure:
+        with (
+            patch.object(fit, "_fit_fallback") as mock_fallback,
+            patch.object(fit, "get_loss_closure_with_grads") as mock_get_closure,
+        ):
             mock_get_closure.return_value = "foo"
             fit._fit_fallback_approximate(
                 self.mll,
