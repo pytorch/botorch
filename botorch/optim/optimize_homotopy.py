@@ -3,7 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from collections.abc import Callable
+from typing import Any
+import warnings
 
 import torch
 from botorch.acquisition import AcquisitionFunction
@@ -51,14 +52,11 @@ def optimize_acqf_homotopy(
     bounds: Tensor,
     q: int,
     homotopy: Homotopy,
-    num_restarts: int,
-    raw_samples: int | None = None,
-    fixed_features: dict[int, float] | None = None,
-    options: dict[str, bool | float | int | str] | None = None,
-    final_options: dict[str, bool | float | int | str] | None = None,
-    batch_initial_conditions: Tensor | None = None,
-    post_processing_func: Callable[[Tensor], Tensor] | None = None,
+    *,
     prune_tolerance: float = 1e-4,
+    batch_initial_conditions: Tensor | None = None,
+    optimize_acqf_loop_kwargs: dict[str, Any] | None = None,
+    optimize_acqf_final_kwargs: dict[str, Any] | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via multi-start optimization.
 
@@ -68,19 +66,56 @@ def optimize_acqf_homotopy(
         q: The number of candidates.
         homotopy: Homotopy object that will make the necessary modifications to the
             problem when calling `step()`.
-        num_restarts: The number of starting points for multistart acquisition
-            function optimization.
-        raw_samples: The number of samples for initialization. This is required
-            if `batch_initial_conditions` is not specified.
-        fixed_features: A map `{feature_index: value}` for features that
-            should be fixed to a particular value during generation.
-        options: Options for candidate generation.
-        final_options: Options for candidate generation in the last homotopy step.
+        prune_tolerance: The minimum distance to prune candidates.
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
-        post_processing_func: Post processing function (such as rounding or clamping)
-            that is applied before choosing the final candidate.
+        optimize_acqf_loop_kwargs: A dictionary of keyword arguments for
+            `optimize_acqf`. These settings are used in the homotopy loop.
+        optimize_acqf_final_kwargs: A dictionary of keyword arguments for
+            `optimize_acqf`. These settings are used for the final optimization
+            after the homotopy loop.
     """
+    if optimize_acqf_loop_kwargs is None:
+        optimize_acqf_loop_kwargs = {}
+
+    if optimize_acqf_final_kwargs is None:
+        optimize_acqf_final_kwargs = {}
+
+    for kwarg_dict_name, kwarg_dict in [("optimize_acqf_loop_kwargs", optimize_acqf_loop_kwargs), ("optimize_acqf_final_kwargs", optimize_acqf_final_kwargs)]:
+
+        if "return_best_only" in kwarg_dict:
+            warnings.warn(
+                f"`return_best_only` is set to True in `{kwarg_dict_name}`, setting to False."
+            )
+            kwarg_dict["return_best_only"] = False
+
+        if "q" in kwarg_dict:
+            warnings.warn(
+                f"`q` is set in `{kwarg_dict_name}`, setting to 1."
+            )
+            kwarg_dict["q"] = 1
+
+        if "batch_initial_conditions" in kwarg_dict:
+            warnings.warn(
+                f"`batch_initial_conditions` is set in `{kwarg_dict_name}`, setting to None."
+            )
+            kwarg_dict.pop("batch_initial_conditions")
+
+        for arg_name, arg_value in [("acq_function", acq_function), ("bounds", bounds)]:
+            if arg_name in kwarg_dict:
+                warnings.warn(
+                    f"`{arg_name}` is set in `{kwarg_dict_name}` and will be "
+                    "overridden in favor of the value in `optimize_acqf_homotopy`. "
+                    f"({arg_name} = {arg_value} c.f. {kwarg_dict_name}[{arg_name}] = {kwarg_dict[arg_name]})"
+                )
+                kwarg_dict[arg_name] = arg_value
+
+    if "post_processing_func" in optimize_acqf_loop_kwargs:
+        warnings.warn(
+            "`post_processing_func` is set in `optimize_acqf_loop_kwargs`, setting to None."
+        )
+        optimize_acqf_loop_kwargs["post_processing_func"] = None
+
     candidate_list, acq_value_list = [], []
     if q > 1:
         base_X_pending = acq_function.X_pending
@@ -90,17 +125,7 @@ def optimize_acqf_homotopy(
         homotopy.restart()
 
         while not homotopy.should_stop:
-            candidates, acq_values = optimize_acqf(
-                q=1,
-                acq_function=acq_function,
-                bounds=bounds,
-                num_restarts=num_restarts,
-                batch_initial_conditions=candidates,
-                raw_samples=raw_samples,
-                fixed_features=fixed_features,
-                return_best_only=False,
-                options=options,
-            )
+            candidates, acq_values = optimize_acqf(batch_initial_conditions=candidates, **optimize_acqf_loop_kwargs)
             homotopy.step()
 
             # Prune candidates
@@ -111,20 +136,8 @@ def optimize_acqf_homotopy(
             ).unsqueeze(1)
 
         # Optimize one more time with the final options
-        candidates, acq_values = optimize_acqf(
-            q=1,
-            acq_function=acq_function,
-            bounds=bounds,
-            num_restarts=num_restarts,
-            batch_initial_conditions=candidates,
-            return_best_only=False,
-            options=final_options,
-        )
+        candidates, acq_values = optimize_acqf(batch_initial_conditions=candidates, **optimize_acqf_final_kwargs)
 
-        # Post-process the candidates and grab the best candidate
-        if post_processing_func is not None:
-            candidates = post_processing_func(candidates)
-            acq_values = acq_function(candidates)
         best = torch.argmax(acq_values.view(-1), dim=0)
         candidate, acq_value = candidates[best], acq_values[best]
 
