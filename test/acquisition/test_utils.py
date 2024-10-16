@@ -10,7 +10,12 @@ from unittest.mock import patch
 
 import torch
 
-from botorch.acquisition.objective import GenericMCObjective, LearnedObjective
+from botorch.acquisition.objective import (
+    ExpectationPosteriorTransform,
+    GenericMCObjective,
+    LearnedObjective,
+    ScalarizedPosteriorTransform,
+)
 from botorch.acquisition.utils import (
     compute_best_feasible_objective,
     expand_trace_observations,
@@ -418,26 +423,65 @@ class TestGetOptimalSamples(BotorchTestCase):
 
         bounds = torch.tensor([[0, 1]] * dims, dtype=dtype).T
         X = torch.rand(*batch_shape, 4, dims, dtype=dtype)
-        Y = torch.sin(X).sum(dim=-1, keepdim=True).to(dtype)
-        model = SingleTaskGP(X, Y)
-        X_opt, f_opt = get_optimal_samples(
-            model, bounds, num_optima=num_optima, **for_testing_speed_kwargs
-        )
-        X_opt, f_opt_min = get_optimal_samples(
-            model,
-            bounds,
-            num_optima=num_optima,
-            maximize=False,
-            **for_testing_speed_kwargs,
+        Y = torch.sin(2 * 3.1415 * X).sum(dim=-1, keepdim=True).to(dtype)
+        model = SingleTaskGP(train_X=X, train_Y=Y)
+        posterior_transform = ScalarizedPosteriorTransform(
+            weights=-torch.ones(1, dtype=dtype)
         )
 
-        correct_X_shape = (num_optima,) + batch_shape + (dims,)
-        correct_f_shape = (num_optima,) + batch_shape + (1,)
-        self.assertEqual(X_opt.shape, correct_X_shape)
-        self.assertEqual(f_opt.shape, correct_f_shape)
-        # asserting that the solutions found by minimization the samples are smaller
-        # than those found by maximization
-        self.assertTrue(torch.all(f_opt_min < f_opt))
+        for ps in [None, posterior_transform]:
+            with torch.random.fork_rng():
+                torch.manual_seed(0)
+                X_opt, f_opt = get_optimal_samples(
+                    model=model,
+                    bounds=bounds,
+                    num_optima=num_optima,
+                    posterior_transform=ps,
+                    **for_testing_speed_kwargs,
+                )
+            correct_X_shape = (num_optima,) + batch_shape + (dims,)
+            correct_f_shape = (num_optima,) + batch_shape + (1,)
+            self.assertEqual(X_opt.shape, correct_X_shape)
+            self.assertEqual(f_opt.shape, correct_f_shape)
+
+        with torch.random.fork_rng():
+            torch.manual_seed(0)
+            X_opt_min, f_opt_min = get_optimal_samples(
+                model=model,
+                bounds=bounds,
+                num_optima=num_optima,
+                maximize=False,
+                **for_testing_speed_kwargs,
+            )
+            # check that the minimum is the same for minimize and
+            # negative posterior transform
+            self.assertAllClose(X_opt_min, X_opt)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "Minimizing the samples are not supported with a `posterior_transform`.",
+        ):
+            get_optimal_samples(
+                model=model,
+                bounds=bounds,
+                num_optima=num_optima,
+                maximize=False,
+                posterior_transform=posterior_transform,
+                **for_testing_speed_kwargs,
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "Only the ScalarizedPosteriorTransform is supported for "
+            "get_optimal_samples.",
+        ):
+            get_optimal_samples(
+                model=model,
+                bounds=bounds,
+                num_optima=num_optima,
+                maximize=False,
+                posterior_transform=ExpectationPosteriorTransform(n_w=5),
+                **for_testing_speed_kwargs,
+            )
 
 
 class TestPreferenceUtils(BotorchTestCase):

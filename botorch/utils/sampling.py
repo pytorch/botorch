@@ -21,7 +21,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable
 from contextlib import contextmanager
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy
@@ -36,7 +36,12 @@ from torch.quasirandom import SobolEngine
 
 
 if TYPE_CHECKING:
-    from botorch.sampling.pathwise.paths import SamplePath  # pragma: no cover
+    from botorch.acquisition.objective import (  # pragma: no cover
+        ScalarizedPosteriorTransform,
+    )
+    from botorch.models.deterministic import (  # pragma: no cover
+        GenericDeterministicModel,
+    )
 
 
 @contextmanager
@@ -988,13 +993,12 @@ def sparse_to_dense_constraints(
 
 
 def optimize_posterior_samples(
-    paths: SamplePath,
+    paths: GenericDeterministicModel,
     bounds: Tensor,
     candidates: Tensor | None = None,
-    raw_samples: int | None = 1024,
+    raw_samples: int = 1024,
     num_restarts: int = 20,
-    maximize: bool = True,
-    **kwargs: Any,
+    posterior_transform: ScalarizedPosteriorTransform | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Cheaply maximizes posterior samples by random querying followed by vanilla
     gradient descent on the best num_restarts points.
@@ -1006,27 +1010,26 @@ def optimize_posterior_samples(
             which acts as extra initial guesses for the optimization routine.
         raw_samples: The number of samples with which to query the samples initially.
         num_restarts: The number of points selected for gradient-based optimization.
-        maximize: Boolean indicating whether to maimize or minimize
+        posterior_transform: A ScalarizedPosteriorTransform used to negate the
+            objective or linearly combine multiple outputs.
 
     Returns:
         A two-element tuple containing:
             - X_opt: A `num_optima x [batch_size] x d`-dim tensor of optimal inputs x*.
-            - f_opt: A `num_optima x [batch_size] x 1`-dim tensor of optimal outputs f*.
+            - f_opt: A `num_optima x [batch_size] x m`-dim tensor of optimal outputs f*.
     """
-    if maximize:
 
-        def path_func(x):
-            return paths(x)
+    def path_func(x) -> Tensor:
+        res = paths(x)
+        if posterior_transform:
+            res = posterior_transform.evaluate(res)
 
-    else:
-
-        def path_func(x):
-            return -paths(x)
+        return res.squeeze(-1)
 
     candidate_set = unnormalize(
-        SobolEngine(dimension=bounds.shape[1], scramble=True).draw(raw_samples), bounds
+        SobolEngine(dimension=bounds.shape[1], scramble=True).draw(n=raw_samples),
+        bounds=bounds,
     )
-
     # queries all samples on all candidates - output shape
     # raw_samples * num_optima * num_models
     candidate_queries = path_func(candidate_set)
@@ -1034,10 +1037,13 @@ def optimize_posterior_samples(
     X_top_k = candidate_set[argtop_k, :]
 
     # to avoid circular import, the import occurs here
-    from botorch.generation.gen import gen_candidates_torch
+    from botorch.generation.gen import gen_candidates_scipy
 
-    X_top_k, f_top_k = gen_candidates_torch(
-        X_top_k, path_func, lower_bounds=bounds[0], upper_bounds=bounds[1], **kwargs
+    X_top_k, f_top_k = gen_candidates_scipy(
+        X_top_k,
+        path_func,
+        lower_bounds=bounds[0],
+        upper_bounds=bounds[1],
     )
     f_opt, arg_opt = f_top_k.max(dim=-1, keepdim=True)
 
@@ -1050,6 +1056,6 @@ def optimize_posterior_samples(
     X_opt = X_top_k.reshape(final_shape.numel(), num_restarts, -1)[
         torch.arange(final_shape.numel()), arg_opt.flatten()
     ].reshape(*final_shape, -1)
-    if not maximize:
-        f_opt = -f_opt
+    f_opt = paths(X_opt.unsqueeze(-2)).squeeze(-2)
+
     return X_opt, f_opt

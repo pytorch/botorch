@@ -18,6 +18,7 @@ from botorch.acquisition.objective import (
     IdentityMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
+    ScalarizedPosteriorTransform,
 )
 from botorch.exceptions.errors import (
     BotorchTensorDimensionError,
@@ -28,10 +29,11 @@ from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.sampling.get_sampler import get_sampler
-from botorch.sampling.pathwise import draw_matheron_paths
+from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.utils.objective import compute_feasibility_indicator
 from botorch.utils.sampling import optimize_posterior_samples
 from botorch.utils.transforms import is_ensemble, normalize_indices
+from gpytorch.models import GP
 from torch import Tensor
 
 
@@ -486,12 +488,13 @@ def project_to_sample_points(X: Tensor, sample_points: Tensor) -> Tensor:
 
 
 def get_optimal_samples(
-    model: Model,
+    model: GP,
     bounds: Tensor,
     num_optima: int,
     raw_samples: int = 1024,
     num_restarts: int = 20,
     maximize: bool = True,
+    posterior_transform: PosteriorTransform | None = None,
 ) -> tuple[Tensor, Tensor]:
     """Draws sample paths from the posterior and maximizes the samples using GD.
 
@@ -505,17 +508,39 @@ def get_optimal_samples(
         num_restarts (int, optional): The number of candidates to do gradient-based
             optimization on. Defaults to 20.
         maximize: Whether to maximize or minimize the samples.
+        posterior_transform: A PosteriorTransform, used to negate the objective or
+            scalarize multi-output models.
+
     Returns:
         Tuple[Tensor, Tensor]: The optimal input locations and corresponding
         outputs, x* and f*.
 
     """
-    paths = draw_matheron_paths(model, sample_shape=torch.Size([num_optima]))
+    if posterior_transform and not isinstance(
+        posterior_transform, ScalarizedPosteriorTransform
+    ):
+        raise ValueError(
+            "Only the ScalarizedPosteriorTransform is supported for "
+            "get_optimal_samples."
+        )
+
+    # To avoid ambiguity, we disallow two types of negation.
+    # TODO remove maximize argument entirely - currently in use in input contstructors
+    # and acquisition functions
+    if not maximize and posterior_transform:
+        raise ValueError(
+            "Minimizing the samples are not supported with a `posterior_transform`."
+        )
+    elif not maximize:
+        posterior_transform = ScalarizedPosteriorTransform(
+            weights=-torch.ones(1).to(bounds)
+        )
+    paths = get_matheron_path_model(model=model, sample_shape=torch.Size([num_optima]))
     optimal_inputs, optimal_outputs = optimize_posterior_samples(
-        paths,
+        paths=paths,
         bounds=bounds,
         raw_samples=raw_samples,
         num_restarts=num_restarts,
-        maximize=maximize,
+        posterior_transform=posterior_transform,
     )
     return optimal_inputs, optimal_outputs
