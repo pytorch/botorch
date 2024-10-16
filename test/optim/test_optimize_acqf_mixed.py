@@ -354,7 +354,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
         best_f = model(X)
         ei = ExpectedImprovement(model, best_f=best_f)
-        X_clone, ei_val = continuous_step(
+        X_new, ei_val = continuous_step(
             opt_inputs=_make_opt_inputs(
                 acq_function=ei,
                 bounds=bounds,
@@ -363,15 +363,18 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             discrete_dims=binary_dims,
             current_x=X.clone(),
         )
-        self.assertAllClose(X_clone[cont_dims], root[cont_dims])
-        self.assertAllClose(X_clone[binary_dims], X[binary_dims])
+        self.assertAllClose(X_new[cont_dims], root[cont_dims])
+        self.assertAllClose(X_new[binary_dims], X[binary_dims])
 
         # Test with fixed features and constraints.
         fixed_binary = int(binary_dims[0])
-        fixed_cont = int(cont_dims[0])
+        # We don't want fixed cont to be one of the first two indices,
+        # to avoid it being a part of the constraint. This ensures that.
+        # The fixed value of 0.5 cannot satisfy the constraint.
+        fixed_cont = int(cont_dims[:3].max())
         X_ = X.clone()
         X_[:2] = 1.0  # To satisfy the constraint.
-        X_clone, ei_val = continuous_step(
+        X_new, ei_val = continuous_step(
             opt_inputs=_make_opt_inputs(
                 acq_function=ei,
                 bounds=bounds,
@@ -390,11 +393,11 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         )
         self.assertTrue(
             torch.equal(
-                X_clone[[fixed_binary, fixed_cont]],
+                X_new[[fixed_binary, fixed_cont]],
                 torch.tensor([1.0, 0.5], device=self.device),
             )
         )
-        self.assertAllClose(X_clone[:2], X_[:2])
+        self.assertAllClose(X_new[:2], X_[:2])
 
         # test edge case when all parameters are binary
         root = torch.rand(d_bin)
@@ -422,7 +425,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             ValueError,
             "continuous_step requires current_x to be",
         ):
-            X_clone, ei_val = continuous_step(
+            X_new, ei_val = continuous_step(
                 opt_inputs=_make_opt_inputs(
                     acq_function=ei,
                     bounds=bounds,
