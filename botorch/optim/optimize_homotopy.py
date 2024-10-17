@@ -87,12 +87,12 @@ def optimize_acqf_homotopy(
     ]:
         if "return_best_only" in kwarg_dict:
             warnings.warn(
-                f"`return_best_only` is set to True in `{kwarg_dict_name}`, setting to False."
+                f"`return_best_only` is set to True in `{kwarg_dict_name}`, override to False."
             )
             kwarg_dict["return_best_only"] = False
 
         if kwarg_dict.get("q", None) != 1:
-            warnings.warn(f"`q` is set in `{kwarg_dict_name}`, setting to 1.")
+            warnings.warn(f"`q` is not set to 1 in `{kwarg_dict_name}`, override to 1.")
             kwarg_dict["q"] = 1
 
         if "batch_initial_conditions" in kwarg_dict:
@@ -160,10 +160,12 @@ def optimize_acqf_homotopy(
             ).unsqueeze(1)
 
         # Optimize one more time with the final options
+        # NOTE is there any reason we don't want to pass fixed features to final?
         candidates, acq_values = optimize_acqf(
             acq_function=acq_function,
             bounds=bounds,
-            batch_initial_conditions=candidates, **optimize_acqf_final_kwargs
+            batch_initial_conditions=candidates,
+            **optimize_acqf_final_kwargs
         )
 
         best = torch.argmax(acq_values.view(-1), dim=0)
