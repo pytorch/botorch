@@ -85,7 +85,7 @@ def optimize_acqf_homotopy(
         ("optimize_acqf_loop_kwargs", optimize_acqf_loop_kwargs),
         ("optimize_acqf_final_kwargs", optimize_acqf_final_kwargs),
     ]:
-        if "return_best_only" in kwarg_dict:
+        if kwarg_dict.get("return_best_only", None) is not False:
             warnings.warn(
                 f"`return_best_only` is set to True in `{kwarg_dict_name}`, override to False."
             )
