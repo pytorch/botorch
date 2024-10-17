@@ -30,7 +30,6 @@ References:
     Seventh Conference on Uncertainty in Artificial Intelligence, 2021.
 """
 
-
 import math
 from abc import abstractmethod
 from collections.abc import Mapping

@@ -162,7 +162,6 @@ class TestFixedFeatureAcquisitionFunction(BotorchTestCase):
                 self.assertEqual(ff.values.dtype, expected_dtype)
 
     def test_values_devices(self) -> None:
-
         acqf = MockAcquisitionFunction()
         cpu = torch.device("cpu")
         cuda = torch.device("cuda")

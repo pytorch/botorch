@@ -269,7 +269,6 @@ def t_batch_mode_transform(
         def decorated(
             acqf: AcquisitionFunction, X: Any, *args: Any, **kwargs: Any
         ) -> Any:
-
             # Allow using acquisition functions for other inputs (e.g. lists of strings)
             if not isinstance(X, Tensor):
                 return method(acqf, X, *args, **kwargs)
@@ -311,7 +310,7 @@ def t_batch_mode_transform(
 
 
 def concatenate_pending_points(
-    method: Callable[[Any, Tensor], Any]
+    method: Callable[[Any, Tensor], Any],
 ) -> Callable[[Any, Tensor], Any]:
     r"""Decorator concatenating X_pending into an acquisition function's argument.
 

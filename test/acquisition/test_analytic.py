@@ -82,7 +82,6 @@ class TestAnalyticAcquisitionFunction(BotorchTestCase):
 
 
 class TestExpectedImprovement(BotorchTestCase):
-
     def test_expected_improvement(self):
         mean = torch.tensor([[-0.5]], device=self.device)
         variance = torch.ones(1, 1, device=self.device)

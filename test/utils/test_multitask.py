@@ -14,7 +14,6 @@ from gpytorch.distributions.multivariate_normal import MultivariateNormal
 
 
 class TestSeparateMTMVN(BotorchTestCase):
-
     def _test_separate_mtmvn(self, interleaved=False):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}

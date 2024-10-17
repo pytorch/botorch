@@ -396,7 +396,7 @@ def _generate_unfixed_nonlin_constraints(
     values = torch.tensor(list(fixed_features.values()), dtype=torch.double)
 
     def _wrap_nonlin_constraint(
-        constraint: Callable[[Tensor], Tensor]
+        constraint: Callable[[Tensor], Tensor],
     ) -> Callable[[Tensor], Tensor]:
         def new_nonlin_constraint(X: Tensor) -> Tensor:
             ivalues = values.to(X).expand(*X.shape[:-1], len(fixed_features))

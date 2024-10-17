@@ -13,7 +13,6 @@ from botorch.utils.testing import BotorchTestCase
 
 
 class TestTestHelpers(BotorchTestCase):
-
     def test_get_pvar_expected(self):
         # The test helper is used throughout, veryfying that an error is raised
         # when it is used with an unsupported model.

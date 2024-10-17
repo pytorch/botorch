@@ -19,7 +19,7 @@ from torch import Tensor
 
 
 def get_outcome_constraint_transforms(
-    outcome_constraints: tuple[Tensor, Tensor] | None
+    outcome_constraints: tuple[Tensor, Tensor] | None,
 ) -> list[Callable[[Tensor], Tensor]] | None:
     r"""Create outcome constraint callables from outcome constraint tensors.
 

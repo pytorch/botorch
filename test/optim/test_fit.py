@@ -151,7 +151,6 @@ class TestFitGPyTorchMLLScipy(BotorchTestCase):
             raise RuntimeError("singular")
 
         for dtype in [torch.float32, torch.float64]:
-
             parameters = {"x": torch.tensor([0.0], dtype=dtype)}
 
             wrapper = NdarrayOptimizationClosure(closure=closure, parameters=parameters)

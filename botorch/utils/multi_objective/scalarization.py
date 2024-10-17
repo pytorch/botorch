@@ -14,6 +14,7 @@ References
     for expensive multiobjective optimization problems," in IEEE Transactions
     on Evolutionary Computation, vol. 10, no. 1, pp. 50-66, Feb. 2006.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable

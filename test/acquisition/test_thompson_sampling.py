@@ -15,7 +15,6 @@ from botorch.utils.testing import BotorchTestCase
 
 
 def _get_mcmc_samples(num_samples: int, dim: int, infer_noise: bool, **tkwargs):
-
     mcmc_samples = {
         "lengthscale": torch.rand(num_samples, 1, dim, **tkwargs),
         "outputscale": torch.rand(num_samples, **tkwargs),
@@ -32,7 +31,6 @@ def get_fully_bayesian_model(
     num_models,
     **tkwargs,
 ):
-
     model = SaasFullyBayesianSingleTaskGP(
         train_X=train_X,
         train_Y=train_Y,

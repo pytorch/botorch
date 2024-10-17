@@ -4,9 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
-r"""Multi-task Gaussian Process Regression models with fully Bayesian inference.
-"""
-
+r"""Multi-task Gaussian Process Regression models with fully Bayesian inference."""
 
 from collections.abc import Mapping
 from typing import Any, NoReturn

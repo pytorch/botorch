@@ -15,6 +15,7 @@ References
     Augmenting Acquisition Functions with User Beliefs for Bayesian Optimization.
     ICLR 2022.
 """
+
 from __future__ import annotations
 
 from botorch.acquisition.acquisition import AcquisitionFunction

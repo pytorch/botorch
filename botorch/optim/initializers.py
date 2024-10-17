@@ -12,6 +12,7 @@ References
     surrogates and dynamic coordinate search in high-dimensional
     expensive black-box optimization, Engineering Optimization, 2013.
 """
+
 from __future__ import annotations
 
 import warnings
