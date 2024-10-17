@@ -710,7 +710,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 num_models=num_models,
                 num_cond=num_cond,
                 infer_noise=infer_noise,
-                **tkwargs
+                **tkwargs,
             )
             model = SaasFullyBayesianSingleTaskGP(
                 train_X=train_X,
@@ -721,7 +721,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 num_samples=num_models,
                 dim=train_X.shape[-1],
                 infer_noise=infer_noise,
-                **tkwargs
+                **tkwargs,
             )
             model.load_mcmc_samples(mcmc_samples)
 
@@ -757,7 +757,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 num_samples=num_models,
                 dim=train_X.shape[-1],
                 infer_noise=infer_noise,
-                **tkwargs
+                **tkwargs,
             )
             model.load_mcmc_samples(mcmc_samples)
 

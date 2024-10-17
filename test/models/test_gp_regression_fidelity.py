@@ -40,7 +40,6 @@ def _get_random_data_with_fidelity(
 
 
 class TestSingleTaskMultiFidelityGP(BotorchTestCase):
-
     FIDELITY_TEST_PAIRS = (
         # (iteration_fidelity, data_fidelities)
         (None, [1]),
@@ -430,7 +429,6 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
 
 
 class TestFixedNoiseSingleTaskMultiFidelityGP(TestSingleTaskMultiFidelityGP):
-
     def _get_model_and_data(
         self,
         iteration_fidelity,

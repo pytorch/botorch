@@ -291,7 +291,8 @@ class LCEAKernel(Kernel):
         else:
             context_outputscales = self.outputscale_list * self.context_weight
         context_covar = (
-            (context_outputscales.unsqueeze(-2))  # (ns) x 1 x num_contexts
+            (context_outputscales.unsqueeze(-2))
+            # (ns) x 1 x num_contexts
             .mul(context_covar)
             .mul(context_outputscales.unsqueeze(-1))  # (ns) x num_contexts x 1
         )

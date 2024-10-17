@@ -1258,7 +1258,6 @@ def construct_inputs_qKG(
     }
 
     if with_current_value:
-
         X = _get_dataset_field(training_data, "X", first_only=True)
         _bounds = torch.as_tensor(bounds, dtype=X.dtype, device=X.device)
 
@@ -1868,7 +1867,6 @@ def _get_ref_point(
     objective_thresholds: Tensor,
     objective: MCMultiOutputObjective | None = None,
 ) -> Tensor:
-
     if objective is None:
         ref_point = objective_thresholds
     elif isinstance(objective, RiskMeasureMCObjective):

@@ -32,7 +32,6 @@ def run_gaussian_estimator(
     batch_limit: int | None = None,
     seed: int | None = None,
 ) -> Tensor:
-
     if batch_limit is None:
         batch_limit = num_samples
 

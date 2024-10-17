@@ -138,12 +138,10 @@ class TestGreedyVarianceReduction(BotorchTestCase):
         self.assertEqual(n_tensors_before, n_tensors_after)
 
     def test_inducing_points_shape_and_repeatability(self):
-
         for train_X in [
             torch.rand(15, 1, device=self.device),  # single task
             torch.rand(2, 15, 1, device=self.device),  # batched inputs
         ]:
-
             inducing_points_1 = self.ipa.allocate_inducing_points(
                 inputs=train_X,
                 covar_module=MaternKernel(),
@@ -227,7 +225,6 @@ class TestGreedyImprovementReduction(BotorchTestCase):
             torch.rand(15, 1, device=self.device),  # single task
             torch.rand(2, 15, 1, device=self.device),  # batched inputs
         ]:
-
             inducing_points_1 = self.ipa.allocate_inducing_points(
                 inputs=train_X,
                 covar_module=MaternKernel(),

@@ -456,7 +456,6 @@ class TestSingleTaskGP(TestGPRegressionBase):
 
 
 class TestSingleTaskGPFixedNoise(TestSingleTaskGP):
-
     def _get_model_and_data(
         self,
         batch_shape,

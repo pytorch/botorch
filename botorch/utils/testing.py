@@ -277,7 +277,8 @@ class MockPosterior(Posterior):
         raise NotImplementedError  # pragma: no cover
 
     def _extended_shape(
-        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+        self,
+        sample_shape: torch.Size = torch.Size(),  # noqa: B008
     ) -> torch.Size:
         return sample_shape + self.base_sample_shape
 

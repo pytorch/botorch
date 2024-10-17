@@ -1267,14 +1267,12 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
         func = get_acqf_input_constructor(qKnowledgeGradient)
 
         with self.subTest("test_with_current_value"):
-
             current_value = torch.tensor(1.23)
 
             with mock.patch(
                 target="botorch.acquisition.input_constructors.optimize_objective",
                 return_value=(None, current_value),
             ):
-
                 kwargs = func(
                     model=mock.Mock(),
                     training_data=self.blockX_blockY,
@@ -1299,7 +1297,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
             self.assertNotIn("current_value", kwargs)
 
     def test_construct_inputs_mfhvkg(self) -> None:
-
         get_kwargs = get_acqf_input_constructor(
             qMultiFidelityHypervolumeKnowledgeGradient
         )
@@ -1327,7 +1324,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
 
     @mock.patch("botorch.acquisition.input_constructors._get_hv_value_function")
     def test_construct_inputs_hvkg(self, mock_get_hv_value_function) -> None:
-
         current_value = torch.tensor(1.23)
         objective_thresholds = torch.rand(2)
 
@@ -1335,7 +1331,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
             qHypervolumeKnowledgeGradient,
             qMultiFidelityHypervolumeKnowledgeGradient,
         ):
-
             get_kwargs = get_acqf_input_constructor(acqf_cls)
 
             model = mock.Mock()
@@ -1353,7 +1348,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
                 target="botorch.acquisition.input_constructors.optimize_acqf",
                 return_value=(None, current_value),
             ) as mock_optimize_acqf:
-
                 kwargs = get_kwargs(
                     model=model,
                     training_data=self.blockX_blockY,

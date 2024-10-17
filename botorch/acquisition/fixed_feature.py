@@ -93,7 +93,6 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
         if isinstance(values, Tensor):
             new_values = values.detach().clone()
         else:
-
             dtype = get_dtype_of_sequence(values)
             device = get_device_of_sequence(values)
 

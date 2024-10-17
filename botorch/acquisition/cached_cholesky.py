@@ -8,6 +8,7 @@ r"""
 Abstract class for acquisition functions leveraging a cached Cholesky
 decomposition of the posterior covariance over f(X_baseline).
 """
+
 from __future__ import annotations
 
 import warnings

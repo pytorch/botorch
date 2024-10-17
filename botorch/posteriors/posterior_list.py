@@ -108,7 +108,8 @@ class PosteriorList(Posterior):
         return next(iter(dtypes))
 
     def _extended_shape(
-        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+        self,
+        sample_shape: torch.Size = torch.Size(),  # noqa: B008
     ) -> torch.Size:
         r"""Returns the shape of the samples produced by the posterior with
         the given `sample_shape`.

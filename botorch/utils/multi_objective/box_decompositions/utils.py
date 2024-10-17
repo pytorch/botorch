@@ -6,7 +6,6 @@
 
 r"""Utilities for box decomposition algorithms."""
 
-
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.utils.multi_objective.pareto import is_non_dominated
