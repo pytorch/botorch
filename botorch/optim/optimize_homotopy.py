@@ -81,23 +81,25 @@ def optimize_acqf_homotopy(
     if optimize_acqf_final_kwargs is None:
         optimize_acqf_final_kwargs = {}
 
-    for kwarg_dict_name, kwarg_dict in [("optimize_acqf_loop_kwargs", optimize_acqf_loop_kwargs), ("optimize_acqf_final_kwargs", optimize_acqf_final_kwargs)]:
-
+    for kwarg_dict_name, kwarg_dict in [
+        ("optimize_acqf_loop_kwargs", optimize_acqf_loop_kwargs),
+        ("optimize_acqf_final_kwargs", optimize_acqf_final_kwargs),
+    ]:
         if "return_best_only" in kwarg_dict:
             warnings.warn(
                 f"`return_best_only` is set to True in `{kwarg_dict_name}`, setting to False."
             )
             kwarg_dict["return_best_only"] = False
 
-        if "q" in kwarg_dict:
-            warnings.warn(
-                f"`q` is set in `{kwarg_dict_name}`, setting to 1."
-            )
+        if kwarg_dict.get("q", None) != 1:
+            warnings.warn(f"`q` is set in `{kwarg_dict_name}`, setting to 1.")
             kwarg_dict["q"] = 1
 
         if "batch_initial_conditions" in kwarg_dict:
             warnings.warn(
-                f"`batch_initial_conditions` is set in `{kwarg_dict_name}`, setting to None."
+                f"`batch_initial_conditions` is set in `{kwarg_dict_name}`, "
+                "removing it in favour of `batch_initial_conditions` given to "
+                "`optimize_acqf_homotopy`."
             )
             kwarg_dict.pop("batch_initial_conditions")
 
@@ -110,11 +112,28 @@ def optimize_acqf_homotopy(
                 )
                 kwarg_dict[arg_name] = arg_value
 
+    if (
+        batch_initial_conditions is None
+        and optimize_acqf_loop_kwargs.get("raw_samples", None) is None
+    ):
+        raise ValueError(
+            "Must specify `raw_samples` in `optimize_acqf_loop_kwargs` when "
+            "`batch_initial_conditions` is None`."
+        )
+
     if "post_processing_func" in optimize_acqf_loop_kwargs:
         warnings.warn(
             "`post_processing_func` is set in `optimize_acqf_loop_kwargs`, setting to None."
         )
         optimize_acqf_loop_kwargs["post_processing_func"] = None
+
+    if "raw_samples" in optimize_acqf_final_kwargs:
+        warnings.warn(
+            "`raw_samples` is set in `optimize_acqf_final_kwargs`, "
+            "removing it as we set `batch_initial_conditions` to the candidates "
+            "returned by homotopy loop for the final optimization."
+        )
+        optimize_acqf_final_kwargs.pop("raw_samples")
 
     candidate_list, acq_value_list = [], []
     if q > 1:
@@ -125,7 +144,12 @@ def optimize_acqf_homotopy(
         homotopy.restart()
 
         while not homotopy.should_stop:
-            candidates, acq_values = optimize_acqf(batch_initial_conditions=candidates, **optimize_acqf_loop_kwargs)
+            candidates, acq_values = optimize_acqf(
+                acq_function=acq_function,
+                bounds=bounds,
+                batch_initial_conditions=candidates,
+                **optimize_acqf_loop_kwargs
+            )
             homotopy.step()
 
             # Prune candidates
@@ -136,7 +160,11 @@ def optimize_acqf_homotopy(
             ).unsqueeze(1)
 
         # Optimize one more time with the final options
-        candidates, acq_values = optimize_acqf(batch_initial_conditions=candidates, **optimize_acqf_final_kwargs)
+        candidates, acq_values = optimize_acqf(
+            acq_function=acq_function,
+            bounds=bounds,
+            batch_initial_conditions=candidates, **optimize_acqf_final_kwargs
+        )
 
         best = torch.argmax(acq_values.view(-1), dim=0)
         candidate, acq_value = candidates[best], acq_values[best]
@@ -145,6 +173,7 @@ def optimize_acqf_homotopy(
         candidate_list.append(candidate)
         acq_value_list.append(acq_value)
         selected_candidates = torch.cat(candidate_list, dim=-2)
+
         if q > 1:
             acq_function.set_X_pending(
                 torch.cat([base_X_pending, selected_candidates], dim=-2)
@@ -154,6 +183,7 @@ def optimize_acqf_homotopy(
 
     if q > 1:  # Reset acq_function to previous X_pending state
         acq_function.set_X_pending(base_X_pending)
+
     homotopy.reset()  # Reset the homotopy parameters
 
     return selected_candidates, torch.stack(acq_value_list)

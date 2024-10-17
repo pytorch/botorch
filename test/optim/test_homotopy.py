@@ -114,14 +114,18 @@ class TestHomotopy(BotorchTestCase):
         )
         model = GenericDeterministicModel(f=lambda x: 5 - (x - p) ** 2)
         acqf = PosteriorMean(model=model)
+
+        optimize_acqf_core_kwargs = {
+            "num_restarts": 2,
+            "raw_samples": 16,
+        }
         candidate, acqf_val = optimize_acqf_homotopy(
             q=1,
             acq_function=acqf,
             bounds=torch.tensor([[-10], [5]]).to(**tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
-            num_restarts=2,
-            raw_samples=16,
-            post_processing_func=lambda x: x.round(),
+            optimize_acqf_loop_kwargs=optimize_acqf_core_kwargs,
+            optimize_acqf_final_kwargs=optimize_acqf_core_kwargs.update({"post_processing_func":lambda x: x.round()}),
         )
         self.assertEqual(candidate, torch.zeros(1, **tkwargs))
         self.assertEqual(acqf_val, 5 * torch.ones(1, **tkwargs))
@@ -137,9 +141,8 @@ class TestHomotopy(BotorchTestCase):
             acq_function=acqf,
             bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
-            num_restarts=2,
-            raw_samples=16,
-            fixed_features=fixed_features,
+            optimize_acqf_loop_kwargs=optimize_acqf_core_kwargs.update({"fixed_features":fixed_features}),
+            optimize_acqf_final_kwargs=optimize_acqf_core_kwargs
         )
         self.assertEqual(candidate[0, 0], torch.tensor(1, **tkwargs))
 
@@ -150,12 +153,13 @@ class TestHomotopy(BotorchTestCase):
             acq_function=acqf,
             bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
-            num_restarts=2,
-            raw_samples=16,
-            fixed_features=fixed_features,
+            optimize_acqf_loop_kwargs=optimize_acqf_core_kwargs.update({"fixed_features":fixed_features}),
+            optimize_acqf_final_kwargs=optimize_acqf_core_kwargs
         )
         self.assertEqual(candidate.shape, torch.Size([3, 2]))
         self.assertEqual(acqf_val.shape, torch.Size([3]))
+
+        # with linear constraints
 
     def test_prune_candidates(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
@@ -202,14 +206,18 @@ class TestHomotopy(BotorchTestCase):
         )
         model = GenericDeterministicModel(f=lambda x: 5 - (x - p) ** 2)
         acqf = PosteriorMean(model=model)
+        optimize_acqf_core_kwargs = {
+            "num_restarts":2,
+            "raw_samples":16,
+        }
+
         candidate, acqf_val = optimize_acqf_homotopy(
             q=1,
             acq_function=acqf,
             bounds=torch.tensor([[-10], [5]]).to(**tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
-            num_restarts=4,
-            raw_samples=16,
-            post_processing_func=lambda x: x.round(),
+            optimize_acqf_loop_kwargs=optimize_acqf_core_kwargs,
+            optimize_acqf_final_kwargs=optimize_acqf_core_kwargs.update({"post_processing_func":lambda x: x.round()}),
         )
         # First time we expect to call `prune_candidates` with 4 candidates
         self.assertEqual(
