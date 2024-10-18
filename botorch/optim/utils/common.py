@@ -14,12 +14,13 @@ from logging import debug as logging_debug
 from warnings import warn_explicit, WarningMessage
 
 import numpy as np
+import numpy.typing as npt
 from linear_operator.utils.errors import NanError, NotPSDError
 
 
 def _handle_numerical_errors(
-    error: RuntimeError, x: np.ndarray, dtype: np.dtype | None = None
-) -> tuple[np.ndarray, np.ndarray]:
+    error: RuntimeError, x: npt.NDArray, dtype: np.dtype | None = None
+) -> tuple[npt.NDArray, npt.NDArray]:
     if isinstance(error, NotPSDError):
         raise error
     error_message = error.args[0] if len(error.args) > 0 else ""
