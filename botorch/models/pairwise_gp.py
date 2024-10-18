@@ -26,6 +26,7 @@ from copy import deepcopy
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions import UnsupportedError
@@ -397,13 +398,13 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def _grad_posterior_f(
         self,
-        utility: Tensor | np.ndarray,
+        utility: Tensor | npt.NDArray,
         datapoints: Tensor,
         D: Tensor,
         covar_chol: Tensor,
         covar_inv: Tensor | None = None,
         ret_np: bool = False,
-    ) -> Tensor | np.ndarray:
+    ) -> Tensor | npt.NDArray:
         r"""Compute the gradient of S loss wrt to f/utility in [Chu2005preference]_.
 
         For finding f_map, which is negative of the log posterior, i.e., -log(p(f|D))
@@ -441,13 +442,13 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
     def _hess_posterior_f(
         self,
-        utility: Tensor | np.ndarray,
+        utility: Tensor | npt.NDArray,
         datapoints: Tensor,
         D: Tensor,
         covar_chol: Tensor,
         covar_inv: Tensor,
         ret_np: bool = False,
-    ) -> Tensor | np.ndarray:
+    ) -> Tensor | npt.NDArray:
         r"""Compute the hessian of S loss wrt utility for finding f_map.
 
         which is negative of the log posterior, i.e., -log(p(f|D))
