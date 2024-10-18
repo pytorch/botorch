@@ -16,6 +16,7 @@ from functools import partial
 from typing import Union
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from botorch.exceptions.errors import CandidateGenerationError, UnsupportedError
 from scipy.optimize import Bounds
@@ -131,7 +132,7 @@ def make_scipy_linear_constraints(
 
 
 def eval_lin_constraint(
-    x: np.ndarray, flat_idxr: list[int], coeffs: np.ndarray, rhs: float
+    x: npt.NDArray, flat_idxr: list[int], coeffs: npt.NDArray, rhs: float
 ) -> np.float64:
     r"""Evaluate a single linear constraint.
 
@@ -148,8 +149,8 @@ def eval_lin_constraint(
 
 
 def lin_constraint_jac(
-    x: np.ndarray, flat_idxr: list[int], coeffs: np.ndarray, n: int
-) -> np.ndarray:
+    x: npt.NDArray, flat_idxr: list[int], coeffs: npt.NDArray, n: int
+) -> npt.NDArray:
     r"""Return the Jacobian associated with a linear constraint.
 
     Args:
@@ -167,7 +168,7 @@ def lin_constraint_jac(
     return jac
 
 
-def _arrayify(X: Tensor) -> np.ndarray:
+def _arrayify(X: Tensor) -> npt.NDArray:
     r"""Convert a torch.Tensor (any dtype or device) to a numpy (double) array.
 
     Args:

@@ -7,6 +7,7 @@
 import time
 
 import numpy as np
+import numpy.typing as npt
 from botorch.optim.utils.timeout import minimize_with_timeout
 from botorch.utils.testing import BotorchTestCase
 from scipy.optimize import OptimizeResult
@@ -14,7 +15,7 @@ from scipy.optimize import OptimizeResult
 
 class TestMinimizeWithTimeout(BotorchTestCase):
     def test_minimize_with_timeout(self):
-        def f_and_g(x: np.ndarray, sleep_sec: float = 0.0):
+        def f_and_g(x: npt.NDArray, sleep_sec: float = 0.0):
             time.sleep(sleep_sec)
             return x**2, 2 * x
 
@@ -52,7 +53,7 @@ class TestMinimizeWithTimeout(BotorchTestCase):
         # set up callback with mutable object to verify callback execution
         check_set = set()
 
-        def callback(x: np.ndarray) -> None:
+        def callback(x: npt.NDArray) -> None:
             check_set.add("foo")
 
         with self.subTest("test w/ callout argument and non-binding timeout"):
@@ -66,7 +67,7 @@ class TestMinimizeWithTimeout(BotorchTestCase):
         check_set.clear()
         self.assertFalse("foo" in check_set)
 
-        def callback_trustconstr(x: np.ndarray, state: OptimizeResult) -> bool:
+        def callback_trustconstr(x: npt.NDArray, state: OptimizeResult) -> bool:
             check_set.add("foo")
             return False
 

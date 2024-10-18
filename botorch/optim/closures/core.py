@@ -13,6 +13,8 @@ from collections.abc import Callable, Sequence
 from functools import partial
 from typing import Any
 
+import numpy.typing as npt
+
 import torch
 from botorch.optim.utils import (
     _handle_numerical_errors,
@@ -21,7 +23,7 @@ from botorch.optim.utils import (
 )
 from botorch.optim.utils.numpy_utils import as_ndarray
 from botorch.utils.context_managers import zero_grad_ctx
-from numpy import float64 as np_float64, full as np_full, ndarray, zeros as np_zeros
+from numpy import float64 as np_float64, full as np_full, zeros as np_zeros
 from torch import Tensor
 
 
@@ -82,10 +84,10 @@ class NdarrayOptimizationClosure:
         self,
         closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]],
         parameters: dict[str, Tensor],
-        as_array: Callable[[Tensor], ndarray] = None,  # pyre-ignore [9]
-        as_tensor: Callable[[ndarray], Tensor] = torch.as_tensor,
-        get_state: Callable[[], ndarray] = None,  # pyre-ignore [9]
-        set_state: Callable[[ndarray], None] = None,  # pyre-ignore [9]
+        as_array: Callable[[Tensor], npt.NDArray] = None,  # pyre-ignore [9]
+        as_tensor: Callable[[npt.NDArray], Tensor] = torch.as_tensor,
+        get_state: Callable[[], npt.NDArray] = None,  # pyre-ignore [9]
+        set_state: Callable[[npt.NDArray], None] = None,  # pyre-ignore [9]
         fill_value: float = 0.0,
         persistent: bool = True,
     ) -> None:
@@ -140,11 +142,11 @@ class NdarrayOptimizationClosure:
 
         self.fill_value = fill_value
         self.persistent = persistent
-        self._gradient_ndarray: ndarray | None = None
+        self._gradient_ndarray: npt.NDArray | None = None
 
     def __call__(
-        self, state: ndarray | None = None, **kwargs: Any
-    ) -> tuple[ndarray, ndarray]:
+        self, state: npt.NDArray | None = None, **kwargs: Any
+    ) -> tuple[npt.NDArray, npt.NDArray]:
         if state is not None:
             self.state = state
 
@@ -164,14 +166,14 @@ class NdarrayOptimizationClosure:
         return value, grads
 
     @property
-    def state(self) -> ndarray:
+    def state(self) -> npt.NDArray:
         return self._get_state()
 
     @state.setter
-    def state(self, state: ndarray) -> None:
+    def state(self, state: npt.NDArray) -> None:
         self._set_state(state)
 
-    def _get_gradient_ndarray(self, fill_value: float | None = None) -> ndarray:
+    def _get_gradient_ndarray(self, fill_value: float | None = None) -> npt.NDArray:
         if self.persistent and self._gradient_ndarray is not None:
             if fill_value is not None:
                 self._gradient_ndarray.fill(fill_value)

@@ -17,10 +17,12 @@ from sys import maxsize
 from time import monotonic
 from typing import Any
 
+import numpy.typing as npt
+
 from botorch.optim.closures import NdarrayOptimizationClosure
 from botorch.optim.utils.numpy_utils import get_bounds_as_ndarray
 from botorch.optim.utils.timeout import minimize_with_timeout
-from numpy import asarray, float64 as np_float64, ndarray
+from numpy import asarray, float64 as np_float64
 from torch import Tensor
 from torch.optim.adam import Adam
 from torch.optim.optimizer import Optimizer
@@ -60,7 +62,7 @@ def scipy_minimize(
     parameters: dict[str, Tensor],
     bounds: dict[str, tuple[float | None, float | None]] | None = None,
     callback: Callable[[dict[str, Tensor], OptimizationResult], None] | None = None,
-    x0: ndarray | None = None,
+    x0: npt.NDArray | None = None,
     method: str = "L-BFGS-B",
     options: dict[str, Any] | None = None,
     timeout_sec: float | None = None,
@@ -98,7 +100,7 @@ def scipy_minimize(
     else:
         call_counter = count(1)  # callbacks are typically made at the end of each iter
 
-        def wrapped_callback(x: ndarray):
+        def wrapped_callback(x: npt.NDArray):
             result = OptimizationResult(
                 step=next(call_counter),
                 fval=float(wrapped_closure(x)[0]),
