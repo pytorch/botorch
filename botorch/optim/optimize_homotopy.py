@@ -87,7 +87,7 @@ def optimize_acqf_homotopy(
     ]:
         if kwarg_dict.get("return_best_only", None) is not False:
             warnings.warn(
-                f"`return_best_only` is set to True in `{kwarg_dict_name}`, override to False."
+                f"`return_best_only` is not False in `{kwarg_dict_name}`, override to False."
             )
             kwarg_dict["return_best_only"] = False
 
@@ -101,6 +101,7 @@ def optimize_acqf_homotopy(
                 "removing it in favour of `batch_initial_conditions` given to "
                 "`optimize_acqf_homotopy`."
             )
+            # are pops dangerious here given no copy? if repeatedly reusing kwarg_dict it could create issues
             kwarg_dict.pop("batch_initial_conditions")
 
         for arg_name, arg_value in [("acq_function", acq_function), ("bounds", bounds)]:
@@ -133,7 +134,7 @@ def optimize_acqf_homotopy(
             "removing it as we set `batch_initial_conditions` to the candidates "
             "returned by homotopy loop for the final optimization."
         )
-        optimize_acqf_final_kwargs.pop("raw_samples")
+        optimize_acqf_final_kwargs.pop("raw_samples")  # are pops dangerious here given no copy? see above
 
     candidate_list, acq_value_list = [], []
     if q > 1:

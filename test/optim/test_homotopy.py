@@ -124,7 +124,7 @@ class TestHomotopy(BotorchTestCase):
             acq_function=acqf,
             bounds=torch.tensor([[-10], [5]]).to(**tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
-            optimize_acqf_loop_kwargs=optimize_acqf_core_kwargs,
+            optimize_acqf_loop_kwargs={**optimize_acqf_core_kwargs},
             optimize_acqf_final_kwargs={
                 **optimize_acqf_core_kwargs,
                 "post_processing_func": lambda x: x.round(),
@@ -146,9 +146,9 @@ class TestHomotopy(BotorchTestCase):
             homotopy=Homotopy(homotopy_parameters=[hp]),
             optimize_acqf_loop_kwargs={
                 **optimize_acqf_core_kwargs,
-                "fixed_features": fixed_features,
+                "fixed_features": fixed_features,  # this is done to mimic old behaviour which was perhaps a bug?
             },
-            optimize_acqf_final_kwargs=optimize_acqf_core_kwargs,
+            optimize_acqf_final_kwargs={**optimize_acqf_core_kwargs},
         )
         self.assertEqual(candidate[0, 0], torch.tensor(1, **tkwargs))
 
@@ -163,12 +163,35 @@ class TestHomotopy(BotorchTestCase):
                 **optimize_acqf_core_kwargs,
                 "fixed_features": fixed_features,
             },
-            optimize_acqf_final_kwargs=optimize_acqf_core_kwargs,
+            optimize_acqf_final_kwargs={**optimize_acqf_core_kwargs},
         )
         self.assertEqual(candidate.shape, torch.Size([3, 2]))
         self.assertEqual(acqf_val.shape, torch.Size([3]))
 
         # with linear constraints
+        constraints = [(  # X[..., 0] + X[..., 1] >= 2.
+            torch.tensor([0, 1], device=self.device),
+            torch.ones(2, device=self.device, dtype=torch.double),
+            2.0,
+        )]
+
+        acqf = PosteriorMean(model=model)
+        candidate, acqf_val = optimize_acqf_homotopy(
+            q=1,
+            acq_function=acqf,
+            bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+            homotopy=Homotopy(homotopy_parameters=[hp]),
+            optimize_acqf_loop_kwargs={
+                **optimize_acqf_core_kwargs,
+                "inequality_constraints": constraints,
+            },
+            optimize_acqf_final_kwargs={
+                **optimize_acqf_core_kwargs,
+                "inequality_constraints": constraints,
+            },
+        )
+        self.assertEqual(candidate.shape, torch.Size([1, 2]))
+        self.assertGreaterEqual(candidate.sum(), 2 * torch.ones(1, **tkwargs))
 
     def test_prune_candidates(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
@@ -225,7 +248,7 @@ class TestHomotopy(BotorchTestCase):
             acq_function=acqf,
             bounds=torch.tensor([[-10], [5]]).to(**tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
-            optimize_acqf_loop_kwargs=optimize_acqf_core_kwargs,
+            optimize_acqf_loop_kwargs={**optimize_acqf_core_kwargs},
             optimize_acqf_final_kwargs={
                 **optimize_acqf_core_kwargs,
                 "post_processing_func": lambda x: x.round(),
