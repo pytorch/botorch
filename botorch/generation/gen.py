@@ -17,6 +17,7 @@ from functools import partial
 from typing import Any, NoReturn
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import OptimizationGradientError
@@ -191,7 +192,7 @@ def gen_candidates_scipy(
     with_grad = options.get("with_grad", True)
     if with_grad:
 
-        def f_np_wrapper(x: np.ndarray, f: Callable):
+        def f_np_wrapper(x: npt.NDArray, f: Callable):
             """Given a torch callable, compute value + grad given a numpy array."""
             if np.isnan(x).any():
                 raise RuntimeError(
@@ -223,7 +224,7 @@ def gen_candidates_scipy(
 
     else:
 
-        def f_np_wrapper(x: np.ndarray, f: Callable):
+        def f_np_wrapper(x: npt.NDArray, f: Callable):
             X = torch.from_numpy(x).to(initial_conditions).view(shapeX).contiguous()
             with torch.no_grad():
                 X_fix = fix_features(X=X, fixed_features=fixed_features)

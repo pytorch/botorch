@@ -24,6 +24,7 @@ from contextlib import contextmanager
 from typing import Any, TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
 import scipy
 import torch
 from botorch.exceptions.errors import BotorchError
@@ -374,11 +375,11 @@ def _convert_bounds_to_inequality_constraints(bounds: Tensor) -> tuple[Tensor, T
 
 
 def find_interior_point(
-    A: np.ndarray,
-    b: np.ndarray,
-    A_eq: np.ndarray | None = None,
-    b_eq: np.ndarray | None = None,
-) -> np.ndarray:
+    A: npt.NDArray,
+    b: npt.NDArray,
+    A_eq: npt.NDArray | None = None,
+    b_eq: npt.NDArray | None = None,
+) -> npt.NDArray:
     r"""Find an interior point of a polytope via linear programming.
 
     Args:

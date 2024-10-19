@@ -8,6 +8,7 @@ from collections.abc import Callable
 from itertools import product
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from botorch.exceptions.errors import CandidateGenerationError, UnsupportedError
 from botorch.optim.parameter_constraints import (
@@ -55,7 +56,7 @@ class TestParameterConstraints(BotorchTestCase):
         def nlc(x):
             return 4 - x.sum()
 
-        def f_np_wrapper(x: np.ndarray, f: Callable):
+        def f_np_wrapper(x: npt.NDArray, f: Callable):
             """Given a torch callable, compute value + grad given a numpy array."""
             X = (
                 torch.from_numpy(x)
@@ -114,7 +115,7 @@ class TestParameterConstraints(BotorchTestCase):
         def nlc(x):
             return 4 - x.sum()
 
-        def f_np_wrapper(x: np.ndarray, f: Callable):
+        def f_np_wrapper(x: npt.NDArray, f: Callable):
             """Given a torch callable, compute value + grad given a numpy array."""
             X = (
                 torch.from_numpy(x)

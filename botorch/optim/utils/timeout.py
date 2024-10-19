@@ -11,14 +11,14 @@ import warnings
 from collections.abc import Callable, Sequence
 from typing import Any
 
-import numpy as np
+import numpy.typing as npt
 from botorch.exceptions.errors import OptimizationTimeoutError
 from scipy import optimize
 
 
 def minimize_with_timeout(
-    fun: Callable[[np.ndarray, ...], float],
-    x0: np.ndarray,
+    fun: Callable[[npt.NDArray, ...], float],
+    x0: npt.NDArray,
     args: tuple[Any, ...] = (),
     method: str | None = None,
     jac: str | Callable | bool | None = None,
@@ -45,7 +45,7 @@ def minimize_with_timeout(
         start_time = time.monotonic()
         callback_data = {"num_iterations": 0}  # update from withing callback below
 
-        def timeout_callback(xk: np.ndarray) -> bool:
+        def timeout_callback(xk: npt.NDArray) -> bool:
             runtime = time.monotonic() - start_time
             callback_data["num_iterations"] += 1
             if runtime > timeout_sec:
@@ -63,14 +63,14 @@ def minimize_with_timeout(
         elif method == "trust-constr":  # special signature
 
             def wrapped_callback(
-                xk: np.ndarray, state: optimize.OptimizeResult
+                xk: npt.NDArray, state: optimize.OptimizeResult
             ) -> bool:
                 # order here is important to make sure base callback gets executed
                 return callback(xk, state) or timeout_callback(xk=xk)
 
         else:
 
-            def wrapped_callback(xk: np.ndarray) -> None:
+            def wrapped_callback(xk: npt.NDArray) -> None:
                 timeout_callback(xk=xk)
                 callback(xk)
 
