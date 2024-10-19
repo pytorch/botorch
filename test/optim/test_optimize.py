@@ -132,7 +132,6 @@ class TestOptimizeAcqf(BotorchTestCase):
                 mock_gen_candidates_scipy,
                 mock_gen_candidates_torch,
             ):
-
                 mock_gen_batch_initial_conditions.return_value = torch.zeros(
                     num_restarts, q, 3, device=self.device, dtype=dtype
                 )

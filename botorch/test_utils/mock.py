@@ -8,6 +8,7 @@
 Utilities for speeding up optimization in tests.
 
 """
+
 from __future__ import annotations
 
 from collections.abc import Generator

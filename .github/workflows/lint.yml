@@ -25,7 +25,6 @@ jobs:
       run: |
         # pin dependencies to match Meta-internal versions
         pip install -r requirements-fmt.txt
-        pip install ufmt
     - name: ufmt
       run: |
         ufmt diff .

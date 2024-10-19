@@ -72,7 +72,6 @@ EXPECTED_KEYS_NOISE = EXPECTED_KEYS + [
 
 
 class TestFullyBayesianMultiTaskGP(BotorchTestCase):
-
     def _get_data_and_model(
         self,
         task_rank: int | None = None,

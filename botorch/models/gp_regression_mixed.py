@@ -64,9 +64,8 @@ class MixedSingleTaskGP(SingleTaskGP):
         train_Y: Tensor,
         cat_dims: list[int],
         train_Yvar: Tensor | None = None,
-        cont_kernel_factory: None | (
-            Callable[[torch.Size, int, list[int]], Kernel]
-        ) = None,
+        cont_kernel_factory: None
+        | (Callable[[torch.Size, int, list[int]], Kernel]) = None,
         likelihood: Likelihood | None = None,
         outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
         input_transform: InputTransform | None = None,  # TODO

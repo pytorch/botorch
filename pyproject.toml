@@ -8,3 +8,6 @@ write_to = "./botorch/version.py"
 
 [tool.usort]
 first_party_detection = false
+
+[tool.ufmt]
+formatter = "ruff-api"

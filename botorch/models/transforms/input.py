@@ -13,6 +13,7 @@ rounding functions, and log transformations. The input transformation
 is typically part of a Model and applied within the model.forward()
 method.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

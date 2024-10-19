@@ -370,9 +370,7 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                         ModelListGP, "fantasize", return_value=mfm
                     ) as patch_f, mock.patch(
                         NO, new_callable=mock.PropertyMock
-                    ) as mock_num_outputs, warnings.catch_warnings(
-                        record=True
-                    ) as ws:
+                    ) as mock_num_outputs, warnings.catch_warnings(record=True) as ws:
                         mock_num_outputs.return_value = 3
                         qHVKG = acqf_class(
                             model=model,

@@ -21,7 +21,7 @@ from torch import Tensor
 
 
 def _convert_nonlinear_inequality_constraints(
-    nonlinear_inequality_constraints: list[Callable | tuple[Callable, bool]]
+    nonlinear_inequality_constraints: list[Callable | tuple[Callable, bool]],
 ) -> list[tuple[Callable, bool]]:
     """Convert legacy defintions of nonlinear inequality constraints into the new
     format. Assumes intra-point constraints.

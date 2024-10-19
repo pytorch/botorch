@@ -40,7 +40,6 @@ from torch.nn.functional import pad
 
 
 def _get_mcmc_samples(num_samples: int, dim: int, infer_noise: bool, **tkwargs):
-
     mcmc_samples = {
         "lengthscale": 1 + torch.rand(num_samples, 1, dim, **tkwargs),
         "outputscale": 1 + torch.rand(num_samples, **tkwargs),
