@@ -5,20 +5,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from typing import Any
 
 import torch
 from botorch.acquisition import AcquisitionFunction
-from botorch.optim.homotopy import Homotopy
-from botorch.optim.optimize import optimize_acqf
-from torch import Tensor
-
-from collections.abc import Callable
 
 from botorch.generation.gen import TGenCandidates
-from botorch.optim.initializers import (
-    TGenInitialConditions,
-)
+from botorch.optim.homotopy import Homotopy
+from botorch.optim.initializers import TGenInitialConditions
+from botorch.optim.optimize import optimize_acqf
+from torch import Tensor
 
 
 def prune_candidates(
@@ -188,7 +186,7 @@ def optimize_acqf_homotopy(
                 q=1,
                 options=options,
                 batch_initial_conditions=candidates,
-                **shared_optimize_acqf_kwargs
+                **shared_optimize_acqf_kwargs,
             )
             homotopy.step()
 

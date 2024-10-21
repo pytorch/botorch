@@ -158,11 +158,13 @@ class TestHomotopy(BotorchTestCase):
         self.assertEqual(acqf_val.shape, torch.Size([3]))
 
         # with linear constraints
-        constraints = [(  # X[..., 0] + X[..., 1] >= 2.
-            torch.tensor([0, 1], device=self.device),
-            torch.ones(2, device=self.device, dtype=torch.double),
-            2.0,
-        )]
+        constraints = [
+            (  # X[..., 0] + X[..., 1] >= 2.
+                torch.tensor([0, 1], device=self.device),
+                torch.ones(2, device=self.device, dtype=torch.double),
+                2.0,
+            )
+        ]
 
         acqf = PosteriorMean(model=model)
         candidate, acqf_val = optimize_acqf_homotopy(
