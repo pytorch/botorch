@@ -51,7 +51,7 @@ Here's a quick run down of the main components of a Bayesian Optimization loop.
 
     gp = SingleTaskGP(
         train_X=train_X,
-        train_Y=Y,
+        train_Y=train_Y,
         input_transform=Normalize(d=2),
         outcome_transform=Standardize(m=1),
     )
@@ -63,7 +63,7 @@ Here's a quick run down of the main components of a Bayesian Optimization loop.
     ```python
     from botorch.acquisition import LogExpectedImprovement
 
-    logNEI = LogExpectedImprovement(model=gp, best_f=Y.max())
+    logNEI = LogExpectedImprovement(model=gp, best_f=train_Y.max())
     ```
 
 3. Optimize the acquisition function
