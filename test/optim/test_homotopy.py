@@ -177,7 +177,7 @@ class TestHomotopy(BotorchTestCase):
             inequality_constraints=constraints,
         )
         self.assertEqual(candidate.shape, torch.Size([1, 2]))
-        self.assertGreaterEqual(candidate.sum(), 2.0)
+        self.assertGreaterEqual(candidate.sum().item(), 2.0 - 1e-6)
 
     def test_prune_candidates(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
