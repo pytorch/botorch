@@ -94,7 +94,8 @@ def optimize_acqf_homotopy(
         raw_samples: The number of samples for initialization. This is required
             if `batch_initial_conditions` is not specified.
         options: Options for candidate generation in the initial step of the homotopy.
-        final_options: Options for candidate generation in the final step of the homotopy.
+        final_options: Options for candidate generation in the final step of
+            the homotopy.
         inequality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
@@ -161,7 +162,7 @@ def optimize_acqf_homotopy(
         "equality_constraints": equality_constraints,
         "nonlinear_inequality_constraints": nonlinear_inequality_constraints,
         "fixed_features": fixed_features,
-        "return_best_only": False,  # This is set to False so that the restarts propagate through to the final homotopy.
+        "return_best_only": False,  # False to make n_restarts persist through homotopy.
         "gen_candidates": gen_candidates,
         "sequential": sequential,
         "ic_generator": ic_generator,
