@@ -157,6 +157,28 @@ class TestHomotopy(BotorchTestCase):
         self.assertEqual(candidate.shape, torch.Size([3, 2]))
         self.assertEqual(acqf_val.shape, torch.Size([3]))
 
+        # with linear constraints
+        constraints = [
+            (  # X[..., 0] + X[..., 1] >= 2.
+                torch.tensor([0, 1], device=self.device),
+                torch.ones(2, device=self.device, dtype=torch.double),
+                2.0,
+            )
+        ]
+
+        acqf = PosteriorMean(model=model)
+        candidate, acqf_val = optimize_acqf_homotopy(
+            q=1,
+            acq_function=acqf,
+            bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+            homotopy=Homotopy(homotopy_parameters=[hp]),
+            num_restarts=2,
+            raw_samples=16,
+            inequality_constraints=constraints,
+        )
+        self.assertEqual(candidate.shape, torch.Size([1, 2]))
+        self.assertGreaterEqual(candidate.sum().item(), 2.0 - 1e-6)
+
     def test_prune_candidates(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
         # no pruning
@@ -210,6 +232,7 @@ class TestHomotopy(BotorchTestCase):
             num_restarts=4,
             raw_samples=16,
             post_processing_func=lambda x: x.round(),
+            return_full_tree=True,
         )
         # First time we expect to call `prune_candidates` with 4 candidates
         self.assertEqual(

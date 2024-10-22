@@ -489,7 +489,8 @@ def optimize_acqf(
             functions and `gen_batch_initial_conditions` otherwise. Must be specified
             for nonlinear inequality constraints.
         timeout_sec: Max amount of time optimization can run for.
-        return_full_tree:
+        return_full_tree: Return the full tree of optimizers of the previous
+            iteration.
         retry_on_optimization_warning: Whether to retry candidate generation with a new
             set of initial conditions when it fails with an `OptimizationWarning`.
         ic_gen_kwargs: Additional keyword arguments passed to function specified by
@@ -623,7 +624,8 @@ def optimize_acqf_cyclic(
             functions and `gen_batch_initial_conditions` otherwise. Must be specified
             for nonlinear inequality constraints.
         timeout_sec: Max amount of time optimization can run for.
-        return_full_tree:
+        return_full_tree: Return the full tree of optimizers of the previous
+            iteration.
         retry_on_optimization_warning: Whether to retry candidate generation with a new
             set of initial conditions when it fails with an `OptimizationWarning`.
         ic_gen_kwargs: Additional keyword arguments passed to function specified by
