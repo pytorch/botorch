@@ -14,10 +14,14 @@ from unittest import mock
 
 import numpy as np
 import torch
+from botorch.acquisition.objective import (
+    LinearMCObjective,
+    ScalarizedPosteriorTransform,
+)
 from botorch.exceptions.errors import BotorchError
 from botorch.exceptions.warnings import UserInputWarning
 from botorch.models.gp_regression import SingleTaskGP
-from botorch.sampling.pathwise import draw_matheron_paths
+from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.utils.sampling import (
     _convert_bounds_to_inequality_constraints,
     batched_multinomial,
@@ -552,23 +556,35 @@ class TestOptimizePosteriorSamples(BotorchTestCase):
         torch.manual_seed(1)
         dims = 2
         dtype = torch.float64
-        eps = 1e-6
-        for_testing_speed_kwargs = {"raw_samples": 512, "num_restarts": 10}
+        eps = 1e-4
+        for_testing_speed_kwargs = {"raw_samples": 128, "num_restarts": 4}
         nums_optima = (1, 7)
-        batch_shapes = ((), (3,), (5, 2))
-        for num_optima, batch_shape in itertools.product(nums_optima, batch_shapes):
+        batch_shapes = ((), (2,), (3, 2))
+        posterior_transforms = (
+            None,
+            ScalarizedPosteriorTransform(weights=-torch.ones(1, dtype=dtype)),
+        )
+        for num_optima, batch_shape, posterior_transform in itertools.product(
+            nums_optima, batch_shapes, posterior_transforms
+        ):
             bounds = torch.tensor([[0, 1]] * dims, dtype=dtype).T
-            X = torch.rand(*batch_shape, 13, dims, dtype=dtype)
+            X = torch.rand(*batch_shape, 4, dims, dtype=dtype)
             Y = torch.pow(X - 0.5, 2).sum(dim=-1, keepdim=True)
 
             # having a noiseless model all but guarantees that the found optima
             # will be better than the observations
             model = SingleTaskGP(X, Y, torch.full_like(Y, eps))
-            paths = draw_matheron_paths(
+            model.covar_module.lengthscale = 0.5
+            paths = get_matheron_path_model(
                 model=model, sample_shape=torch.Size([num_optima])
             )
             X_opt, f_opt = optimize_posterior_samples(
-                paths, bounds, **for_testing_speed_kwargs
+                paths=paths,
+                bounds=bounds,
+                sample_transform=(
+                    posterior_transform.evaluate if posterior_transform else None
+                ),
+                **for_testing_speed_kwargs,
             )
 
             correct_X_shape = (num_optima,) + batch_shape + (dims,)
@@ -581,4 +597,72 @@ class TestOptimizePosteriorSamples(BotorchTestCase):
 
             # Check that the all found optima are larger than the observations
             # This is not 100% deterministic, but just about.
-            self.assertTrue(torch.all(f_opt > Y.max(dim=-2).values))
+            Y_queries = paths(X)
+            # this is when we negate, so the values should be smaller
+            if posterior_transform:
+                self.assertTrue(torch.all(f_opt < Y_queries.min(dim=-2).values))
+
+            # otherwise, larger
+            else:
+                self.assertTrue(torch.all(f_opt > Y_queries.max(dim=-2).values))
+
+        obj = LinearMCObjective(weights=-torch.ones(1, dtype=dtype))
+        X_opt, f_opt = optimize_posterior_samples(
+            paths=paths,
+            bounds=bounds,
+            sample_transform=obj,
+            **for_testing_speed_kwargs,
+        )
+        self.assertTrue(torch.all(f_opt < Y_queries.max(dim=-2).values))
+
+    def test_optimize_posterior_samples_multi_objective(self):
+        # Fix the random seed to prevent flaky failures.
+        torch.manual_seed(1)
+        dims = 2
+        dtype = torch.float64
+        eps = 1e-4
+        for_testing_speed_kwargs = {"raw_samples": 128, "num_restarts": 4}
+        num_optima = 5
+        batch_shape = (3,)
+
+        # test that multi-output models are supported if there is an appropriate
+        # scalarization
+        bounds = torch.tensor([[0, 1]] * dims, dtype=dtype).T
+        X = torch.rand(*batch_shape, 4, dims, dtype=dtype)
+        Y1 = torch.pow(X - 0.5, 2).sum(dim=-1, keepdim=True)
+        Y2 = torch.cos(X * 3).sum(dim=-1, keepdim=True)
+        Y = torch.cat([Y1, Y2], dim=-1)
+        # having a noiseless model all but guarantees that the found optima
+        # will be better than the observations
+        model = SingleTaskGP(X, Y, torch.full_like(Y, eps))
+        model.covar_module.lengthscale = 0.5
+        posterior_transform = ScalarizedPosteriorTransform(
+            weights=torch.ones(2, dtype=dtype)
+        )
+        paths = get_matheron_path_model(
+            model=model,
+            sample_shape=torch.Size([num_optima]),
+        )
+        X_opt, f_opt = optimize_posterior_samples(
+            paths=paths,
+            bounds=bounds,
+            sample_transform=posterior_transform.evaluate,
+            **for_testing_speed_kwargs,
+        )
+
+        correct_X_shape = (num_optima,) + batch_shape + (dims,)
+        correct_f_shape = (num_optima,) + batch_shape + (2,)
+        self.assertEqual(X_opt.shape, correct_X_shape)
+        self.assertEqual(f_opt.shape, correct_f_shape)
+        self.assertTrue(torch.all(X_opt >= bounds[0]))
+        self.assertTrue(torch.all(X_opt <= bounds[1]))
+
+        X_opt, f_opt = optimize_posterior_samples(
+            paths=paths,
+            bounds=bounds,
+            sample_transform=posterior_transform.evaluate,
+            return_transformed=True,
+            **for_testing_speed_kwargs,
+        )
+        correct_f_shape = (num_optima,) + batch_shape + (1,)
+        self.assertEqual(f_opt.shape, correct_f_shape)
