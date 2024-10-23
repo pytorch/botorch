@@ -1000,6 +1000,8 @@ def optimize_acqf_discrete(
     choices: Tensor,
     max_batch_size: int = 2048,
     unique: bool = True,
+    X_avoid: Tensor | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Optimize over a discrete set of points using batch evaluation.
 
@@ -1017,6 +1019,12 @@ def optimize_acqf_discrete(
             a large training set.
         unique: If True return unique choices, o/w choices may be repeated
             (only relevant if `q > 1`).
+        X_avoid: An `n x d` tensor of candidates that we aren't allowed to pick.
+            These will be removed from the set of choices.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
+            Infeasible points will be removed from the set of choices.
 
     Returns:
         A two-element tuple containing
@@ -1029,8 +1037,31 @@ def optimize_acqf_discrete(
             "Discrete optimization is not supported for"
             "one-shot acquisition functions."
         )
-    if choices.numel() == 0:
-        raise InputDataError("`choices` must be non-emtpy.")
+    if X_avoid is not None and unique:
+        choices = _filter_invalid(X=choices, X_avoid=X_avoid)
+    if inequality_constraints is not None:
+        choices = _filter_infeasible(
+            X=choices, inequality_constraints=inequality_constraints
+        )
+    len_choices = len(choices)
+    if len_choices == 0:
+        message = "`choices` must be non-empty."
+        if X_avoid is not None or inequality_constraints is not None:
+            message += (
+                " No feasible points remain after removing `X_avoid` and "
+                "filtering out infeasible points."
+            )
+        raise InputDataError(message)
+    elif len_choices < q and unique:
+        warnings.warn(
+            (
+                f"Requested {q=} candidates from fully discrete search "
+                f"space, but only {len_choices} possible choices remain. "
+            ),
+            OptimizationWarning,
+            stacklevel=2,
+        )
+        q = len_choices
     choices_batched = choices.unsqueeze(-2)
     if q > 1:
         candidate_list, acq_value_list = [], []
@@ -1081,7 +1112,7 @@ def _generate_neighbors(
     discrete_choices: list[Tensor],
     X_avoid: Tensor,
     inequality_constraints: list[tuple[Tensor, Tensor, float]],
-):
+) -> Tensor:
     # generate all 1D perturbations
     npts = sum([len(c) for c in discrete_choices])
     X_loc = x.repeat(npts, 1)
@@ -1097,7 +1128,7 @@ def _generate_neighbors(
 
 def _filter_infeasible(
     X: Tensor, inequality_constraints: list[tuple[Tensor, Tensor, float]]
-):
+) -> Tensor:
     """Remove all points from `X` that don't satisfy the constraints."""
     is_feasible = torch.ones(X.shape[0], dtype=torch.bool, device=X.device)
     for inds, weights, bound in inequality_constraints:
@@ -1105,7 +1136,7 @@ def _filter_infeasible(
     return X[is_feasible]
 
 
-def _filter_invalid(X: Tensor, X_avoid: Tensor):
+def _filter_invalid(X: Tensor, X_avoid: Tensor) -> Tensor:
     """Remove all occurences of `X_avoid` from `X`."""
     return X[~(X == X_avoid.unsqueeze(-2)).all(dim=-1).any(dim=-2)]
 
