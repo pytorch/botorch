@@ -72,7 +72,6 @@ def construct_inputs_SCoreBO(
         model=model,
         bounds=torch.as_tensor(bounds, dtype=dtype).T,
         num_optima=num_optima,
-        maximize=maximize,
     )
 
     inputs = {
