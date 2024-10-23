@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple
 
 import torch
 from botorch.acquisition.input_constructors import acqf_input_constructor
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.acquisition.utils import get_optimal_samples
 from botorch.models.model import Model
 from botorch_community.acquisition.bayesian_active_learning import (
@@ -62,7 +63,7 @@ def construct_inputs_SCoreBO(
     model: Model,
     bounds: List[Tuple[float, float]],
     num_optima: int = 8,
-    maximize: bool = True,
+    posterior_transform: Optional[ScalarizedPosteriorTransform] = None,
     distance_metric: str = "hellinger",
     X_pending: Optional[Tensor] = None,
 ):
@@ -72,14 +73,15 @@ def construct_inputs_SCoreBO(
         model=model,
         bounds=torch.as_tensor(bounds, dtype=dtype).T,
         num_optima=num_optima,
+        posterior_transform=posterior_transform,
+        return_transformed=True,
     )
-
     inputs = {
         "model": model,
         "optimal_inputs": optimal_inputs,
         "optimal_outputs": optimal_outputs,
         "distance_metric": distance_metric,
-        "maximize": maximize,
+        "posterior_transform": posterior_transform,
         "X_pending": X_pending,
     }
     return inputs

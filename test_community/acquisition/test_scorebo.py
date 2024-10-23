@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.utils.test_helpers import get_fully_bayesian_model
 from botorch.utils.testing import BotorchTestCase
 from botorch_community.acquisition.scorebo import qSelfCorrectingBayesianOptimization
@@ -21,13 +22,12 @@ class TestQSelfCorrectingBayesianOptimization(BotorchTestCase):
             distance_metric,
             only_maxval,
             standardize_model,
-            maximize,
         ) in [
-            (torch.float, "hellinger", False, True, True),
-            (torch.double, "hellinger", True, False, False),
-            (torch.float, "kl_divergence", False, True, True),
-            (torch.double, "kl_divergence", True, False, False),
-            (torch.double, "kl_divergence", True, True, False),
+            (torch.float, "hellinger", True, True),
+            (torch.double, "hellinger", False, False),
+            (torch.float, "kl_divergence", True, True),
+            (torch.double, "kl_divergence", False, False),
+            (torch.double, "kl_divergence", True, False),
         ]:
             tkwargs["dtype"] = dtype
             input_dim = 2
@@ -66,7 +66,6 @@ class TestQSelfCorrectingBayesianOptimization(BotorchTestCase):
                     optimal_outputs=optimal_outputs,
                     distance_metric=distance_metric,
                     X_pending=X_pending,
-                    maximize=maximize,
                 )
 
                 test_Xs = [
@@ -81,6 +80,18 @@ class TestQSelfCorrectingBayesianOptimization(BotorchTestCase):
                     # assess shape
                     self.assertTrue(acq_X.shape == test_Xs[j].shape[:-2])
 
+        acq = qSelfCorrectingBayesianOptimization(
+            model=model,
+            optimal_inputs=optimal_inputs,
+            optimal_outputs=optimal_outputs,
+            posterior_transform=ScalarizedPosteriorTransform(
+                weights=-torch.ones(1, **tkwargs)
+            ),
+        )
+        self.assertTrue(torch.all(acq.optimal_output_values == -acq.optimal_outputs))
+        acq_X = acq(test_Xs[j])
+        self.assertTrue(acq_X.shape == test_Xs[j].shape[:-2])
+
         with self.assertRaises(ValueError):
             acq = qSelfCorrectingBayesianOptimization(
                 model=model,
@@ -88,5 +99,4 @@ class TestQSelfCorrectingBayesianOptimization(BotorchTestCase):
                 optimal_outputs=optimal_outputs,
                 distance_metric="NOT_A_DISTANCE",
                 X_pending=X_pending,
-                maximize=maximize,
             )
