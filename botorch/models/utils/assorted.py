@@ -11,7 +11,6 @@ from __future__ import annotations
 import warnings
 from collections.abc import Iterator
 from contextlib import contextmanager, ExitStack
-from typing import Optional
 
 import torch
 from botorch import settings
@@ -49,8 +48,8 @@ def multioutput_to_batch_mode_transform(
     train_X: Tensor,
     train_Y: Tensor,
     num_outputs: int,
-    train_Yvar: Optional[Tensor] = None,
-) -> tuple[Tensor, Tensor, Optional[Tensor]]:
+    train_Yvar: Tensor | None = None,
+) -> tuple[Tensor, Tensor, Tensor | None]:
     r"""Transforms training inputs for a multi-output model.
 
     Used for multi-output models that internally are represented by a
@@ -138,7 +137,7 @@ def check_min_max_scaling(
     strict: bool = False,
     atol: float = 1e-2,
     raise_on_fail: bool = False,
-    ignore_dims: Optional[list[int]] = None,
+    ignore_dims: list[int] | None = None,
 ) -> None:
     r"""Check that tensor is normalized to the unit cube.
 
@@ -226,9 +225,9 @@ def check_standardization(
 def validate_input_scaling(
     train_X: Tensor,
     train_Y: Tensor,
-    train_Yvar: Optional[Tensor] = None,
+    train_Yvar: Tensor | None = None,
     raise_on_fail: bool = False,
-    ignore_X_dims: Optional[list[int]] = None,
+    ignore_X_dims: list[int] | None = None,
 ) -> None:
     r"""Helper function to validate input data to models.
 

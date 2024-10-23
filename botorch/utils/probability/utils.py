@@ -7,12 +7,12 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 
 from functools import lru_cache
 from math import pi
 from numbers import Number
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 import torch
 from botorch.utils.safe_math import logdiffexp
@@ -80,10 +80,10 @@ def case_dispatcher(
 
 @lru_cache(maxsize=None)
 def get_constants(
-    values: Union[Number, Iterator[Number]],
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
-) -> Union[Tensor, tuple[Tensor, ...]]:
+    values: Number | Iterator[Number],
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
+) -> Tensor | tuple[Tensor, ...]:
     r"""Returns scalar-valued Tensors containing each of the given constants.
     Used to expedite tensor operations involving scalar arithmetic. Note that
     the returned Tensors should not be modified in-place."""
@@ -94,16 +94,16 @@ def get_constants(
 
 
 def get_constants_like(
-    values: Union[Number, Iterator[Number]],
+    values: Number | Iterator[Number],
     ref: Tensor,
-) -> Union[Tensor, Iterator[Tensor]]:
+) -> Tensor | Iterator[Tensor]:
     return get_constants(values, device=ref.device, dtype=ref.dtype)
 
 
 def gen_positional_indices(
     shape: torch.Size,
     dim: int,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
 ) -> Iterator[torch.LongTensor]:
     ndim = len(shape)
     _dim = ndim + dim if dim < 0 else dim
@@ -119,7 +119,7 @@ def gen_positional_indices(
 def build_positional_indices(
     shape: torch.Size,
     dim: int,
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
 ) -> LongTensor:
     return sum(gen_positional_indices(shape=shape, dim=dim, device=device))
 
@@ -259,10 +259,10 @@ def log_prob_normal_in(a: Tensor, b: Tensor) -> Tensor:
 
 def swap_along_dim_(
     values: Tensor,
-    i: Union[int, LongTensor],
-    j: Union[int, LongTensor],
+    i: int | LongTensor,
+    j: int | LongTensor,
     dim: int,
-    buffer: Optional[Tensor] = None,
+    buffer: Tensor | None = None,
 ) -> Tensor:
     r"""Swaps Tensor slices in-place along dimension `dim`.
 
@@ -326,3 +326,82 @@ def swap_along_dim_(
         values[j] = buffer
 
     return values
+
+
+def compute_log_prob_feas_from_bounds(
+    con_lower_inds: Tensor,
+    con_upper_inds: Tensor,
+    con_both_inds: Tensor,
+    con_lower: Tensor,
+    con_upper: Tensor,
+    con_both: Tensor,
+    means: Tensor,
+    sigmas: Tensor,
+) -> Tensor:
+    r"""Compute logarithm of the feasibility probability for each batch of mean/sigma.
+
+    Args:
+        means: A `(b) x m`-dim Tensor of means.
+        sigmas: A `(b) x m`-dim Tensor of standard deviations.
+        con_lower_inds: 1d Tensor of indices con_lower applies to
+            in the second dimension of means and sigmas.
+        con_upper_inds: 1d Tensor of indices con_upper applies to
+            in the second dimension of means and sigmas.
+        con_both_inds: 1d Tensor of indices con_both applies to
+            in the second dimension of means and sigmas.
+        con_lower: 1d Tensor of lower bounds on the constraints
+            equal in dimension to con_lower_inds.
+        con_upper: 1d Tensor of upper bounds on the constraints
+            equal in dimension to con_upper_inds.
+        con_both: 2d Tensor of "both" bounds on the constraints
+            equal in length to con_both_inds.
+    Returns:
+        A `b`-dim tensor of log feasibility probabilities
+    """
+    log_prob = torch.zeros_like(means[..., 0])
+    if len(con_lower_inds) > 0:
+        i = con_lower_inds
+        dist_l = (con_lower - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_ndtr(-dist_l).sum(dim=-1)  # 1 - Phi(x) = Phi(-x)
+    if len(con_upper_inds) > 0:
+        i = con_upper_inds
+        dist_u = (con_upper - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_ndtr(dist_u).sum(dim=-1)
+    if len(con_both_inds) > 0:
+        i = con_both_inds
+        con_lower, con_upper = con_both[:, 0], con_both[:, 1]
+        # scaled distance to lower and upper constraint boundary:
+        dist_l = (con_lower - means[..., i]) / sigmas[..., i]
+        dist_u = (con_upper - means[..., i]) / sigmas[..., i]
+        log_prob = log_prob + log_prob_normal_in(a=dist_l, b=dist_u).sum(dim=-1)
+    return log_prob
+
+
+def percentile_of_score(data: Tensor, score: Tensor, dim: int = -1) -> Tensor:
+    """Compute the percentile rank of `score` relative to `data`.
+    For example, if this function returns 70 then 70% of the
+    values in `data` are below `score`.
+
+    This implementation is based on `scipy.stats.percentileofscore`,
+    with `kind='rank'` and `nan_policy='propagate'`, which is the default.
+
+    Args:
+        data: A `... x n x output_shape`-dim Tensor of data.
+        score: A `... x 1 x output_shape`-dim Tensor of scores.
+
+    Returns:
+        A `... x output_shape`-dim Tensor of percentile ranks.
+    """
+    # based on scipy.stats.percentileofscore
+    left = torch.count_nonzero(data < score, dim=dim)
+    right = torch.count_nonzero(data <= score, dim=dim)
+    plus1 = left < right
+    perct = (left + right + plus1) * (50.0 / data.shape[dim])
+    # perct shape: `... x output_shape`
+    # fill in nans due to current trial progression being nan
+    nan_mask = torch.broadcast_to(torch.isnan(score.squeeze(dim)), perct.shape)
+    perct[nan_mask] = torch.nan
+    # fill in nans due to previous trial progressions being nan
+    nan_mask = torch.broadcast_to(torch.any(torch.isnan(data), dim=dim), perct.shape)
+    perct[nan_mask] = torch.nan
+    return perct

@@ -11,8 +11,9 @@ Some basic data transformation helpers.
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import torch
 from botorch.utils.safe_math import logmeanexp
@@ -119,7 +120,7 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
     return X * (bounds[1] - bounds[0]) + bounds[0]
 
 
-def normalize_indices(indices: Optional[list[int]], d: int) -> Optional[list[int]]:
+def normalize_indices(indices: list[int] | None, d: int) -> list[int] | None:
     r"""Normalize a list of indices to ensure that they are positive.
 
     Args:
@@ -226,7 +227,7 @@ def is_ensemble(model: Model) -> bool:
 
 
 def t_batch_mode_transform(
-    expected_q: Optional[int] = None,
+    expected_q: int | None = None,
     assert_output_shape: bool = True,
 ) -> Callable[
     [Callable[[AcquisitionFunction, Any], Any]],
@@ -268,7 +269,6 @@ def t_batch_mode_transform(
         def decorated(
             acqf: AcquisitionFunction, X: Any, *args: Any, **kwargs: Any
         ) -> Any:
-
             # Allow using acquisition functions for other inputs (e.g. lists of strings)
             if not isinstance(X, Tensor):
                 return method(acqf, X, *args, **kwargs)
@@ -310,7 +310,7 @@ def t_batch_mode_transform(
 
 
 def concatenate_pending_points(
-    method: Callable[[Any, Tensor], Any]
+    method: Callable[[Any, Tensor], Any],
 ) -> Callable[[Any, Tensor], Any]:
     r"""Decorator concatenating X_pending into an acquisition function's argument.
 

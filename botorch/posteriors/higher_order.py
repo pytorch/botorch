@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -88,7 +87,8 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         return (0, -1)
 
     def _extended_shape(
-        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+        self,
+        sample_shape: torch.Size = torch.Size(),  # noqa: B008
     ) -> torch.Size:
         r"""Returns the shape of the samples produced by the posterior with
         the given `sample_shape`.
@@ -162,7 +162,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
     def rsample_from_base_samples(
         self,
         sample_shape: torch.Size,
-        base_samples: Optional[Tensor],
+        base_samples: Tensor | None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients) using base samples.
 
@@ -244,7 +244,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
 
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 

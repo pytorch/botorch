@@ -8,10 +8,10 @@ r"""Utilities for fitting and manipulating models."""
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 
 from re import Pattern
-from typing import Any, Callable, NamedTuple, Optional, Union
+from typing import Any, NamedTuple
 from warnings import warn
 
 import torch
@@ -39,8 +39,8 @@ def get_data_loader(
 
 def get_parameters(
     module: Module,
-    requires_grad: Optional[bool] = None,
-    name_filter: Optional[Callable[[str], bool]] = None,
+    requires_grad: bool | None = None,
+    name_filter: Callable[[str], bool] | None = None,
 ) -> dict[str, Tensor]:
     r"""Helper method for obtaining a module's parameters and their respective ranges.
 
@@ -68,10 +68,10 @@ def get_parameters(
 
 def get_parameters_and_bounds(
     module: Module,
-    requires_grad: Optional[bool] = None,
-    name_filter: Optional[Callable[[str], bool]] = None,
+    requires_grad: bool | None = None,
+    name_filter: Callable[[str], bool] | None = None,
     default_bounds: tuple[float, float] = (-float("inf"), float("inf")),
-) -> tuple[dict[str, Tensor], dict[str, tuple[Optional[float], Optional[float]]]]:
+) -> tuple[dict[str, Tensor], dict[str, tuple[float | None, float | None]]]:
     r"""Helper method for obtaining a module's parameters and their respective ranges.
 
     Args:
@@ -110,8 +110,8 @@ def get_parameters_and_bounds(
 
 
 def get_name_filter(
-    patterns: Iterator[Union[Pattern, str]]
-) -> Callable[[Union[str, tuple[str, Any, ...]]], bool]:
+    patterns: Iterator[Pattern | str],
+) -> Callable[[str | tuple[str, Any, ...]], bool]:
     r"""Returns a binary function that filters strings (or iterables whose first
     element is a string) according to a bank of excluded patterns. Typically, used
     in conjunction with generators such as `module.named_parameters()`.
@@ -136,7 +136,7 @@ def get_name_filter(
                 f"but found {type(pattern)}."
             )
 
-    def name_filter(item: Union[str, tuple[str, Any, ...]]) -> bool:
+    def name_filter(item: str | tuple[str, Any, ...]) -> bool:
         name = item if isinstance(item, str) else next(iter(item))
         if name in names:
             return False

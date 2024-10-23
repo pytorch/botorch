@@ -2,5 +2,5 @@
 black==24.4.2
 ruff-api==0.0.8
 stdlibs==2024.1.28
-ufmt==2.7.2
+ufmt==2.7.3
 usort==1.0.5

@@ -6,26 +6,28 @@
 
 
 import itertools
-from typing import Optional
 
 import torch
 from botorch import fit_fully_bayesian_model_nuts
 from botorch.acquisition.analytic import (
-    ExpectedImprovement,
+    LogExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
+from botorch.acquisition.logei import (
+    qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
+)
 from botorch.acquisition.monte_carlo import (
-    qExpectedImprovement,
-    qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from botorch.acquisition.multi_objective import (
-    qExpectedHypervolumeImprovement,
-    qNoisyExpectedHypervolumeImprovement,
+
+from botorch.acquisition.multi_objective.logei import (
+    qLogExpectedHypervolumeImprovement,
+    qLogNoisyExpectedHypervolumeImprovement,
 )
 from botorch.models import ModelList, ModelListGP
 from botorch.models.deterministic import GenericDeterministicModel
@@ -72,29 +74,35 @@ EXPECTED_KEYS_NOISE = EXPECTED_KEYS + [
 class TestFullyBayesianMultiTaskGP(BotorchTestCase):
     def _get_data_and_model(
         self,
-        task_rank: Optional[int] = None,
-        output_tasks: Optional[list[int]] = None,
+        task_rank: int | None = None,
+        output_tasks: list[int] | None = None,
         infer_noise: bool = False,
-        **tkwargs
+        use_outcome_transform: bool = True,
+        **tkwargs,
     ):
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.rand(10, 4, **tkwargs)
-            task_indices = torch.cat(
-                [torch.zeros(5, 1, **tkwargs), torch.ones(5, 1, **tkwargs)], dim=0
-            )
-            self.num_tasks = 2
-            train_X = torch.cat([train_X, task_indices], dim=1)
-            train_Y = torch.sin(train_X[:, :1])
-            train_Yvar = 0.5 * torch.arange(10, **tkwargs).unsqueeze(-1)
-            model = SaasFullyBayesianMultiTaskGP(
-                train_X=train_X,
-                train_Y=train_Y,
-                train_Yvar=None if infer_noise else train_Yvar,
-                task_feature=4,
-                output_tasks=output_tasks,
-                rank=task_rank,
-            )
+        task_indices = torch.cat(
+            [torch.zeros(5, 1, **tkwargs), torch.ones(5, 1, **tkwargs)], dim=0
+        )
+        self.num_tasks = 2
+        train_X = torch.cat([train_X, task_indices], dim=1)
+        train_Y = torch.sin(train_X[:, :1])
+        train_Yvar = 0.5 * torch.arange(10, **tkwargs).unsqueeze(-1)
+        model = SaasFullyBayesianMultiTaskGP(
+            train_X=train_X,
+            train_Y=train_Y,
+            train_Yvar=None if infer_noise else train_Yvar,
+            task_feature=4,
+            output_tasks=output_tasks,
+            rank=task_rank,
+            outcome_transform=(
+                Standardize(m=1, batch_shape=train_X.shape[:-2])
+                if use_outcome_transform
+                else None
+            ),
+        )
         return train_X, train_Y, train_Yvar, model
 
     def _get_unnormalized_data(self, **tkwargs):
@@ -205,13 +213,24 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         dtype: torch.dtype = torch.double,
         infer_noise: bool = False,
         task_rank: int = 1,
+        use_outcome_transform: bool = False,
     ):
         tkwargs = {"device": self.device, "dtype": dtype}
         train_X, train_Y, train_Yvar, model = self._get_data_and_model(
-            infer_noise=infer_noise, task_rank=task_rank, **tkwargs
+            infer_noise=infer_noise,
+            task_rank=task_rank,
+            use_outcome_transform=use_outcome_transform,
+            **tkwargs,
         )
         n = train_X.shape[0]
         d = train_X.shape[1] - 1
+
+        # Handle outcome transforms (if used)
+        train_Y_tf, train_Yvar_tf = train_Y, train_Yvar
+        if use_outcome_transform:
+            train_Y_tf, train_Yvar_tf = model.outcome_transform(
+                Y=train_Y, Yvar=train_Yvar
+            )
 
         # Test init
         self.assertIsNone(model.mean_module)
@@ -219,12 +238,12 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         self.assertIsNone(model.likelihood)
         self.assertIsInstance(model.pyro_model, MultitaskSaasPyroModel)
         self.assertAllClose(train_X, model.pyro_model.train_X)
-        self.assertAllClose(train_Y, model.pyro_model.train_Y)
+        self.assertAllClose(train_Y_tf, model.pyro_model.train_Y)
         if infer_noise:
             self.assertIsNone(model.pyro_model.train_Yvar)
         else:
             self.assertAllClose(
-                train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
+                train_Yvar_tf.clamp(MIN_INFERRED_NOISE_LEVEL),
                 model.pyro_model.train_Yvar,
             )
 
@@ -345,14 +364,32 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
 
         # Check the keys in the state dict
         true_keys = EXPECTED_KEYS_NOISE if infer_noise else EXPECTED_KEYS
+        if use_outcome_transform:
+            true_keys = true_keys + [
+                "outcome_transform.stdvs",
+                "outcome_transform._is_trained",
+                "outcome_transform._stdvs_sq",
+                "outcome_transform.means",
+            ]
         self.assertEqual(set(model.state_dict().keys()), set(true_keys))
 
         # Check that we can load the state dict.
         state_dict = model.state_dict()
         _, _, _, m_new = self._get_data_and_model(
-            infer_noise=infer_noise, task_rank=task_rank, **tkwargs
+            infer_noise=infer_noise,
+            task_rank=task_rank,
+            use_outcome_transform=use_outcome_transform,
+            **tkwargs,
         )
-        self.assertEqual(m_new.state_dict(), {})
+        expected_state_dict = {}
+        if use_outcome_transform:
+            expected_state_dict.update(
+                {
+                    "outcome_transform." + k: v
+                    for k, v in model.outcome_transform.state_dict().items()
+                }
+            )
+        self.assertEqual(m_new.state_dict(), expected_state_dict)
         m_new.load_state_dict(state_dict)
         self.assertEqual(model.state_dict().keys(), m_new.state_dict().keys())
         for k in model.state_dict().keys():
@@ -377,12 +414,15 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
     def test_fit_model_infer_noise(self):
         self.test_fit_model(infer_noise=True, task_rank=2)
 
+    def test_fit_model_with_outcome_transform(self):
+        self.test_fit_model(use_outcome_transform=True)
+
     def test_transforms(self, infer_noise: bool = False):
         tkwargs = {"device": self.device, "dtype": torch.double}
         train_X, train_Y, train_Yvar, test_X = self._get_unnormalized_data(**tkwargs)
         n, d = train_X.shape
         normalize_indices = torch.tensor(
-            list(range(train_X.shape[-1] - 1)), **{"device": self.device}
+            list(range(train_X.shape[-1] - 1)), device=self.device
         )
 
         lb, ub = (
@@ -466,14 +506,14 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 posterior=mixed_list.posterior(test_X), sample_shape=torch.Size([2])
             )
             acquisition_functions = [
-                ExpectedImprovement(model=model, best_f=train_Y.max()),
+                LogExpectedImprovement(model=model, best_f=train_Y.max()),
                 ProbabilityOfImprovement(model=model, best_f=train_Y.max()),
                 PosteriorMean(model=model),
                 UpperConfidenceBound(model=model, beta=4),
-                qExpectedImprovement(
+                qLogExpectedImprovement(
                     model=model, best_f=train_Y.max(), sampler=simple_sampler
                 ),
-                qNoisyExpectedImprovement(
+                qLogNoisyExpectedImprovement(
                     model=model, X_baseline=test_X, sampler=simple_sampler
                 ),
                 qProbabilityOfImprovement(
@@ -481,13 +521,13 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 ),
                 qSimpleRegret(model=model, sampler=simple_sampler),
                 qUpperConfidenceBound(model=model, beta=4, sampler=simple_sampler),
-                qNoisyExpectedHypervolumeImprovement(
+                qLogNoisyExpectedHypervolumeImprovement(
                     model=list_gp,
                     X_baseline=test_X,
                     ref_point=torch.zeros(2, **tkwargs),
                     sampler=list_gp_sampler,
                 ),
-                qExpectedHypervolumeImprovement(
+                qLogExpectedHypervolumeImprovement(
                     model=list_gp,
                     ref_point=torch.zeros(2, **tkwargs),
                     sampler=list_gp_sampler,
@@ -496,13 +536,13 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                     ),
                 ),
                 # qEHVI/qNEHVI with mixed models
-                qNoisyExpectedHypervolumeImprovement(
+                qLogNoisyExpectedHypervolumeImprovement(
                     model=mixed_list,
                     X_baseline=test_X,
                     ref_point=torch.zeros(2, **tkwargs),
                     sampler=mixed_list_sampler,
                 ),
-                qExpectedHypervolumeImprovement(
+                qLogExpectedHypervolumeImprovement(
                     model=mixed_list,
                     ref_point=torch.zeros(2, **tkwargs),
                     sampler=mixed_list_sampler,
@@ -522,14 +562,22 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                     self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
 
     def test_load_samples(self):
-        for task_rank, dtype in itertools.product([1, 2], [torch.float, torch.double]):
+        for task_rank, dtype, use_outcome_transform in itertools.product(
+            [1, 2], [torch.float, torch.double], (False, True)
+        ):
             tkwargs = {"device": self.device, "dtype": dtype}
             train_X, train_Y, train_Yvar, model = self._get_data_and_model(
-                task_rank=task_rank, **tkwargs
+                task_rank=task_rank,
+                use_outcome_transform=use_outcome_transform,
+                **tkwargs,
             )
+
             d = train_X.shape[1] - 1
             mcmc_samples = self._get_mcmc_samples(
-                num_samples=3, dim=d, task_rank=task_rank, **tkwargs
+                num_samples=3,
+                dim=d,
+                task_rank=task_rank,
+                **tkwargs,
             )
             model.load_mcmc_samples(mcmc_samples)
 
@@ -551,10 +599,24 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                     mcmc_samples["mean"],
                 )
             )
+
+            # Handle outcome transforms (if used)
+            train_Y_tf, train_Yvar_tf = train_Y, train_Yvar
+            if use_outcome_transform:
+                train_Y_tf, train_Yvar_tf = model.outcome_transform(
+                    Y=train_Y, Yvar=train_Yvar
+                )
+
+            self.assertTrue(
+                torch.allclose(
+                    model.pyro_model.train_Y,
+                    train_Y_tf,
+                )
+            )
             self.assertTrue(
                 torch.allclose(
                     model.pyro_model.train_Yvar,
-                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
+                    train_Yvar_tf.clamp(MIN_INFERRED_NOISE_LEVEL),
                 )
             )
             self.assertTrue(

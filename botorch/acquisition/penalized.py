@@ -11,7 +11,8 @@ Modules to add regularization to acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -233,10 +234,10 @@ class PenalizedAcquisitionFunction(AcquisitionFunction):
         return raw_value - self.regularization_parameter * penalty_term
 
     @property
-    def X_pending(self) -> Optional[Tensor]:
+    def X_pending(self) -> Tensor | None:
         return self.raw_acqf.X_pending
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
         if not isinstance(self.raw_acqf, AnalyticAcquisitionFunction):
             self.raw_acqf.set_X_pending(X_pending=X_pending)
         else:
@@ -321,10 +322,10 @@ class PenalizedMCObjective(GenericMCObjective):
 
     def __init__(
         self,
-        objective: Callable[[Tensor, Optional[Tensor]], Tensor],
+        objective: Callable[[Tensor, Tensor | None], Tensor],
         penalty_objective: torch.nn.Module,
         regularization_parameter: float,
-        expand_dim: Optional[int] = None,
+        expand_dim: int | None = None,
     ) -> None:
         r"""Penalized MC objective.
 
@@ -345,7 +346,7 @@ class PenalizedMCObjective(GenericMCObjective):
         self.regularization_parameter = regularization_parameter
         self.expand_dim = expand_dim
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Evaluate the penalized objective on the samples.
 
         Args:

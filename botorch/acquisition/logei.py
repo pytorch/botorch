@@ -17,11 +17,13 @@ References
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from copy import deepcopy
 
 from functools import partial
 
-from typing import Callable, Optional, TypeVar, Union
+from typing import TypeVar
 
 import torch
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCSamplerMixin
@@ -78,12 +80,12 @@ class LogImprovementMCAcquisitionFunction(SampleReducingMCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Union[Tensor, float] = 1e-3,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        eta: Tensor | float = 1e-3,
         fat: bool = True,
         tau_max: float = TAU_MAX,
     ) -> None:
@@ -161,13 +163,13 @@ class qLogExpectedImprovement(LogImprovementMCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Union[Tensor, float] = 1e-3,
+        best_f: float | Tensor,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        eta: Tensor | float = 1e-3,
         fat: bool = True,
         tau_max: float = TAU_MAX,
         tau_relu: float = TAU_RELU,
@@ -262,18 +264,18 @@ class qLogNoisyExpectedImprovement(
         self,
         model: Model,
         X_baseline: Tensor,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Union[Tensor, float] = 1e-3,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        eta: Tensor | float = 1e-3,
         fat: bool = True,
         prune_baseline: bool = False,
         cache_root: bool = True,
         tau_max: float = TAU_MAX,
         tau_relu: float = TAU_RELU,
-        marginalize_dim: Optional[int] = None,
+        marginalize_dim: int | None = None,
     ) -> None:
         r"""q-Noisy Expected Improvement.
 
@@ -365,12 +367,12 @@ class qLogNoisyExpectedImprovement(
         self,
         model: Model,
         X_baseline: Tensor,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
         prune_baseline: bool = False,
         cache_root: bool = True,
-        marginalize_dim: Optional[int] = None,
+        marginalize_dim: int | None = None,
     ) -> None:
         CachedCholeskyMCSamplerMixin.__init__(
             self, model=model, cache_root=cache_root, sampler=sampler
@@ -509,7 +511,7 @@ class qLogNoisyExpectedImprovement(
 def _log_improvement(
     Y: Tensor,
     best_f: Tensor,
-    tau: Union[float, Tensor],
+    tau: float | Tensor,
     fat: bool,
 ) -> Tensor:
     """Computes the logarithm of the softplus-smoothed improvement, i.e.

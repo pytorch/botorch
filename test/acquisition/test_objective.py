@@ -6,7 +6,6 @@
 
 import itertools
 import warnings
-from typing import Optional
 
 import torch
 from botorch.acquisition import LearnedObjective
@@ -422,8 +421,8 @@ class TestLearnedObjective(BotorchTestCase):
 
     def _get_pref_model(
         self,
-        dtype: Optional[torch.dtype] = None,
-        input_transform: Optional[Normalize] = None,
+        dtype: torch.dtype | None = None,
+        input_transform: Normalize | None = None,
     ) -> PairwiseGP:
         train_X = torch.rand((2, self.x_dim), dtype=dtype)
         train_comps = torch.LongTensor([[0, 1]])

@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -55,16 +55,16 @@ class LinearTruncatedFidelityKernel(Kernel):
     def __init__(  # noqa C901
         self,
         fidelity_dims: list[int],
-        dimension: Optional[int] = None,
-        power_prior: Optional[Prior] = None,
-        power_constraint: Optional[Interval] = None,
+        dimension: int | None = None,
+        power_prior: Prior | None = None,
+        power_constraint: Interval | None = None,
         nu: float = 2.5,
-        lengthscale_prior_unbiased: Optional[Prior] = None,
-        lengthscale_prior_biased: Optional[Prior] = None,
-        lengthscale_constraint_unbiased: Optional[Interval] = None,
-        lengthscale_constraint_biased: Optional[Interval] = None,
-        covar_module_unbiased: Optional[Kernel] = None,
-        covar_module_biased: Optional[Kernel] = None,
+        lengthscale_prior_unbiased: Prior | None = None,
+        lengthscale_prior_biased: Prior | None = None,
+        lengthscale_constraint_unbiased: Interval | None = None,
+        lengthscale_constraint_biased: Interval | None = None,
+        covar_module_unbiased: Kernel | None = None,
+        covar_module_biased: Kernel | None = None,
         **kwargs: Any,
     ) -> None:
         """

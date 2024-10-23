@@ -10,10 +10,13 @@ Utility functions for constrained optimization.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from functools import partial
-from typing import Callable, Optional, Union
+from typing import Union
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from botorch.exceptions.errors import CandidateGenerationError, UnsupportedError
 from scipy.optimize import Bounds
@@ -28,9 +31,9 @@ NLC_TOL = -1e-6
 
 def make_scipy_bounds(
     X: Tensor,
-    lower_bounds: Optional[Union[float, Tensor]] = None,
-    upper_bounds: Optional[Union[float, Tensor]] = None,
-) -> Optional[Bounds]:
+    lower_bounds: float | Tensor | None = None,
+    upper_bounds: float | Tensor | None = None,
+) -> Bounds | None:
     r"""Creates a scipy Bounds object for optimziation
 
     Args:
@@ -51,7 +54,7 @@ def make_scipy_bounds(
     if lower_bounds is None and upper_bounds is None:
         return None
 
-    def _expand(bounds: Union[float, Tensor], X: Tensor, lower: bool) -> Tensor:
+    def _expand(bounds: float | Tensor, X: Tensor, lower: bool) -> Tensor:
         if bounds is None:
             ebounds = torch.full_like(X, float("-inf" if lower else "inf"))
         else:
@@ -67,8 +70,8 @@ def make_scipy_bounds(
 
 def make_scipy_linear_constraints(
     shapeX: torch.Size,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
 ) -> list[ScipyConstraintDict]:
     r"""Generate scipy constraints from torch representation.
 
@@ -129,7 +132,7 @@ def make_scipy_linear_constraints(
 
 
 def eval_lin_constraint(
-    x: np.ndarray, flat_idxr: list[int], coeffs: np.ndarray, rhs: float
+    x: npt.NDArray, flat_idxr: list[int], coeffs: npt.NDArray, rhs: float
 ) -> np.float64:
     r"""Evaluate a single linear constraint.
 
@@ -146,8 +149,8 @@ def eval_lin_constraint(
 
 
 def lin_constraint_jac(
-    x: np.ndarray, flat_idxr: list[int], coeffs: np.ndarray, n: int
-) -> np.ndarray:
+    x: npt.NDArray, flat_idxr: list[int], coeffs: npt.NDArray, n: int
+) -> npt.NDArray:
     r"""Return the Jacobian associated with a linear constraint.
 
     Args:
@@ -165,7 +168,7 @@ def lin_constraint_jac(
     return jac
 
 
-def _arrayify(X: Tensor) -> np.ndarray:
+def _arrayify(X: Tensor) -> npt.NDArray:
     r"""Convert a torch.Tensor (any dtype or device) to a numpy (double) array.
 
     Args:
@@ -370,10 +373,10 @@ def _make_nonlinear_constraints(
 
 
 def _generate_unfixed_nonlin_constraints(
-    constraints: Optional[list[tuple[Callable[[Tensor], Tensor], bool]]],
+    constraints: list[tuple[Callable[[Tensor], Tensor], bool]] | None,
     fixed_features: dict[int, float],
     dimension: int,
-) -> Optional[list[Callable[[Tensor], Tensor]]]:
+) -> list[Callable[[Tensor], Tensor]] | None:
     """Given a dictionary of fixed features, returns a list of callables for
     nonlinear inequality constraints expecting only a tensor with the non-fixed
     features as input.
@@ -394,7 +397,7 @@ def _generate_unfixed_nonlin_constraints(
     values = torch.tensor(list(fixed_features.values()), dtype=torch.double)
 
     def _wrap_nonlin_constraint(
-        constraint: Callable[[Tensor], Tensor]
+        constraint: Callable[[Tensor], Tensor],
     ) -> Callable[[Tensor], Tensor]:
         def new_nonlin_constraint(X: Tensor) -> Tensor:
             ivalues = values.to(X).expand(*X.shape[:-1], len(fixed_features))
@@ -410,11 +413,11 @@ def _generate_unfixed_nonlin_constraints(
 
 
 def _generate_unfixed_lin_constraints(
-    constraints: Optional[list[tuple[Tensor, Tensor, float]]],
+    constraints: list[tuple[Tensor, Tensor, float]] | None,
     fixed_features: dict[int, float],
     dimension: int,
     eq: bool,
-) -> Optional[list[tuple[Tensor, Tensor, float]]]:
+) -> list[tuple[Tensor, Tensor, float]] | None:
     # If constraints is None or an empty list, then return itself
     if not constraints:
         return constraints

@@ -13,18 +13,20 @@ rounding functions, and log transformations. The input transformation
 is typically part of a Model and applied within the model.forward()
 method.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Any, Callable, Optional, Union
+from collections.abc import Callable, Iterable
+from typing import Any
 from warnings import warn
 
 import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import UserInputWarning
-from botorch.models.transforms.utils import subset_transform
+from botorch.models.transforms.utils import interaction_features, subset_transform
 from botorch.models.utils import fantasize
 from botorch.utils.rounding import approximate_round, OneHotArgmaxSTE, RoundSTE
 from gpytorch import Module as GPyTorchModule
@@ -153,6 +155,130 @@ class InputTransform(ABC):
             else:
                 return self.transform(X)
         return X
+
+
+class BatchBroadcastedInputTransform(InputTransform, ModuleDict):
+    r"""An input transform representing a list of transforms to be broadcasted."""
+
+    def __init__(
+        self,
+        transforms: list[InputTransform],
+        broadcast_index: int = -3,
+    ) -> None:
+        r"""A transform list that is broadcasted across a batch dimension specified by
+        `broadcast_index`. This is allows using a batched Gaussian process model when
+        the input transforms are different for different batch dimensions.
+
+        Args:
+            transforms: The transforms to broadcast across the first batch dimension.
+                The transform at position i in the list will be applied to `X[i]` for
+                a given input tensor `X` in the forward pass.
+            broadcast_index: The tensor index at which the transforms are broadcasted.
+
+        Example:
+            >>> tf1 = Normalize(d=2)
+            >>> tf2 = InputStandardize(d=2)
+            >>> tf = BatchBroadcastedTransformList(transforms=[tf1, tf2])
+        """
+        super().__init__()
+        self.transform_on_train = False
+        self.transform_on_eval = False
+        self.transform_on_fantasize = False
+        self.transforms = transforms
+        if broadcast_index in (-2, -1):
+            raise ValueError(
+                "The broadcast index cannot be -2 and -1, as these indices are reserved"
+                " for non-batch, data and input dimensions."
+            )
+        self.broadcast_index = broadcast_index
+        self.is_one_to_many = self.transforms[0].is_one_to_many
+        if not all(tf.is_one_to_many == self.is_one_to_many for tf in self.transforms):
+            raise ValueError(  # output shapes of transforms must be the same
+                "All transforms must have the same is_one_to_many property."
+            )
+        for tf in self.transforms:
+            self.transform_on_train |= tf.transform_on_train
+            self.transform_on_eval |= tf.transform_on_eval
+            self.transform_on_fantasize |= tf.transform_on_fantasize
+
+    def transform(self, X: Tensor) -> Tensor:
+        r"""Transform the inputs to a model.
+
+        Individual transforms are applied in sequence and results are returned as
+        a batched tensor.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
+        """
+        return torch.stack(
+            [t.forward(Xi) for Xi, t in self._Xs_and_transforms(X)],
+            dim=self.broadcast_index,
+        )
+
+    def untransform(self, X: Tensor) -> Tensor:
+        r"""Un-transform the inputs to a model.
+
+        Un-transforms of the individual transforms are applied in reverse sequence.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of transformed inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of un-transformed inputs.
+        """
+        return torch.stack(
+            [t.untransform(Xi) for Xi, t in self._Xs_and_transforms(X)],
+            dim=self.broadcast_index,
+        )
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform.
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        return (
+            super().equals(other=other)
+            and all(t1.equals(t2) for t1, t2 in zip(self.transforms, other.transforms))
+            and (self.broadcast_index == other.broadcast_index)
+        )
+
+    def preprocess_transform(self, X: Tensor) -> Tensor:
+        r"""Apply transforms for preprocessing inputs.
+
+        The main use cases for this method are 1) to preprocess training data
+        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy
+        acquisition functions so that `X_baseline` is "preprocessed" with the
+        same transformations as the cached training inputs.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of (transformed) inputs.
+        """
+        return torch.stack(
+            [t.preprocess_transform(Xi) for Xi, t in self._Xs_and_transforms(X)],
+            dim=self.broadcast_index,
+        )
+
+    def _Xs_and_transforms(self, X: Tensor) -> Iterable[tuple[Tensor, InputTransform]]:
+        r"""Returns an iterable of sub-tensors of X and their associated transforms.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            An iterable containing tuples of sub-tensors of X and their transforms.
+        """
+        Xs = X.unbind(dim=self.broadcast_index)
+        return zip(Xs, self.transforms)
 
 
 class ChainedInputTransform(InputTransform, ModuleDict):
@@ -322,7 +448,7 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         d: int,
         coefficient: Tensor,
         offset: Tensor,
-        indices: Optional[Union[list[int], Tensor]] = None,
+        indices: list[int] | Tensor | None = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -503,15 +629,15 @@ class Normalize(AffineInputTransform):
     def __init__(
         self,
         d: int,
-        indices: Optional[Union[list[int], Tensor]] = None,
-        bounds: Optional[Tensor] = None,
+        indices: list[int] | Tensor | None = None,
+        bounds: Tensor | None = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
         reverse: bool = False,
         min_range: float = 1e-8,
-        learn_bounds: Optional[bool] = None,
+        learn_bounds: bool | None = None,
         almost_zero: float = 1e-12,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
@@ -652,7 +778,7 @@ class InputStandardize(AffineInputTransform):
     def __init__(
         self,
         d: int,
-        indices: Optional[Union[list[int], Tensor]] = None,
+        indices: list[int] | Tensor | None = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -774,8 +900,8 @@ class Round(InputTransform, Module):
 
     def __init__(
         self,
-        integer_indices: Union[list[int], LongTensor, None] = None,
-        categorical_features: Optional[dict[int, int]] = None,
+        integer_indices: list[int] | LongTensor | None = None,
+        categorical_features: dict[int, int] | None = None,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
@@ -949,9 +1075,9 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         transform_on_fantasize: bool = True,
         reverse: bool = False,
         eps: float = 1e-7,
-        concentration1_prior: Optional[Prior] = None,
-        concentration0_prior: Optional[Prior] = None,
-        batch_shape: Optional[torch.Size] = None,
+        concentration1_prior: Prior | None = None,
+        concentration0_prior: Prior | None = None,
+        batch_shape: torch.Size | None = None,
     ) -> None:
         r"""Initialize transform.
 
@@ -1022,7 +1148,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             )
             self.register_constraint(param_name=p_name, constraint=constraint)
 
-    def _set_concentration(self, i: int, value: Union[float, Tensor]) -> None:
+    def _set_concentration(self, i: int, value: float | Tensor) -> None:
         if not torch.is_tensor(value):
             value = torch.as_tensor(value).to(self.concentration0)
         self.initialize(**{f"concentration{i}": value})
@@ -1134,10 +1260,10 @@ class AppendFeatures(InputTransform, Module):
 
     def __init__(
         self,
-        feature_set: Optional[Tensor] = None,
-        f: Optional[Callable[[Tensor], Tensor]] = None,
-        indices: Optional[list[int]] = None,
-        fkwargs: Optional[dict[str, Any]] = None,
+        feature_set: Tensor | None = None,
+        f: Callable[[Tensor], Tensor] | None = None,
+        indices: list[int] | None = None,
+        fkwargs: dict[str, Any] | None = None,
         skip_expand: bool = False,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
@@ -1246,6 +1372,30 @@ class AppendFeatures(InputTransform, Module):
         return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])
 
 
+class InteractionFeatures(AppendFeatures):
+    r"""A transform that appends the first-order interaction terms $x_i * x_j, i < j$,
+    for all or a subset of the input variables."""
+
+    def __init__(
+        self,
+        indices: list[int] | None = None,
+    ) -> None:
+        r"""Initializes the InteractionFeatures transform.
+
+        Args:
+            indices: Indices of the subset of dimensions to compute interaction
+                features on.
+        """
+
+        super().__init__(
+            f=interaction_features,
+            indices=indices,
+            transform_on_train=True,
+            transform_on_eval=True,
+            transform_on_fantasize=True,
+        )
+
+
 class FilterFeatures(InputTransform, Module):
     r"""A transform that filters the input with a given set of features indices.
 
@@ -1332,9 +1482,9 @@ class InputPerturbation(InputTransform, Module):
 
     def __init__(
         self,
-        perturbation_set: Union[Tensor, Callable[[Tensor], Tensor]],
-        bounds: Optional[Tensor] = None,
-        indices: Optional[list[int]] = None,
+        perturbation_set: Tensor | Callable[[Tensor], Tensor],
+        bounds: Tensor | None = None,
+        indices: list[int] | None = None,
         multiplicative: bool = False,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
@@ -1451,7 +1601,7 @@ class OneHotToNumeric(InputTransform, Module):
     def __init__(
         self,
         dim: int,
-        categorical_features: Optional[dict[int, int]] = None,
+        categorical_features: dict[int, int] | None = None,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,

@@ -7,7 +7,6 @@
 import itertools
 import warnings
 from copy import deepcopy
-from typing import Optional
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
@@ -226,7 +225,6 @@ class TestModelListGP(BotorchTestCase):
         for dtype, outcome_transform in itertools.product(
             (torch.float, torch.double), ("None", "Standardize", "Log", "Chained")
         ):
-
             model = self._base_test_ModelListGP(
                 fixed_noise=False, dtype=dtype, outcome_transform=outcome_transform
             )
@@ -262,7 +260,6 @@ class TestModelListGP(BotorchTestCase):
                 )
 
     def test_ModelListGP_fixed_noise(self) -> None:
-
         for dtype, outcome_transform in itertools.product(
             (torch.float, torch.double), ("None", "Standardize")
         ):
@@ -292,8 +289,11 @@ class TestModelListGP(BotorchTestCase):
         self.assertIsInstance(posterior, GPyTorchPosterior)
         self.assertIsInstance(posterior.distribution, MultivariateNormal)
 
-    def test_ModelListGP_multi_task(self):
+    def test_ModelListGP_multi_task(self, use_outcome_transform: bool = False):
         tkwargs = {"device": self.device, "dtype": torch.float}
+        outcome_transform_kwargs = (
+            {} if use_outcome_transform else {"outcome_transform": None}
+        )
         train_x_raw, train_y = _get_random_data(
             batch_shape=torch.Size(), m=1, n=10, **tkwargs
         )
@@ -306,6 +306,7 @@ class TestModelListGP(BotorchTestCase):
             train_Y=train_y,
             task_feature=-1,
             output_tasks=[0],
+            **outcome_transform_kwargs,
         )
         # Wrap a single single-output MTGP.
         model_list_gp = ModelListGP(model)
@@ -326,6 +327,7 @@ class TestModelListGP(BotorchTestCase):
             train_X=train_x,
             train_Y=train_y,
             task_feature=-1,
+            **outcome_transform_kwargs,
         )
         model_list_gp = ModelListGP(model2)
         self.assertEqual(model_list_gp.num_outputs, 2)
@@ -360,9 +362,7 @@ class TestModelListGP(BotorchTestCase):
         self.assertEqual(len(subset_model.models), 2)
         # Test condition on observations
         model_s1 = SingleTaskGP(
-            train_X=train_x_raw,
-            train_Y=train_y,
-            outcome_transform=None,
+            train_X=train_x_raw, train_Y=train_y, **outcome_transform_kwargs
         )
         model_list_gp = ModelListGP(model_s1, model2, deepcopy(model_s1))
         model_list_gp.posterior(train_x_raw)
@@ -375,11 +375,21 @@ class TestModelListGP(BotorchTestCase):
         self.assertIsInstance(cm, ModelListGP)
         self.assertEqual(cm.num_outputs, 4)
         self.assertEqual(len(cm.models), 3)
+        # TODO: Figure out why the outcome transform changes the input shape...
+        exp_shape_stgp = (
+            torch.Size([1, 15, 1]) if use_outcome_transform else torch.Size([15, 1])
+        )
+        exp_shape_mtgp = (
+            torch.Size([1, 20, 2]) if use_outcome_transform else torch.Size([20, 2])
+        )
         for i in [0, 2]:
             self.assertIsInstance(cm.models[i], SingleTaskGP)
-            self.assertEqual(cm.models[i].train_inputs[0].shape, torch.Size([15, 1]))
+            self.assertEqual(cm.models[i].train_inputs[0].shape, exp_shape_stgp)
         self.assertIsInstance(cm.models[1], MultiTaskGP)
-        self.assertEqual(cm.models[1].train_inputs[0].shape, torch.Size([20, 2]))
+        self.assertEqual(cm.models[1].train_inputs[0].shape, exp_shape_mtgp)
+
+    def test_ModelListGP_multi_task_outcome_transform(self):
+        self.test_ModelListGP_multi_task(use_outcome_transform=True)
 
     def test_transform_revert_train_inputs(self):
         tkwargs = {"device": self.device, "dtype": torch.float}
@@ -548,7 +558,7 @@ class TestModelListGP(BotorchTestCase):
                 def _get_fant_mean(
                     model: ModelListGP,
                     sampler: MCSampler,
-                    eval_mask: Optional[Tensor] = None,
+                    eval_mask: Tensor | None = None,
                 ) -> float:
                     fant = model.fantasize(
                         target_x,  # noqa

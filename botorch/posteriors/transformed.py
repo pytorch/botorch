@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import torch
 from botorch.posteriors.posterior import Posterior
@@ -20,8 +20,8 @@ class TransformedPosterior(Posterior):
         self,
         posterior: Posterior,
         sample_transform: Callable[[Tensor], Tensor],
-        mean_transform: Optional[Callable[[Tensor, Tensor], Tensor]] = None,
-        variance_transform: Optional[Callable[[Tensor, Tensor], Tensor]] = None,
+        mean_transform: Callable[[Tensor, Tensor], Tensor] | None = None,
+        variance_transform: Callable[[Tensor, Tensor], Tensor] | None = None,
     ) -> None:
         r"""An implicitly represented transformed posterior.
 
@@ -70,7 +70,8 @@ class TransformedPosterior(Posterior):
         return self._posterior.dtype
 
     def _extended_shape(
-        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+        self,
+        sample_shape: torch.Size = torch.Size(),  # noqa: B008
     ) -> torch.Size:
         r"""Returns the shape of the samples produced by the posterior with
         the given `sample_shape`.
@@ -126,7 +127,7 @@ class TransformedPosterior(Posterior):
 
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 

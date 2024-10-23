@@ -21,9 +21,10 @@ import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable
 from contextlib import contextmanager
-from typing import Any, Optional, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
 import scipy
 import torch
 from botorch.exceptions.errors import BotorchError
@@ -40,7 +41,7 @@ if TYPE_CHECKING:
 
 
 @contextmanager
-def manual_seed(seed: Optional[int] = None) -> Generator[None, None, None]:
+def manual_seed(seed: int | None = None) -> Generator[None, None, None]:
     r"""Contextmanager for manual setting the torch.random seed.
 
     Args:
@@ -67,8 +68,8 @@ def draw_sobol_samples(
     bounds: Tensor,
     n: int,
     q: int,
-    batch_shape: Optional[Union[Iterable[int], torch.Size]] = None,
-    seed: Optional[int] = None,
+    batch_shape: Iterable[int] | torch.Size | None = None,
+    seed: int | None = None,
 ) -> Tensor:
     r"""Draw qMC samples from the box defined by bounds.
 
@@ -108,9 +109,9 @@ def draw_sobol_samples(
 def draw_sobol_normal_samples(
     d: int,
     n: int,
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
-    seed: Optional[int] = None,
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
+    seed: int | None = None,
 ) -> Tensor:
     r"""Draw qMC samples from a multi-variate standard normal N(0, I_d).
 
@@ -141,9 +142,9 @@ def sample_hypersphere(
     d: int,
     n: int = 1,
     qmc: bool = False,
-    seed: Optional[int] = None,
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
+    seed: int | None = None,
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
 ) -> Tensor:
     r"""Sample uniformly from a unit d-sphere.
 
@@ -179,9 +180,9 @@ def sample_simplex(
     d: int,
     n: int = 1,
     qmc: bool = False,
-    seed: Optional[int] = None,
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
+    seed: int | None = None,
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
 ) -> Tensor:
     r"""Sample uniformly from a d-simplex.
 
@@ -223,7 +224,7 @@ def sample_polytope(
     n: int = 10000,
     n0: int = 100,
     n_thinning: int = 1,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> Tensor:
     r"""
     Hit and run sampler from uniform sampling points from a polytope,
@@ -313,8 +314,8 @@ def batched_multinomial(
     weights: Tensor,
     num_samples: int,
     replacement: bool = False,
-    generator: Optional[torch.Generator] = None,
-    out: Optional[Tensor] = None,
+    generator: torch.Generator | None = None,
+    out: Tensor | None = None,
 ) -> LongTensor:
     r"""Sample from multinomial with an arbitrary number of batch dimensions.
 
@@ -374,11 +375,11 @@ def _convert_bounds_to_inequality_constraints(bounds: Tensor) -> tuple[Tensor, T
 
 
 def find_interior_point(
-    A: np.ndarray,
-    b: np.ndarray,
-    A_eq: Optional[np.ndarray] = None,
-    b_eq: Optional[np.ndarray] = None,
-) -> np.ndarray:
+    A: npt.NDArray,
+    b: npt.NDArray,
+    A_eq: npt.NDArray | None = None,
+    b_eq: npt.NDArray | None = None,
+) -> npt.NDArray:
     r"""Find an interior point of a polytope via linear programming.
 
     Args:
@@ -448,7 +449,7 @@ def find_interior_point(
     elif result.status > 0:
         raise ValueError(
             "Problem checking constraint specification. "
-            + "linprog status: {}".format(result.message)
+            + f"linprog status: {result.message}"
         )
     # the x in the result is really (x, s)
     return result.x[:-1]
@@ -459,10 +460,10 @@ class PolytopeSampler(ABC):
 
     def __init__(
         self,
-        inequality_constraints: Optional[tuple[Tensor, Tensor]] = None,
-        equality_constraints: Optional[tuple[Tensor, Tensor]] = None,
-        bounds: Optional[Tensor] = None,
-        interior_point: Optional[Tensor] = None,
+        inequality_constraints: tuple[Tensor, Tensor] | None = None,
+        equality_constraints: tuple[Tensor, Tensor] | None = None,
+        bounds: Tensor | None = None,
+        interior_point: Tensor | None = None,
     ) -> None:
         r"""
         Args:
@@ -583,13 +584,13 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
 
     def __init__(
         self,
-        inequality_constraints: Optional[tuple[Tensor, Tensor]] = None,
-        equality_constraints: Optional[tuple[Tensor, Tensor]] = None,
-        bounds: Optional[Tensor] = None,
-        interior_point: Optional[Tensor] = None,
+        inequality_constraints: tuple[Tensor, Tensor] | None = None,
+        equality_constraints: tuple[Tensor, Tensor] | None = None,
+        bounds: Tensor | None = None,
+        interior_point: Tensor | None = None,
         n_burnin: int = 200,
         n_thinning: int = 20,
-        seed: Optional[int] = None,
+        seed: int | None = None,
     ) -> None:
         r"""A sampler for sampling from a polyope using a hit-and-run algorithm.
 
@@ -660,9 +661,9 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
         self.n_burnin: int = n_burnin
         self.n_thinning: int = n_thinning
         self.num_samples_generated: int = 0
-        self._seed: Optional[int] = seed
-        self._offset: Optional[Tensor] = offset
-        self._scale: Optional[Tensor] = scale
+        self._seed: int | None = seed
+        self._offset: Tensor | None = offset
+        self._scale: Tensor | None = scale
 
     def draw(self, n: int = 1) -> Tensor:
         r"""Draw samples from the polytope.
@@ -728,10 +729,10 @@ class DelaunayPolytopeSampler(PolytopeSampler):
 
     def __init__(
         self,
-        inequality_constraints: Optional[tuple[Tensor, Tensor]] = None,
-        equality_constraints: Optional[tuple[Tensor, Tensor]] = None,
-        bounds: Optional[Tensor] = None,
-        interior_point: Optional[Tensor] = None,
+        inequality_constraints: tuple[Tensor, Tensor] | None = None,
+        equality_constraints: tuple[Tensor, Tensor] | None = None,
+        bounds: Tensor | None = None,
+        interior_point: Tensor | None = None,
     ) -> None:
         r"""Initialize DelaunayPolytopeSampler.
 
@@ -790,7 +791,7 @@ class DelaunayPolytopeSampler(PolytopeSampler):
             self._polytopes = polytopes
             self._p = volumes / volumes.sum()
 
-    def draw(self, n: int = 1, seed: Optional[int] = None) -> Tensor:
+    def draw(self, n: int = 1, seed: int | None = None) -> Tensor:
         r"""Draw samples from the polytope.
 
         Args:
@@ -884,9 +885,9 @@ def normalize_dense_linear_constraints(
 def get_polytope_samples(
     n: int,
     bounds: Tensor,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    seed: Optional[int] = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    seed: int | None = None,
     n_burnin: int = 10_000,
     n_thinning: int = 32,
 ) -> Tensor:
@@ -990,8 +991,8 @@ def sparse_to_dense_constraints(
 def optimize_posterior_samples(
     paths: SamplePath,
     bounds: Tensor,
-    candidates: Optional[Tensor] = None,
-    raw_samples: Optional[int] = 1024,
+    candidates: Tensor | None = None,
+    raw_samples: int | None = 1024,
     num_restarts: int = 20,
     maximize: bool = True,
     **kwargs: Any,

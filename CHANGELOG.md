@@ -2,6 +2,72 @@
 
 The release log for BoTorch.
 
+## [0.12.0] -- Sep 17, 2024
+
+#### Major changes
+* Update most models to use dimension-scaled log-normal hyperparameter priors by
+  default, which makes performance much more robust to dimensionality. See
+  discussion #2451 for details. The only models that are _not_ changed are those
+  for fully Bayesian models and `PairwiseGP`; for models that utilize a
+  composite kernel, such as multi-fidelity/task/context, this change only
+  affects the base kernel (#2449, #2450, #2507).
+* Use `Standarize` by default in all the models using the upgraded priors. In
+  addition to reducing the amount of boilerplate needed to initialize a model,
+  this change was motivated by the change to default priors, because the new
+  priors will work less well when data is not standardized. Users who do not
+  want to use transforms should explicitly pass in `None` (#2458, #2532).
+
+#### Compatibility
+* Unpin NumPy (#2459).
+* Require PyTorch>=2.0.1, GPyTorch==1.13, and linear_operator==0.5.3 (#2511).
+
+#### New features
+* Introduce `PathwiseThompsonSampling` acquisition function (#2443).
+* Enable `qBayesianActiveLearningByDisagreement` to accept a posterior
+  transform, and improve its implementation (#2457).
+* Enable `SaasPyroModel` to sample via NUTS when training data is empty (#2465).
+* Add multi-objective `qBayesianActiveLearningByDisagreement` (#2475).
+* Add input constructor for `qNegIntegratedPosteriorVariance` (#2477).
+* Introduce `qLowerConfidenceBound` (#2517).
+* Add input constructor for `qMultiFidelityHypervolumeKnowledgeGradient` (#2524).
+* Add `posterior_transform` to `ApproximateGPyTorchModel.posterior` (#2531).
+
+#### Bug fixes
+* Fix `batch_shape` default in `OrthogonalAdditiveKernel` (#2473).
+* Ensure all tensors are on CPU in `HitAndRunPolytopeSampler` (#2502).
+* Fix duplicate logging in `generation/gen.py` (#2504).
+* Raise exception if `X_pending` is set on the underlying `AcquisitionFunction`
+  in prior-guided `AcquisitionFunction` (#2505).
+* Make affine input transforms error with data of incorrect dimension, even in
+ eval mode (#2510).
+* Use fidelity-aware `current_value` in input constructor for `qMultiFidelityKnowledgeGradient` (#2519).
+* Apply input transforms when computing MLL in model closures (#2527).
+* Detach `fval` in `torch_minimize` to remove an opportunity for memory leaks
+  (#2529).
+
+#### Documentation
+* Clarify incompatibility of inter-point constraints with `get_polytope_samples`
+  (#2469).
+* Update tutorials to use the log variants of EI-family acquisition functions,
+  don't make tutorials pass `Standardize` unnecessarily, and other
+  simplifications and cleanup (#2462, #2463, #2490, #2495, #2496, #2498, #2499).
+* Remove deprecated `FixedNoiseGP` (#2536).
+
+#### Other changes
+* More informative warnings about failure to standardize or normalize data
+  (#2489).
+* Suppress irrelevant warnings in `qHypervolumeKnowledgeGradient` helpers
+  (#2486).
+* Cleaner `botorch/acquisition/multi_objective` directory structure (#2485).
+* With `AffineInputTransform`, always require data to have at least two
+ dimensions (#2518).
+* Remove deprecated argument `data_fidelity` to `SingleTaskMultiFidelityGP` and
+  deprecated model `FixedNoiseMultiFidelityGP` (#2532).
+* Raise an `OptimizationGradientError` when optimization produces NaN gradients (#2537).
+* Improve numerics by replacing `torch.log(1 + x)` with `torch.log1p(x)`
+  and `torch.exp(x) - 1` with `torch.special.expm1` (#2539, #2540, #2541).
+
+
 ## [0.11.3] -- Jul 22, 2024
 
 #### Compatibility

@@ -6,8 +6,6 @@
 
 r"""Utilities for box decomposition algorithms."""
 
-from typing import Optional
-
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.utils.multi_objective.pareto import is_non_dominated
@@ -41,7 +39,7 @@ def _pad_batch_pareto_frontier(
     Y: Tensor,
     ref_point: Tensor,
     is_pareto: bool = False,
-    feasibility_mask: Optional[Tensor] = None,
+    feasibility_mask: Tensor | None = None,
 ) -> Tensor:
     r"""Get a batch Pareto frontier by padding the pareto frontier with repeated points.
 

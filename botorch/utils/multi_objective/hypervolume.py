@@ -22,11 +22,10 @@ References
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 from copy import deepcopy
 
 from itertools import combinations
-
-from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCSamplerMixin
@@ -64,7 +63,7 @@ MIN_Y_RANGE = 1e-7
 
 def infer_reference_point(
     pareto_Y: Tensor,
-    max_ref_point: Optional[Tensor] = None,
+    max_ref_point: Tensor | None = None,
     scale: float = 0.1,
     scale_max_ref_point: bool = False,
 ) -> Tensor:
@@ -346,7 +345,7 @@ class Node:
         m: int,
         dtype: torch.dtype,
         device: torch.device,
-        data: Optional[Tensor] = None,
+        data: Tensor | None = None,
     ) -> None:
         r"""Initialize MultiList.
 
@@ -483,7 +482,7 @@ class SubsetIndexCachingMixin:
 
 
 def compute_subset_indices(
-    q: int, device: Optional[torch.device] = None
+    q: int, device: torch.device | None = None
 ) -> BufferDict[str, Tensor]:
     r"""Compute all (2^q - 1) distinct subsets of {1, ..., `q`}.
 
@@ -508,19 +507,19 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
     def __init__(
         self,
         model: Model,
-        ref_point: Union[list[float], Tensor],
+        ref_point: list[float] | Tensor,
         X_baseline: Tensor,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        X_pending: Optional[Tensor] = None,
+        sampler: MCSampler | None = None,
+        objective: MCMultiOutputObjective | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        X_pending: Tensor | None = None,
         prune_baseline: bool = False,
         alpha: float = 0.0,
         cache_pending: bool = True,
         max_iep: int = 0,
         incremental_nehvi: bool = True,
         cache_root: bool = True,
-        marginalize_dim: Optional[int] = None,
+        marginalize_dim: int | None = None,
     ):
         """Initialize a mixin that contains functions for the batched Pareto-frontier
         partitioning used by the noisy hypervolume-improvement-based acquisition
@@ -651,7 +650,7 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
         r"""Return X_baseline augmented with pending points cached using CBD."""
         return self._X_baseline_and_pending
 
-    def _compute_initial_hvs(self, obj: Tensor, feas: Optional[Tensor] = None) -> None:
+    def _compute_initial_hvs(self, obj: Tensor, feas: Tensor | None = None) -> None:
         r"""Compute hypervolume dominated by f(X_baseline) under each sample.
 
         Args:
@@ -775,7 +774,7 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
         self.register_buffer("cell_lower_bounds", cell_bounds[0])
         self.register_buffer("cell_upper_bounds", cell_bounds[1])
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
         r"""Informs the acquisition function about pending design points.
 
         Args:

@@ -18,7 +18,7 @@ References
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import torch
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
@@ -41,14 +41,14 @@ class MOMF(qExpectedHypervolumeImprovement):
     def __init__(
         self,
         model: Model,
-        ref_point: Union[list[float], Tensor],
+        ref_point: list[float] | Tensor,
         partitioning: NondominatedPartitioning,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Union[Tensor, float] = 1e-3,
-        X_pending: Optional[Tensor] = None,
-        cost_call: Optional[Callable[[Tensor], Tensor]] = None,
+        sampler: MCSampler | None = None,
+        objective: MCMultiOutputObjective | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        eta: Tensor | float = 1e-3,
+        X_pending: Tensor | None = None,
+        cost_call: Callable[[Tensor], Tensor] | None = None,
     ) -> None:
         r"""MOMF acquisition function supporting m>=2 outcomes.
         The model needs to have train_obj that has a fidelity

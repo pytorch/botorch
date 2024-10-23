@@ -18,8 +18,6 @@ References
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
@@ -61,7 +59,7 @@ class NondominatedPartitioning(BoxDecomposition):
     def __init__(
         self,
         ref_point: Tensor,
-        Y: Optional[Tensor] = None,
+        Y: Tensor | None = None,
         alpha: float = 0.0,
     ) -> None:
         """Initialize NondominatedPartitioning.
@@ -370,7 +368,7 @@ class FastNondominatedPartitioning(FastPartitioning):
     def __init__(
         self,
         ref_point: Tensor,
-        Y: Optional[Tensor] = None,
+        Y: Tensor | None = None,
     ) -> None:
         """Initialize FastNondominatedPartitioning.
 

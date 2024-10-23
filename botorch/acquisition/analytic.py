@@ -16,7 +16,6 @@ import math
 from abc import ABC
 from contextlib import nullcontext
 from copy import deepcopy
-from typing import Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -29,9 +28,9 @@ from botorch.models.model import Model
 from botorch.utils.constants import get_constants_like
 from botorch.utils.probability import MVNXPB
 from botorch.utils.probability.utils import (
+    compute_log_prob_feas_from_bounds,
     log_ndtr as log_Phi,
     log_phi,
-    log_prob_normal_in,
     ndtr as Phi,
     phi,
 )
@@ -52,7 +51,7 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
     def __init__(
         self,
         model: Model,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> None:
         r"""Base constructor for analytic acquisition functions.
 
@@ -76,14 +75,14 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
                 )
         self.posterior_transform = posterior_transform
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
         raise UnsupportedError(
             "Analytic acquisition functions do not account for X_pending yet."
         )
 
     def _mean_and_sigma(
         self, X: Tensor, compute_sigma: bool = True, min_var: float = 1e-12
-    ) -> tuple[Tensor, Optional[Tensor]]:
+    ) -> tuple[Tensor, Tensor | None]:
         """Computes the first and second moments of the model posterior.
 
         Args:
@@ -135,8 +134,8 @@ class LogProbabilityOfImprovement(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
-        posterior_transform: Optional[PosteriorTransform] = None,
+        best_f: float | Tensor,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
     ):
         r"""Single-outcome Probability of Improvement.
@@ -189,8 +188,8 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
-        posterior_transform: Optional[PosteriorTransform] = None,
+        best_f: float | Tensor,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
     ):
         r"""Single-outcome Probability of Improvement.
@@ -237,8 +236,8 @@ class qAnalyticProbabilityOfImprovement(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
-        posterior_transform: Optional[PosteriorTransform] = None,
+        best_f: float | Tensor,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
     ) -> None:
         """qPI using an analytic approximation.
@@ -314,8 +313,8 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
-        posterior_transform: Optional[PosteriorTransform] = None,
+        best_f: float | Tensor,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
     ):
         r"""Single-outcome Expected Improvement (analytic).
@@ -378,8 +377,8 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
-        posterior_transform: Optional[PosteriorTransform] = None,
+        best_f: float | Tensor,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
     ):
         r"""Logarithm of single-outcome Expected Improvement (analytic).
@@ -447,9 +446,9 @@ class LogConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
+        best_f: float | Tensor,
         objective_index: int,
-        constraints: dict[int, tuple[Optional[float], Optional[float]]],
+        constraints: dict[int, tuple[float | None, float | None]],
         maximize: bool = True,
     ) -> None:
         r"""Analytic Log Constrained Expected Improvement.
@@ -525,9 +524,9 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
+        best_f: float | Tensor,
         objective_index: int,
-        constraints: dict[int, tuple[Optional[float], Optional[float]]],
+        constraints: dict[int, tuple[float | None, float | None]],
         maximize: bool = True,
     ) -> None:
         r"""Analytic Constrained Expected Improvement.
@@ -606,7 +605,7 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         X_observed: Tensor,
         num_fantasies: int = 20,
         maximize: bool = True,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> None:
         r"""Single-outcome Noisy Log Expected Improvement (via fantasies).
 
@@ -762,8 +761,8 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        beta: Union[float, Tensor],
-        posterior_transform: Optional[PosteriorTransform] = None,
+        beta: float | Tensor,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
     ) -> None:
         r"""Single-outcome Upper Confidence Bound.
@@ -812,7 +811,7 @@ class PosteriorMean(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
     ) -> None:
         r"""Single-outcome Posterior Mean.
@@ -857,7 +856,7 @@ class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
         self,
         model: Model,
         weights: Tensor,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> None:
         r"""Scalarized Posterior Mean.
 
@@ -919,7 +918,7 @@ class PosteriorStandardDeviation(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
     ) -> None:
         r"""Single-outcome Posterior Mean.
@@ -1135,8 +1134,8 @@ def _get_noiseless_fantasy_model(
 
 
 def _preprocess_constraint_bounds(
-    acqf: Union[LogConstrainedExpectedImprovement, ConstrainedExpectedImprovement],
-    constraints: dict[int, tuple[Optional[float], Optional[float]]],
+    acqf: LogConstrainedExpectedImprovement | ConstrainedExpectedImprovement,
+    constraints: dict[int, tuple[float | None, float | None]],
 ) -> None:
     r"""Set up constraint bounds.
 
@@ -1180,7 +1179,7 @@ def _preprocess_constraint_bounds(
 
 
 def _compute_log_prob_feas(
-    acqf: Union[LogConstrainedExpectedImprovement, ConstrainedExpectedImprovement],
+    acqf: LogConstrainedExpectedImprovement | ConstrainedExpectedImprovement,
     means: Tensor,
     sigmas: Tensor,
 ) -> Tensor:
@@ -1201,20 +1200,13 @@ def _compute_log_prob_feas(
     TODO: Investigate further.
     """
     acqf.to(device=means.device)
-    log_prob = torch.zeros_like(means[..., 0])
-    if len(acqf.con_lower_inds) > 0:
-        i = acqf.con_lower_inds
-        dist_l = (acqf.con_lower - means[..., i]) / sigmas[..., i]
-        log_prob = log_prob + log_Phi(-dist_l).sum(dim=-1)  # 1 - Phi(x) = Phi(-x)
-    if len(acqf.con_upper_inds) > 0:
-        i = acqf.con_upper_inds
-        dist_u = (acqf.con_upper - means[..., i]) / sigmas[..., i]
-        log_prob = log_prob + log_Phi(dist_u).sum(dim=-1)
-    if len(acqf.con_both_inds) > 0:
-        i = acqf.con_both_inds
-        con_lower, con_upper = acqf.con_both[:, 0], acqf.con_both[:, 1]
-        # scaled distance to lower and upper constraint boundary:
-        dist_l = (con_lower - means[..., i]) / sigmas[..., i]
-        dist_u = (con_upper - means[..., i]) / sigmas[..., i]
-        log_prob = log_prob + log_prob_normal_in(a=dist_l, b=dist_u).sum(dim=-1)
-    return log_prob
+    return compute_log_prob_feas_from_bounds(
+        acqf.con_lower_inds,
+        acqf.con_upper_inds,
+        acqf.con_both_inds,
+        acqf.con_lower,
+        acqf.con_upper,
+        acqf.con_both,
+        means,
+        sigmas,
+    )

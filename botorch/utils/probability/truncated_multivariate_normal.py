@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from typing import Optional
-
 import torch
 from botorch.utils.probability.lin_ess import LinearEllipticalSliceSampler
 from botorch.utils.probability.mvnxpb import MVNXPB
@@ -22,13 +20,13 @@ class TruncatedMultivariateNormal(MultivariateNormal):
     def __init__(
         self,
         loc: Tensor,
-        covariance_matrix: Optional[Tensor] = None,
-        precision_matrix: Optional[Tensor] = None,
-        scale_tril: Optional[Tensor] = None,
+        covariance_matrix: Tensor | None = None,
+        precision_matrix: Tensor | None = None,
+        scale_tril: Tensor | None = None,
         bounds: Tensor = None,
-        solver: Optional[MVNXPB] = None,
-        sampler: Optional[LinearEllipticalSliceSampler] = None,
-        validate_args: Optional[bool] = None,
+        solver: MVNXPB | None = None,
+        sampler: LinearEllipticalSliceSampler | None = None,
+        validate_args: bool | None = None,
     ):
         r"""Initializes an instance of a TruncatedMultivariateNormal distribution.
 

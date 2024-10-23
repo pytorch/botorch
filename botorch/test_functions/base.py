@@ -11,7 +11,6 @@ Base class for test functions for optimization benchmarks.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional, Union
 
 import torch
 from botorch.exceptions.errors import InputDataError
@@ -28,7 +27,7 @@ class BaseTestProblem(Module, ABC):
 
     def __init__(
         self,
-        noise_std: Union[None, float, list[float]] = None,
+        noise_std: None | float | list[float] = None,
         negate: bool = False,
     ) -> None:
         r"""Base constructor for test functions.
@@ -96,7 +95,7 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
 
     num_constraints: int
     _check_grad_at_opt: bool = False
-    constraint_noise_std: Union[None, float, list[float]] = None
+    constraint_noise_std: None | float | list[float] = None
 
     def evaluate_slack(self, X: Tensor, noise: bool = True) -> Tensor:
         r"""Evaluate the constraint slack on a set of points.
@@ -161,11 +160,11 @@ class MultiObjectiveTestProblem(BaseTestProblem, ABC):
 
     num_objectives: int
     _ref_point: list[float]
-    _max_hv: Optional[float] = None
+    _max_hv: float | None = None
 
     def __init__(
         self,
-        noise_std: Union[None, float, list[float]] = None,
+        noise_std: None | float | list[float] = None,
         negate: bool = False,
     ) -> None:
         r"""Base constructor for multi-objective test functions.

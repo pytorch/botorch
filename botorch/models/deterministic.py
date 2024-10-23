@@ -27,7 +27,7 @@ functions or in other places where a `Model` is expected.
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import torch
 from botorch.models.ensemble import EnsembleModel
@@ -106,7 +106,7 @@ class GenericDeterministicModel(DeterministicModel):
 class AffineDeterministicModel(DeterministicModel):
     r"""An affine deterministic model."""
 
-    def __init__(self, a: Tensor, b: Union[Tensor, float] = 0.01) -> None:
+    def __init__(self, a: Tensor, b: Tensor | float = 0.01) -> None:
         r"""Affine deterministic model from weights and offset terms.
 
         A simple model of the form
@@ -177,11 +177,11 @@ class FixedSingleSampleModel(DeterministicModel):
     def __init__(
         self,
         model: Model,
-        w: Optional[Tensor] = None,
-        dim: Optional[int] = None,
-        jitter: Optional[float] = 1e-8,
-        dtype: Optional[torch.dtype] = None,
-        device: Optional[torch.dtype] = None,
+        w: Tensor | None = None,
+        dim: int | None = None,
+        jitter: float | None = 1e-8,
+        dtype: torch.dtype | None = None,
+        device: torch.dtype | None = None,
     ) -> None:
         r"""
         Args:

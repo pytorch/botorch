@@ -15,8 +15,8 @@ from __future__ import annotations
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from collections.abc import Mapping
-from typing import Any, Callable, Optional, TYPE_CHECKING, TypeVar, Union
+from collections.abc import Callable, Mapping
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -37,11 +37,10 @@ from botorch.utils.transforms import is_fully_bayesian
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 from torch.nn import Module, ModuleDict, ModuleList
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import PosteriorTransform  # pragma: no cover
-
-TFantasizeMixin = TypeVar("TFantasizeMixin", bound="FantasizeMixin")
 
 
 class Model(Module, ABC):
@@ -74,7 +73,7 @@ class Model(Module, ABC):
     """  # noqa: E501
 
     _has_transformed_inputs: bool = False
-    _original_train_inputs: Optional[Tensor] = None
+    _original_train_inputs: Tensor | None = None
     _is_fully_bayesian = False
     _is_ensemble = False
 
@@ -82,9 +81,9 @@ class Model(Module, ABC):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
-        observation_noise: Union[bool, Tensor] = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        output_indices: list[int] | None = None,
+        observation_noise: bool | Tensor = False,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
 
@@ -175,7 +174,7 @@ class Model(Module, ABC):
     def construct_inputs(
         cls,
         training_data: SupervisedDataset,
-    ) -> dict[str, Union[BotorchContainer, Tensor]]:
+    ) -> dict[str, BotorchContainer | Tensor]:
         """
         Construct `Model` keyword arguments from a `SupervisedDataset`.
 
@@ -200,7 +199,7 @@ class Model(Module, ABC):
     def transform_inputs(
         self,
         X: Tensor,
-        input_transform: Optional[Module] = None,
+        input_transform: Module | None = None,
     ) -> Tensor:
         r"""Transform inputs.
 
@@ -289,11 +288,7 @@ class FantasizeMixin(ABC):
     """
 
     @abstractmethod
-    def condition_on_observations(
-        self: TFantasizeMixin,
-        X: Tensor,
-        Y: Tensor,
-    ) -> TFantasizeMixin:
+    def condition_on_observations(self, X: Tensor, Y: Tensor) -> Self:
         """
         Classes that inherit from `FantasizeMixin` must implement
         a `condition_on_observations` method.
@@ -315,23 +310,20 @@ class FantasizeMixin(ABC):
     def transform_inputs(
         self,
         X: Tensor,
-        input_transform: Optional[Module] = None,
+        input_transform: Module | None = None,
     ) -> Tensor:
         """
         Classes that inherit from `FantasizeMixin` must implement
         a `transform_inputs` method.
         """
 
-    # When Python 3.11 arrives we can start annotating return types like
-    # this as
-    # 'Self', but at this point the verbose 'T...' syntax is needed.
     def fantasize(
-        self: TFantasizeMixin,
+        self,
         X: Tensor,
         sampler: MCSampler,
-        observation_noise: Optional[Tensor] = None,
+        observation_noise: Tensor | None = None,
         **kwargs: Any,
-    ) -> TFantasizeMixin:
+    ) -> Self:
         r"""Construct a fantasy model.
 
         Constructs a fantasy model in the following fashion:
@@ -432,9 +424,7 @@ class ModelList(Model):
         super().__init__()
         self.models = ModuleList(models)
 
-    def _get_group_subset_indices(
-        self, idcs: Optional[list[int]]
-    ) -> dict[int, list[int]]:
+    def _get_group_subset_indices(self, idcs: list[int] | None) -> dict[int, list[int]]:
         r"""Convert global subset indices to indices for the individual models.
 
         Args:
@@ -460,9 +450,9 @@ class ModelList(Model):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
-        observation_noise: Union[bool, Tensor] = False,
-        posterior_transform: Optional[Callable[[PosteriorList], Posterior]] = None,
+        output_indices: list[int] | None = None,
+        observation_noise: bool | Tensor = False,
+        posterior_transform: Callable[[PosteriorList], Posterior] | None = None,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
 
@@ -606,8 +596,8 @@ class ModelList(Model):
         self,
         X: Tensor,
         sampler: MCSampler,
-        observation_noise: Optional[Tensor] = None,
-        evaluation_mask: Optional[Tensor] = None,
+        observation_noise: Tensor | None = None,
+        evaluation_mask: Tensor | None = None,
         **kwargs: Any,
     ) -> Model:
         r"""Construct a fantasy model.

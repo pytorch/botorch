@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import botorch.models.model as model
 import torch
@@ -20,7 +20,7 @@ logger = _get_logger(name="Feasibility")
 
 def get_feasible_samples(
     samples: Tensor,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
 ) -> tuple[Tensor, float]:
     r"""
     Checks which of the samples satisfy all of the inequality constraints.
@@ -62,7 +62,7 @@ def get_outcome_feasibility_probability(
     outcome_constraints: list[Callable[[Tensor], Tensor]],
     threshold: float = 0.1,
     nsample_outcome: int = 1000,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> float:
     r"""
     Monte Carlo estimate of the feasible volume with respect to the outcome constraints.
@@ -120,14 +120,14 @@ def estimate_feasible_volume(
     bounds: Tensor,
     model: model.Model,
     outcome_constraints: list[Callable[[Tensor], Tensor]],
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
     nsample_feature: int = 1000,
     nsample_outcome: int = 1000,
     threshold: float = 0.1,
     verbose: bool = False,
-    seed: Optional[int] = None,
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
+    seed: int | None = None,
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
 ) -> tuple[float, float]:
     r"""
     Monte Carlo estimate of the feasible volume with respect

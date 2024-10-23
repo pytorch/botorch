@@ -9,18 +9,20 @@ r"""Core abstractions and generic optimizers."""
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from enum import auto, Enum
 from itertools import count
 from sys import maxsize
 from time import monotonic
-from typing import Any, Callable, Optional, Union
+from typing import Any
+
+import numpy.typing as npt
 
 from botorch.optim.closures import NdarrayOptimizationClosure
 from botorch.optim.utils.numpy_utils import get_bounds_as_ndarray
 from botorch.optim.utils.timeout import minimize_with_timeout
-from numpy import asarray, float64 as np_float64, ndarray
+from numpy import asarray, float64 as np_float64
 from torch import Tensor
 from torch.optim.adam import Adam
 from torch.optim.optimizer import Optimizer
@@ -46,24 +48,24 @@ class OptimizationStatus(int, Enum):
 @dataclass
 class OptimizationResult:
     step: int
-    fval: Union[float, int]
+    fval: float | int
     status: OptimizationStatus
-    runtime: Optional[float] = None
-    message: Optional[str] = None
+    runtime: float | None = None
+    message: str | None = None
 
 
 def scipy_minimize(
-    closure: Union[
-        Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]],
-        NdarrayOptimizationClosure,
-    ],
+    closure: (
+        Callable[[], tuple[Tensor, Sequence[Tensor | None]]]
+        | NdarrayOptimizationClosure
+    ),
     parameters: dict[str, Tensor],
-    bounds: Optional[dict[str, tuple[Optional[float], Optional[float]]]] = None,
-    callback: Optional[Callable[[dict[str, Tensor], OptimizationResult], None]] = None,
-    x0: Optional[ndarray] = None,
+    bounds: dict[str, tuple[float | None, float | None]] | None = None,
+    callback: Callable[[dict[str, Tensor], OptimizationResult], None] | None = None,
+    x0: npt.NDArray | None = None,
     method: str = "L-BFGS-B",
-    options: Optional[dict[str, Any]] = None,
-    timeout_sec: Optional[float] = None,
+    options: dict[str, Any] | None = None,
+    timeout_sec: float | None = None,
 ) -> OptimizationResult:
     r"""Generic scipy.optimize.minimize-based optimization routine.
 
@@ -98,7 +100,7 @@ def scipy_minimize(
     else:
         call_counter = count(1)  # callbacks are typically made at the end of each iter
 
-        def wrapped_callback(x: ndarray):
+        def wrapped_callback(x: npt.NDArray):
             result = OptimizationResult(
                 step=next(call_counter),
                 fval=float(wrapped_closure(x)[0]),
@@ -141,15 +143,15 @@ def scipy_minimize(
 
 
 def torch_minimize(
-    closure: Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]],
+    closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]],
     parameters: dict[str, Tensor],
-    bounds: Optional[dict[str, tuple[Optional[float], Optional[float]]]] = None,
-    callback: Optional[Callable[[dict[str, Tensor], OptimizationResult], None]] = None,
-    optimizer: Union[Optimizer, Callable[[list[Tensor]], Optimizer]] = Adam,
-    scheduler: Optional[Union[LRScheduler, Callable[[Optimizer], LRScheduler]]] = None,
-    step_limit: Optional[int] = None,
-    timeout_sec: Optional[float] = None,
-    stopping_criterion: Optional[Callable[[Tensor], bool]] = None,
+    bounds: dict[str, tuple[float | None, float | None]] | None = None,
+    callback: Callable[[dict[str, Tensor], OptimizationResult], None] | None = None,
+    optimizer: Optimizer | Callable[[list[Tensor]], Optimizer] = Adam,
+    scheduler: LRScheduler | Callable[[Optimizer], LRScheduler] | None = None,
+    step_limit: int | None = None,
+    timeout_sec: float | None = None,
+    stopping_criterion: Callable[[Tensor], bool] | None = None,
 ) -> OptimizationResult:
     r"""Generic torch.optim-based optimization routine.
 

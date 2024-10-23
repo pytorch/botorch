@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import warnings
-from typing import Optional
 from unittest import mock
 
 import torch
@@ -32,8 +31,8 @@ class DummyCachedCholeskyAcqf(MCAcquisitionFunction, CachedCholeskyMCSamplerMixi
     def __init__(
         self,
         model: Model,
-        objective: Optional[MCAcquisitionObjective] = None,
-        sampler: Optional[MCSampler] = None,
+        objective: MCAcquisitionObjective | None = None,
+        sampler: MCSampler | None = None,
         cache_root: bool = False,
     ):
         """A dummy cached cholesky acquisition function."""

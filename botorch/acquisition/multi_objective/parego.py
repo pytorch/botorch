@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import torch
 from botorch.acquisition.logei import qLogNoisyExpectedImprovement, TAU_MAX, TAU_RELU
@@ -24,12 +24,12 @@ class qLogNParEGO(qLogNoisyExpectedImprovement, MultiObjectiveMCAcquisitionFunct
         self,
         model: Model,
         X_baseline: Tensor,
-        scalarization_weights: Optional[Tensor] = None,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        X_pending: Optional[Tensor] = None,
-        eta: Union[Tensor, float] = 1e-3,
+        scalarization_weights: Tensor | None = None,
+        sampler: MCSampler | None = None,
+        objective: MCMultiOutputObjective | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        X_pending: Tensor | None = None,
+        eta: Tensor | float = 1e-3,
         fat: bool = True,
         prune_baseline: bool = False,
         cache_root: bool = True,
@@ -138,7 +138,7 @@ class qLogNParEGO(qLogNoisyExpectedImprovement, MultiObjectiveMCAcquisitionFunct
         # Set these after __init__ calls so that they're not overwritten / deleted.
         # These are intended mainly for easier debugging & transparency.
         self._org_objective: MCMultiOutputObjective = org_objective
-        self.chebyshev_scalarization: Callable[[Tensor, Optional[Tensor]], Tensor] = (
+        self.chebyshev_scalarization: Callable[[Tensor, Tensor | None], Tensor] = (
             chebyshev_scalarization
         )
         self.scalarization_weights: Tensor = scalarization_weights

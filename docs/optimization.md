@@ -43,12 +43,20 @@ optimizers.
 ### Multiple Random Restarts
 
 Acquisition functions are often difficult to optimize as they are generally
-non-convex and often flat (e.g., EI), so BoTorch makes use of multiple random
-restarts to improve optimization quality. Each restart can be thought of as an
-optimization routine within a local region; thus, taking the best result over
-many restarts can help provide an approximation to the global optimization
-objective. The function
-[`gen_batch_initial_conditions()`](../api/optim.html#botorch.optim.optimize.gen_batch_initial_conditions)
+non-convex and can exhibit numerically vanishing gradients, a problem that is
+particularly prominent in naive formulations of Expected Improvement (EI).
+[LogEI](../api/acquisition.html#botorch.acquisition.analytic.LogExpectedImprovement)
+and its siblings
+([qLogNEI](../api/acquisition.html#botorch.acquisition.logei.qLogNoisyExpectedImprovement) and
+[qLogNEHVI](../api/acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement),
+...) ameliorate the flatness issue
+and generally lead to signficiantly higher optimization performance [^Ament2023].
+Since convexity cannot be guaranteed in general, BoTorch makes use of
+multiple random restarts to improve optimization quality. Each restart gives rise to
+a separate optimization within a particular local region; thus,
+the best result over many restarts can provide an approximation to the
+global optimization objective. The function
+[`gen_batch_initial_conditions()`](../api/optim.html#botorch.optim.optimize.gen_batch_initial_conditions), which is used by default,
 implements heuristics for choosing a set of initial restart locations (candidates).
 
 Rather than optimize sequentially from each initial restart
@@ -89,7 +97,11 @@ However, it is important to note that as $q$ increases, the performance of joint
 optimization can be hindered by the harder $q \times d$-dimensional problem, and
 sequential optimization might be preferred. See [^Wilson2018] for further
 discussion on how sequential greedy maximization is an effective strategy for
-common classes of acquisition functions.
+common classes of acquisition functions, and [^Ament2023] for joint-vs-sequential
+optimization ablations using the LogEI family of acquisition functions.
 
 [^Wilson2018]: J. Wilson, F. Hutter, M. Deisenroth. Maximizing Acquisition
 Functions for Bayesian Optimization. NeurIPS, 2018.
+
+[^Ament2023]: S. Ament, S. Daulton, D. Eriksson, M. Balandat, E. Bakshy. Unexpected
+Improvements to Expected Improvement for Bayesian Optimization. NeurIPS, 2023.

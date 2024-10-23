@@ -52,7 +52,7 @@ jobs:
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
-        ./scripts/build_and_verify_py_packages.sh
+        ./scripts/verify_py_packages.sh
     - name: Deploy to Test PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
@@ -79,8 +79,6 @@ jobs:
       # Don't need most deps for conda build, but need them for testing
       # We do need setuptools_scm though to properly parse the version
       run: |
-        # avoid conda bug in >=23.10.0: https://github.com/conda/conda/issues/13412
-        conda config --set solver classic
         conda install -y scipy multipledispatch setuptools_scm conda-build conda-verify
         conda config --set anaconda_upload no
         conda install -y -c pytorch-nightly pytorch cpuonly

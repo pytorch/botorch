@@ -6,13 +6,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from copy import deepcopy
 
 from functools import partial
 from itertools import count
-from typing import Any, Callable, Optional, Union
+from typing import Any
 from unittest.mock import patch
 
 import torch
@@ -24,13 +24,12 @@ from torch import Tensor
 
 
 def run_gaussian_estimator(
-    estimator: Callable[[Tensor], tuple[Tensor, Union[Tensor, float, int]]],
+    estimator: Callable[[Tensor], tuple[Tensor, Tensor | float | int]],
     sqrt_cov: Tensor,
     num_samples: int,
-    batch_limit: Optional[int] = None,
-    seed: Optional[int] = None,
+    batch_limit: int | None = None,
+    seed: int | None = None,
 ) -> Tensor:
-
     if batch_limit is None:
         batch_limit = num_samples
 
@@ -118,7 +117,7 @@ class TestMVNXPB(BotorchTestCase):
         self,
         ndim: int,
         batch_shape: Sequence[int] = (),
-        bound_range: Optional[tuple[float, float]] = None,
+        bound_range: tuple[float, float] | None = None,
     ) -> tuple[Tensor, Tensor]:
         shape = tuple(batch_shape) + (ndim,)
         lower = torch.rand(shape, **self.tkwargs)

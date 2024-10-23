@@ -8,16 +8,16 @@ r"""Model fitting routines."""
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from copy import deepcopy
 from functools import partial
 from itertools import filterfalse
-from typing import Any, Callable, Optional, Union
+from typing import Any
 from warnings import catch_warnings, simplefilter, warn_explicit, WarningMessage
 
 from botorch.exceptions.errors import ModelFittingError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
+from botorch.logging import logger
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
@@ -74,10 +74,10 @@ FitGPyTorchMLL = Dispatcher("fit_gpytorch_mll", encoder=type_bypassing_encoder)
 
 def fit_gpytorch_mll(
     mll: MarginalLogLikelihood,
-    closure: Optional[Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
-    optimizer: Optional[Callable] = None,
-    closure_kwargs: Optional[dict[str, Any]] = None,
-    optimizer_kwargs: Optional[dict[str, Any]] = None,
+    closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]] | None = None,
+    optimizer: Callable | None = None,
+    closure_kwargs: dict[str, Any] | None = None,
+    optimizer_kwargs: dict[str, Any] | None = None,
     **kwargs: Any,
 ) -> MarginalLogLikelihood:
     r"""Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.
@@ -119,10 +119,10 @@ def _fit_fallback(
     _: type[object],
     __: type[object],
     *,
-    closure: Optional[Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
+    closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]] | None = None,
     optimizer: Callable = fit_gpytorch_mll_scipy,
-    closure_kwargs: Optional[dict[str, Any]] = None,
-    optimizer_kwargs: Optional[dict[str, Any]] = None,
+    closure_kwargs: dict[str, Any] | None = None,
+    optimizer_kwargs: dict[str, Any] | None = None,
     max_attempts: int = 5,
     pick_best_of_all_attempts: bool = False,
     warning_handler: Callable[[WarningMessage], bool] = DEFAULT_WARNING_HANDLER,
@@ -158,7 +158,7 @@ def _fit_fallback(
             `optimizer`. Any unfiltered warnings (those for which `warning_handler`
             returns `False`) will be rethrown and trigger a model fitting retry.
         caught_exception_types: A tuple of exception types whose instances should
-            be redirected to `logging.DEBUG`.
+            be logged at the `DEBUG` level.
         **ignore: This function ignores unrecognized keyword arguments.
 
     Returns:
@@ -229,20 +229,18 @@ def _fit_fallback(
                             f"Fit attempt #{attempt}: Current MLL {current_mll} did "
                             f"not beat best MLL so far {best_mll}."
                         )
-                    logging.log(logging.DEBUG, msg=message)
+                    logger.debug(message)
 
                 # Ensure mll is in the right mode if going for another attempt.
                 mll = mll if mll.training else mll.train()
                 if not success:
-                    logging.log(
-                        logging.DEBUG,
+                    logger.debug(
                         f"Fit attempt #{attempt} of {max_attempts} triggered retry "
                         f"policy {'.' if attempt == max_attempts else '; retrying...'}",
                     )
 
             except caught_exception_types as err:
-                logging.log(
-                    logging.DEBUG,
+                logger.debug(
                     f"Fit attempt #{attempt} of {max_attempts} failed with exception:\n"
                     f"{err}",
                 )
@@ -289,9 +287,9 @@ def _fit_fallback_approximate(
     _: type[Likelihood],
     __: type[ApproximateGPyTorchModel],
     *,
-    closure: Optional[Callable[[], tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
-    data_loader: Optional[DataLoader] = None,
-    optimizer: Optional[Callable] = None,
+    closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]] | None = None,
+    data_loader: DataLoader | None = None,
+    optimizer: Callable | None = None,
     full_batch_limit: int = 1024,
     **kwargs: Any,
 ) -> _ApproximateMarginalLogLikelihood:
@@ -333,7 +331,7 @@ def _fit_fallback_approximate(
 
 
 def fit_fully_bayesian_model_nuts(
-    model: Union[SaasFullyBayesianSingleTaskGP, SaasFullyBayesianMultiTaskGP],
+    model: SaasFullyBayesianSingleTaskGP | SaasFullyBayesianMultiTaskGP,
     max_tree_depth: int = 6,
     warmup_steps: int = 512,
     num_samples: int = 256,

@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional
+from collections.abc import Callable
+
 from warnings import warn
 
 import torch
@@ -105,9 +106,9 @@ class GaussianMixturePosterior(GPyTorchPosterior):
         )
         self._covariance_matrix = distribution.lazy_covariance_matrix
 
-        self._mixture_mean: Optional[Tensor] = None
-        self._mixture_variance: Optional[Tensor] = None
-        self._mixture_covariance_matrix: Optional[Tensor] = None
+        self._mixture_mean: Tensor | None = None
+        self._mixture_variance: Tensor | None = None
+        self._mixture_covariance_matrix: Tensor | None = None
 
     @property
     def mixture_mean(self) -> Tensor:

@@ -21,8 +21,8 @@ see also [Hong2014review]_.
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from math import ceil
-from typing import Callable, Optional
 
 import torch
 from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
@@ -49,7 +49,7 @@ class RiskMeasureMCObjective(MCAcquisitionObjective, ABC):
     def __init__(
         self,
         n_w: int,
-        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
+        preprocessing_function: Callable[[Tensor], Tensor] | None = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -94,7 +94,7 @@ class RiskMeasureMCObjective(MCAcquisitionObjective, ABC):
         return samples.view(*samples.shape[:-1], -1, self.n_w)
 
     @abstractmethod
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the risk measure corresponding to the given samples.
 
         Args:
@@ -127,7 +127,7 @@ class CVaR(RiskMeasureMCObjective):
         self,
         alpha: float,
         n_w: int,
-        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
+        preprocessing_function: Callable[[Tensor], Tensor] | None = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -147,7 +147,7 @@ class CVaR(RiskMeasureMCObjective):
         self.alpha = alpha
         self.alpha_idx = ceil(n_w * alpha) - 1
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the CVaR corresponding to the given samples.
 
         Args:
@@ -181,7 +181,7 @@ class VaR(CVaR):
         self,
         alpha: float,
         n_w: int,
-        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
+        preprocessing_function: Callable[[Tensor], Tensor] | None = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -202,7 +202,7 @@ class VaR(CVaR):
         )
         self._q = 1 - self.alpha_idx / n_w
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the VaR corresponding to the given samples.
 
         Args:
@@ -234,7 +234,7 @@ class VaR(CVaR):
 class WorstCase(RiskMeasureMCObjective):
     r"""The worst-case risk measure."""
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the worst-case measure corresponding to the given samples.
 
         Args:
@@ -259,7 +259,7 @@ class Expectation(RiskMeasureMCObjective):
     reducing the cost of posterior sampling as a result.
     """
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the expectation corresponding to the given samples.
         This calculates the expectation / mean / average of each `n_w` samples
         across the q-batch dimension. If `self.weights` is given, the samples

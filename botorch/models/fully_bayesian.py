@@ -30,11 +30,10 @@ References:
     Seventh Conference on Uncertainty in Artificial Intelligence, 2021.
 """
 
-
 import math
 from abc import abstractmethod
 from collections.abc import Mapping
-from typing import Any, Optional
+from typing import Any
 
 import pyro
 import torch
@@ -112,7 +111,7 @@ class PyroModel:
     """
 
     def set_inputs(
-        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor | None = None
     ) -> None:
         """Set the training data.
 
@@ -160,7 +159,7 @@ class SaasPyroModel(PyroModel):
     """
 
     def set_inputs(
-        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor | None = None
     ) -> None:
         super().set_inputs(train_X, train_Y, train_Yvar)
         self.ard_num_dims = self.train_X.shape[-1]
@@ -337,10 +336,10 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Optional[Tensor] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
-        pyro_model: Optional[PyroModel] = None,
+        train_Yvar: Tensor | None = None,
+        outcome_transform: OutcomeTransform | None = None,
+        input_transform: InputTransform | None = None,
+        pyro_model: PyroModel | None = None,
     ) -> None:
         r"""Initialize the fully Bayesian single-task GP model.
 
@@ -509,9 +508,9 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
+        output_indices: list[int] | None = None,
         observation_noise: bool = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
         **kwargs: Any,
     ) -> GaussianMixturePosterior:
         r"""Computes the posterior over model outputs at the provided points.

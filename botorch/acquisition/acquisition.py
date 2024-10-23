@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import torch
 from botorch.exceptions import BotorchWarning
@@ -41,7 +40,7 @@ class AcquisitionFunction(Module, ABC):
         super().__init__()
         self.model: Model = model
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
         r"""Informs the acquisition function about pending design points.
 
         Args:
@@ -115,7 +114,7 @@ class MCSamplerMixin(ABC):
 
     _default_sample_shape = torch.Size([512])
 
-    def __init__(self, sampler: Optional[MCSampler] = None) -> None:
+    def __init__(self, sampler: MCSampler | None = None) -> None:
         r"""Register the sampler on the acquisition function.
 
         Args:

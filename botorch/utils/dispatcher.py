@@ -6,8 +6,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from inspect import getsource, getsourcefile
-from typing import Any, Callable, Optional
+from typing import Any
 
 from multipledispatch.dispatcher import (
     Dispatcher as MDDispatcher,
@@ -31,7 +33,7 @@ class Dispatcher(MDDispatcher):
     def __init__(
         self,
         name: str,
-        doc: Optional[str] = None,
+        doc: str | None = None,
         encoder: Callable[Any, type] = type,
     ) -> None:
         """
@@ -47,8 +49,8 @@ class Dispatcher(MDDispatcher):
 
     def __getitem__(
         self,
-        args: Optional[Any] = None,
-        types: Optional[tuple[type]] = None,
+        args: Any | None = None,
+        types: tuple[type] | None = None,
     ) -> Callable:
         r"""Method lookup.
 

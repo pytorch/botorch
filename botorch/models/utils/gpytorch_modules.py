@@ -17,8 +17,8 @@ References:
     In International Conference on Machine Learning, 2024.
 """
 
+from collections.abc import Sequence
 from math import log, sqrt
-from typing import Optional, Sequence, Union
 
 import torch
 from gpytorch.constraints.constraints import GreaterThan
@@ -32,7 +32,7 @@ SQRT3 = sqrt(3)
 
 
 def get_matern_kernel_with_gamma_prior(
-    ard_num_dims: int, batch_shape: Optional[torch.Size] = None
+    ard_num_dims: int, batch_shape: torch.Size | None = None
 ) -> ScaleKernel:
     r"""Constructs the Scale-Matern kernel that is used by default by
     several models. This uses a Gamma(3.0, 6.0) prior for the lengthscale
@@ -51,7 +51,7 @@ def get_matern_kernel_with_gamma_prior(
 
 
 def get_gaussian_likelihood_with_gamma_prior(
-    batch_shape: Optional[torch.Size] = None,
+    batch_shape: torch.Size | None = None,
 ) -> GaussianLikelihood:
     r"""Constructs the GaussianLikelihood that is used by default by
     several models. This uses a Gamma(1.1, 0.05) prior and constrains the
@@ -72,7 +72,7 @@ def get_gaussian_likelihood_with_gamma_prior(
 
 
 def get_gaussian_likelihood_with_lognormal_prior(
-    batch_shape: Optional[torch.Size] = None,
+    batch_shape: torch.Size | None = None,
 ) -> GaussianLikelihood:
     """Return Gaussian likelihood with a LogNormal(-4.0, 1.0) prior.
     This prior is based on [Hvarfner2024vanilla]_.
@@ -99,10 +99,10 @@ def get_gaussian_likelihood_with_lognormal_prior(
 
 def get_covar_module_with_dim_scaled_prior(
     ard_num_dims: int,
-    batch_shape: Optional[torch.Size] = None,
+    batch_shape: torch.Size | None = None,
     use_rbf_kernel: bool = True,
-    active_dims: Optional[Sequence[int]] = None,
-) -> Union[MaternKernel, RBFKernel]:
+    active_dims: Sequence[int] | None = None,
+) -> MaternKernel | RBFKernel:
     """Returns an RBF or Matern kernel with priors
     from  [Hvarfner2024vanilla]_.
 

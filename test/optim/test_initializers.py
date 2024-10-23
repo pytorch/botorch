@@ -8,7 +8,6 @@ import warnings
 from contextlib import ExitStack
 from itertools import product
 from random import random
-from typing import Optional
 from unittest import mock
 
 import torch
@@ -90,40 +89,42 @@ class TestInitializeQBatch(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             # basic test
             X = torch.rand(5, 3, 4, device=self.device, dtype=dtype)
-            Y = torch.rand(5, device=self.device, dtype=dtype)
-            ics = initialize_q_batch_nonneg(X=X, Y=Y, n=2)
-            self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
-            self.assertEqual(ics.device, X.device)
-            self.assertEqual(ics.dtype, X.dtype)
+            acq_vals = torch.rand(5, device=self.device, dtype=dtype)
+            ics_X, ics_acq_vals = initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=2)
+            self.assertEqual(ics_X.shape, torch.Size([2, 3, 4]))
+            self.assertEqual(ics_X.device, X.device)
+            self.assertEqual(ics_X.dtype, X.dtype)
+            self.assertEqual(ics_acq_vals.shape, torch.Size([2]))
+            self.assertEqual(ics_acq_vals.device, acq_vals.device)
+            self.assertEqual(ics_acq_vals.dtype, acq_vals.dtype)
             # ensure nothing happens if we want all samples
-            ics = initialize_q_batch_nonneg(X=X, Y=Y, n=5)
-            self.assertTrue(torch.equal(X, ics))
+            ics_X, ics_acq_vals = initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=5)
+            self.assertTrue(torch.equal(X, ics_X))
+            self.assertTrue(torch.equal(acq_vals, ics_acq_vals))
             # make sure things work with constant inputs
-            Y = torch.ones(5, device=self.device, dtype=dtype)
-            ics = initialize_q_batch_nonneg(X=X, Y=Y, n=2)
+            acq_vals = torch.ones(5, device=self.device, dtype=dtype)
+            ics, _ = initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=2)
             self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
             self.assertEqual(ics.device, X.device)
             self.assertEqual(ics.dtype, X.dtype)
             # ensure raises correct warning
-            Y = torch.zeros(5, device=self.device, dtype=dtype)
+            acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
             with warnings.catch_warnings(record=True) as w, settings.debug(True):
-                ics = initialize_q_batch_nonneg(X=X, Y=Y, n=2)
-                self.assertEqual(len(w), 1)
-                self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
+                ics, _ = initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=2)
+            self.assertEqual(len(w), 1)
+            self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
             self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
             with self.assertRaises(RuntimeError):
-                initialize_q_batch_nonneg(X=X, Y=Y, n=10)
+                initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=10)
             # test less than `n` positive acquisition values
-            Y = torch.arange(5, device=self.device, dtype=dtype) - 3
-            ics = initialize_q_batch_nonneg(X=X, Y=Y, n=2)
-            self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
-            self.assertEqual(ics.device, X.device)
-            self.assertEqual(ics.dtype, X.dtype)
+            acq_vals = torch.arange(5, device=self.device, dtype=dtype) - 3
+            ics_X, ics_acq_vals = initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=2)
+            self.assertEqual(ics_X.shape, torch.Size([2, 3, 4]))
             # check that we chose the point with the positive acquisition value
-            self.assertTrue(torch.equal(ics[0], X[-1]) or torch.equal(ics[1], X[-1]))
+            self.assertTrue((ics_acq_vals > 0).any())
             # test less than `n` alpha_pos values
-            Y = torch.arange(5, device=self.device, dtype=dtype)
-            ics = initialize_q_batch_nonneg(X=X, Y=Y, n=2, alpha=1.0)
+            acq_vals = torch.arange(5, device=self.device, dtype=dtype)
+            ics, _ = initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=2, alpha=1.0)
             self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
             self.assertEqual(ics.device, X.device)
             self.assertEqual(ics.dtype, X.dtype)
@@ -133,32 +134,36 @@ class TestInitializeQBatch(BotorchTestCase):
             for batch_shape in (torch.Size(), [3, 2], (2,), torch.Size([2, 3, 4]), []):
                 # basic test
                 X = torch.rand(5, *batch_shape, 3, 4, device=self.device, dtype=dtype)
-                Y = torch.rand(5, *batch_shape, device=self.device, dtype=dtype)
-                ics = initialize_q_batch(X=X, Y=Y, n=2)
-                self.assertEqual(ics.shape, torch.Size([2, *batch_shape, 3, 4]))
-                self.assertEqual(ics.device, X.device)
-                self.assertEqual(ics.dtype, X.dtype)
+                acq_vals = torch.rand(5, *batch_shape, device=self.device, dtype=dtype)
+                ics_X, ics_acq_vals = initialize_q_batch(X=X, acq_vals=acq_vals, n=2)
+                self.assertEqual(ics_X.shape, torch.Size([2, *batch_shape, 3, 4]))
+                self.assertEqual(ics_X.device, X.device)
+                self.assertEqual(ics_X.dtype, X.dtype)
+                self.assertEqual(ics_acq_vals.shape, torch.Size([2, *batch_shape]))
+                self.assertEqual(ics_acq_vals.device, acq_vals.device)
+                self.assertEqual(ics_acq_vals.dtype, acq_vals.dtype)
                 # ensure nothing happens if we want all samples
-                ics = initialize_q_batch(X=X, Y=Y, n=5)
-                self.assertTrue(torch.equal(X, ics))
+                ics_X, ics_acq_vals = initialize_q_batch(X=X, acq_vals=acq_vals, n=5)
+                self.assertTrue(torch.equal(X, ics_X))
+                self.assertTrue(torch.equal(acq_vals, ics_acq_vals))
                 # ensure raises correct warning
-                Y = torch.zeros(5, device=self.device, dtype=dtype)
+                acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
                 with warnings.catch_warnings(record=True) as w, settings.debug(True):
-                    ics = initialize_q_batch(X=X, Y=Y, n=2)
-                    self.assertEqual(len(w), 1)
-                    self.assertTrue(
-                        issubclass(w[-1].category, BadInitialCandidatesWarning)
-                    )
+                    ics, _ = initialize_q_batch(X=X, acq_vals=acq_vals, n=2)
+                self.assertEqual(len(w), 1)
+                self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
                 self.assertEqual(ics.shape, torch.Size([2, *batch_shape, 3, 4]))
                 with self.assertRaises(RuntimeError):
-                    initialize_q_batch(X=X, Y=Y, n=10)
+                    initialize_q_batch(X=X, acq_vals=acq_vals, n=10)
 
     def test_initialize_q_batch_largeZ(self):
         for dtype in (torch.float, torch.double):
             # testing large eta*Z
             X = torch.rand(5, 3, 4, device=self.device, dtype=dtype)
-            Y = torch.tensor([-1e12, 0, 0, 0, 1e12], device=self.device, dtype=dtype)
-            ics = initialize_q_batch(X=X, Y=Y, n=2, eta=100)
+            acq_vals = torch.tensor(
+                [-1e12, 0, 0, 0, 1e12], device=self.device, dtype=dtype
+            )
+            ics, _ = initialize_q_batch(X=X, acq_vals=acq_vals, n=2, eta=100)
             self.assertEqual(ics.shape[0], 2)
 
 
@@ -506,8 +511,8 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
 
                 # samples are always on cpu
                 def _to_self_device(
-                    x: Optional[torch.Tensor],
-                ) -> Optional[torch.Tensor]:
+                    x: torch.Tensor | None,
+                ) -> torch.Tensor | None:
                     return None if x is None else x.to(device=self.device)
 
                 self.assertLess(
@@ -714,7 +719,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 [True, False], [None, 1234], [None, 1], [None, {0: 0.5}]
             ):
 
-                def generator(n: int, q: int, seed: Optional[int]):
+                def generator(n: int, q: int, seed: int | None):
                     with manual_seed(seed):
                         X_rnd_nlzd = torch.rand(
                             n,
@@ -770,7 +775,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
     def test_error_generator_with_sample_around_best(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
 
-        def generator(n: int, q: int, seed: Optional[int]):
+        def generator(n: int, q: int, seed: int | None):
             return torch.rand(n, q, 3).to(**tkwargs)
 
         with self.assertRaisesRegex(
@@ -1299,7 +1304,6 @@ class TestSampleAroundBest(BotorchTestCase):
             acqf = qExpectedImprovement(model, best_f=0.0)
 
             with warnings.catch_warnings(record=True) as w, settings.debug(True):
-
                 X_rnd = sample_points_around_best(
                     acq_function=acqf,
                     n_discrete_points=4,

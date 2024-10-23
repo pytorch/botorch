@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Callable, Optional
+from collections.abc import Callable
 from unittest import mock
 
 import torch
@@ -47,7 +47,7 @@ class MESMockModel(MockModel):
         self,
         X: Tensor,
         observation_noise: bool = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> MockPosterior:
         m_shape = X.shape[:-1]
         r_shape = list(X.shape[:-2]) + [1, 1]

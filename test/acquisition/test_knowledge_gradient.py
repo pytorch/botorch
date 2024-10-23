@@ -587,7 +587,6 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                         torch.zeros(2, **tkwargs),
                     ),
                 ):
-
                     candidate, value = optimize_acqf(
                         acq_function=kg,
                         bounds=bounds,

@@ -28,8 +28,8 @@ References
 
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from math import ceil
-from typing import Callable, Optional, Union
 
 import torch
 from botorch.acquisition.multi_objective.objective import (
@@ -60,7 +60,7 @@ class MultiOutputRiskMeasureMCObjective(
     def __init__(
         self,
         n_w: int,
-        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
+        preprocessing_function: Callable[[Tensor], Tensor] | None = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -92,7 +92,7 @@ class MultiOutputRiskMeasureMCObjective(
         return samples.view(*samples.shape[:-2], -1, self.n_w, samples.shape[-1])
 
     @abstractmethod
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the risk measure corresponding to the given samples.
 
         Args:
@@ -116,7 +116,7 @@ class MultiOutputExpectation(MultiOutputRiskMeasureMCObjective):
     reducing the cost of posterior sampling as a result.
     """
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the expectation of the given samples. Expectation is
         calculated over each `n_w` samples in the q-batch dimension.
 
@@ -166,7 +166,7 @@ class IndependentCVaR(CVaR, MultiOutputRiskMeasureMCObjective):
         prepared_samples = self._prepare_samples(samples)
         return prepared_samples.sort(dim=-2, descending=True).values
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the CVaR corresponding to the given samples.
 
         Args:
@@ -194,7 +194,7 @@ class IndependentVaR(IndependentCVaR):
     `1 - alpha` quantile of a given random variable.
     """
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the VaR corresponding to the given samples.
 
         Args:
@@ -213,7 +213,7 @@ class IndependentVaR(IndependentCVaR):
 class MultiOutputWorstCase(MultiOutputRiskMeasureMCObjective):
     r"""The multi-output worst-case risk measure."""
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the worst-case measure corresponding to the given samples.
 
         Args:
@@ -249,7 +249,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         n_w: int,
         alpha: float,
         expectation: bool = False,
-        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
+        preprocessing_function: Callable[[Tensor], Tensor] | None = None,
         *,
         pad_to_n_w: bool = False,
         filter_dominated: bool = True,
@@ -483,7 +483,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
     def forward(
         self,
         samples: Tensor,
-        X: Optional[Tensor] = None,
+        X: Tensor | None = None,
     ) -> Tensor:
         r"""Calculate the MVaR corresponding to the given samples.
 
@@ -549,10 +549,10 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         self,
         alpha: float,
         n_w: int,
-        chebyshev_weights: Union[Tensor, list[float]],
-        baseline_Y: Optional[Tensor] = None,
-        ref_point: Optional[Union[Tensor, list[float]]] = None,
-        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
+        chebyshev_weights: Tensor | list[float],
+        baseline_Y: Tensor | None = None,
+        ref_point: Tensor | list[float] | None = None,
+        preprocessing_function: Callable[[Tensor], Tensor] | None = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -591,9 +591,9 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
 
     def set_baseline_Y(
         self,
-        model: Optional[Model],
-        X_baseline: Optional[Tensor],
-        Y_samples: Optional[Tensor] = None,
+        model: Model | None,
+        X_baseline: Tensor | None,
+        Y_samples: Tensor | None = None,
     ) -> None:
         r"""Set the `baseline_Y` based on the MVaR predictions of the `model`
         for `X_baseline`.
@@ -629,7 +629,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         return self._chebyshev_weights
 
     @chebyshev_weights.setter
-    def chebyshev_weights(self, chebyshev_weights: Union[Tensor, list[float]]) -> None:
+    def chebyshev_weights(self, chebyshev_weights: Tensor | list[float]) -> None:
         r"""Update the Chebyshev weights.
 
         Invalidates the cached Chebyshev objective.
@@ -649,12 +649,12 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         self.register_buffer("_chebyshev_weights", chebyshev_weights)
 
     @property
-    def baseline_Y(self) -> Optional[Tensor]:
+    def baseline_Y(self) -> Tensor | None:
         r"""Baseline outcomes used in determining the normalization bounds."""
         return self._baseline_Y
 
     @baseline_Y.setter
-    def baseline_Y(self, baseline_Y: Optional[Tensor]) -> None:
+    def baseline_Y(self, baseline_Y: Tensor | None) -> None:
         r"""Update the baseline outcomes.
 
         Invalidates the cached Chebyshev objective.
@@ -668,7 +668,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         self.register_buffer("_baseline_Y", baseline_Y)
 
     @property
-    def chebyshev_objective(self) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
+    def chebyshev_objective(self) -> Callable[[Tensor, Tensor | None], Tensor]:
         r"""The objective for applying the Chebyshev scalarization."""
         if self._chebyshev_objective is None:
             self._construct_chebyshev_objective()
@@ -695,7 +695,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         if ref_point is not None:
             ref_point = normalize(ref_point.unsqueeze(0), bounds=Y_bounds).squeeze(0)
 
-        def chebyshev_obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        def chebyshev_obj(Y: Tensor, X: Tensor | None = None) -> Tensor:
             Y = self.preprocessing_function(Y)
             Y = normalize(Y, bounds=Y_bounds)
             if ref_point is not None:
@@ -723,7 +723,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
     @staticmethod
     def _get_Y_normalization_bounds(
         Y: Tensor,
-        ref_point: Optional[Tensor] = None,
+        ref_point: Tensor | None = None,
     ) -> Tensor:
         r"""Get normalization bounds for scalarizations.
 

@@ -12,6 +12,7 @@ from botorch.exceptions.errors import (
     CandidateGenerationError,
     DeprecationError,
     InputDataError,
+    OptimizationGradientError,
     OptimizationTimeoutError,
     UnsupportedError,
 )
@@ -48,4 +49,10 @@ class TestBotorchExceptions(BotorchTestCase):
         self.assertEqual(error.runtime, 0.123)
         self.assertTrue(np.array_equal(error.current_x, np.array([1.0])))
         with self.assertRaises(OptimizationTimeoutError):
+            raise error
+
+    def test_OptimizationGradientError(self):
+        error = OptimizationGradientError("message", current_x=np.array([1.0]))
+        self.assertTrue(np.array_equal(error.current_x, np.array([1.0])))
+        with self.assertRaisesRegex(OptimizationGradientError, "message"):
             raise error
