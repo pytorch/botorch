@@ -86,10 +86,8 @@ class TestFullyBayesianAcquisitionFunctionInputConstructors(
             training_data=self.blockX_blockY,
             bounds=self.bounds,
             num_optima=num_optima,
-            maximize=False,
             distance_metric="kl_divergence",
         )
-        self.assertFalse(kwargs["maximize"])
         self.assertEqual(self.blockX_blockY[0].X.dtype, kwargs["optimal_inputs"].dtype)
         self.assertEqual(len(kwargs["optimal_inputs"]), num_optima)
         self.assertEqual(len(kwargs["optimal_outputs"]), num_optima)
