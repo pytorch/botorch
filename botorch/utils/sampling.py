@@ -19,9 +19,9 @@ from __future__ import annotations
 import warnings
 
 from abc import ABC, abstractmethod
-from collections.abc import Generator, Iterable
+from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -37,7 +37,9 @@ from torch.quasirandom import SobolEngine
 
 
 if TYPE_CHECKING:
-    from botorch.sampling.pathwise.paths import SamplePath  # pragma: no cover
+    from botorch.models.deterministic import (  # pragma: no cover
+        GenericDeterministicModel,
+    )
 
 
 @contextmanager
@@ -989,45 +991,45 @@ def sparse_to_dense_constraints(
 
 
 def optimize_posterior_samples(
-    paths: SamplePath,
+    paths: GenericDeterministicModel,
     bounds: Tensor,
-    candidates: Tensor | None = None,
-    raw_samples: int | None = 1024,
+    raw_samples: int = 1024,
     num_restarts: int = 20,
-    maximize: bool = True,
-    **kwargs: Any,
+    sample_transform: Callable[[Tensor], Tensor] | None = None,
+    return_transformed: bool = False,
 ) -> tuple[Tensor, Tensor]:
-    r"""Cheaply maximizes posterior samples by random querying followed by vanilla
-    gradient descent on the best num_restarts points.
+    r"""Cheaply maximizes posterior samples by random querying followed by
+    gradient-based optimization using SciPy's L-BFGS-B routine.
 
     Args:
         paths: Random Fourier Feature-based sample paths from the GP
         bounds: The bounds on the search space.
-        candidates: A priori good candidates (typically previous design points)
-            which acts as extra initial guesses for the optimization routine.
         raw_samples: The number of samples with which to query the samples initially.
         num_restarts: The number of points selected for gradient-based optimization.
-        maximize: Boolean indicating whether to maimize or minimize
+        sample_transform: A callable transform of the sample outputs (e.g.
+            MCAcquisitionObjective or ScalarizedPosteriorTransform.evaluate) used to
+            negate the objective or otherwise transform the output.
+        return_transformed: A boolean indicating whether to return the transformed
+            or non-transformed samples.
 
     Returns:
         A two-element tuple containing:
             - X_opt: A `num_optima x [batch_size] x d`-dim tensor of optimal inputs x*.
-            - f_opt: A `num_optima x [batch_size] x 1`-dim tensor of optimal outputs f*.
+            - f_opt: A `num_optima x [batch_size] x m`-dim, optionally
+                `num_optima x [batch_size] x 1`-dim,  tensor of optimal outputs f*.
     """
-    if maximize:
 
-        def path_func(x):
-            return paths(x)
+    def path_func(x) -> Tensor:
+        res = paths(x)
+        if sample_transform:
+            res = sample_transform(res)
 
-    else:
-
-        def path_func(x):
-            return -paths(x)
+        return res.squeeze(-1)
 
     candidate_set = unnormalize(
-        SobolEngine(dimension=bounds.shape[1], scramble=True).draw(raw_samples), bounds
+        SobolEngine(dimension=bounds.shape[1], scramble=True).draw(n=raw_samples),
+        bounds=bounds,
     )
-
     # queries all samples on all candidates - output shape
     # raw_samples * num_optima * num_models
     candidate_queries = path_func(candidate_set)
@@ -1035,10 +1037,13 @@ def optimize_posterior_samples(
     X_top_k = candidate_set[argtop_k, :]
 
     # to avoid circular import, the import occurs here
-    from botorch.generation.gen import gen_candidates_torch
+    from botorch.generation.gen import gen_candidates_scipy
 
-    X_top_k, f_top_k = gen_candidates_torch(
-        X_top_k, path_func, lower_bounds=bounds[0], upper_bounds=bounds[1], **kwargs
+    X_top_k, f_top_k = gen_candidates_scipy(
+        X_top_k,
+        path_func,
+        lower_bounds=bounds[0],
+        upper_bounds=bounds[1],
     )
     f_opt, arg_opt = f_top_k.max(dim=-1, keepdim=True)
 
@@ -1046,11 +1051,16 @@ def optimize_posterior_samples(
     # retrieves the argmax. We flatten, pick out the indices and then reshape to
     # the original batch shapes (so instead of pickig out the argmax of a
     # (3, 7, num_restarts, D)) along the num_restarts dim, we pick it out of a
-    # (21  , num_restarts, D)
+    # (21, num_restarts, D)
     final_shape = candidate_queries.shape[:-1]
     X_opt = X_top_k.reshape(final_shape.numel(), num_restarts, -1)[
         torch.arange(final_shape.numel()), arg_opt.flatten()
     ].reshape(*final_shape, -1)
-    if not maximize:
-        f_opt = -f_opt
+
+    # if we return transformed, we do not need to pass the samples through paths
+    # paths a second time but rather just return the transformed optimal values
+    if return_transformed:
+        return X_opt, f_opt
+
+    f_opt = paths(X_opt.unsqueeze(-2)).squeeze(-2)
     return X_opt, f_opt

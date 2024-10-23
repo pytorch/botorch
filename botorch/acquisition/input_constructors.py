@@ -1800,7 +1800,6 @@ def construct_inputs_qJES(
     model: Model,
     bounds: list[tuple[float, float]],
     num_optima: int = 64,
-    maximize: bool = True,
     condition_noiseless: bool = True,
     X_pending: Tensor | None = None,
     estimation_type: str = "LB",
@@ -1811,7 +1810,6 @@ def construct_inputs_qJES(
         model=model,
         bounds=torch.as_tensor(bounds, dtype=dtype).T,
         num_optima=num_optima,
-        maximize=maximize,
     )
 
     inputs = {
@@ -1819,7 +1817,6 @@ def construct_inputs_qJES(
         "optimal_inputs": optimal_inputs,
         "optimal_outputs": optimal_outputs,
         "condition_noiseless": condition_noiseless,
-        "maximize": maximize,
         "X_pending": X_pending,
         "estimation_type": estimation_type,
         "num_samples": num_samples,
