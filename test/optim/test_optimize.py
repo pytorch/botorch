@@ -22,6 +22,7 @@ from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
     qHypervolumeKnowledgeGradient,
 )
 from botorch.exceptions import InputDataError, UnsupportedError
+from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.gen import gen_candidates_scipy, gen_candidates_torch
 from botorch.models import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
@@ -1556,7 +1557,7 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             mock_acq_function = SquaredAcquisitionFunction()
             mock_acq_function.set_X_pending(None)
             # ensure proper raising of errors if no choices
-            with self.assertRaisesRegex(InputDataError, "`choices` must be non-emtpy."):
+            with self.assertRaisesRegex(InputDataError, "`choices` must be non-empty."):
                 optimize_acqf_discrete(
                     acq_function=mock_acq_function,
                     q=q,
@@ -1613,13 +1614,50 @@ class TestOptimizeAcqfDiscrete(BotorchTestCase):
             self.assertAllClose(acq_value, expected_acq_value)
             self.assertAllClose(candidates, expected_candidates)
 
-        with self.assertRaises(UnsupportedError):
-            acqf = MockOneShotAcquisitionFunction()
+        acqf = MockOneShotAcquisitionFunction()
+        with self.assertRaisesRegex(UnsupportedError, "one-shot acquisition"):
             optimize_acqf_discrete(
                 acq_function=acqf,
                 q=1,
                 choices=torch.tensor([[0.5], [0.2]]),
             )
+
+    def test_optimize_acqf_discrete_X_avoid_and_constraints(self):
+        # Check that choices are filtered correctly using X_avoid and constraints.
+        tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.double}
+        mock_acq_function = SquaredAcquisitionFunction()
+        choices = torch.rand(2, 2, **tkwargs)
+        with self.assertRaisesRegex(InputDataError, "No feasible points"):
+            optimize_acqf_discrete(
+                acq_function=mock_acq_function,
+                q=1,
+                choices=choices,
+                X_avoid=choices,
+            )
+        with self.assertWarnsRegex(OptimizationWarning, "Requested q=2 candidates"):
+            candidates, _ = optimize_acqf_discrete(
+                acq_function=mock_acq_function,
+                q=2,
+                choices=choices,
+                X_avoid=choices[:1],
+            )
+        self.assertAllClose(candidates, choices[1:])
+        constraints = [
+            (  # X[..., 0] >= 1.0
+                torch.tensor([0], dtype=torch.long, device=self.device),
+                torch.tensor([1.0], **tkwargs),
+                1.0,
+            )
+        ]
+        choices[0, 0] = 1.0
+        with self.assertWarnsRegex(OptimizationWarning, "Requested q=2 candidates"):
+            candidates, _ = optimize_acqf_discrete(
+                acq_function=mock_acq_function,
+                q=2,
+                choices=choices,
+                inequality_constraints=constraints,
+            )
+        self.assertAllClose(candidates, choices[:1])
 
     def test_optimize_acqf_discrete_local_search(self):
         for q, dtype in itertools.product((1, 2), (torch.float, torch.double)):
