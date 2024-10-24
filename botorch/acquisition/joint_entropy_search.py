@@ -74,7 +74,6 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         posterior_transform: PosteriorTransform | None = None,
         X_pending: Tensor | None = None,
         estimation_type: str = "LB",
-        maximize: bool = True,
         num_samples: int = 64,
     ) -> None:
         r"""Joint entropy search acquisition function.
@@ -91,11 +90,11 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
                 [Tu2022joint]_. These are sampled identically, so this only controls
                 the fashion in which the GP is reshaped as a result of conditioning
                 on the optimum.
+            posterior_transform: PosteriorTransform to negate or scalarize the output.
             estimation_type: estimation_type: A string to determine which entropy
                 estimate is computed: Lower bound" ("LB") or "Monte Carlo" ("MC").
                 Lower Bound is recommended due to the relatively high variance
                 of the MC estimator.
-            maximize: If true, we consider a maximization problem.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation, but have not yet been evaluated.
             num_samples: The number of Monte Carlo samples used for the Monte Carlo
@@ -112,16 +111,13 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         # and three-dimensional otherwise.
         self.optimal_inputs = optimal_inputs.unsqueeze(-2)
         self.optimal_outputs = optimal_outputs.unsqueeze(-2)
+        self.optimal_output_values = (
+            posterior_transform.evaluate(self.optimal_outputs).unsqueeze(-1)
+            if posterior_transform
+            else self.optimal_outputs
+        )
         self.posterior_transform = posterior_transform
-        self.maximize = maximize
 
-        # The optima (can be maxima, can be minima) come in as the largest
-        # values if we optimize, or the smallest (likely substantially negative)
-        # if we minimize. Inside the acquisition function, however, we always
-        # want to consider MAX-values. As such, we need to flip them if
-        # we want to minimize.
-        if not self.maximize:
-            optimal_outputs = -optimal_outputs
         self.num_samples = optimal_inputs.shape[0]
         self.condition_noiseless = condition_noiseless
         self.initial_model = model
@@ -203,7 +199,9 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             A `batch_shape`-dim Tensor of acquisition values at the given design
             points `X`.
         """
-        initial_posterior = self.initial_model.posterior(X, observation_noise=True)
+        initial_posterior = self.initial_model.posterior(
+            X, observation_noise=True, posterior_transform=self.posterior_transform
+        )
         # need to check if there is a two-dimensional batch shape -
         # the sampled optima appear in the dimension right after
         batch_shape = X.shape[:-2]
@@ -221,15 +219,17 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
 
         # Compute the mixture mean and variance
         posterior_m = self.conditional_model.posterior(
-            X.unsqueeze(MCMC_DIM), observation_noise=True
+            X.unsqueeze(MCMC_DIM),
+            observation_noise=True,
+            posterior_transform=self.posterior_transform,
         )
         noiseless_var = self.conditional_model.posterior(
-            X.unsqueeze(MCMC_DIM), observation_noise=False
+            X.unsqueeze(MCMC_DIM),
+            observation_noise=False,
+            posterior_transform=self.posterior_transform,
         ).variance
 
         mean_m = posterior_m.mean
-        if not self.maximize:
-            mean_m = -mean_m
         variance_m = posterior_m.variance
 
         check_no_nans(variance_m)
@@ -240,7 +240,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             torch.zeros(1, device=X.device, dtype=X.dtype),
             torch.ones(1, device=X.device, dtype=X.dtype),
         )
-        normalized_mvs = (self.optimal_outputs - mean_m) / stdv
+        normalized_mvs = (self.optimal_output_values - mean_m) / stdv
         cdf_mvs = normal.cdf(normalized_mvs).clamp_min(CLAMP_LB)
         pdf_mvs = torch.exp(normal.log_prob(normalized_mvs))
 
@@ -294,7 +294,9 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
             A `batch_shape`-dim Tensor of acquisition values at the given design
             points `X`.
         """
-        initial_posterior = self.initial_model.posterior(X, observation_noise=True)
+        initial_posterior = self.initial_model.posterior(
+            X, observation_noise=True, posterior_transform=self.posterior_transform
+        )
 
         batch_shape = X.shape[:-2]
         sample_dim = len(batch_shape)
@@ -311,15 +313,17 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
 
         # Compute the mixture mean and variance
         posterior_m = self.conditional_model.posterior(
-            X.unsqueeze(MCMC_DIM), observation_noise=True
+            X.unsqueeze(MCMC_DIM),
+            observation_noise=True,
+            posterior_transform=self.posterior_transform,
         )
         noiseless_var = self.conditional_model.posterior(
-            X.unsqueeze(MCMC_DIM), observation_noise=False
+            X.unsqueeze(MCMC_DIM),
+            observation_noise=False,
+            posterior_transform=self.posterior_transform,
         ).variance
 
         mean_m = posterior_m.mean
-        if not self.maximize:
-            mean_m = -mean_m
         variance_m = posterior_m.variance.clamp_min(CLAMP_LB)
         conditional_samples, conditional_logprobs = self._compute_monte_carlo_variables(
             posterior_m

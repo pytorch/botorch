@@ -1620,10 +1620,11 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
             training_data=self.blockX_blockY,
             bounds=self.bounds,
             num_optima=17,
-            maximize=False,
+            posterior_transform=ScalarizedPosteriorTransform(
+                torch.rand(1, dtype=self.blockX_blockY[0].Y.dtype)
+            ),
         )
 
-        self.assertFalse(kwargs["maximize"])
         self.assertEqual(self.blockX_blockY[0].X.dtype, kwargs["optimal_inputs"].dtype)
         self.assertEqual(len(kwargs["optimal_inputs"]), 17)
         self.assertEqual(len(kwargs["optimal_outputs"]), 17)

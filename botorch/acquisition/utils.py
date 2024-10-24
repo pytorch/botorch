@@ -18,6 +18,7 @@ from botorch.acquisition.objective import (
     IdentityMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
+    ScalarizedPosteriorTransform,
 )
 from botorch.exceptions.errors import (
     BotorchTensorDimensionError,
@@ -28,10 +29,11 @@ from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.sampling.get_sampler import get_sampler
-from botorch.sampling.pathwise import draw_matheron_paths
+from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.utils.objective import compute_feasibility_indicator
 from botorch.utils.sampling import optimize_posterior_samples
 from botorch.utils.transforms import is_ensemble, normalize_indices
+from gpytorch.models import GP
 from torch import Tensor
 
 
@@ -486,36 +488,62 @@ def project_to_sample_points(X: Tensor, sample_points: Tensor) -> Tensor:
 
 
 def get_optimal_samples(
-    model: Model,
+    model: GP,
     bounds: Tensor,
     num_optima: int,
     raw_samples: int = 1024,
     num_restarts: int = 20,
-    maximize: bool = True,
+    posterior_transform: ScalarizedPosteriorTransform | None = None,
+    objective: MCAcquisitionObjective | None = None,
+    return_transformed: bool = False,
 ) -> tuple[Tensor, Tensor]:
     """Draws sample paths from the posterior and maximizes the samples using GD.
 
     Args:
-        model (Model): The model from which samples are drawn.
-        bounds: (Tensor): Bounds of the search space. If the model inputs are
+        model: The model from which samples are drawn.
+        bounds: Bounds of the search space. If the model inputs are
             normalized, the bounds should be normalized as well.
-        num_optima (int): The number of paths to be drawn and optimized.
-        raw_samples (int, optional): The number of candidates randomly sample.
+        num_optima: The number of paths to be drawn and optimized.
+        raw_samples: The number of candidates randomly sample.
             Defaults to 1024.
-        num_restarts (int, optional): The number of candidates to do gradient-based
+        num_restarts: The number of candidates to do gradient-based
             optimization on. Defaults to 20.
-        maximize: Whether to maximize or minimize the samples.
+        posterior_transform: A ScalarizedPosteriorTransform (may e.g. be used to
+            scalarize multi-output models or negate the objective).
+        objective: An MCAcquisitionObjective, used to negate the objective or otherwise
+            transform sample outputs. Cannot be combined with `posterior_transform`.
+        return_transformed: If True, return the transformed samples.
+
     Returns:
-        Tuple[Tensor, Tensor]: The optimal input locations and corresponding
-        outputs, x* and f*.
+        The optimal input locations and corresponding outputs, x* and f*.
 
     """
-    paths = draw_matheron_paths(model, sample_shape=torch.Size([num_optima]))
+    if posterior_transform and not isinstance(
+        posterior_transform, ScalarizedPosteriorTransform
+    ):
+        raise ValueError(
+            "Only the ScalarizedPosteriorTransform is supported for "
+            "get_optimal_samples."
+        )
+    if posterior_transform and objective:
+        raise ValueError(
+            "Only one of `posterior_transform` and `objective` can be specified."
+        )
+
+    if posterior_transform:
+        sample_transform = posterior_transform.evaluate
+    elif objective:
+        sample_transform = objective
+    else:
+        sample_transform = None
+
+    paths = get_matheron_path_model(model=model, sample_shape=torch.Size([num_optima]))
     optimal_inputs, optimal_outputs = optimize_posterior_samples(
-        paths,
+        paths=paths,
         bounds=bounds,
         raw_samples=raw_samples,
         num_restarts=num_restarts,
-        maximize=maximize,
+        sample_transform=sample_transform,
+        return_transformed=return_transformed,
     )
     return optimal_inputs, optimal_outputs

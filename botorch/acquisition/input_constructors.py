@@ -80,6 +80,7 @@ from botorch.acquisition.objective import (
     LearnedObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
+    ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.preference import (
     AnalyticExpectedUtilityOfBestOption,
@@ -1800,8 +1801,8 @@ def construct_inputs_qJES(
     model: Model,
     bounds: list[tuple[float, float]],
     num_optima: int = 64,
-    maximize: bool = True,
     condition_noiseless: bool = True,
+    posterior_transform: ScalarizedPosteriorTransform | None = None,
     X_pending: Tensor | None = None,
     estimation_type: str = "LB",
     num_samples: int = 64,
@@ -1811,7 +1812,8 @@ def construct_inputs_qJES(
         model=model,
         bounds=torch.as_tensor(bounds, dtype=dtype).T,
         num_optima=num_optima,
-        maximize=maximize,
+        posterior_transform=posterior_transform,
+        return_transformed=True,
     )
 
     inputs = {
@@ -1819,7 +1821,7 @@ def construct_inputs_qJES(
         "optimal_inputs": optimal_inputs,
         "optimal_outputs": optimal_outputs,
         "condition_noiseless": condition_noiseless,
-        "maximize": maximize,
+        "posterior_transform": posterior_transform,
         "X_pending": X_pending,
         "estimation_type": estimation_type,
         "num_samples": num_samples,
