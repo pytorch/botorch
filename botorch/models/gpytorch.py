@@ -48,7 +48,6 @@ from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNorm
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from linear_operator.operators import BlockDiagLinearOperator, CatLinearOperator
 from torch import Tensor
-from torch._C import _get_tracing_state
 
 if TYPE_CHECKING:
     from botorch.posteriors.posterior_list import PosteriorList  # pragma: no cover
@@ -447,8 +446,10 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             mvn = self(X)
             mvn = self._apply_noise(X=X, mvn=mvn, observation_noise=observation_noise)
             if self._num_outputs > 1:
-                if _get_tracing_state():
-                    mvn = MultitaskMultivariateNormal.from_batch_mvn(mvn, task_dim=0)
+                if torch.jit.is_tracing():
+                    mvn = MultitaskMultivariateNormal.from_batch_mvn(
+                        mvn, task_dim=output_dim_idx
+                    )
                 else:
                     mean_x = mvn.mean
                     covar_x = mvn.lazy_covariance_matrix
