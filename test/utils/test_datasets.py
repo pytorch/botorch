@@ -354,6 +354,17 @@ class TestDatasets(BotorchTestCase):
         ):
             mt_dataset.X
 
+        # Test equality.
+        self.assertEqual(mt_dataset, mt_dataset)
+        self.assertNotEqual(mt_dataset, dataset_5)
+        self.assertNotEqual(
+            mt_dataset, MultiTaskDataset(datasets=[dataset_1], target_outcome_name="y")
+        )
+        self.assertNotEqual(
+            mt_dataset,
+            MultiTaskDataset(datasets=[dataset_1, dataset_5], target_outcome_name="z"),
+        )
+
     def test_contextual_datasets(self):
         num_contexts = 3
         feature_names = [f"x_c{i}" for i in range(num_contexts)]

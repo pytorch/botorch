@@ -492,6 +492,14 @@ class MultiTaskDataset(SupervisedDataset):
             outcome_names=[outcome_name],
         )
 
+    def __eq__(self, other: Any) -> bool:
+        return (
+            type(other) is type(self)
+            and self.datasets == other.datasets
+            and self.target_outcome_name == other.target_outcome_name
+            and self.task_feature_index == other.task_feature_index
+        )
+
 
 class ContextualDataset(SupervisedDataset):
     """This is a contextual dataset that is constructed from either a single
@@ -548,7 +556,7 @@ class ContextualDataset(SupervisedDataset):
             return torch.cat(Ys, dim=-1)
 
     @property
-    def Yvar(self) -> Tensor:
+    def Yvar(self) -> Tensor | None:
         """Concatenates the Yvars from the child datasets to create the Y expected
         by LCEM model if there are multiple datasets; Or return the Yvar expected
         by LCEA model if there is only one dataset.
