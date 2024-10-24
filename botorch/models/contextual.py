@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Optional
+from typing import Any
 
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.contextual_lcea import LCEAKernel
@@ -20,7 +20,7 @@ class SACGP(SingleTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Optional[Tensor],
+        train_Yvar: Tensor | None,
         decomposition: dict[str, list[int]],
     ) -> None:
         r"""
@@ -73,13 +73,13 @@ class LCEAGP(SingleTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Yvar: Optional[Tensor],
+        train_Yvar: Tensor | None,
         decomposition: dict[str, list[int]],
         train_embedding: bool = True,
-        cat_feature_dict: Optional[dict] = None,
-        embs_feature_dict: Optional[dict] = None,
-        embs_dim_list: Optional[list[int]] = None,
-        context_weight_dict: Optional[dict] = None,
+        cat_feature_dict: dict | None = None,
+        embs_feature_dict: dict | None = None,
+        embs_dim_list: list[int] | None = None,
+        context_weight_dict: dict | None = None,
     ) -> None:
         r"""
         Args:
@@ -127,10 +127,10 @@ class LCEAGP(SingleTaskGP):
         training_data: SupervisedDataset,
         decomposition: dict[str, list[str]],
         train_embedding: bool = True,
-        cat_feature_dict: Optional[dict] = None,
-        embs_feature_dict: Optional[dict] = None,
-        embs_dim_list: Optional[list[int]] = None,
-        context_weight_dict: Optional[dict] = None,
+        cat_feature_dict: dict | None = None,
+        embs_feature_dict: dict | None = None,
+        embs_dim_list: list[int] | None = None,
+        context_weight_dict: dict | None = None,
     ) -> dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 

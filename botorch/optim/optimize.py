@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import dataclasses
 import warnings
-from typing import Any, Callable, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
 import torch
 from botorch.acquisition.acquisition import (
@@ -66,19 +67,19 @@ class OptimizeAcqfInputs:
     bounds: Tensor
     q: int
     num_restarts: int
-    raw_samples: Optional[int]
-    options: Optional[dict[str, Union[bool, float, int, str]]]
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]]
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]]
-    nonlinear_inequality_constraints: Optional[list[tuple[Callable, bool]]]
-    fixed_features: Optional[dict[int, float]]
-    post_processing_func: Optional[Callable[[Tensor], Tensor]]
-    batch_initial_conditions: Optional[Tensor]
+    raw_samples: int | None
+    options: dict[str, bool | float | int | str] | None
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None
+    nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None
+    fixed_features: dict[int, float] | None
+    post_processing_func: Callable[[Tensor], Tensor] | None
+    batch_initial_conditions: Tensor | None
     return_best_only: bool
     gen_candidates: TGenCandidates
     sequential: bool
-    ic_generator: Optional[TGenInitialConditions] = None
-    timeout_sec: Optional[float] = None
+    ic_generator: TGenInitialConditions | None = None
+    timeout_sec: float | None = None
     return_full_tree: bool = False
     retry_on_optimization_warning: bool = True
     ic_gen_kwargs: dict = dataclasses.field(default_factory=dict)
@@ -332,7 +333,7 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
     batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
 
     optimization_warning_raised = any(
-        (issubclass(w.category, OptimizationWarning) for w in ws)
+        issubclass(w.category, OptimizationWarning) for w in ws
     )
     if optimization_warning_raised and opt_inputs.retry_on_optimization_warning:
         first_warn_msg = (
@@ -366,7 +367,7 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
             batch_candidates, batch_acq_values, ws = _optimize_batch_candidates()
 
             optimization_warning_raised = any(
-                (issubclass(w.category, OptimizationWarning) for w in ws)
+                issubclass(w.category, OptimizationWarning) for w in ws
             )
             if optimization_warning_raised:
                 warnings.warn(
@@ -403,20 +404,20 @@ def optimize_acqf(
     bounds: Tensor,
     q: int,
     num_restarts: int,
-    raw_samples: Optional[int] = None,
-    options: Optional[dict[str, Union[bool, float, int, str]]] = None,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[list[tuple[Callable, bool]]] = None,
-    fixed_features: Optional[dict[int, float]] = None,
-    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
-    batch_initial_conditions: Optional[Tensor] = None,
+    raw_samples: int | None = None,
+    options: dict[str, bool | float | int | str] | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None = None,
+    fixed_features: dict[int, float] | None = None,
+    post_processing_func: Callable[[Tensor], Tensor] | None = None,
+    batch_initial_conditions: Tensor | None = None,
     return_best_only: bool = True,
-    gen_candidates: Optional[TGenCandidates] = None,
+    gen_candidates: TGenCandidates | None = None,
     sequential: bool = False,
     *,
-    ic_generator: Optional[TGenInitialConditions] = None,
-    timeout_sec: Optional[float] = None,
+    ic_generator: TGenInitialConditions | None = None,
+    timeout_sec: float | None = None,
     return_full_tree: bool = False,
     retry_on_optimization_warning: bool = True,
     **ic_gen_kwargs: Any,
@@ -488,7 +489,8 @@ def optimize_acqf(
             functions and `gen_batch_initial_conditions` otherwise. Must be specified
             for nonlinear inequality constraints.
         timeout_sec: Max amount of time optimization can run for.
-        return_full_tree:
+        return_full_tree: Return the full tree of optimizers of the previous
+            iteration.
         retry_on_optimization_warning: Whether to retry candidate generation with a new
             set of initial conditions when it fails with an `OptimizationWarning`.
         ic_gen_kwargs: Additional keyword arguments passed to function specified by
@@ -573,17 +575,17 @@ def optimize_acqf_cyclic(
     bounds: Tensor,
     q: int,
     num_restarts: int,
-    raw_samples: Optional[int] = None,
-    options: Optional[dict[str, Union[bool, float, int, str]]] = None,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    fixed_features: Optional[dict[int, float]] = None,
-    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
-    batch_initial_conditions: Optional[Tensor] = None,
-    cyclic_options: Optional[dict[str, Union[bool, float, int, str]]] = None,
+    raw_samples: int | None = None,
+    options: dict[str, bool | float | int | str] | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    fixed_features: dict[int, float] | None = None,
+    post_processing_func: Callable[[Tensor], Tensor] | None = None,
+    batch_initial_conditions: Tensor | None = None,
+    cyclic_options: dict[str, bool | float | int | str] | None = None,
     *,
-    ic_generator: Optional[TGenInitialConditions] = None,
-    timeout_sec: Optional[float] = None,
+    ic_generator: TGenInitialConditions | None = None,
+    timeout_sec: float | None = None,
     return_full_tree: bool = False,
     retry_on_optimization_warning: bool = True,
     **ic_gen_kwargs: Any,
@@ -622,7 +624,8 @@ def optimize_acqf_cyclic(
             functions and `gen_batch_initial_conditions` otherwise. Must be specified
             for nonlinear inequality constraints.
         timeout_sec: Max amount of time optimization can run for.
-        return_full_tree:
+        return_full_tree: Return the full tree of optimizers of the previous
+            iteration.
         retry_on_optimization_warning: Whether to retry candidate generation with a new
             set of initial conditions when it fails with an `OptimizationWarning`.
         ic_gen_kwargs: Additional keyword arguments passed to function specified by
@@ -708,16 +711,16 @@ def optimize_acqf_list(
     acq_function_list: list[AcquisitionFunction],
     bounds: Tensor,
     num_restarts: int,
-    raw_samples: Optional[int] = None,
-    options: Optional[dict[str, Union[bool, float, int, str]]] = None,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[list[tuple[Callable, bool]]] = None,
-    fixed_features: Optional[dict[int, float]] = None,
-    fixed_features_list: Optional[list[dict[int, float]]] = None,
-    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
-    ic_generator: Optional[TGenInitialConditions] = None,
-    ic_gen_kwargs: Optional[dict] = None,
+    raw_samples: int | None = None,
+    options: dict[str, bool | float | int | str] | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None = None,
+    fixed_features: dict[int, float] | None = None,
+    fixed_features_list: list[dict[int, float]] | None = None,
+    post_processing_func: Callable[[Tensor], Tensor] | None = None,
+    ic_generator: TGenInitialConditions | None = None,
+    ic_gen_kwargs: dict | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Generate a list of candidates from a list of acquisition functions.
 
@@ -842,15 +845,15 @@ def optimize_acqf_mixed(
     q: int,
     num_restarts: int,
     fixed_features_list: list[dict[int, float]],
-    raw_samples: Optional[int] = None,
-    options: Optional[dict[str, Union[bool, float, int, str]]] = None,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[list[tuple[Callable, bool]]] = None,
-    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
-    batch_initial_conditions: Optional[Tensor] = None,
-    ic_generator: Optional[TGenInitialConditions] = None,
-    ic_gen_kwargs: Optional[dict] = None,
+    raw_samples: int | None = None,
+    options: dict[str, bool | float | int | str] | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None = None,
+    post_processing_func: Callable[[Tensor], Tensor] | None = None,
+    batch_initial_conditions: Tensor | None = None,
+    ic_generator: TGenInitialConditions | None = None,
+    ic_gen_kwargs: dict | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Optimize over a list of fixed_features and returns the best solution.
 
@@ -1140,9 +1143,9 @@ def optimize_acqf_discrete_local_search(
     q: int,
     num_restarts: int = 20,
     raw_samples: int = 4096,
-    inequality_constraints: Optional[list[tuple[Tensor, Tensor, float]]] = None,
-    X_avoid: Optional[Tensor] = None,
-    batch_initial_conditions: Optional[Tensor] = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    X_avoid: Tensor | None = None,
+    batch_initial_conditions: Tensor | None = None,
     max_batch_size: int = 2048,
     unique: bool = True,
 ) -> tuple[Tensor, Tensor]:

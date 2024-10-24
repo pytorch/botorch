@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional
 
 import torch
 from botorch.acquisition.analytic import AcquisitionFunction
@@ -33,7 +32,7 @@ class PathwiseThompsonSampling(AcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> None:
         r"""Single-outcome TS.
 
@@ -49,7 +48,7 @@ class PathwiseThompsonSampling(AcquisitionFunction):
             )
 
         super().__init__(model=model)
-        self.batch_size: Optional[int] = None
+        self.batch_size: int | None = None
 
     def redraw(self) -> None:
         self.samples = get_matheron_path_model(

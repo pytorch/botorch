@@ -15,9 +15,8 @@ References
     Augmenting Acquisition Functions with User Beliefs for Bayesian Optimization.
     ICLR 2022.
 """
-from __future__ import annotations
 
-from typing import Optional
+from __future__ import annotations
 
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.monte_carlo import SampleReducingMCAcquisitionFunction
@@ -43,7 +42,7 @@ class PriorGuidedAcquisitionFunction(AcquisitionFunction):
         prior_module: Module,
         log: bool = False,
         prior_exponent: float = 1.0,
-        X_pending: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
     ) -> None:
         r"""Initialize the prior-guided acquisition function.
 

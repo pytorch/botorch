@@ -32,7 +32,7 @@ def lognorm_to_norm(mu: Tensor, Cov: Tensor) -> tuple[Tensor, Tensor]:
         - The `batch_shape x n` mean vector of the Normal distribution
         - The `batch_shape x n x n` covariance matrix of the Normal distribution
     """
-    Cov_n = torch.log(1 + Cov / (mu.unsqueeze(-1) * mu.unsqueeze(-2)))
+    Cov_n = torch.log1p(Cov / (mu.unsqueeze(-1) * mu.unsqueeze(-2)))
     mu_n = torch.log(mu) - 0.5 * torch.diagonal(Cov_n, dim1=-1, dim2=-2)
     return mu_n, Cov_n
 
@@ -60,7 +60,7 @@ def norm_to_lognorm(mu: Tensor, Cov: Tensor) -> tuple[Tensor, Tensor]:
     diag = torch.diagonal(Cov, dim1=-1, dim2=-2)
     b = mu + 0.5 * diag
     mu_ln = torch.exp(b)
-    Cov_ln = (torch.exp(Cov) - 1) * torch.exp(b.unsqueeze(-1) + b.unsqueeze(-2))
+    Cov_ln = torch.special.expm1(Cov) * torch.exp(b.unsqueeze(-1) + b.unsqueeze(-2))
     return mu_ln, Cov_ln
 
 
@@ -88,7 +88,7 @@ def norm_to_lognorm_variance(mu: Tensor, var: Tensor) -> Tensor:
         The `batch_shape x n` variance vector of the log-Normal distribution.
     """
     b = mu + 0.5 * var
-    return (torch.exp(var) - 1) * torch.exp(2 * b)
+    return torch.special.expm1(var) * torch.exp(2 * b)
 
 
 def expand_and_copy_tensor(X: Tensor, batch_shape: torch.Size) -> Tensor:
@@ -126,3 +126,18 @@ def subset_transform(transform):
         return Y
 
     return f
+
+
+def interaction_features(X: Tensor) -> Tensor:
+    """Computes the interaction features between the inputs.
+
+    Args:
+        X: A `batch_shape x q x d`-dim tensor of inputs.
+        indices: The input dimensions to generate interaction features for.
+
+    Returns:
+        A `n x q x 1 x (d * (d-1) / 2))`-dim tensor of interaction features.
+    """
+    dim = X.shape[-1]
+    row_idcs, col_idcs = torch.triu_indices(dim, dim, offset=1)
+    return (X.unsqueeze(-1) @ X.unsqueeze(-2))[..., row_idcs, col_idcs].unsqueeze(-2)

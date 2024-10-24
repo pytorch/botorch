@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 from dataclasses import dataclass, InitVar
 from itertools import chain
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from botorch.utils.probability.utils import swap_along_dim_
@@ -34,9 +34,9 @@ def block_matrix_concat(blocks: Sequence[Sequence[Tensor]]) -> Tensor:
 def augment_cholesky(
     Laa: Tensor,
     Kbb: Tensor,
-    Kba: Optional[Tensor] = None,
-    Lba: Optional[Tensor] = None,
-    jitter: Optional[float] = None,
+    Kba: Tensor | None = None,
+    Lba: Tensor | None = None,
+    jitter: float | None = None,
 ) -> Tensor:
     r"""Computes the Cholesky factor of a block matrix `K = [[Kaa, Kab], [Kba, Kbb]]`
     based on a precomputed Cholesky factor `Kaa = Laa Laa^T`.
@@ -77,7 +77,7 @@ class PivotedCholesky:
     step: int
     tril: Tensor
     perm: LongTensor
-    diag: Optional[Tensor] = None
+    diag: Tensor | None = None
     validate_init: InitVar[bool] = True
 
     def __post_init__(self, validate_init: bool = True):

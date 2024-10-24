@@ -4,12 +4,23 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import itertools
+
 import torch
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models.kernels.orthogonal_additive_kernel import OrthogonalAdditiveKernel
+from botorch.fit import fit_gpytorch_mll
+from botorch.models import SingleTaskGP
+from botorch.models.kernels.orthogonal_additive_kernel import (
+    OrthogonalAdditiveKernel,
+    SECOND_ORDER_PRIOR_ERROR_MSG,
+)
 from botorch.utils.testing import BotorchTestCase
+from gpytorch.constraints import Positive
 from gpytorch.kernels import MaternKernel, RBFKernel
 from gpytorch.lazy import LazyEvaluatedKernelTensor
+from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from gpytorch.priors import LogNormalPrior
+from gpytorch.priors.torch_priors import GammaPrior, HalfCauchyPrior, UniformPrior
 from torch import nn, Tensor
 
 
@@ -117,6 +128,184 @@ class TestOrthogonalAdditiveKernel(BotorchTestCase):
                 # = 0
                 tol = 1e-5
                 self.assertTrue(((K_ortho @ oak.w).squeeze(-1) < tol).all())
+
+    def test_priors(self):
+        d = 5
+        dtypes = [torch.float, torch.double]
+        batch_shapes = [(), (2,), (7, 2)]
+
+        # test no prior
+        oak = OrthogonalAdditiveKernel(
+            RBFKernel(), dim=d, batch_shape=None, second_order=True
+        )
+        for dtype, batch_shape in itertools.product(dtypes, batch_shapes):
+            # test with default args and batch_shape = None in second_order
+            tkwargs = {"dtype": dtype, "device": self.device}
+            offset_prior = HalfCauchyPrior(0.1).to(**tkwargs)
+            coeffs_1_prior = LogNormalPrior(0, 1).to(**tkwargs)
+            coeffs_2_prior = GammaPrior(3, 6).to(**tkwargs)
+            oak = OrthogonalAdditiveKernel(
+                RBFKernel(),
+                dim=d,
+                second_order=True,
+                offset_prior=offset_prior,
+                coeffs_1_prior=coeffs_1_prior,
+                coeffs_2_prior=coeffs_2_prior,
+                batch_shape=batch_shape,
+                **tkwargs,
+            )
+
+            self.assertIsInstance(oak.offset_prior, HalfCauchyPrior)
+            self.assertIsInstance(oak.coeffs_1_prior, LogNormalPrior)
+            self.assertEqual(oak.coeffs_1_prior.scale, 1)
+            self.assertEqual(oak.coeffs_2_prior.concentration, 3)
+
+            oak = OrthogonalAdditiveKernel(
+                RBFKernel(),
+                dim=d,
+                second_order=True,
+                coeffs_1_prior=None,
+                coeffs_2_prior=coeffs_2_prior,
+                batch_shape=batch_shape,
+                **tkwargs,
+            )
+            self.assertEqual(oak.coeffs_2_prior.concentration, 3)
+            with self.assertRaisesRegex(
+                AttributeError,
+                "'OrthogonalAdditiveKernel' object has no attribute 'coeffs_1_prior",
+            ):
+                _ = oak.coeffs_1_prior
+                # test with batch_shape = None in second_order
+            oak = OrthogonalAdditiveKernel(
+                RBFKernel(),
+                dim=d,
+                second_order=True,
+                coeffs_1_prior=coeffs_1_prior,
+                batch_shape=batch_shape,
+                **tkwargs,
+            )
+        with self.assertRaisesRegex(AttributeError, SECOND_ORDER_PRIOR_ERROR_MSG):
+            OrthogonalAdditiveKernel(
+                RBFKernel(),
+                dim=d,
+                batch_shape=None,
+                second_order=False,
+                coeffs_2_prior=GammaPrior(1, 1),
+            )
+
+        # train the model to ensure that param setters are called
+        train_X = torch.rand(5, d, dtype=dtype, device=self.device)
+        train_Y = torch.randn(5, 1, dtype=dtype, device=self.device)
+
+        oak = OrthogonalAdditiveKernel(
+            RBFKernel(),
+            dim=d,
+            batch_shape=None,
+            second_order=True,
+            offset_prior=offset_prior,
+            coeffs_1_prior=coeffs_1_prior,
+            coeffs_2_prior=coeffs_2_prior,
+            **tkwargs,
+        )
+        model = SingleTaskGP(train_X=train_X, train_Y=train_Y, covar_module=oak)
+        mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 2}})
+
+        unif_prior = UniformPrior(10, 11)
+        # coeff_constraint is not enforced so that we can check the raw parameter
+        # values and not the reshaped (triu transformed) ones
+        oak_for_sample = OrthogonalAdditiveKernel(
+            RBFKernel(),
+            dim=d,
+            batch_shape=None,
+            second_order=True,
+            offset_prior=unif_prior,
+            coeffs_1_prior=unif_prior,
+            coeffs_2_prior=unif_prior,
+            coeff_constraint=Positive(transform=None, inv_transform=None),
+            **tkwargs,
+        )
+        oak_for_sample.sample_from_prior("offset_prior")
+        oak_for_sample.sample_from_prior("coeffs_1_prior")
+        oak_for_sample.sample_from_prior("coeffs_2_prior")
+
+        # check that all sampled values are within the bounds set by the priors
+        self.assertTrue(torch.all(10 <= oak_for_sample.raw_offset <= 11))
+        self.assertTrue(
+            torch.all(
+                (10 <= oak_for_sample.raw_coeffs_1)
+                * (oak_for_sample.raw_coeffs_1 <= 11)
+            )
+        )
+        self.assertTrue(
+            torch.all(
+                (10 <= oak_for_sample.raw_coeffs_2)
+                * (oak_for_sample.raw_coeffs_2 <= 11)
+            )
+        )
+
+    def test_set_coeffs(self):
+        d = 5
+        dtype = torch.double
+        oak = OrthogonalAdditiveKernel(
+            RBFKernel(),
+            dim=d,
+            batch_shape=None,
+            second_order=True,
+            dtype=dtype,
+        )
+        constraint = oak.coeff_constraint
+        coeffs_1 = torch.arange(d, dtype=dtype)
+        coeffs_2 = torch.ones((d * d), dtype=dtype).reshape(d, d).triu()
+        oak.coeffs_1 = coeffs_1
+        oak.coeffs_2 = coeffs_2
+
+        self.assertAllClose(
+            oak.raw_coeffs_1,
+            constraint.inverse_transform(coeffs_1),
+        )
+        # raw_coeffs_2 has length d * (d-1) / 2
+        self.assertAllClose(
+            oak.raw_coeffs_2, constraint.inverse_transform(torch.ones(10, dtype=dtype))
+        )
+
+        batch_shapes = torch.Size([2]), torch.Size([5, 2])
+        for batch_shape in batch_shapes:
+            dtype = torch.double
+            oak = OrthogonalAdditiveKernel(
+                RBFKernel(),
+                dim=d,
+                batch_shape=batch_shape,
+                second_order=True,
+                dtype=dtype,
+                coeff_constraint=Positive(transform=None, inv_transform=None),
+            )
+            constraint = oak.coeff_constraint
+            coeffs_1 = torch.arange(d, dtype=dtype)
+            coeffs_2 = torch.ones((d * d), dtype=dtype).reshape(d, d).triu()
+            oak.coeffs_1 = coeffs_1
+            oak.coeffs_2 = coeffs_2
+
+            self.assertEqual(oak.raw_coeffs_1.shape, batch_shape + torch.Size([5]))
+            # raw_coeffs_2 has length d * (d-1) / 2
+            self.assertEqual(oak.raw_coeffs_2.shape, batch_shape + torch.Size([10]))
+
+            # test setting value as float
+            oak.offset = 0.5
+            self.assertAllClose(oak.offset, 0.5 * torch.ones_like(oak.offset))
+            # raw_coeffs_2 has length d * (d-1) / 2
+            oak.coeffs_1 = 0.2
+            self.assertAllClose(
+                oak.raw_coeffs_1, 0.2 * torch.ones_like(oak.raw_coeffs_1)
+            )
+            oak.coeffs_2 = 0.3
+            self.assertAllClose(
+                oak.raw_coeffs_2, 0.3 * torch.ones_like(oak.raw_coeffs_2)
+            )
+            # the lower triangular part is set to 0 automatically since the
+            self.assertAllClose(
+                oak.coeffs_2.tril(diagonal=-1), torch.zeros_like(oak.coeffs_2)
+            )
 
 
 def isposdef(A: Tensor) -> bool:

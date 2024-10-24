@@ -7,7 +7,7 @@
 
 import torch
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.contextual_multioutput import FixedNoiseLCEMGP, LCEMGP
+from botorch.models.contextual_multioutput import LCEMGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.test_helpers import gen_multi_task_dataset
@@ -101,26 +101,6 @@ class ContextualMultiOutputTest(BotorchTestCase):
                 right_interp_indices=task_idcs,
             ).to_dense()
             self.assertAllClose(previous_covar, model.task_covar_module(task_idcs))
-
-    def test_FixedNoiseLCEMGP(self):
-        for dtype in (torch.float, torch.double):
-            _, (train_x, train_y, train_yvar) = gen_multi_task_dataset(
-                yvar=0.01, dtype=dtype, device=self.device
-            )
-
-            with self.assertWarnsRegex(DeprecationWarning, "FixedNoiseLCEMGP"):
-                model = FixedNoiseLCEMGP(
-                    train_X=train_x,
-                    train_Y=train_y,
-                    train_Yvar=train_yvar,
-                    task_feature=0,
-                )
-            mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
-            self.assertIsInstance(model, FixedNoiseLCEMGP)
-
-            test_x = train_x[:5]
-            self.assertIsInstance(model(test_x), MultivariateNormal)
 
     def test_construct_inputs(self) -> None:
         for with_embedding_inputs, yvar, skip_task_features_in_datasets in zip(

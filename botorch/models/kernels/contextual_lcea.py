@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
@@ -41,7 +41,7 @@ def is_contiguous(indices: list[int]) -> bool:
     return set(indices) == set(range(min_idx, min_idx + len(indices)))
 
 
-def get_permutation(decomposition: dict[str, list[int]]) -> Optional[list[int]]:
+def get_permutation(decomposition: dict[str, list[int]]) -> list[int] | None:
     """Construct permutation to reorder the parameters such that:
 
     1) the parameters for each context are contiguous.
@@ -98,11 +98,11 @@ class LCEAKernel(Kernel):
         decomposition: dict[str, list[int]],
         batch_shape: torch.Size,
         train_embedding: bool = True,
-        cat_feature_dict: Optional[dict] = None,
-        embs_feature_dict: Optional[dict] = None,
-        embs_dim_list: Optional[list[int]] = None,
-        context_weight_dict: Optional[dict] = None,
-        device: Optional[torch.device] = None,
+        cat_feature_dict: dict | None = None,
+        embs_feature_dict: dict | None = None,
+        embs_dim_list: list[int] | None = None,
+        context_weight_dict: dict | None = None,
+        device: torch.device | None = None,
     ) -> None:
         r"""
         Args:
@@ -190,7 +190,7 @@ class LCEAKernel(Kernel):
         self.register_constraint("raw_outputscale_list", Positive())
 
     @property
-    def device(self) -> Optional[torch.device]:
+    def device(self) -> torch.device | None:
         return self._device
 
     @property
@@ -212,9 +212,9 @@ class LCEAKernel(Kernel):
 
     def _set_context_features(
         self,
-        cat_feature_dict: Optional[dict] = None,
-        embs_feature_dict: Optional[dict] = None,
-        embs_dim_list: Optional[list[int]] = None,
+        cat_feature_dict: dict | None = None,
+        embs_feature_dict: dict | None = None,
+        embs_dim_list: list[int] | None = None,
     ) -> None:
         """Set context categorical features and continuous embedding features.
         If cat_feature_dict is None, context indices will be used; If embs_dim_list
@@ -291,7 +291,8 @@ class LCEAKernel(Kernel):
         else:
             context_outputscales = self.outputscale_list * self.context_weight
         context_covar = (
-            (context_outputscales.unsqueeze(-2))  # (ns) x 1 x num_contexts
+            (context_outputscales.unsqueeze(-2))
+            # (ns) x 1 x num_contexts
             .mul(context_covar)
             .mul(context_outputscales.unsqueeze(-1))  # (ns) x num_contexts x 1
         )

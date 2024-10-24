@@ -7,8 +7,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
-from typing import Any, Callable, Optional, overload, Union
+from collections.abc import Callable, Iterable
+from typing import Any, overload, Union
 
 import torch
 from botorch.models.approximate_gp import SingleTaskVariationalGP
@@ -31,8 +31,8 @@ GetTrainTargets = Dispatcher("get_train_targets")
 class TransformedModuleMixin:
     r"""Mixin that wraps a module's __call__ method with optional transforms."""
 
-    input_transform: Optional[TInputTransform]
-    output_transform: Optional[TOutputTransform]
+    input_transform: TInputTransform | None
+    output_transform: TOutputTransform | None
 
     def __call__(self, values: Tensor, *args: Any, **kwargs: Any) -> Tensor:
         input_transform = getattr(self, "input_transform", None)
@@ -84,7 +84,7 @@ class ChainedTransform(TensorTransform):
 class SineCosineTransform(TensorTransform):
     r"""A transform that returns concatenated sine and cosine features."""
 
-    def __init__(self, scale: Optional[Tensor] = None):
+    def __init__(self, scale: Tensor | None = None):
         r"""Initializes a SineCosineTransform instance.
 
         Args:
@@ -143,7 +143,7 @@ class FeatureSelector(TensorTransform):
     r"""A transform that returns a subset of its input's features.
     along a given tensor dimension."""
 
-    def __init__(self, indices: Iterable[int], dim: Union[int, LongTensor] = -1):
+    def __init__(self, indices: Iterable[int], dim: int | LongTensor = -1):
         r"""Initializes a FeatureSelector instance.
 
         Args:
@@ -166,7 +166,7 @@ class OutcomeUntransformer(TensorTransform):
     def __init__(
         self,
         transform: OutcomeTransform,
-        num_outputs: Union[int, LongTensor],
+        num_outputs: int | LongTensor,
     ):
         r"""Initializes an OutcomeUntransformer instance.
 
@@ -193,12 +193,12 @@ class OutcomeUntransformer(TensorTransform):
         return output_values.transpose(-2, -1)
 
 
-def get_input_transform(model: GPyTorchModel) -> Optional[InputTransform]:
+def get_input_transform(model: GPyTorchModel) -> InputTransform | None:
     r"""Returns a model's input_transform or None."""
     return getattr(model, "input_transform", None)
 
 
-def get_output_transform(model: GPyTorchModel) -> Optional[OutcomeUntransformer]:
+def get_output_transform(model: GPyTorchModel) -> OutcomeUntransformer | None:
     r"""Returns a wrapped version of a model's outcome_transform or None."""
     transform = getattr(model, "outcome_transform", None)
     if transform is None:

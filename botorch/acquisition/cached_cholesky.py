@@ -8,10 +8,10 @@ r"""
 Abstract class for acquisition functions leveraging a cached Cholesky
 decomposition of the posterior covariance over f(X_baseline).
 """
+
 from __future__ import annotations
 
 import warnings
-from typing import Optional
 
 import torch
 from botorch.acquisition.acquisition import MCSamplerMixin
@@ -72,7 +72,7 @@ class CachedCholeskyMCSamplerMixin(MCSamplerMixin):
         self,
         model: Model,
         cache_root: bool = False,
-        sampler: Optional[MCSampler] = None,
+        sampler: MCSampler | None = None,
     ) -> None:
         r"""Set class attributes and perform compatibility checks.
 

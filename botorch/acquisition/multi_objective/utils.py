@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import math
 import warnings
+from collections.abc import Callable
 from math import ceil
-from typing import Any, Callable, Optional
+from typing import Any
 
 import torch
 from botorch.acquisition import monte_carlo  # noqa F401
@@ -68,11 +69,11 @@ def prune_inferior_points_multi_objective(
     model: Model,
     X: Tensor,
     ref_point: Tensor,
-    objective: Optional[MCMultiOutputObjective] = None,
-    constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
+    objective: MCMultiOutputObjective | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
     num_samples: int = 2048,
     max_frac: float = 1.0,
-    marginalize_dim: Optional[int] = None,
+    marginalize_dim: int | None = None,
 ) -> Tensor:
     r"""Prune points from an input tensor that are unlikely to be pareto optimal.
 
@@ -154,7 +155,7 @@ def prune_inferior_points_multi_objective(
     probs = pareto_mask.to(dtype=X.dtype).mean(dim=0)
     idcs = probs.nonzero().view(-1)
     if idcs.shape[0] > max_points:
-        counts, order_idcs = torch.sort(probs, descending=True)
+        counts, order_idcs = torch.sort(probs, stable=True, descending=True)
         idcs = order_idcs[:max_points]
     effective_n_w = obj_vals.shape[-2] // X.shape[-2]
     idcs = (idcs / effective_n_w).long().unique()
@@ -165,7 +166,7 @@ def compute_sample_box_decomposition(
     pareto_fronts: Tensor,
     partitioning: BoxDecomposition = DominatedPartitioning,
     maximize: bool = True,
-    num_constraints: Optional[int] = 0,
+    num_constraints: int | None = 0,
 ) -> Tensor:
     r"""Computes the box decomposition associated with some sampled optimal
     objectives. This also supports the single-objective and constrained optimization
@@ -321,7 +322,7 @@ def sample_optimal_points(
         [GenericDeterministicModel, Tensor, int, bool, Any], tuple[Tensor, Tensor]
     ] = random_search_optimizer,
     maximize: bool = True,
-    optimizer_kwargs: Optional[dict[str, Any]] = None,
+    optimizer_kwargs: dict[str, Any] | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Compute a collection of optimal inputs and outputs from samples of a Gaussian
     Process (GP).

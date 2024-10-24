@@ -31,9 +31,9 @@ References
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from copy import deepcopy
 from math import log
-from typing import Callable, Optional
 
 import numpy as np
 import torch
@@ -71,9 +71,9 @@ class MaxValueBase(AcquisitionFunction, ABC):
         self,
         model: Model,
         num_mv_samples: int,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
-        X_pending: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
     ) -> None:
         r"""Single-outcome max-value entropy search-based acquisition functions.
 
@@ -136,7 +136,7 @@ class MaxValueBase(AcquisitionFunction, ABC):
         # Average over fantasies, ig is of shape `num_fantasies x batch_shape x (m)`.
         return ig.mean(dim=0)
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
         r"""Set pending design points.
 
         Set "pending points" to inform the acquisition function of the candidate
@@ -171,7 +171,7 @@ class MaxValueBase(AcquisitionFunction, ABC):
 
     @abstractmethod
     def _sample_max_values(
-        self, num_samples: int, X_pending: Optional[Tensor] = None
+        self, num_samples: int, X_pending: Tensor | None = None
     ) -> None:
         r"""Draw samples from the posterior over maximum values.
 
@@ -204,11 +204,11 @@ class DiscreteMaxValueBase(MaxValueBase):
         model: Model,
         candidate_set: Tensor,
         num_mv_samples: int = 10,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
         use_gumbel: bool = True,
         maximize: bool = True,
-        X_pending: Optional[Tensor] = None,
-        train_inputs: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
+        train_inputs: Tensor | None = None,
     ) -> None:
         r"""Single-outcome MES-like acquisition functions based on discrete MV sampling.
 
@@ -252,7 +252,7 @@ class DiscreteMaxValueBase(MaxValueBase):
         )
 
     def _sample_max_values(
-        self, num_samples: int, X_pending: Optional[Tensor] = None
+        self, num_samples: int, X_pending: Tensor | None = None
     ) -> None:
         r"""Draw samples from the posterior over maximum values on a discrete set.
 
@@ -321,11 +321,11 @@ class qMaxValueEntropy(DiscreteMaxValueBase, MCSamplerMixin):
         num_fantasies: int = 16,
         num_mv_samples: int = 10,
         num_y_samples: int = 128,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
         use_gumbel: bool = True,
         maximize: bool = True,
-        X_pending: Optional[Tensor] = None,
-        train_inputs: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
+        train_inputs: Tensor | None = None,
     ) -> None:
         r"""Single-outcome max-value entropy search acquisition function.
 
@@ -370,7 +370,7 @@ class qMaxValueEntropy(DiscreteMaxValueBase, MCSamplerMixin):
         self.num_fantasies = num_fantasies
         self.set_X_pending(X_pending)  # this did not happen in the super constructor
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
         r"""Set pending points.
 
         Informs the acquisition function about pending design points,
@@ -690,11 +690,11 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         num_fantasies: int = 16,
         num_mv_samples: int = 10,
         num_y_samples: int = 128,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
         use_gumbel: bool = True,
         maximize: bool = True,
-        X_pending: Optional[Tensor] = None,
-        cost_aware_utility: Optional[CostAwareUtility] = None,
+        X_pending: Tensor | None = None,
+        cost_aware_utility: CostAwareUtility | None = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
     ) -> None:
@@ -841,10 +841,10 @@ class qMultiFidelityLowerBoundMaxValueEntropy(qMultiFidelityMaxValueEntropy):
         num_fantasies: int = 16,
         num_mv_samples: int = 10,
         num_y_samples: int = 128,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
         use_gumbel: bool = True,
         maximize: bool = True,
-        cost_aware_utility: Optional[CostAwareUtility] = None,
+        cost_aware_utility: CostAwareUtility | None = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
     ) -> None:
@@ -925,7 +925,7 @@ def _sample_max_value_Thompson(
     model: Model,
     candidate_set: Tensor,
     num_samples: int,
-    posterior_transform: Optional[PosteriorTransform] = None,
+    posterior_transform: PosteriorTransform | None = None,
     maximize: bool = True,
 ) -> Tensor:
     """Samples the max values by discrete Thompson sampling.
@@ -960,7 +960,7 @@ def _sample_max_value_Gumbel(
     model: Model,
     candidate_set: Tensor,
     num_samples: int,
-    posterior_transform: Optional[PosteriorTransform] = None,
+    posterior_transform: PosteriorTransform | None = None,
     maximize: bool = True,
 ) -> Tensor:
     """Samples the max values by Gumbel approximation.

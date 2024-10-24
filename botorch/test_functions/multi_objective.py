@@ -76,7 +76,6 @@ from __future__ import annotations
 import math
 from abc import ABC, abstractmethod
 from math import pi
-from typing import Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -118,7 +117,7 @@ class BraninCurrin(MultiObjectiveTestProblem):
 
     def __init__(
         self,
-        noise_std: Union[None, float, list[float]] = None,
+        noise_std: None | float | list[float] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -178,7 +177,7 @@ class DH(MultiObjectiveTestProblem, ABC):
     def __init__(
         self,
         dim: int,
-        noise_std: Union[None, float, list[float]] = None,
+        noise_std: None | float | list[float] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -338,7 +337,7 @@ class DTLZ(MultiObjectiveTestProblem):
         self,
         dim: int,
         num_objectives: int = 2,
-        noise_std: Union[None, float, list[float]] = None,
+        noise_std: None | float | list[float] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -606,7 +605,7 @@ class GMM(MultiObjectiveTestProblem):
 
     def __init__(
         self,
-        noise_std: Union[None, float, list[float]] = None,
+        noise_std: None | float | list[float] = None,
         negate: bool = False,
         num_objectives: int = 2,
     ) -> None:
@@ -934,7 +933,7 @@ class ZDT(MultiObjectiveTestProblem):
         self,
         dim: int,
         num_objectives: int = 2,
-        noise_std: Union[None, float, list[float]] = None,
+        noise_std: None | float | list[float] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -1244,8 +1243,8 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
 
     def __init__(
         self,
-        noise_std: Union[None, float, list[float]] = None,
-        constraint_noise_std: Union[None, float, list[float]] = None,
+        noise_std: None | float | list[float] = None,
+        constraint_noise_std: None | float | list[float] = None,
         negate: bool = False,
     ) -> None:
         r"""
@@ -1268,7 +1267,6 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
 
 
 class C2DTLZ2(DTLZ2, ConstrainedBaseTestProblem):
-
     num_constraints = 1
     _r = 0.2
     # approximate from nsga-ii, TODO: replace with analytic
@@ -1356,8 +1354,8 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     def __init__(
         self,
         dim: int,
-        noise_std: Union[None, float, list[float]] = None,
-        constraint_noise_std: Union[None, float, list[float]] = None,
+        noise_std: None | float | list[float] = None,
+        constraint_noise_std: None | float | list[float] = None,
         negate: bool = False,
     ) -> None:
         r"""

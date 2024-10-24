@@ -10,7 +10,6 @@ from collections.abc import Iterator
 
 from functools import lru_cache
 from numbers import Number
-from typing import Optional, Union
 
 import torch
 from torch import Tensor
@@ -18,10 +17,10 @@ from torch import Tensor
 
 @lru_cache(maxsize=None)
 def get_constants(
-    values: Union[Number, Iterator[Number]],
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
-) -> Union[Tensor, tuple[Tensor, ...]]:
+    values: Number | Iterator[Number],
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
+) -> Tensor | tuple[Tensor, ...]:
     r"""Returns scalar-valued Tensors containing each of the given constants.
     Used to expedite tensor operations involving scalar arithmetic. Note that
     the returned Tensors should not be modified in-place."""
@@ -32,7 +31,7 @@ def get_constants(
 
 
 def get_constants_like(
-    values: Union[Number, Iterator[Number]],
+    values: Number | Iterator[Number],
     ref: Tensor,
-) -> Union[Tensor, Iterator[Tensor]]:
+) -> Tensor | Iterator[Tensor]:
     return get_constants(values, device=ref.device, dtype=ref.dtype)

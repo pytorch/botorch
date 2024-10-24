@@ -18,7 +18,6 @@ References
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import torch
 from botorch.exceptions.errors import BotorchError
@@ -38,9 +37,7 @@ class BoxDecomposition(Module, ABC):
     Note: Internally, we store the negative reference point (minimization).
     """
 
-    def __init__(
-        self, ref_point: Tensor, sort: bool, Y: Optional[Tensor] = None
-    ) -> None:
+    def __init__(self, ref_point: Tensor, sort: bool, Y: Tensor | None = None) -> None:
         """Initialize BoxDecomposition.
 
         Args:
@@ -261,7 +258,7 @@ class FastPartitioning(BoxDecomposition, ABC):
     def __init__(
         self,
         ref_point: Tensor,
-        Y: Optional[Tensor] = None,
+        Y: Tensor | None = None,
     ) -> None:
         """
         Args:

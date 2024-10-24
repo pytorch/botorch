@@ -473,7 +473,6 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             self._test_cache_root()
 
     def _test_cache_root(self):
-
         sample_cached_path = (
             "botorch.acquisition.cached_cholesky.sample_cached_cholesky"
         )

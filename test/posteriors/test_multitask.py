@@ -8,9 +8,10 @@ import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.multitask import KroneckerMultiTaskGP
-from botorch.posteriors.multitask import MultitaskGPPosterior
+from botorch.posteriors.multitask import _permute_solve, MultitaskGPPosterior
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase
+from linear_operator.operators import to_linear_operator
 
 
 def get_posterior_test_cases(
@@ -41,7 +42,6 @@ def get_posterior_test_cases(
 
 
 class TestMultitaskGPPosterior(BotorchTestCase):
-
     def _test_MultitaskGPPosterior(self, dtype: torch.dtype) -> None:
         post_list = get_posterior_test_cases(device=self.device, dtype=dtype)
         sample_shaping = torch.Size([5, 3])
@@ -189,3 +189,23 @@ class TestMultitaskGPPosterior(BotorchTestCase):
         base_samples = torch.randn(4, 10, 1, device=self.device)
         with self.assertRaises(RuntimeError):
             res = posterior._draw_from_base_covar(sym_mat, base_samples)
+
+
+class TestPermuteSolve(BotorchTestCase):
+    def test_permute_solve_tensor(self):
+        # Random PSD matrix
+        a = torch.randn(32, 32, device=self.device, dtype=torch.float64)
+        A = torch.mm(a, a.t())
+
+        # Random batched column vector
+        b = torch.randn(4, 1, 32, 1, device=self.device, dtype=torch.float64)
+
+        # Compare results of permuted and standard solve
+        x_1 = _permute_solve(to_linear_operator(A), b)
+        x_2 = torch.linalg.solve(A, b)
+        self.assertAllClose(x_1, x_2)
+
+        # Ensure also works if b is not batched
+        x_1 = _permute_solve(to_linear_operator(A), b[0, 0, :, :])
+        x_2 = torch.linalg.solve(A, b[0, 0, :, :])
+        self.assertAllClose(x_1, x_2)

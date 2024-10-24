@@ -16,11 +16,9 @@ References
 
 """
 
-
 from __future__ import annotations
 
 from itertools import product
-from typing import Optional
 
 import torch
 from botorch.acquisition.multi_objective.base import (
@@ -42,7 +40,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
         model: Model,
         ref_point: list[float],
         partitioning: NondominatedPartitioning,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> None:
         r"""Expected Hypervolume Improvement supporting m>=2 outcomes.
 

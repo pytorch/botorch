@@ -17,7 +17,6 @@ References:
 from __future__ import annotations
 
 import math
-from typing import Optional
 
 import torch
 from torch import Tensor
@@ -37,7 +36,7 @@ class NormalQMCEngine:
     """
 
     def __init__(
-        self, d: int, seed: Optional[int] = None, inv_transform: bool = False
+        self, d: int, seed: int | None = None, inv_transform: bool = False
     ) -> None:
         r"""Engine for drawing qMC samples from a multivariate normal `N(0, I_d)`.
 
@@ -60,9 +59,9 @@ class NormalQMCEngine:
     def draw(
         self,
         n: int = 1,
-        out: Optional[Tensor] = None,
-        dtype: Optional[torch.dtype] = None,
-    ) -> Optional[Tensor]:
+        out: Tensor | None = None,
+        dtype: torch.dtype | None = None,
+    ) -> Tensor | None:
         r"""Draw `n` qMC samples from the standard Normal.
 
         Args:
@@ -116,7 +115,7 @@ class MultivariateNormalQMCEngine:
         self,
         mean: Tensor,
         cov: Tensor,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         inv_transform: bool = False,
     ) -> None:
         r"""Engine for qMC sampling from a multivariate Normal `N(\mu, \Sigma)`.
@@ -150,7 +149,7 @@ class MultivariateNormalQMCEngine:
             eigval_root = eigval.clamp_min(0.0).sqrt()
             self._corr_matrix = (eigvec * eigval_root).transpose(-1, -2)
 
-    def draw(self, n: int = 1, out: Optional[Tensor] = None) -> Optional[Tensor]:
+    def draw(self, n: int = 1, out: Tensor | None = None) -> Tensor | None:
         r"""Draw `n` qMC samples from the multivariate Normal.
 
         Args:

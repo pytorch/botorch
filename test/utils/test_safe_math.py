@@ -10,8 +10,8 @@ import itertools
 
 import math
 from abc import abstractmethod
+from collections.abc import Callable
 from itertools import combinations, product
-from typing import Callable
 
 import torch
 from botorch.exceptions import UnsupportedError

@@ -10,11 +10,13 @@ Cross-validation utilities using batch evaluation mode.
 
 from __future__ import annotations
 
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from torch import Tensor
@@ -25,19 +27,19 @@ class CVFolds(NamedTuple):
     test_X: Tensor
     train_Y: Tensor
     test_Y: Tensor
-    train_Yvar: Optional[Tensor] = None
-    test_Yvar: Optional[Tensor] = None
+    train_Yvar: Tensor | None = None
+    test_Yvar: Tensor | None = None
 
 
 class CVResults(NamedTuple):
     model: GPyTorchModel
     posterior: GPyTorchPosterior
     observed_Y: Tensor
-    observed_Yvar: Optional[Tensor] = None
+    observed_Yvar: Tensor | None = None
 
 
 def gen_loo_cv_folds(
-    train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+    train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor | None = None
 ) -> CVFolds:
     r"""Generate LOO CV folds w.r.t. to `n`.
 
@@ -110,9 +112,9 @@ def batch_cross_validation(
     model_cls: type[GPyTorchModel],
     mll_cls: type[MarginalLogLikelihood],
     cv_folds: CVFolds,
-    fit_args: Optional[dict[str, Any]] = None,
+    fit_args: dict[str, Any] | None = None,
     observation_noise: bool = False,
-    model_init_kwargs: Optional[dict[str, Any]] = None,
+    model_init_kwargs: dict[str, Any] | None = None,
 ) -> CVResults:
     r"""Perform cross validation by using GPyTorch batch mode.
 
@@ -166,6 +168,10 @@ def batch_cross_validation(
         ...    },
         ... )
     """
+    if issubclass(model_cls, MultiTaskGP):
+        raise UnsupportedError(
+            "Multi-task GPs are not currently supported by `batch_cross_validation`."
+        )
     model_init_kws = model_init_kwargs if model_init_kwargs is not None else {}
     if cv_folds.train_Yvar is not None:
         model_init_kws["train_Yvar"] = cv_folds.train_Yvar

@@ -59,7 +59,7 @@ class BufferDict(Module):
             buffers: A mapping (dictionary) from string to :class:`~torch.Tensor`, or
                 an iterable of key-value pairs of type (string, :class:`~torch.Tensor`).
         """
-        super(BufferDict, self).__init__()
+        super().__init__()
         if buffers is not None:
             self.update(buffers)
 
@@ -152,7 +152,7 @@ class BufferDict(Module):
         child_lines = []
         for k, p in self._buffers.items():
             size_str = "x".join(str(size) for size in p.size())
-            device_str = "" if not p.is_cuda else " (GPU {})".format(p.get_device())
+            device_str = "" if not p.is_cuda else f" (GPU {p.get_device()})"
             parastr = "Buffer containing: [{} of size {}{}]".format(
                 torch.typename(p), size_str, device_str
             )

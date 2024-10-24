@@ -25,8 +25,6 @@ from __future__ import annotations
 import warnings
 from math import log, pi
 
-from typing import Optional
-
 import torch
 from botorch import settings
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
@@ -73,8 +71,8 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         optimal_inputs: Tensor,
         optimal_outputs: Tensor,
         condition_noiseless: bool = True,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
         estimation_type: str = "LB",
         maximize: bool = True,
         num_samples: int = 64,

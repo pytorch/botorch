@@ -12,8 +12,8 @@ When adding tests for a new input constructor, please add a new case to
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from functools import reduce
-from typing import Callable
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -109,6 +109,7 @@ from botorch.models import MultiTaskGP, SaasFullyBayesianSingleTaskGP, SingleTas
 from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.test_utils.mock import fast_optimize
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
@@ -1266,14 +1267,12 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
         func = get_acqf_input_constructor(qKnowledgeGradient)
 
         with self.subTest("test_with_current_value"):
-
             current_value = torch.tensor(1.23)
 
             with mock.patch(
                 target="botorch.acquisition.input_constructors.optimize_objective",
                 return_value=(None, current_value),
             ):
-
                 kwargs = func(
                     model=mock.Mock(),
                     training_data=self.blockX_blockY,
@@ -1298,7 +1297,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
             self.assertNotIn("current_value", kwargs)
 
     def test_construct_inputs_mfhvkg(self) -> None:
-
         get_kwargs = get_acqf_input_constructor(
             qMultiFidelityHypervolumeKnowledgeGradient
         )
@@ -1326,7 +1324,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
 
     @mock.patch("botorch.acquisition.input_constructors._get_hv_value_function")
     def test_construct_inputs_hvkg(self, mock_get_hv_value_function) -> None:
-
         current_value = torch.tensor(1.23)
         objective_thresholds = torch.rand(2)
 
@@ -1334,7 +1331,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
             qHypervolumeKnowledgeGradient,
             qMultiFidelityHypervolumeKnowledgeGradient,
         ):
-
             get_kwargs = get_acqf_input_constructor(acqf_cls)
 
             model = mock.Mock()
@@ -1352,7 +1348,6 @@ class TestKGandESAcquisitionFunctionInputConstructors(InputConstructorBaseTestCa
                 target="botorch.acquisition.input_constructors.optimize_acqf",
                 return_value=(None, current_value),
             ) as mock_optimize_acqf:
-
                 kwargs = get_kwargs(
                     model=model,
                     training_data=self.blockX_blockY,
@@ -1845,6 +1840,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
             },
         )
 
+    @fast_optimize
     def test_constructors_can_instantiate(self) -> None:
         for key, (classes, input_constructor_kwargs) in self.cases.items():
             with self.subTest(

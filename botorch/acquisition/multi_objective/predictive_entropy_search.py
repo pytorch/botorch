@@ -23,8 +23,6 @@ References:
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.exceptions import InputDataError
@@ -102,7 +100,7 @@ class qMultiObjectivePredictiveEntropySearch(AcquisitionFunction):
         model: Model,
         pareto_sets: Tensor,
         maximize: bool = True,
-        X_pending: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
         max_ep_iterations: int = 250,
         ep_jitter: float = 1e-4,
         test_jitter: float = 1e-4,

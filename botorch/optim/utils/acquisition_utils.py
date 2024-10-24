@@ -8,7 +8,7 @@ r"""Utilities for maximizing acquisition functions."""
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import Mapping
 from warnings import warn
 
 import torch
@@ -21,8 +21,8 @@ from torch import Tensor
 
 def columnwise_clamp(
     X: Tensor,
-    lower: Optional[Union[float, Tensor]] = None,
-    upper: Optional[Union[float, Tensor]] = None,
+    lower: float | Tensor | None = None,
+    upper: float | Tensor | None = None,
     raise_on_violation: bool = False,
 ) -> Tensor:
     r"""Clamp values of a Tensor in column-wise fashion (with support for t-batches).
@@ -64,7 +64,7 @@ def columnwise_clamp(
 
 
 def fix_features(
-    X: Tensor, fixed_features: Optional[dict[int, Optional[float]]] = None
+    X: Tensor, fixed_features: Mapping[int, float | None] | None = None
 ) -> Tensor:
     r"""Fix feature values in a Tensor.
 
@@ -72,7 +72,7 @@ def fix_features(
 
     Args:
         X: input Tensor with shape `... x p`, where `p` is the number of features
-        fixed_features: A dictionary with keys as column indices and values
+        fixed_features: A mapping with keys as column indices and values
             equal to what the feature should be set to in `X`. If the value is
             None, that column is just considered fixed. Keys should be in the
             range `[0, p - 1]`.
@@ -93,7 +93,7 @@ def fix_features(
     return torch.stack(columns, dim=-1)
 
 
-def get_X_baseline(acq_function: AcquisitionFunction) -> Optional[Tensor]:
+def get_X_baseline(acq_function: AcquisitionFunction) -> Tensor | None:
     r"""Extract X_baseline from an acquisition function.
 
     This tries to find the baseline set of points. First, this checks if the

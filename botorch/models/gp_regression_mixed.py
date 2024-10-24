@@ -6,7 +6,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+
+from typing import Any
 
 import torch
 from botorch.models.gp_regression import SingleTaskGP
@@ -16,6 +18,7 @@ from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils.gpytorch_modules import get_covar_module_with_dim_scaled_prior
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.transforms import normalize_indices
+from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.constraints import GreaterThan
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
@@ -60,13 +63,12 @@ class MixedSingleTaskGP(SingleTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         cat_dims: list[int],
-        train_Yvar: Optional[Tensor] = None,
-        cont_kernel_factory: Optional[
-            Callable[[torch.Size, int, list[int]], Kernel]
-        ] = None,
-        likelihood: Optional[Likelihood] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,  # TODO
-        input_transform: Optional[InputTransform] = None,  # TODO
+        train_Yvar: Tensor | None = None,
+        cont_kernel_factory: None
+        | (Callable[[torch.Size, int, list[int]], Kernel]) = None,
+        likelihood: Likelihood | None = None,
+        outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
+        input_transform: InputTransform | None = None,  # TODO
     ) -> None:
         r"""A single-task exact GP model supporting categorical parameters.
 
@@ -87,7 +89,9 @@ class MixedSingleTaskGP(SingleTaskGP):
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform.
             input_transform: An input transform that is applied in the model's
                 forward pass. Only input transforms are allowed which do not
                 transform the categorical dimensions. If you want to use it
@@ -161,7 +165,7 @@ class MixedSingleTaskGP(SingleTaskGP):
         cls,
         training_data: SupervisedDataset,
         categorical_features: list[int],
-        likelihood: Optional[Likelihood] = None,
+        likelihood: Likelihood | None = None,
     ) -> dict[str, Any]:
         r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
 

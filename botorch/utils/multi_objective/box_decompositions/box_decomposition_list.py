@@ -8,8 +8,6 @@ r"""Box decomposition container."""
 
 from __future__ import annotations
 
-from typing import Union
-
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
@@ -94,7 +92,7 @@ class BoxDecompositionList(Module):
 
         return torch.stack(bounds_list, dim=-3)
 
-    def update(self, Y: Union[list[Tensor], Tensor]) -> None:
+    def update(self, Y: list[Tensor] | Tensor) -> None:
         r"""Update the partitioning.
 
         Args:

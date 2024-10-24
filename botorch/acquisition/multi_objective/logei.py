@@ -10,7 +10,7 @@ Multi-objective variants of the LogEI family of acquisition functions, see
 
 from __future__ import annotations
 
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import torch
 from botorch.acquisition.logei import TAU_MAX, TAU_RELU
@@ -48,19 +48,18 @@ from torch import Tensor
 class qLogExpectedHypervolumeImprovement(
     MultiObjectiveMCAcquisitionFunction, SubsetIndexCachingMixin
 ):
-
     _log: bool = True
 
     def __init__(
         self,
         model: Model,
-        ref_point: Union[list[float], Tensor],
+        ref_point: list[float] | Tensor,
         partitioning: NondominatedPartitioning,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        X_pending: Optional[Tensor] = None,
-        eta: Union[Tensor, float] = 1e-2,
+        sampler: MCSampler | None = None,
+        objective: MCMultiOutputObjective | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        X_pending: Tensor | None = None,
+        eta: Tensor | float = 1e-2,
         fat: bool = True,
         tau_relu: float = TAU_RELU,
         tau_max: float = TAU_MAX,
@@ -144,7 +143,7 @@ class qLogExpectedHypervolumeImprovement(
         self.tau_max = tau_max
         self.fat = fat
 
-    def _compute_log_qehvi(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def _compute_log_qehvi(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Compute the expected (feasible) hypervolume improvement given MC samples.
 
         Args:
@@ -267,7 +266,7 @@ class qLogExpectedHypervolumeImprovement(
         return logmeanexp(logsumexp(log_areas_per_segment, dim=-1), dim=0)
 
     def _log_improvement(
-        self, obj_subsets: Tensor, view_shape: Union[tuple, torch.Size]
+        self, obj_subsets: Tensor, view_shape: tuple | torch.Size
     ) -> Tensor:
         # smooth out the clamp and take the log (previous step 3)
         # subtract cell lower bounds, clamp min at zero, but first
@@ -282,7 +281,7 @@ class qLogExpectedHypervolumeImprovement(
         return log_Zi  # mc_samples x batch_shape x num_cells x q_choose_i x i x m
 
     def _log_cell_lengths(
-        self, log_improvement_i: Tensor, view_shape: Union[tuple, torch.Size]
+        self, log_improvement_i: Tensor, view_shape: tuple | torch.Size
     ) -> Tensor:
         cell_upper_bounds = self.cell_upper_bounds.clamp_max(
             1e10 if log_improvement_i.dtype == torch.double else 1e8
@@ -321,19 +320,18 @@ class qLogNoisyExpectedHypervolumeImprovement(
     NoisyExpectedHypervolumeMixin,
     qLogExpectedHypervolumeImprovement,
 ):
-
     _log: bool = True
 
     def __init__(
         self,
         model: Model,
-        ref_point: Union[list[float], Tensor],
+        ref_point: list[float] | Tensor,
         X_baseline: Tensor,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        X_pending: Optional[Tensor] = None,
-        eta: Union[Tensor, float] = 1e-3,
+        sampler: MCSampler | None = None,
+        objective: MCMultiOutputObjective | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        X_pending: Tensor | None = None,
+        eta: Tensor | float = 1e-3,
         prune_baseline: bool = False,
         alpha: float = 0.0,
         cache_pending: bool = True,
@@ -343,7 +341,7 @@ class qLogNoisyExpectedHypervolumeImprovement(
         tau_relu: float = TAU_RELU,
         tau_max: float = 1e-3,  # TAU_MAX,
         fat: bool = True,
-        marginalize_dim: Optional[int] = None,
+        marginalize_dim: int | None = None,
     ) -> None:
         r"""
         q-Log Noisy Expected Hypervolume Improvement supporting m>=2 outcomes.

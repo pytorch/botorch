@@ -24,9 +24,10 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from copy import deepcopy
 from functools import partial
-from typing import Callable, Optional, Protocol, Union
+from typing import Protocol
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
@@ -63,10 +64,10 @@ class MCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, ABC):
     def __init__(
         self,
         model: Model,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
     ) -> None:
         r"""
         Args:
@@ -180,14 +181,14 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
         sample_reduction: SampleReductionProtocol = torch.mean,
         q_reduction: SampleReductionProtocol = torch.amax,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Union[Tensor, float] = 1e-3,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        eta: Tensor | float = 1e-3,
         fat: bool = False,
     ):
         r"""Constructor of SampleReducingMCAcquisitionFunction.
@@ -356,13 +357,13 @@ class qExpectedImprovement(SampleReducingMCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Union[Tensor, float] = 1e-3,
+        best_f: float | Tensor,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        eta: Tensor | float = 1e-3,
     ) -> None:
         r"""q-Expected Improvement.
 
@@ -442,15 +443,15 @@ class qNoisyExpectedImprovement(
         self,
         model: Model,
         X_baseline: Tensor,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
         prune_baseline: bool = True,
         cache_root: bool = True,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Union[Tensor, float] = 1e-3,
-        marginalize_dim: Optional[int] = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        eta: Tensor | float = 1e-3,
+        marginalize_dim: int | None = None,
     ) -> None:
         r"""q-Noisy Expected Improvement.
 
@@ -667,14 +668,14 @@ class qProbabilityOfImprovement(SampleReducingMCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        best_f: float | Tensor,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
         tau: float = 1e-3,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Union[Tensor, float] = 1e-3,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        eta: Tensor | float = 1e-3,
     ) -> None:
         r"""q-Probability of Improvement.
 
@@ -759,10 +760,10 @@ class qSimpleRegret(SampleReducingMCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
     ) -> None:
         r"""q-Simple Regret.
 
@@ -829,10 +830,10 @@ class qUpperConfidenceBound(SampleReducingMCAcquisitionFunction):
         self,
         model: Model,
         beta: float,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
     ) -> None:
         r"""q-Upper Confidence Bound.
 

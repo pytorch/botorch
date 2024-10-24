@@ -21,7 +21,6 @@ References
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Union
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -283,7 +282,7 @@ class GreedyImprovementReduction(InducingPointAllocator):
 
 def _pivoted_cholesky_init(
     train_inputs: Tensor,
-    kernel_matrix: Union[Tensor, LinearOperator],
+    kernel_matrix: Tensor | LinearOperator,
     max_length: int,
     quality_scores: Tensor,
     epsilon: float = 1e-6,

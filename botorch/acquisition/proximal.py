@@ -11,8 +11,6 @@ acquisition function.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
@@ -52,8 +50,8 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         self,
         acq_function: AcquisitionFunction,
         proximal_weights: Tensor,
-        transformed_weighting: Optional[bool] = True,
-        beta: Optional[float] = None,
+        transformed_weighting: bool | None = True,
+        beta: float | None = None,
     ) -> None:
         r"""Derived Acquisition Function weighted by proximity to recently
         observed point.
@@ -211,7 +209,7 @@ def _validate_model(model: Model, proximal_weights: Tensor) -> None:
         )
 
 
-def _get_input_transform(model: Model) -> Optional[InputTransform]:
+def _get_input_transform(model: Model) -> InputTransform | None:
     """get input transform if defined"""
     try:
         return model.input_transform

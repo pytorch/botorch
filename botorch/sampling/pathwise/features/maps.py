@@ -6,8 +6,6 @@
 
 from __future__ import annotations
 
-from typing import Optional, Union
-
 import torch
 from botorch.sampling.pathwise.utils import (
     TInputTransform,
@@ -23,8 +21,8 @@ from torch.nn import Module
 class FeatureMap(TransformedModuleMixin, Module):
     num_outputs: int
     batch_shape: Size
-    input_transform: Optional[TInputTransform]
-    output_transform: Optional[TOutputTransform]
+    input_transform: TInputTransform | None
+    output_transform: TOutputTransform | None
 
 
 class KernelEvaluationMap(FeatureMap):
@@ -34,8 +32,8 @@ class KernelEvaluationMap(FeatureMap):
         self,
         kernel: Kernel,
         points: Tensor,
-        input_transform: Optional[TInputTransform] = None,
-        output_transform: Optional[TOutputTransform] = None,
+        input_transform: TInputTransform | None = None,
+        output_transform: TOutputTransform | None = None,
     ) -> None:
         r"""Initializes a KernelEvaluationMap instance:
 
@@ -62,7 +60,7 @@ class KernelEvaluationMap(FeatureMap):
         self.input_transform = input_transform
         self.output_transform = output_transform
 
-    def forward(self, x: Tensor) -> Union[Tensor, LinearOperator]:
+    def forward(self, x: Tensor) -> Tensor | LinearOperator:
         return self.kernel(x, self.points)
 
     @property
@@ -90,9 +88,9 @@ class KernelFeatureMap(FeatureMap):
         self,
         kernel: Kernel,
         weight: Tensor,
-        bias: Optional[Tensor] = None,
-        input_transform: Optional[TInputTransform] = None,
-        output_transform: Optional[TOutputTransform] = None,
+        bias: Tensor | None = None,
+        input_transform: TInputTransform | None = None,
+        output_transform: TOutputTransform | None = None,
     ) -> None:
         r"""Initializes a KernelFeatureMap instance:
 

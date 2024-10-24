@@ -15,7 +15,6 @@ to the GPU running out of memory.
 import unittest
 from itertools import chain
 from pathlib import Path
-from typing import Union
 
 import torch
 from botorch.utils.testing import BotorchTestCase
@@ -29,7 +28,7 @@ class TestBotorchCUDA(unittest.TestCase):
         self.assertTrue(run_cuda_tests(tests))
 
 
-def run_cuda_tests(tests: Union[unittest.TestCase, unittest.TestSuite]) -> bool:
+def run_cuda_tests(tests: unittest.TestCase | unittest.TestSuite) -> bool:
     """Function for running all tests on cuda (except TestBotorchCUDA itself)"""
     if isinstance(tests, BotorchTestCase):
         tests.device = torch.device("cuda")

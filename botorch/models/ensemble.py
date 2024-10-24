@@ -12,7 +12,7 @@ via the BoTorch Model and Posterior APIs.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
@@ -48,8 +48,8 @@ class EnsembleModel(Model, ABC):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        output_indices: list[int] | None = None,
+        posterior_transform: PosteriorTransform | None = None,
         **kwargs: Any,
     ) -> EnsemblePosterior:
         r"""Compute the ensemble posterior at X.

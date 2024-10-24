@@ -8,11 +8,10 @@ r"""
 Base classes for multi-objective acquisition functions.
 """
 
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
@@ -34,7 +33,7 @@ class MultiObjectiveAnalyticAcquisitionFunction(AcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> None:
         r"""Constructor for the MultiObjectiveAnalyticAcquisitionFunction base class.
 
@@ -61,7 +60,7 @@ class MultiObjectiveAnalyticAcquisitionFunction(AcquisitionFunction):
         """
         pass  # pragma: no cover
 
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
         raise UnsupportedError(
             "Analytic acquisition functions do not account for X_pending yet."
         )
@@ -81,11 +80,11 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, A
     def __init__(
         self,
         model: Model,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCMultiOutputObjective] = None,
-        constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-        eta: Union[Tensor, float] = 1e-3,
-        X_pending: Optional[Tensor] = None,
+        sampler: MCSampler | None = None,
+        objective: MCMultiOutputObjective | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        eta: Tensor | float = 1e-3,
+        X_pending: Tensor | None = None,
     ) -> None:
         r"""Constructor for the `MultiObjectiveMCAcquisitionFunction` base class.
 

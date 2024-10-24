@@ -5,8 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from typing import Optional, Union
-
 import torch
 from botorch.logging import logger
 from botorch.posteriors.ensemble import EnsemblePosterior
@@ -31,7 +29,7 @@ from torch.quasirandom import SobolEngine
 
 def _posterior_to_distribution_encoder(
     posterior: Posterior,
-) -> Union[type[Distribution], type[Posterior]]:
+) -> type[Distribution] | type[Posterior]:
     r"""An encoder returning the type of the distribution for `TorchPosterior`
     and the type of the posterior for the rest.
     """
@@ -47,7 +45,7 @@ def get_sampler(
     posterior: TorchPosterior,
     sample_shape: torch.Size,
     *,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> MCSampler:
     r"""Get the sampler for the given posterior.
 
@@ -72,7 +70,7 @@ def _get_sampler_mvn(
     posterior: GPyTorchPosterior,
     sample_shape: torch.Size,
     *,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> NormalMCSampler:
     r"""The Sobol normal sampler for the `MultivariateNormal` posterior.
 
@@ -95,7 +93,7 @@ def _get_sampler_derived(
     posterior: TransformedPosterior,
     sample_shape: torch.Size,
     *,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> MCSampler:
     r"""Get the sampler for the underlying posterior."""
     return get_sampler(
@@ -107,7 +105,7 @@ def _get_sampler_derived(
 
 @GetSampler.register(PosteriorList)
 def _get_sampler_list(
-    posterior: PosteriorList, sample_shape: torch.Size, *, seed: Optional[int] = None
+    posterior: PosteriorList, sample_shape: torch.Size, *, seed: int | None = None
 ) -> MCSampler:
     r"""Get the `ListSampler` with the appropriate list of samplers."""
     samplers = [
@@ -121,7 +119,7 @@ def _get_sampler_list(
 def _get_sampler_ensemble(
     posterior: EnsemblePosterior,
     sample_shape: torch.Size,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> MCSampler:
     r"""Get the `IndexSampler` for the `EnsemblePosterior`."""
     return IndexSampler(sample_shape=sample_shape, seed=seed)
@@ -131,7 +129,7 @@ def _get_sampler_ensemble(
 def _not_found_error(
     posterior: Posterior,
     sample_shape: torch.Size,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> None:
     raise NotImplementedError(
         f"A registered `MCSampler` for posterior {posterior} is not found. You can "

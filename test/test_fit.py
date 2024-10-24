@@ -5,11 +5,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from contextlib import ExitStack, nullcontext
 from copy import deepcopy
 from itertools import filterfalse, product
-from typing import Callable, Optional
 from unittest.mock import MagicMock, patch
 from warnings import catch_warnings, warn, WarningMessage
 
@@ -40,7 +39,7 @@ class MockOptimizer:
         self,
         randomize_requires_grad: bool = True,
         warnings: Iterable[WarningMessage] = (),
-        exception: Optional[BaseException] = None,
+        exception: BaseException | None = None,
     ):
         r"""Class used to mock `optimizer` argument to `fit_gpytorch_mll."""
         self.randomize_requires_grad = randomize_requires_grad
@@ -49,7 +48,7 @@ class MockOptimizer:
         self.call_count = 0
         self.state_dicts = []
 
-    def __call__(self, mll, closure: Optional[Callable] = None) -> OptimizationResult:
+    def __call__(self, mll, closure: Callable | None = None) -> OptimizationResult:
         self.call_count += 1
         for w in self.warnings:
             warn(str(w.message), w.category)
@@ -284,8 +283,9 @@ class TestFitFallback(BotorchTestCase):
         optimizer = MockOptimizer(exception=NotPSDError("not_psd"))
         with catch_warnings():
             # Test behavior when encountering a caught exception
-            with self.assertLogs(level="DEBUG") as logs, self.assertRaises(
-                ModelFittingError
+            with (
+                self.assertLogs(logger="botorch", level="DEBUG") as logs,
+                self.assertRaises(ModelFittingError),
             ):
                 fit._fit_fallback(
                     mll,
@@ -319,7 +319,7 @@ class TestFitFallback(BotorchTestCase):
         mll = next(iter(self.mlls.values()))
         optimizer = MockOptimizer()
         max_attempts = 10
-        with patch("botorch.fit.logging.log") as mock_log:
+        with patch("botorch.fit.logger.debug") as mock_log:
             fit._fit_fallback(
                 mll,
                 None,
@@ -335,7 +335,7 @@ class TestFitFallback(BotorchTestCase):
         # We have an increasing sequence of best MLL values.
         mll_vals = []
         for call in mock_log.call_args_list:
-            message = call.kwargs["msg"]
+            message = call.args[0]
             mll_val = message.split(" ")[-1][:-1]
             mll_vals.append(float(mll_val))
         self.assertEqual(mll_vals, sorted(mll_vals))
@@ -420,9 +420,10 @@ class TestFitFallbackApproximate(BotorchTestCase):
                 optimizer=fit_gpytorch_mll_torch,
             )
 
-        with patch.object(fit, "_fit_fallback") as mock_fallback, patch.object(
-            fit, "get_loss_closure_with_grads"
-        ) as mock_get_closure:
+        with (
+            patch.object(fit, "_fit_fallback") as mock_fallback,
+            patch.object(fit, "get_loss_closure_with_grads") as mock_get_closure,
+        ):
             mock_get_closure.return_value = "foo"
             fit._fit_fallback_approximate(
                 self.mll,

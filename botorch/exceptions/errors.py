@@ -10,7 +10,7 @@ Botorch Errors.
 
 from typing import Any
 
-import numpy as np
+import numpy.typing as npt
 
 
 class BotorchError(Exception):
@@ -59,7 +59,7 @@ class OptimizationTimeoutError(BotorchError):
     r"""Exception raised when optimization times out."""
 
     def __init__(
-        self, /, *args: Any, current_x: np.ndarray, runtime: float, **kwargs: Any
+        self, /, *args: Any, current_x: npt.NDArray, runtime: float, **kwargs: Any
     ) -> None:
         r"""
         Args:
@@ -72,3 +72,17 @@ class OptimizationTimeoutError(BotorchError):
         super().__init__(*args, **kwargs)
         self.current_x = current_x
         self.runtime = runtime
+
+
+class OptimizationGradientError(BotorchError, RuntimeError):
+    r"""Exception raised when gradient array `gradf` containts NaNs."""
+
+    def __init__(self, /, *args: Any, current_x: npt.NDArray, **kwargs: Any) -> None:
+        r"""
+        Args:
+            *args: Standard args to `BoTorchError`.
+            current_x: A numpy array representing the current iterate.
+            **kwargs: Standard kwargs to `BoTorchError`.
+        """
+        super().__init__(*args, **kwargs)
+        self.current_x = current_x

@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import warnings
-from typing import Optional
 
 import torch
 from botorch import settings
@@ -32,7 +31,7 @@ from torch import Tensor
 
 
 class NotSoAbstractMORiskMeasure(MultiOutputRiskMeasureMCObjective):
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         prepared_samples = self._prepare_samples(samples)
         return prepared_samples.sum(dim=-2)
 
