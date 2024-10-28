@@ -47,7 +47,10 @@ class BaseTestProblem(Module, ABC):
                 f"Got {self.dim=} and {len(self._bounds)=}."
             )
         self.register_buffer(
-            "bounds", torch.tensor(self._bounds, dtype=torch.double).transpose(-1, -2)
+            "bounds",
+            torch.tensor(self._bounds, dtype=torch.get_default_dtype()).transpose(
+                -1, -2
+            ),
         )
 
     def forward(self, X: Tensor, noise: bool = True) -> Tensor:
