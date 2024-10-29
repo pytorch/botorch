@@ -16,7 +16,12 @@ from botorch.models.gp_regression import SingleTaskGP
 from botorch.optim.core import scipy_minimize
 from botorch.optim.initializers import gen_batch_initial_conditions, initialize_q_batch
 from botorch.optim.optimize import optimize_acqf
-
+from botorch.optim.optimize_mixed import (
+    continuous_step,
+    discrete_step,
+    get_nearest_neighbors,
+    optimize_acqf_mixed_alternating,
+)
 from botorch.test_utils.mock import fast_optimize, fast_optimize_context_manager
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 
@@ -32,7 +37,7 @@ class SinAcqusitionFunction(MockAcquisitionFunction):
 
 
 class TestMock(BotorchTestCase):
-    def test_fast_optimize_context_manager(self):
+    def test_fast_optimize_context_manager(self) -> None:
         with self.subTest("gen_candidates_scipy"):
             with fast_optimize_context_manager():
                 cand, value = gen_candidates_scipy(
@@ -79,6 +84,31 @@ class TestMock(BotorchTestCase):
                     raw_samples=16,
                 )
             self.assertEqual(mock_init_q_batch.call_args[1]["n"], 2)
+
+    def test_fast_optimize_mixed_alternating(self) -> None:
+        with patch(
+            "botorch.optim.optimize_mixed.discrete_step",
+            wraps=discrete_step,
+        ) as mock_discrete, patch(
+            "botorch.optim.optimize_mixed.continuous_step",
+            wraps=continuous_step,
+        ) as mock_continuous, patch(
+            "botorch.optim.optimize_mixed.get_nearest_neighbors",
+            wraps=get_nearest_neighbors,
+        ) as mock_neighbors:
+            optimize_acqf_mixed_alternating(
+                acq_function=SinAcqusitionFunction(),
+                bounds=torch.tensor([[-2.0, 0.0], [2.0, 200.0]]),
+                discrete_dims=[1],
+                num_restarts=1,
+            )
+        # These should be called at most `MAX_ITER_ALTER` times for each random
+        # restart, which is mocked to 1.
+        mock_discrete.assert_called_once()
+        mock_continuous.assert_called_once()
+        # This should be called at most `MAX_ITER_DISCRETE` in each call of
+        # `mock_discrete`, which should total to 1.
+        mock_neighbors.assert_called_once()
 
     @fast_optimize
     def test_decorator(self) -> None:
