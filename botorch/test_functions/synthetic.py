@@ -697,7 +697,7 @@ class Rosenbrock(SyntheticTestFunction):
         noise_std: float | None = None,
         negate: bool = False,
         bounds: list[tuple[float, float]] | None = None,
-        dtype: torch.dtype = torch.dtype,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
