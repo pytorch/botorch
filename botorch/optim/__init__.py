@@ -32,6 +32,7 @@ from botorch.optim.optimize import (
     optimize_acqf_mixed,
 )
 from botorch.optim.optimize_homotopy import optimize_acqf_homotopy
+from botorch.optim.optimize_mixed import optimize_acqf_mixed_alternating
 from botorch.optim.stopping import ExpMAStoppingCriterion
 
 
@@ -49,6 +50,7 @@ __all__ = [
     "optimize_acqf_discrete",
     "optimize_acqf_discrete_local_search",
     "optimize_acqf_mixed",
+    "optimize_acqf_mixed_alternating",
     "optimize_acqf_homotopy",
     "scipy_minimize",
     "torch_minimize",

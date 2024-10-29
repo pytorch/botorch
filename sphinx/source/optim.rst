@@ -43,7 +43,7 @@ Acquisition Function Optimization with Homotopy
 
 Acquisition Function Optimization with Mixed Integer Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.optim.optimize_acqf_mixed
+.. automodule:: botorch.optim.optimize_mixed
     :members:
 
 Closures
