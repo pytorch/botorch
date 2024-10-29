@@ -119,13 +119,15 @@ class BraninCurrin(MultiObjectiveTestProblem):
         self,
         noise_std: None | float | list[float] = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the objectives.
+            dtype: The dtype that is used for the bounds of the function.
         """
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
         self._branin = Branin()
 
     def _rescaled_branin(self, X: Tensor) -> Tensor:
@@ -179,12 +181,14 @@ class DH(MultiObjectiveTestProblem, ABC):
         dim: int,
         noise_std: None | float | list[float] = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         if dim < self._min_dim:
             raise ValueError(f"dim must be >= {self._min_dim}, but got dim={dim}!")
@@ -194,7 +198,7 @@ class DH(MultiObjectiveTestProblem, ABC):
         ]
         # max_hv is the area of the box minus the area of the curve formed by the PF.
         self._max_hv = self._ref_point[0] * self._ref_point[1] - self._area_under_curve
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
 
     @abstractmethod
     def _h(self, X: Tensor) -> Tensor:
@@ -339,6 +343,7 @@ class DTLZ(MultiObjectiveTestProblem):
         num_objectives: int = 2,
         noise_std: None | float | list[float] = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
@@ -346,6 +351,7 @@ class DTLZ(MultiObjectiveTestProblem):
             num_objectives: Must be less than dim.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         if dim <= num_objectives:
             raise ValueError(
@@ -356,7 +362,7 @@ class DTLZ(MultiObjectiveTestProblem):
         self.k = self.dim - self.num_objectives + 1
         self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
         self._ref_point = [self._ref_val for _ in range(num_objectives)]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
 
 
 class DTLZ1(DTLZ):
@@ -608,12 +614,14 @@ class GMM(MultiObjectiveTestProblem):
         noise_std: None | float | list[float] = None,
         negate: bool = False,
         num_objectives: int = 2,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the objectives.
             num_objectives: The number of objectives.
+            dtype: The dtype that is used for the bounds of the function.
         """
         if num_objectives not in (2, 3, 4):
             raise UnsupportedError("GMM only currently supports 2 to 4 objectives.")
@@ -623,7 +631,7 @@ class GMM(MultiObjectiveTestProblem):
         if num_objectives > 3:
             self._ref_point.append(-0.1866)
         self.num_objectives = num_objectives
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
         gmm_pos = torch.tensor(
             [
                 [[0.2, 0.2], [0.8, 0.2], [0.5, 0.7]],
@@ -935,6 +943,7 @@ class ZDT(MultiObjectiveTestProblem):
         num_objectives: int = 2,
         noise_std: None | float | list[float] = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
@@ -942,6 +951,7 @@ class ZDT(MultiObjectiveTestProblem):
             num_objectives: Number of objectives. Must not be larger than dim.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         if num_objectives != 2:
             raise NotImplementedError(
@@ -954,7 +964,7 @@ class ZDT(MultiObjectiveTestProblem):
         self.num_objectives = num_objectives
         self.dim = dim
         self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
 
     @staticmethod
     def _g(X: Tensor) -> Tensor:
@@ -1246,6 +1256,7 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
         noise_std: None | float | list[float] = None,
         constraint_noise_std: None | float | list[float] = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
@@ -1253,8 +1264,9 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
             constraint_noise_std: Standard deviation of the observation noise of the
                 constraint.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
         con_bounds = torch.tensor(self._con_bounds, dtype=self.bounds.dtype).transpose(
             -1, -2
         )
@@ -1357,6 +1369,7 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         noise_std: None | float | list[float] = None,
         constraint_noise_std: None | float | list[float] = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
@@ -1365,12 +1378,13 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
             constraint_noise_std: Standard deviation of the observation noise of the
                 constraints.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         if dim < 2:
             raise ValueError("dim must be greater than or equal to 2.")
         self.dim = dim
         self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtpye=dtype)
         self.constraint_noise_std = constraint_noise_std
 
     def LA2(self, A, B, C, D, theta) -> Tensor:
