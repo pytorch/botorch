@@ -1384,7 +1384,7 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
             raise ValueError("dim must be greater than or equal to 2.")
         self.dim = dim
         self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
-        super().__init__(noise_std=noise_std, negate=negate, dtpye=dtype)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
         self.constraint_noise_std = constraint_noise_std
 
     def LA2(self, A, B, C, D, theta) -> Tensor:
