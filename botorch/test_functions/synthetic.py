@@ -271,6 +271,7 @@ class DixonPrice(SyntheticTestFunction):
             dim: The (input) dimension.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         self.dim = dim
         if bounds is None:

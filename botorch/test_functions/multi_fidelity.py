@@ -84,6 +84,7 @@ class AugmentedHartmann(SyntheticTestFunction):
         Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
         self.register_buffer("ALPHA", torch.tensor([1.0, 1.2, 3.0, 3.2]))
@@ -142,6 +143,7 @@ class AugmentedRosenbrock(SyntheticTestFunction):
             dim: The (input) dimension. Must be at least 3.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         if dim < 3:
             raise ValueError(
