@@ -21,7 +21,6 @@ from botorch.optim.initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,
 )
-
 from botorch.optim.utils.timeout import minimize_with_timeout
 from scipy.optimize import OptimizeResult
 from torch import Tensor
@@ -95,6 +94,14 @@ def fast_optimize_context_manager(
                 wraps=minimal_gen_os_ics,
             )
         )
+
+        # Reduce default number of iterations in `optimize_acqf_mixed_alternating`.
+        for name in [
+            "MAX_ITER_ALTER",
+            "MAX_ITER_DISCRETE",
+            "MAX_ITER_CONT",
+        ]:
+            es.enter_context(mock.patch(f"botorch.optim.optimize_mixed.{name}", new=1))
 
         yield
 
