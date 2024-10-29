@@ -43,7 +43,6 @@ class BaseTestProblem(Module, ABC):
         super().__init__()
         self.noise_std = noise_std
         self.negate = negate
-        self.dtype = dtype
         if len(self._bounds) != self.dim:
             raise InputDataError(
                 "Expected the bounds to match the dimensionality of the domain. "
@@ -51,7 +50,7 @@ class BaseTestProblem(Module, ABC):
             )
         self.register_buffer(
             "bounds",
-            torch.tensor(self._bounds, dtype=self.dtype).transpose(-1, -2),
+            torch.tensor(self._bounds, dtype=dtype).transpose(-1, -2),
         )
 
     def forward(self, X: Tensor, noise: bool = True) -> Tensor:
@@ -186,7 +185,7 @@ class MultiObjectiveTestProblem(BaseTestProblem, ABC):
                 f"must match the number of objectives ({len(self._ref_point)})"
             )
         super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
-        ref_point = torch.tensor(self._ref_point, dtype=self.dtype)
+        ref_point = torch.tensor(self._ref_point, dtype=dtype)
         if negate:
             ref_point *= -1
         self.register_buffer("ref_point", ref_point)
