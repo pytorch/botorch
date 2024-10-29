@@ -170,6 +170,7 @@ class MultiObjectiveTestProblem(BaseTestProblem, ABC):
         self,
         noise_std: None | float | list[float] = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""Base constructor for multi-objective test functions.
 
@@ -184,8 +185,8 @@ class MultiObjectiveTestProblem(BaseTestProblem, ABC):
                 f"If specified as a list, length of noise_std ({len(noise_std)}) "
                 f"must match the number of objectives ({len(self._ref_point)})"
             )
-        super().__init__(noise_std=noise_std, negate=negate)
-        ref_point = torch.tensor(self._ref_point, dtype=torch.get_default_dtype())
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
+        ref_point = torch.tensor(self._ref_point, dtype=self.dtype)
         if negate:
             ref_point *= -1
         self.register_buffer("ref_point", ref_point)
