@@ -29,6 +29,7 @@ class BaseTestProblem(Module, ABC):
         self,
         noise_std: None | float | list[float] = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""Base constructor for test functions.
 
@@ -37,10 +38,12 @@ class BaseTestProblem(Module, ABC):
                 provided, specifies separate noise standard deviations for each
                 objective in a multiobjective problem.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         super().__init__()
         self.noise_std = noise_std
         self.negate = negate
+        self.dtype = dtype
         if len(self._bounds) != self.dim:
             raise InputDataError(
                 "Expected the bounds to match the dimensionality of the domain. "
@@ -48,9 +51,7 @@ class BaseTestProblem(Module, ABC):
             )
         self.register_buffer(
             "bounds",
-            torch.tensor(self._bounds, dtype=torch.get_default_dtype()).transpose(
-                -1, -2
-            ),
+            torch.tensor(self._bounds, dtype=self.dtype).transpose(-1, -2),
         )
 
     def forward(self, X: Tensor, noise: bool = True) -> Tensor:
