@@ -22,7 +22,7 @@ from botorch.optim.optimize_mixed import (
     get_nearest_neighbors,
     optimize_acqf_mixed_alternating,
 )
-from botorch.test_utils.mock import fast_optimize, fast_optimize_context_manager
+from botorch.test_utils.mock import mock_optimize, mock_optimize_context_manager
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 
 
@@ -37,14 +37,14 @@ class SinAcqusitionFunction(MockAcquisitionFunction):
 
 
 class TestMock(BotorchTestCase):
-    def test_fast_optimize_context_manager(self) -> None:
+    def test_mock_optimize_context_manager(self) -> None:
         with self.subTest("gen_candidates_scipy"):
-            with fast_optimize_context_manager():
+            with mock_optimize_context_manager():
                 cand, value = gen_candidates_scipy(
                     initial_conditions=torch.tensor([[0.0]]),
                     acquisition_function=SinAcqusitionFunction(),
                 )
-            # When not using `fast_optimize`, the value is 1.0. With it, the value is
+            # When not using `mock_optimize`, the value is 1.0. With it, the value is
             # around 0.84
             self.assertLess(value.item(), 0.99)
 
@@ -54,14 +54,14 @@ class TestMock(BotorchTestCase):
             def closure():
                 return torch.sin(x), [torch.cos(x)]
 
-            with fast_optimize_context_manager():
+            with mock_optimize_context_manager():
                 result = scipy_minimize(closure=closure, parameters={"x": x})
             self.assertEqual(
                 result.message, "STOP: TOTAL NO. of ITERATIONS REACHED LIMIT"
             )
 
         with self.subTest("optimize_acqf"):
-            with fast_optimize_context_manager():
+            with mock_optimize_context_manager():
                 cand, value = optimize_acqf(
                     acq_function=SinAcqusitionFunction(),
                     bounds=torch.tensor([[-2.0], [2.0]]),
@@ -72,7 +72,7 @@ class TestMock(BotorchTestCase):
             self.assertLess(value.item(), 0.99)
 
         with self.subTest("gen_batch_initial_conditions"):
-            with fast_optimize_context_manager(), patch(
+            with mock_optimize_context_manager(), patch(
                 "botorch.optim.initializers.initialize_q_batch",
                 wraps=initialize_q_batch,
             ) as mock_init_q_batch:
@@ -85,7 +85,7 @@ class TestMock(BotorchTestCase):
                 )
             self.assertEqual(mock_init_q_batch.call_args[1]["n"], 2)
 
-    def test_fast_optimize_mixed_alternating(self) -> None:
+    def test_mock_optimize_mixed_alternating(self) -> None:
         with patch(
             "botorch.optim.optimize_mixed.discrete_step",
             wraps=discrete_step,
@@ -110,7 +110,7 @@ class TestMock(BotorchTestCase):
         # `mock_discrete`, which should total to 1.
         mock_neighbors.assert_called_once()
 
-    @fast_optimize
+    @mock_optimize
     def test_decorator(self) -> None:
         model = SingleTaskGP(
             train_X=torch.tensor([[0.0]], dtype=torch.double),
@@ -137,5 +137,5 @@ class TestMock(BotorchTestCase):
 
     def test_raises_when_unused(self) -> None:
         with self.assertRaisesRegex(AssertionError, "No mocks were called"):
-            with fast_optimize_context_manager():
+            with mock_optimize_context_manager():
                 pass

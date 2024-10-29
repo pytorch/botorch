@@ -27,12 +27,12 @@ from torch import Tensor
 
 
 @contextmanager
-def fast_optimize_context_manager(
+def mock_optimize_context_manager(
     force: bool = False,
 ) -> Generator[None, None, None]:
-    """A context manager to force botorch to speed up optimization. Currently, the
-    primary tactic is to force the underlying scipy methods to stop after just one
-    iteration.
+    """A context manager that uses mocks to speed up optimization for testing.
+    Currently, the primary tactic is to force the underlying scipy methods to stop
+    after just one iteration.
 
         force: If True will not raise an AssertionError if no mocks are called.
             USE RESPONSIBLY.
@@ -116,17 +116,17 @@ def fast_optimize_context_manager(
     ):
         raise AssertionError(
             "No mocks were called in the context manager. Please remove unused "
-            "fast_optimize_context_manager()."
+            "mock_optimize_context_manager()."
         )
 
 
-def fast_optimize(f: Callable) -> Callable:
-    """Wraps f in the fast_botorch_optimize_context_manager for use as a decorator."""
+def mock_optimize(f: Callable) -> Callable:
+    """Wraps `f` in `mock_optimize_context_manager` for use as a decorator."""
 
     @wraps(f)
     # pyre-fixme[3]: Return type must be annotated.
     def inner(*args: Any, **kwargs: Any):
-        with fast_optimize_context_manager():
+        with mock_optimize_context_manager():
             return f(*args, **kwargs)
 
     return inner

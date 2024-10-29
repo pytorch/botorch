@@ -11,6 +11,6 @@ anything in 'botorch/test_utils/' can depend on anything in the rest of
 'botorch/'.
 """
 
-from botorch.test_utils.mock import fast_optimize
+from botorch.test_utils.mock import mock_optimize
 
-__all__ = ["fast_optimize"]
+__all__ = ["mock_optimize"]
