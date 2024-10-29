@@ -18,7 +18,7 @@ from botorch.generation.gen import gen_candidates_scipy
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.optim.optimize import _optimize_acqf, OptimizeAcqfInputs
-from botorch.optim.optimize_acqf_mixed import (
+from botorch.optim.optimize_mixed import (
     complement_indices,
     continuous_step,
     discrete_step,
