@@ -789,6 +789,7 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
                     "Pending points require a gradient but the acquisition function"
                     " will not provide a gradient to these points.",
                     BotorchWarning,
+                    stacklevel=2,
                 )
             X_pending = X_pending.detach().clone()
             if self.cache_pending:

@@ -209,6 +209,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
                 warnings.warn(
                     "Encountered negative cost values in InverseCostWeightedUtility",
                     CostAwareWarning,
+                    stacklevel=2,
                 )
         # clamp (away from zero) and sum cost across elements of the q-batch -
         # this will be of shape `num_fantasies x batch_shape` or `batch_shape`

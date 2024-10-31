@@ -87,6 +87,7 @@ class CachedCholeskyMCSamplerMixin(MCSamplerMixin):
             warnings.warn(
                 _get_cache_root_not_supported_message(type(model)),
                 RuntimeWarning,
+                stacklevel=3,
             )
             cache_root = False
         self._cache_root = cache_root
@@ -150,6 +151,7 @@ class CachedCholeskyMCSamplerMixin(MCSamplerMixin):
                     "ill-conditioned covariance matrix. "
                     "Falling back to standard sampling.",
                     BotorchWarning,
+                    stacklevel=3,
                 )
 
         # TODO: improve efficiency for multi-task models

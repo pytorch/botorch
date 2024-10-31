@@ -236,6 +236,7 @@ class Model(Module, ABC):
                     "attribute. Make sure that the `input_transform` is applied to "
                     "both the train inputs and test inputs.",
                     RuntimeWarning,
+                    stacklevel=3,
                 )
 
     def _revert_to_original_inputs(self) -> None:

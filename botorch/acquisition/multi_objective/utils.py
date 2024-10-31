@@ -61,7 +61,11 @@ def get_default_partitioning_alpha(num_objectives: int) -> float:
     if num_objectives <= 4:
         return 0.0
     elif num_objectives > 6:
-        warnings.warn("EHVI works best for less than 7 objectives.", BotorchWarning)
+        warnings.warn(
+            "EHVI works best for less than 7 objectives.",
+            BotorchWarning,
+            stacklevel=3,
+        )
     return 10 ** (-8 + num_objectives)
 
 

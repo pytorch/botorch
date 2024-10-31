@@ -43,7 +43,7 @@ class TestBotorchWarnings(BotorchTestCase):
             UserInputWarning,
         ):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                warnings.warn("message", WarningClass)
+                warnings.warn("message", WarningClass, stacklevel=1)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, WarningClass))
                 self.assertTrue("message" in str(ws[-1].message))
