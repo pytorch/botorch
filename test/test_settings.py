@@ -31,12 +31,12 @@ class TestSettings(BotorchTestCase):
         with settings.debug(False):
             with warnings.catch_warnings(record=True) as ws:
                 if settings.debug.on():
-                    warnings.warn("test", BotorchWarning)
+                    warnings.warn("test", BotorchWarning, stacklevel=1)
             self.assertEqual(len(ws), 0)
         # Check that warnings are not suppressed outside of context manager.
         with warnings.catch_warnings(record=True) as ws:
             if settings.debug.on():
-                warnings.warn("test", BotorchWarning)
+                warnings.warn("test", BotorchWarning, stacklevel=1)
         self.assertEqual(len(ws), 1)
 
         # Turn off debug.
@@ -45,12 +45,12 @@ class TestSettings(BotorchTestCase):
         with settings.debug(True):
             with warnings.catch_warnings(record=True) as ws:
                 if settings.debug.on():
-                    warnings.warn("test", BotorchWarning)
+                    warnings.warn("test", BotorchWarning, stacklevel=1)
             self.assertEqual(len(ws), 1)
         # Check that warnings are suppressed outside of context manager.
         with warnings.catch_warnings(record=True) as ws:
             if settings.debug.on():
-                warnings.warn("test", BotorchWarning)
+                warnings.warn("test", BotorchWarning, stacklevel=1)
         self.assertEqual(len(ws), 0)
 
 

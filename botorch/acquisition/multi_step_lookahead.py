@@ -552,6 +552,7 @@ def _construct_inner_samplers(
                 warnings.warn(
                     "inner_mc_samples is ignored for analytic acquisition functions",
                     BotorchWarning,
+                    stacklevel=3,
                 )
             inner_samplers.append(None)
         else:

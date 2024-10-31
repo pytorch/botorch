@@ -190,6 +190,7 @@ def _verify_output_shape(acqf: Any, X: Tensor, output: Tensor) -> bool:
             f"of X, but got output with shape {output.shape} for X with shape "
             f"{X.shape}. Make sure that this is the intended behavior!",
             RuntimeWarning,
+            stacklevel=3,
         )
         return True
 

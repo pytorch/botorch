@@ -53,6 +53,7 @@ class AcquisitionFunction(Module, ABC):
                     "Pending points require a gradient but the acquisition function"
                     " will not provide a gradient to these points.",
                     BotorchWarning,
+                    stacklevel=2,
                 )
             self.X_pending = X_pending.detach().clone()
         else:
