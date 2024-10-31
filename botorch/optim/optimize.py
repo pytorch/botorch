@@ -125,6 +125,10 @@ class OptimizeAcqfInputs:
                     "Must specify `raw_samples` when "
                     "`batch_initial_conditions` is None`."
                 )
+        if self.fixed_features is not None and any(
+            (k < 0 for k in self.fixed_features)
+        ):
+            raise ValueError("All indices (keys) in `fixed_features` must be >= 0.")
 
     def get_ic_generator(self) -> TGenInitialConditions:
         if self.ic_generator is not None:
@@ -467,7 +471,8 @@ def optimize_acqf(
             is set to 1, which will be done automatically if not specified in
             `options`.
         fixed_features: A map `{feature_index: value}` for features that
-            should be fixed to a particular value during generation.
+            should be fixed to a particular value during generation. All indices
+            should be non-negative.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -610,7 +615,8 @@ def optimize_acqf_cyclic(
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
         fixed_features: A map `{feature_index: value}` for features that
-            should be fixed to a particular value during generation.
+            should be fixed to a particular value during generation. All indices
+            should be non-negative.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -758,11 +764,13 @@ def optimize_acqf_list(
             Using non-linear inequality constraints also requires that `batch_limit`
             is set to 1, which will be done automatically if not specified in
             `options`.
-        fixed_features: A map `{feature_index: value}` for features that
-            should be fixed to a particular value during generation.
+        fixed_features: A map `{feature_index: value}` for features that should
+            be fixed to a particular value during generation. All indices
+            (`feature_index`) should be non-negative.
         fixed_features_list: A list of maps `{feature_index: value}`. The i-th
             item represents the fixed_feature for the i-th optimization. If
             `fixed_features_list` is provided, `optimize_acqf_mixed` is invoked.
+            All indices (`feature_index`) should be non-negative.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -872,7 +880,8 @@ def optimize_acqf_mixed(
         raw_samples: Number of samples for initialization. This is required
             if `batch_initial_conditions` is not specified.
         fixed_features_list: A list of maps `{feature_index: value}`. The i-th
-            item represents the fixed_feature for the i-th optimization.
+            item represents the fixed_feature for the i-th optimization. All
+            indices (`feature_index`) should be non-negative.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form

@@ -6,6 +6,7 @@
 
 import itertools
 import warnings
+from functools import partial
 from itertools import product
 from typing import Any
 from unittest import mock
@@ -1119,6 +1120,45 @@ class TestOptimizeAcqf(BotorchTestCase):
         self.assertEqual(f_np_wrapper.call_count, 2)
 
 
+class TestAllOptimizers(BotorchTestCase):
+    def test_raises_with_negative_fixed_features(self) -> None:
+        cases = {
+            "optimize_acqf": partial(
+                optimize_acqf,
+                acq_function=MockAcquisitionFunction(),
+                fixed_features={-1: 0.0},
+                q=1,
+            ),
+            "optimize_acqf_cyclic": partial(
+                optimize_acqf_cyclic,
+                acq_function=MockAcquisitionFunction(),
+                fixed_features={-1: 0.0},
+                q=1,
+            ),
+            "optimize_acqf_mixed": partial(
+                optimize_acqf_mixed,
+                acq_function=MockAcquisitionFunction(),
+                fixed_features_list=[{-1: 0.0}],
+                q=1,
+            ),
+            "optimize_acqf_list": partial(
+                optimize_acqf_list,
+                acq_function_list=[MockAcquisitionFunction()],
+                fixed_features={-1: 0.0},
+            ),
+        }
+
+        for name, func in cases.items():
+            with self.subTest(name), self.assertRaisesRegex(
+                ValueError, "must be >= 0."
+            ):
+                func(
+                    bounds=torch.tensor([[0.0, 0.0], [1.0, 1.0]], device=self.device),
+                    num_restarts=4,
+                    raw_samples=16,
+                )
+
+
 class TestOptimizeAcqfCyclic(BotorchTestCase):
     @mock.patch("botorch.optim.optimize._optimize_acqf")  # noqa: C901
     # TODO: make sure this runs without mock
@@ -1171,7 +1211,7 @@ class TestOptimizeAcqfCyclic(BotorchTestCase):
                 "set_X_pending",
                 wraps=mock_acq_function.set_X_pending,
             ) as mock_set_X_pending:
-                candidates, acq_value = optimize_acqf_cyclic(
+                candidates, _ = optimize_acqf_cyclic(
                     acq_function=mock_acq_function,
                     bounds=bounds,
                     q=q,
