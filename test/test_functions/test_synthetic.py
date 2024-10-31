@@ -100,7 +100,8 @@ class TestCustomBounds(BotorchTestCase):
         self.assertEqual(dummy._bounds[0], (-2, 2))
         self.assertEqual(dummy._bounds[1], (-3, 3))
         self.assertAllClose(
-            dummy.bounds, torch.tensor([[-2, -3], [2, 3]], dtype=torch.double)
+            dummy.bounds,
+            torch.tensor([[-2, -3], [2, 3]], dtype=torch.double),
         )
 
         # Test each function with custom bounds.

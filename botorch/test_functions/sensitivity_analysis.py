@@ -24,13 +24,18 @@ class Ishigami(SyntheticTestFunction):
     """
 
     def __init__(
-        self, b: float = 0.1, noise_std: float | None = None, negate: bool = False
+        self,
+        b: float = 0.1,
+        noise_std: float | None = None,
+        negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
             b: the b constant, should be 0.1 or 0.05.
             noise_std: Standard deviation of the observation noise.
             negative: If True, negative the objective.
+            dtype: The dtype that is used for the bounds of the function.
         """
         self._optimizers = None
         if b not in (0.1, 0.05):
@@ -52,7 +57,7 @@ class Ishigami(SyntheticTestFunction):
             self.dgsm_gradient_square = [2.8, 24.5, 11]
         self._bounds = [(-math.pi, math.pi) for _ in range(self.dim)]
         self.b = b
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
 
     @property
     def _optimal_value(self) -> float:
@@ -127,13 +132,15 @@ class Gsobol(SyntheticTestFunction):
         a: list = None,
         noise_std: float | None = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
             dim: Dimensionality of the problem. If 6, 8, or 15, will use standard a.
             a: a parameter, unless dim is 6, 8, or 15.
             noise_std: Standard deviation of observation noise.
-            negate: Return negatie of function.
+            negate: Return negative of function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         self._optimizers = None
         self.dim = dim
@@ -163,7 +170,7 @@ class Gsobol(SyntheticTestFunction):
         else:
             self.a = a
         self.optimal_sobol_indicies()
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
 
     @property
     def _optimal_value(self) -> float:
@@ -207,11 +214,17 @@ class Morris(SyntheticTestFunction):
     Proposed to test sensitivity analysis methods
     """
 
-    def __init__(self, noise_std: float | None = None, negate: bool = False) -> None:
+    def __init__(
+        self,
+        noise_std: float | None = None,
+        negate: bool = False,
+        dtype: torch.dtype = torch.double,
+    ) -> None:
         r"""
         Args:
             noise_std: Standard deviation of observation noise.
             negate: Return negative of function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         self._optimizers = None
         self.dim = 20
@@ -238,7 +251,7 @@ class Morris(SyntheticTestFunction):
             0,
             0,
         ]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
 
     @property
     def _optimal_value(self) -> float:

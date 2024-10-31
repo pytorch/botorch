@@ -29,6 +29,7 @@ class BaseTestProblem(Module, ABC):
         self,
         noise_std: None | float | list[float] = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""Base constructor for test functions.
 
@@ -37,6 +38,7 @@ class BaseTestProblem(Module, ABC):
                 provided, specifies separate noise standard deviations for each
                 objective in a multiobjective problem.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         super().__init__()
         self.noise_std = noise_std
@@ -47,7 +49,8 @@ class BaseTestProblem(Module, ABC):
                 f"Got {self.dim=} and {len(self._bounds)=}."
             )
         self.register_buffer(
-            "bounds", torch.tensor(self._bounds, dtype=torch.double).transpose(-1, -2)
+            "bounds",
+            torch.tensor(self._bounds, dtype=dtype).transpose(-1, -2),
         )
 
     def forward(self, X: Tensor, noise: bool = True) -> Tensor:
@@ -166,6 +169,7 @@ class MultiObjectiveTestProblem(BaseTestProblem, ABC):
         self,
         noise_std: None | float | list[float] = None,
         negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""Base constructor for multi-objective test functions.
 
@@ -180,8 +184,8 @@ class MultiObjectiveTestProblem(BaseTestProblem, ABC):
                 f"If specified as a list, length of noise_std ({len(noise_std)}) "
                 f"must match the number of objectives ({len(self._ref_point)})"
             )
-        super().__init__(noise_std=noise_std, negate=negate)
-        ref_point = torch.tensor(self._ref_point, dtype=torch.get_default_dtype())
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
+        ref_point = torch.tensor(self._ref_point, dtype=dtype)
         if negate:
             ref_point *= -1
         self.register_buffer("ref_point", ref_point)

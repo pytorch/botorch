@@ -74,13 +74,19 @@ class AugmentedHartmann(SyntheticTestFunction):
     _optimizers = [(0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573, 1.0)]
     _check_grad_at_opt = False
 
-    def __init__(self, noise_std: float | None = None, negate: bool = False) -> None:
+    def __init__(
+        self,
+        noise_std: float | None = None,
+        negate: bool = False,
+        dtype: torch.dtype = torch.double,
+    ) -> None:
         r"""
         Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
         self.register_buffer("ALPHA", torch.tensor([1.0, 1.2, 3.0, 3.2]))
         A = [
             [10, 3, 17, 3.5, 1.7, 8],
@@ -126,13 +132,18 @@ class AugmentedRosenbrock(SyntheticTestFunction):
     _optimal_value = 0.0
 
     def __init__(
-        self, dim=3, noise_std: float | None = None, negate: bool = False
+        self,
+        dim=3,
+        noise_std: float | None = None,
+        negate: bool = False,
+        dtype: torch.dtype = torch.double,
     ) -> None:
         r"""
         Args:
             dim: The (input) dimension. Must be at least 3.
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
         """
         if dim < 3:
             raise ValueError(
@@ -141,7 +152,7 @@ class AugmentedRosenbrock(SyntheticTestFunction):
         self.dim = dim
         self._bounds = [(-5.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
-        super().__init__(noise_std=noise_std, negate=negate)
+        super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         X_curr = X[..., :-3]
