@@ -83,14 +83,14 @@ class TestParameterConstraints(BotorchTestCase):
             all(set(c.keys()) == {"fun", "jac", "type"} for c in constraints)
         )
         self.assertTrue(all(c["type"] == "ineq" for c in constraints))
-        self.assertEqual(constraints[0]["fun"](x), 4.0 - x[:d].sum())
-        self.assertEqual(constraints[1]["fun"](x), 4.0 - x[d : 2 * d].sum())
+        self.assertAllClose(constraints[0]["fun"](x), 4.0 - x[:d].sum())
+        self.assertAllClose(constraints[1]["fun"](x), 4.0 - x[d : 2 * d].sum())
         jac_exp = np.zeros(shapeX.numel())
         jac_exp[:4] = -1
-        self.assertTrue(np.allclose(constraints[0]["jac"](x), jac_exp))
+        self.assertAllClose(constraints[0]["jac"](x), jac_exp)
         jac_exp = np.zeros(shapeX.numel())
         jac_exp[4:8] = -1
-        self.assertTrue(np.allclose(constraints[1]["jac"](x), jac_exp))
+        self.assertAllClose(constraints[1]["jac"](x), jac_exp)
         # inter
         constraints = _make_nonlinear_constraints(
             f_np_wrapper=f_np_wrapper, nlc=nlc, is_intrapoint=False, shapeX=shapeX
@@ -100,16 +100,14 @@ class TestParameterConstraints(BotorchTestCase):
             all(set(c.keys()) == {"fun", "jac", "type"} for c in constraints)
         )
         self.assertTrue(all(c["type"] == "ineq" for c in constraints))
-        self.assertTrue(np.allclose(constraints[0]["fun"](x), 4.0 - x[: q * d].sum()))
-        self.assertTrue(
-            np.allclose(constraints[1]["fun"](x), 4.0 - x[q * d : 2 * q * d].sum())
-        )
+        self.assertAllClose(constraints[0]["fun"](x), 4.0 - x[: q * d].sum())
+        self.assertAllClose(constraints[1]["fun"](x), 4.0 - x[q * d : 2 * q * d].sum())
         jac_exp = np.zeros(shapeX.numel())
         jac_exp[: q * d] = -1.0
-        self.assertTrue(np.allclose(constraints[0]["jac"](x), jac_exp))
+        self.assertAllClose(constraints[0]["jac"](x), jac_exp)
         jac_exp = np.zeros(shapeX.numel())
         jac_exp[q * d : 2 * q * d] = -1.0
-        self.assertTrue(np.allclose(constraints[1]["jac"](x), jac_exp))
+        self.assertAllClose(constraints[1]["jac"](x), jac_exp)
 
     def test_make_scipy_nonlinear_inequality_constraints(self):
         def nlc(x):
