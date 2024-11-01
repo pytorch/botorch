@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+from abc import ABC
 from copy import deepcopy
 from random import randint
 
@@ -24,12 +25,14 @@ from botorch.models.transforms.input import (
     Log10,
     Normalize,
     OneHotToNumeric,
+    ReversibleInputTransform,
     Round,
     Warp,
 )
 from botorch.models.transforms.utils import expand_and_copy_tensor
 from botorch.models.utils import fantasize
 from botorch.utils.testing import BotorchTestCase
+from gpytorch import Module as GPyTorchModule
 from gpytorch.priors import LogNormalPrior
 from torch import Tensor
 from torch.distributions import Kumaraswamy
@@ -1158,6 +1161,20 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue((warp_tf.concentration0 == 2.0).all())
             warp_tf._set_concentration(i=1, value=3.0)
             self.assertTrue((warp_tf.concentration1 == 3.0).all())
+
+    def test_warp_mro(self) -> None:
+        self.assertEqual(
+            Warp.__mro__,
+            (
+                Warp,
+                ReversibleInputTransform,
+                InputTransform,
+                GPyTorchModule,
+                Module,
+                ABC,
+                object,
+            ),
+        )
 
     def test_one_hot_to_numeric(self) -> None:
         dim = 8
