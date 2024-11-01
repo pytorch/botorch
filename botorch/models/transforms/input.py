@@ -38,12 +38,8 @@ from torch.nn import Module, ModuleDict
 from torch.nn.functional import one_hot
 
 
-class InputTransform(ABC):
+class InputTransform(Module, ABC):
     r"""Abstract base class for input transforms.
-
-    Note: Input transforms must inherit from `torch.nn.Module`. This
-        is deferred to the subclasses to avoid any potential conflict
-        between `gpytorch.module.Module` and `torch.nn.Module` in `Warp`.
 
     Properties:
         is_one_to_many: A boolean denoting whether the transform produces
@@ -442,7 +438,7 @@ class ReversibleInputTransform(InputTransform, ABC):
         return super().equals(other=other) and (self.reverse == other.reverse)
 
 
-class AffineInputTransform(ReversibleInputTransform, Module):
+class AffineInputTransform(ReversibleInputTransform):
     def __init__(
         self,
         d: int,
@@ -576,7 +572,7 @@ class AffineInputTransform(ReversibleInputTransform, Module):
             and self.learn_coefficients == other.learn_coefficients
         )
         if hasattr(self, "indices"):
-            isequal = isequal and (self.indices == other.indices).all()
+            isequal = isequal and bool((self.indices == other.indices).all())
         return isequal
 
     def _check_shape(self, X: Tensor) -> None:
@@ -846,7 +842,7 @@ class InputStandardize(AffineInputTransform):
         self._offset = torch.where(almost_zero, 0.0, offset)
 
 
-class Round(InputTransform, Module):
+class Round(InputTransform):
     r"""A discretization transformation for discrete inputs.
 
     If `approximate=False` (the default), uses PyTorch's `round`.
@@ -993,7 +989,7 @@ class Round(InputTransform, Module):
         }
 
 
-class Log10(ReversibleInputTransform, Module):
+class Log10(ReversibleInputTransform):
     r"""A base-10 log transformation."""
 
     def __init__(
@@ -1204,7 +1200,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         )
 
 
-class AppendFeatures(InputTransform, Module):
+class AppendFeatures(InputTransform):
     r"""A transform that appends the input with a given set of features either
     provided beforehand or generated on the fly via a callable.
 
@@ -1396,7 +1392,7 @@ class InteractionFeatures(AppendFeatures):
         )
 
 
-class FilterFeatures(InputTransform, Module):
+class FilterFeatures(InputTransform):
     r"""A transform that filters the input with a given set of features indices.
 
     As an example, this can be used in a multiobjective optimization with `ModelListGP`
@@ -1467,7 +1463,7 @@ class FilterFeatures(InputTransform, Module):
         return super().equals(other=other)
 
 
-class InputPerturbation(InputTransform, Module):
+class InputPerturbation(InputTransform):
     r"""A transform that adds the set of perturbations to the given input.
 
     Similar to `AppendFeatures`, this can be used with `RiskMeasureMCObjective`
@@ -1595,7 +1591,7 @@ class InputPerturbation(InputTransform, Module):
         return p.transpose(-3, -2)  # p is batch_shape x n_p x n x d
 
 
-class OneHotToNumeric(InputTransform, Module):
+class OneHotToNumeric(InputTransform):
     r"""Transform categorical parameters from a one-hot to a numeric representation."""
 
     def __init__(
