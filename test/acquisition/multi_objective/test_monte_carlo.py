@@ -13,7 +13,6 @@ from unittest import mock
 from warnings import catch_warnings, simplefilter
 
 import torch
-from botorch import settings
 from botorch.acquisition import AcquisitionFunction
 from botorch.acquisition.cached_cholesky import _get_cache_root_not_supported_message
 from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
@@ -249,10 +248,10 @@ class TestMultiObjectiveMCAcquisitionFunction(BotorchTestCase):
         acqf.model._posterior._samples = torch.zeros(1, 2, 2, **tkwargs)
         res = evaluate(acqf, X)
         X2 = torch.zeros(1, 1, 1, requires_grad=True, **tkwargs)
-        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+        with warnings.catch_warnings(record=True) as ws:
             acqf.set_X_pending(X2)
-            self.assertEqual(acqf.X_pending, X2)
-            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
+        self.assertEqual(acqf.X_pending, X2)
+        self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
         # test objective
         acqf = acqf_class(
@@ -1127,12 +1126,12 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
         # test set X_pending with grad
         # Get posterior samples to agree with X_pending
         mm._posterior._samples = torch.zeros(1, 7, m, **tkwargs)
-        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+        with warnings.catch_warnings(record=True) as ws:
             acqf.set_X_pending(
                 torch.cat([X_pending2, X_pending2], dim=0).requires_grad_(True)
             )
-            self.assertIsNone(acqf.X_pending)
-            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
+        self.assertIsNone(acqf.X_pending)
+        self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
         # test max iep
         mm._posterior._samples = baseline_samples
@@ -1704,9 +1703,8 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 # test we fall back to standard sampling for
                 # ill-conditioned covariances
                 acqf._baseline_L = torch.zeros_like(acqf._baseline_L)
-                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                    with torch.no_grad():
-                        evaluate(acqf, test_X)
+                with warnings.catch_warnings(record=True) as ws, torch.no_grad():
+                    evaluate(acqf, test_X)
                 self.assertEqual(
                     sum(issubclass(w.category, BotorchWarning) for w in ws), 1
                 )

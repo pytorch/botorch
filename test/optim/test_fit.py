@@ -14,9 +14,7 @@ from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim import core, fit
-
 from botorch.optim.core import OptimizationResult
-from botorch.settings import debug
 from botorch.utils.context_managers import module_rollback_ctx, TensorCheckpoint
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
@@ -24,8 +22,8 @@ from scipy.optimize import OptimizeResult
 
 
 class TestFitGPyTorchMLLScipy(BotorchTestCase):
-    def setUp(self) -> None:
-        super().setUp()
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         self.mlls = {}
         with torch.random.fork_rng():
             torch.manual_seed(0)
@@ -53,7 +51,7 @@ class TestFitGPyTorchMLLScipy(BotorchTestCase):
             for k, v in mll.state_dict().items()
         }
         with self.subTest("main"), module_rollback_ctx(mll, checkpoint=ckpt):
-            with catch_warnings(record=True) as ws, debug(True):
+            with catch_warnings(record=True) as ws:
                 result = fit.fit_gpytorch_mll_scipy(mll, options=options)
 
             # Test only parameters requiring gradients have changed
@@ -116,7 +114,7 @@ class TestFitGPyTorchMLLScipy(BotorchTestCase):
                 nit=1,
                 message=b"ABNORMAL_TERMINATION_IN_LNSRCH",
             )
-            with catch_warnings(record=True) as ws, debug(True):
+            with catch_warnings(record=True) as ws:
                 fit.fit_gpytorch_mll_scipy(mll, options=options)
 
             # Test that warning gets raised
@@ -199,7 +197,7 @@ class TestFitGPyTorchMLLTorch(BotorchTestCase):
             for k, v in mll.state_dict().items()
         }
         with self.subTest("main"), module_rollback_ctx(mll, checkpoint=ckpt):
-            with catch_warnings(record=True) as _, debug(True):
+            with catch_warnings(record=True):
                 result = fit.fit_gpytorch_mll_torch(mll, step_limit=2)
 
             self.assertIsInstance(result, OptimizationResult)

@@ -15,7 +15,6 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import torch
-from botorch import settings
 from botorch.models import SingleTaskGP
 from botorch.models.utils.gpytorch_modules import (
     get_covar_module_with_dim_scaled_prior,
@@ -204,10 +203,10 @@ class TestSampleAllPriors(BotorchTestCase):
                 outputscale_prior=GammaPrior(2.0, 0.15),
             )
             original_state_dict = dict(deepcopy(mll.model.state_dict()))
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            with warnings.catch_warnings(record=True) as ws:
                 sample_all_priors(model)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue("rsample" in str(ws[0].message))
+            self.assertEqual(len(ws), 1)
+            self.assertTrue("rsample" in str(ws[0].message))
 
             # change to dummy prior that raises an unrecognized RuntimeError
             model.covar_module = ScaleKernel(

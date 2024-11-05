@@ -11,7 +11,6 @@ from math import pi
 from unittest import mock
 
 import torch
-from botorch import settings
 from botorch.acquisition import (
     AcquisitionFunction,
     LogImprovementMCAcquisitionFunction,
@@ -204,12 +203,10 @@ class TestQLogExpectedImprovement(BotorchTestCase):
             mm._posterior._samples = torch.zeros(1, 2, 1, **tkwargs)
             res = acqf(X)
             X2 = torch.zeros(1, 1, 1, **tkwargs, requires_grad=True)
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            with warnings.catch_warnings(record=True) as ws:
                 acqf.set_X_pending(X2)
-                self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(
-                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
-                )
+            self.assertEqual(acqf.X_pending, X2)
+            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
             # testing with illegal taus
             with self.assertRaisesRegex(ValueError, "tau_max is not a scalar:"):
@@ -419,12 +416,10 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
             X2 = torch.zeros(
                 1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
             )
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            with warnings.catch_warnings(record=True) as ws:
                 log_acqf.set_X_pending(X2)
-                self.assertEqual(log_acqf.X_pending, X2)
-                self.assertEqual(
-                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
-                )
+            self.assertEqual(log_acqf.X_pending, X2)
+            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
     def test_q_noisy_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -670,9 +665,8 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
             # test we fall back to standard sampling for
             # ill-conditioned covariances
             acqf._baseline_L = torch.zeros_like(acqf._baseline_L)
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                with torch.no_grad():
-                    acqf(test_X)
+            with warnings.catch_warnings(record=True) as ws, torch.no_grad():
+                acqf(test_X)
             self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
         # test w/ posterior transform

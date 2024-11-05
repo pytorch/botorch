@@ -7,7 +7,6 @@
 import warnings
 
 import torch
-from botorch import settings
 from botorch.acquisition.decoupled import DecoupledAcquisitionFunction
 from botorch.exceptions import BotorchTensorDimensionError, BotorchWarning
 from botorch.logging import shape_to_str
@@ -74,10 +73,10 @@ class TestDecoupledAcquisitionFunction(BotorchTestCase):
             af.set_X_pending(X_pending=X_pending)
         af.X_evaluation_mask = None
         X_pending = X_pending.requires_grad_(True)
-        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+        with warnings.catch_warnings(record=True) as ws:
             af.set_X_pending(X_pending)
-            self.assertEqual(af.X_pending, X_pending)
-            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
+        self.assertEqual(af.X_pending, X_pending)
+        self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
         self.assertIsNone(af.X_evaluation_mask)
 
         # test setting X_pending with X_pending_evaluation_mask

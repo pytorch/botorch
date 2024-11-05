@@ -30,7 +30,6 @@ from botorch.optim.utils import (
     get_parameters,
     sample_all_priors,
 )
-from botorch.settings import debug
 from botorch.utils.context_managers import (
     module_rollback_ctx,
     parameter_rollback_ctx,
@@ -200,7 +199,7 @@ def _fit_fallback(
 
             try:
                 # Fit the model
-                with catch_warnings(record=True) as warning_list, debug(True):
+                with catch_warnings(record=True) as warning_list:
                     simplefilter("always", category=OptimizationWarning)
                     result = optimizer(mll, closure=closure, **optimizer_kwargs)
 
@@ -250,11 +249,7 @@ def _fit_fallback(
         mll.load_state_dict(best_state_dict)
         return mll.eval()
 
-    msg = "All attempts to fit the model have failed."
-    if debug.off():
-        msg = msg + " For more information, try enabling botorch.settings.debug mode."
-
-    raise ModelFittingError(msg)
+    raise ModelFittingError("All attempts to fit the model have failed.")
 
 
 @FitGPyTorchMLL.register(SumMarginalLogLikelihood, object, ModelListGP)

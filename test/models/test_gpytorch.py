@@ -8,7 +8,6 @@ import itertools
 import warnings
 
 import torch
-from botorch import settings
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import (
     BotorchTensorDimensionError,
@@ -232,7 +231,7 @@ class TestGPyTorchModel(BotorchTestCase):
                     BotorchTensorDimensionError, expected_message
                 ):
                     GPyTorchModel._validate_tensor_args(X, Y[0])
-                with settings.debug(True), self.assertWarnsRegex(
+                with self.assertWarnsRegex(
                     BotorchTensorDimensionWarning,
                     (
                         "Non-strict enforcement of botorch tensor conventions. "

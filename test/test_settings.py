@@ -4,54 +4,23 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import warnings
 
 import gpytorch.settings as gp_settings
 import linear_operator.settings as linop_settings
 from botorch import settings
-from botorch.exceptions import BotorchWarning
 from botorch.utils.testing import BotorchTestCase
 
 
 class TestSettings(BotorchTestCase):
     def test_flags(self):
-        for flag in (settings.debug, settings.propagate_grads):
-            self.assertFalse(flag.on())
-            self.assertTrue(flag.off())
-            with flag(True):
-                self.assertTrue(flag.on())
-                self.assertFalse(flag.off())
-            self.assertFalse(flag.on())
-            self.assertTrue(flag.off())
-
-    def test_debug(self):
-        # Turn on debug.
-        settings.debug._set_state(True)
-        # Check that debug warnings are suppressed when it is turned off.
-        with settings.debug(False):
-            with warnings.catch_warnings(record=True) as ws:
-                if settings.debug.on():
-                    warnings.warn("test", BotorchWarning, stacklevel=1)
-            self.assertEqual(len(ws), 0)
-        # Check that warnings are not suppressed outside of context manager.
-        with warnings.catch_warnings(record=True) as ws:
-            if settings.debug.on():
-                warnings.warn("test", BotorchWarning, stacklevel=1)
-        self.assertEqual(len(ws), 1)
-
-        # Turn off debug.
-        settings.debug._set_state(False)
-        # Check that warnings are not suppressed within debug.
-        with settings.debug(True):
-            with warnings.catch_warnings(record=True) as ws:
-                if settings.debug.on():
-                    warnings.warn("test", BotorchWarning, stacklevel=1)
-            self.assertEqual(len(ws), 1)
-        # Check that warnings are suppressed outside of context manager.
-        with warnings.catch_warnings(record=True) as ws:
-            if settings.debug.on():
-                warnings.warn("test", BotorchWarning, stacklevel=1)
-        self.assertEqual(len(ws), 0)
+        flag = settings.propagate_grads
+        self.assertFalse(flag.on())
+        self.assertTrue(flag.off())
+        with flag(True):
+            self.assertTrue(flag.on())
+            self.assertFalse(flag.off())
+        self.assertFalse(flag.on())
+        self.assertTrue(flag.off())
 
 
 class TestDefaultGPyTorchLinOpSettings(BotorchTestCase):

@@ -10,11 +10,11 @@ from copy import deepcopy
 from functools import partial
 from itertools import product
 from math import pi
+from typing import Any
 from unittest import mock
 from warnings import catch_warnings, simplefilter
 
 import torch
-from botorch import settings
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
     qExpectedImprovement,
@@ -109,7 +109,7 @@ class TestQExpectedImprovement(BotorchTestCase):
                     self._test_q_expected_improvement(dtype)
 
     def _test_q_expected_improvement(self, dtype: torch.dtype) -> None:
-        tkwargs = {"device": self.device, "dtype": dtype}
+        tkwargs: dict[str, Any] = {"device": self.device, "dtype": dtype}
         # the event shape is `b x q x t` = 1 x 1 x 1
         samples = torch.zeros(1, 1, 1, **tkwargs)
         mm = MockModel(MockPosterior(samples=samples))
@@ -161,10 +161,10 @@ class TestQExpectedImprovement(BotorchTestCase):
         mm._posterior._samples = torch.zeros(1, 2, 1, **tkwargs)
         res = acqf(X)
         X2 = torch.zeros(1, 1, 1, **tkwargs, requires_grad=True)
-        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+        with warnings.catch_warnings(record=True) as ws:
             acqf.set_X_pending(X2)
-            self.assertEqual(acqf.X_pending, X2)
-            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
+        self.assertEqual(acqf.X_pending, X2)
+        self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
     def test_q_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -330,10 +330,10 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
         self.assertEqual(acqf.X_pending, X)
         res = acqf(X)
         X2 = torch.zeros(1, 1, 1, device=self.device, dtype=dtype, requires_grad=True)
-        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+        with warnings.catch_warnings(record=True) as ws:
             acqf.set_X_pending(X2)
-            self.assertEqual(acqf.X_pending, X2)
-            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
+        self.assertEqual(acqf.X_pending, X2)
+        self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
     def test_q_noisy_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -586,9 +586,8 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             # test we fall back to standard sampling for
             # ill-conditioned covariances
             acqf._baseline_L = torch.zeros_like(acqf._baseline_L)
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                with torch.no_grad():
-                    acqf(test_X)
+            with warnings.catch_warnings(record=True) as ws, torch.no_grad():
+                acqf(test_X)
             self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
         # test w/ posterior transform
@@ -693,12 +692,10 @@ class TestQProbabilityOfImprovement(BotorchTestCase):
             X2 = torch.zeros(
                 1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
             )
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            with warnings.catch_warnings(record=True) as ws:
                 acqf.set_X_pending(X2)
-                self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(
-                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
-                )
+            self.assertEqual(acqf.X_pending, X2)
+            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
     def test_q_probability_of_improvement_batch(self):
         # the event shape is `b x q x t` = 2 x 2 x 1
@@ -806,12 +803,10 @@ class TestQSimpleRegret(BotorchTestCase):
             X2 = torch.zeros(
                 1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
             )
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            with warnings.catch_warnings(record=True) as ws:
                 acqf.set_X_pending(X2)
-                self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(
-                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
-                )
+            self.assertEqual(acqf.X_pending, X2)
+            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
     def test_q_simple_regret_batch(self):
         # the event shape is `b x q x t` = 2 x 2 x 1
@@ -920,12 +915,10 @@ class TestQUpperConfidenceBound(BotorchTestCase):
             X2 = torch.zeros(
                 1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
             )
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            with warnings.catch_warnings(record=True) as ws:
                 acqf.set_X_pending(X2)
-                self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(
-                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
-                )
+            self.assertEqual(acqf.X_pending, X2)
+            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
     def test_q_confidence_bound_batch(self):
         # TODO: T41739913 Implement tests for all MCAcquisitionFunctions
@@ -987,12 +980,10 @@ class TestQUpperConfidenceBound(BotorchTestCase):
             X2 = torch.zeros(
                 1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
             )
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            with warnings.catch_warnings(record=True) as ws:
                 acqf.set_X_pending(X2)
-                self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(
-                    sum(issubclass(w.category, BotorchWarning) for w in ws), 1
-                )
+            self.assertEqual(acqf.X_pending, X2)
+            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
     def test_beta_prime(self, negate: bool = False) -> None:
         acqf = self.acqf_class(

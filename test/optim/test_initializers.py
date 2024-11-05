@@ -11,7 +11,6 @@ from random import random
 from unittest import mock
 
 import torch
-from botorch import settings
 from botorch.acquisition.analytic import PosteriorMean
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
@@ -109,7 +108,7 @@ class TestInitializeQBatch(BotorchTestCase):
             self.assertEqual(ics.dtype, X.dtype)
             # ensure raises correct warning
             acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as w, settings.debug(True):
+            with warnings.catch_warnings(record=True) as w:
                 ics, _ = initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=2)
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
@@ -148,7 +147,7 @@ class TestInitializeQBatch(BotorchTestCase):
                 self.assertTrue(torch.equal(acq_vals, ics_acq_vals))
                 # ensure raises correct warning
                 acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
-                with warnings.catch_warnings(record=True) as w, settings.debug(True):
+                with warnings.catch_warnings(record=True) as w:
                     ics, _ = initialize_q_batch(X=X, acq_vals=acq_vals, n=2)
                 self.assertEqual(len(w), 1)
                 self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
@@ -261,7 +260,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
             for nonnegative, seed, ffs, sample_around_best in product(
                 [True, False], [None, 1234], [None, ffs_map], [True, False]
             ):
-                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                with warnings.catch_warnings(record=True) as ws:
                     warnings.simplefilter(
                         "ignore", category=BadInitialCandidatesWarning
                     )
@@ -1303,7 +1302,7 @@ class TestSampleAroundBest(BotorchTestCase):
             # test EI without X_baseline
             acqf = qExpectedImprovement(model, best_f=0.0)
 
-            with warnings.catch_warnings(record=True) as w, settings.debug(True):
+            with warnings.catch_warnings(record=True) as w:
                 X_rnd = sample_points_around_best(
                     acq_function=acqf,
                     n_discrete_points=4,
@@ -1345,7 +1344,7 @@ class TestSampleAroundBest(BotorchTestCase):
             ff = FixedFeatureAcquisitionFunction(pm, d=2, columns=[0], values=[0])
             # set X_baseline for testing purposes
             ff.X_baseline = X_train
-            with warnings.catch_warnings(record=True) as w, settings.debug(True):
+            with warnings.catch_warnings(record=True) as w:
                 X_rnd = sample_points_around_best(
                     acq_function=ff,
                     n_discrete_points=4,

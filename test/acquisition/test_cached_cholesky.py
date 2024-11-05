@@ -8,7 +8,6 @@ import warnings
 from unittest import mock
 
 import torch
-from botorch import settings
 from botorch.acquisition.cached_cholesky import CachedCholeskyMCSamplerMixin
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective
@@ -191,20 +190,19 @@ class TestCachedCholeskyMCSamplerMixin(BotorchTestCase):
                     with mock.patch(
                         "botorch.acquisition.cached_cholesky.sample_cached_cholesky",
                         side_effect=error_cls,
-                    ) as mock_sample_cached_cholesky:
-                        with warnings.catch_warnings(record=True) as ws, settings.debug(
-                            True
-                        ):
-                            samples = acqf._get_f_X_samples(posterior=posterior, q_in=q)
-                            mock_sample_cached_cholesky.assert_called_once_with(
-                                posterior=posterior,
-                                baseline_L=acqf._baseline_L,
-                                q=q,
-                                base_samples=base_samples,
-                                sample_shape=acqf.sampler.sample_shape,
-                            )
-                            self.assertTrue(issubclass(ws[0].category, BotorchWarning))
-                            self.assertTrue(samples.shape, torch.Size([1, q, 1]))
+                    ) as mock_sample_cached_cholesky, warnings.catch_warnings(
+                        record=True
+                    ) as ws:
+                        samples = acqf._get_f_X_samples(posterior=posterior, q_in=q)
+                    mock_sample_cached_cholesky.assert_called_once_with(
+                        posterior=posterior,
+                        baseline_L=acqf._baseline_L,
+                        q=q,
+                        base_samples=base_samples,
+                        sample_shape=acqf.sampler.sample_shape,
+                    )
+                    self.assertTrue(issubclass(ws[0].category, BotorchWarning))
+                    self.assertTrue(samples.shape, torch.Size([1, q, 1]))
                 # test HOGP
                 hogp = HigherOrderGP(torch.zeros(2, 1), torch.zeros(2, 1, 1)).eval()
                 acqf = DummyCachedCholeskyAcqf(

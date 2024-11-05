@@ -16,7 +16,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 
 import torch
-from botorch import settings
 from botorch.acquisition.objective import (
     GenericMCObjective,
     IdentityMCObjective,
@@ -26,6 +25,7 @@ from botorch.exceptions.warnings import CostAwareWarning
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.sampling.base import MCSampler
+from pyre_extensions import none_throws
 from torch import Tensor
 from torch.nn import Module
 
@@ -199,18 +199,16 @@ class InverseCostWeightedUtility(CostAwareUtility):
             cost = cost_posterior.mean  # batch_shape x q x m'
         else:
             # This will be of shape num_fantasies x batch_shape x q x m'
-            cost = sampler(cost_posterior)
-            # TODO: Make sure this doesn't change base samples in-place
+            cost = none_throws(sampler)(cost_posterior)
         cost = self.cost_objective(cost)
 
         # Ensure non-negativity of the cost
-        if settings.debug.on():
-            if torch.any(cost < -1e-7):
-                warnings.warn(
-                    "Encountered negative cost values in InverseCostWeightedUtility",
-                    CostAwareWarning,
-                    stacklevel=2,
-                )
+        if torch.any(cost < -1e-7):
+            warnings.warn(
+                "Encountered negative cost values in InverseCostWeightedUtility",
+                CostAwareWarning,
+                stacklevel=2,
+            )
         # clamp (away from zero) and sum cost across elements of the q-batch -
         # this will be of shape `num_fantasies x batch_shape` or `batch_shape`
         cost = cost.clamp_min(self._min_cost).sum(dim=-1)
