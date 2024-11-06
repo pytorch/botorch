@@ -21,7 +21,6 @@ from math import ceil
 from typing import Optional, Union
 
 import torch
-from botorch import settings
 from botorch.acquisition import analytic, monte_carlo, multi_objective
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
@@ -341,7 +340,7 @@ def gen_batch_initial_conditions(
     q = 1 if q is None else q
     # the dimension the samples are drawn from
     effective_dim = bounds.shape[-1] * q
-    if effective_dim > SobolEngine.MAXDIM and settings.debug.on():
+    if effective_dim > SobolEngine.MAXDIM:
         warnings.warn(
             f"Sample dimension q*d={effective_dim} exceeding Sobol max dimension "
             f"({SobolEngine.MAXDIM}). Using iid samples instead.",

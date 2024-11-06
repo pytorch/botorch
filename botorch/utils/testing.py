@@ -16,7 +16,6 @@ from typing import Any
 from unittest import mock, TestCase
 
 import torch
-from botorch import settings
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.warnings import BotorchTensorDimensionWarning, InputDataWarning
 from botorch.models.model import FantasizeMixin, Model
@@ -47,7 +46,6 @@ class BotorchTestCase(TestCase):
 
     def setUp(self, suppress_input_warnings: bool = True) -> None:
         warnings.resetwarnings()
-        settings.debug._set_state(False)
         warnings.simplefilter("always", append=True)
         if suppress_input_warnings:
             warnings.filterwarnings(

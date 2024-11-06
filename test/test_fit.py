@@ -24,7 +24,6 @@ from botorch.optim.closures import get_loss_closure_with_grads
 from botorch.optim.core import OptimizationResult, OptimizationStatus
 from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
 from botorch.optim.utils import get_data_loader
-from botorch.settings import debug
 from botorch.utils.context_managers import module_rollback_ctx, TensorCheckpoint
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import RBFKernel
@@ -235,7 +234,6 @@ class TestFitFallback(BotorchTestCase):
                     else nullcontext()
                 )
                 ws = es.enter_context(catch_warnings(record=True))
-                es.enter_context(debug(True))
 
                 try:
                     fit._fit_fallback(

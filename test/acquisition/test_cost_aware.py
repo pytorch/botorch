@@ -8,7 +8,6 @@
 import warnings
 
 import torch
-from botorch import settings
 from botorch.acquisition.cost_aware import (
     CostAwareUtility,
     GenericCostAwareUtility,
@@ -63,11 +62,11 @@ class TestCostAwareUtilities(BotorchTestCase):
                 # check warning for negative cost
                 mm = MockModel(MockPosterior(mean=mean.clamp_max(-1e-6)))
                 icwu = InverseCostWeightedUtility(mm)
-                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                with warnings.catch_warnings(record=True) as ws:
                     icwu(X, deltas)
-                    self.assertTrue(
-                        any(issubclass(w.category, CostAwareWarning) for w in ws)
-                    )
+                self.assertTrue(
+                    any(issubclass(w.category, CostAwareWarning) for w in ws)
+                )
 
                 # basic test for both positive and negative delta values
                 mm = MockModel(MockPosterior(mean=mean))

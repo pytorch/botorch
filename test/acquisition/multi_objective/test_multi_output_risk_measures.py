@@ -7,7 +7,6 @@
 import warnings
 
 import torch
-from botorch import settings
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     IndependentCVaR,
     IndependentVaR,
@@ -512,7 +511,7 @@ class TestMARS(BotorchTestCase):
         # With Y_samples.
         mars._baseline_Y = None
         Y_samples = model.posterior(X_baseline).mean
-        with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+        with warnings.catch_warnings(record=True) as ws:
             mars.set_baseline_Y(model=model, X_baseline=X_baseline, Y_samples=Y_samples)
         self.assertTrue(torch.equal(mars.baseline_Y, torch.tensor([[1.5, 1.5]])))
         self.assertTrue(any(w.category == BotorchWarning for w in ws))
