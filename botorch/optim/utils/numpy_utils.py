@@ -124,7 +124,9 @@ def set_tensors_from_ndarray_1d(
             try:
                 size = tnsr.numel()
                 vals = array[index : index + size] if tnsr.ndim else array[index]
-                tnsr.copy_(torch.from_numpy(vals.reshape(tnsr.shape)).to(tnsr))
+                torch.as_tensor(vals, device=tnsr.device, dtype=tnsr.dtype).view(
+                    tnsr.shape
+                )
                 index += size
             except Exception as e:
                 raise RuntimeError(
