@@ -126,9 +126,7 @@ def set_tensors_from_ndarray_1d(
                 vals = array[index : index + size] if tnsr.ndim else array[index]
                 tnsr.copy_(
                     torch.as_tensor(vals, device=tnsr.device, dtype=tnsr.dtype)
-                    .to(tnsr)
                     .view(tnsr.shape)
-                    .to(tnsr)
                 )
                 index += size
             except Exception as e:
