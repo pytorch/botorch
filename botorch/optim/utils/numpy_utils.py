@@ -9,7 +9,6 @@ r"""Utilities for interfacing Numpy and Torch."""
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator
-
 from itertools import tee
 
 import numpy as np
@@ -113,7 +112,6 @@ def get_tensors_as_ndarray_1d(
 def set_tensors_from_ndarray_1d(
     tensors: Iterator[Tensor] | dict[str, Tensor],
     array: npt.NDArray,
-    as_tensor: Callable[[npt.NDArray], Tensor] = torch.as_tensor,
 ) -> None:
     r"""Sets the values of one more tensors based off of a vector of assignments."""
     named_tensors_iter = (
@@ -125,7 +123,11 @@ def set_tensors_from_ndarray_1d(
             try:
                 size = tnsr.numel()
                 vals = array[index : index + size] if tnsr.ndim else array[index]
-                tnsr.copy_(as_tensor(vals).to(tnsr).view(tnsr.shape).to(tnsr))
+                tnsr.copy_(
+                    torch.as_tensor(vals, device=tnsr.device, dtype=tnsr.dtype).view(
+                        tnsr.shape
+                    )
+                )
                 index += size
             except Exception as e:
                 raise RuntimeError(
