@@ -23,6 +23,7 @@ from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
     qHypervolumeKnowledgeGradient,
 )
 from botorch.exceptions import InputDataError, UnsupportedError
+from botorch.exceptions.errors import CandidateGenerationError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.gen import gen_candidates_scipy, gen_candidates_torch
 from botorch.models import SingleTaskGP
@@ -1586,6 +1587,41 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
                 num_restarts=2,
                 raw_samples=10,
+            )
+
+    def test_optimize_acqf_mixed_ff_with_constraint(self):
+        mock_acq_function = MockAcquisitionFunction()
+        bounds = torch.stack([torch.zeros(3), 4 * torch.ones(3)])
+        ineq_constraints = [(torch.zeros(1), torch.ones(1), 1)]  # x[0] >= 1
+        with self.assertWarnsRegex(
+            OptimizationWarning,
+            "Candidate generation failed for 1 combinations of `fixed_features`. "
+            "To suppress this warning, make sure all equality/inequality "
+            "constraints can be satisfied by all `fixed_features` in "
+            "`fixed_features_list`.",
+        ):
+            optimize_acqf_mixed(
+                acq_function=mock_acq_function,
+                q=1,
+                fixed_features_list=[{0: 0}, {0: 1}],
+                bounds=bounds,
+                num_restarts=2,
+                raw_samples=10,
+                inequality_constraints=ineq_constraints,
+            )
+        # No fixed features satisfy the constraint
+        with self.assertRaisesRegex(
+            CandidateGenerationError,
+            "Candidate generation failed for all `fixed_features`.",
+        ):
+            optimize_acqf_mixed(
+                acq_function=mock_acq_function,
+                q=1,
+                fixed_features_list=[{0: 0}],
+                bounds=bounds,
+                num_restarts=2,
+                raw_samples=10,
+                inequality_constraints=ineq_constraints,
             )
 
 
