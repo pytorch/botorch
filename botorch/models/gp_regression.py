@@ -306,9 +306,7 @@ class HeteroskedasticSingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         noise_likelihood = GaussianLikelihood(
             noise_prior=SmoothedBoxPrior(-3, 5, 0.5, transform=torch.log),
             batch_shape=self._aug_batch_shape,
-            noise_constraint=GreaterThan(
-                MIN_INFERRED_NOISE_LEVEL, transform=None, initial_value=1.0
-            ),
+            noise_constraint=GreaterThan(MIN_INFERRED_NOISE_LEVEL, initial_value=1.0),
         )
         # Likelihood will always get evaluated with transformed X, so we need to
         # transform the training data before constructing the noise model.

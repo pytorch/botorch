@@ -141,9 +141,7 @@ class LCEMGP(MultiTaskGP):
         )
         self.task_covar_module_base = RBFKernel(
             ard_num_dims=n_embs,
-            lengthscale_constraint=Interval(
-                0.0, 2.0, transform=None, initial_value=1.0
-            ),
+            lengthscale_constraint=Interval(0.0, 2.0, initial_value=1.0),
         )
         self.to(train_X)
 
