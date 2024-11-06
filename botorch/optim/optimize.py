@@ -25,6 +25,7 @@ from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
     qHypervolumeKnowledgeGradient,
 )
 from botorch.exceptions import InputDataError, UnsupportedError
+from botorch.exceptions.errors import CandidateGenerationError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.gen import gen_candidates_scipy, TGenCandidates
 from botorch.logging import logger
@@ -938,27 +939,46 @@ def optimize_acqf_mixed(
 
     if q == 1:
         ff_candidate_list, ff_acq_value_list = [], []
+        num_candidate_generation_failures = 0
         for fixed_features in fixed_features_list:
-            candidate, acq_value = optimize_acqf(
-                acq_function=acq_function,
-                bounds=bounds,
-                q=q,
-                num_restarts=num_restarts,
-                raw_samples=raw_samples,
-                options=options or {},
-                inequality_constraints=inequality_constraints,
-                equality_constraints=equality_constraints,
-                nonlinear_inequality_constraints=nonlinear_inequality_constraints,
-                fixed_features=fixed_features,
-                post_processing_func=post_processing_func,
-                batch_initial_conditions=batch_initial_conditions,
-                ic_generator=ic_generator,
-                return_best_only=True,
-                **ic_gen_kwargs,
-            )
+            try:
+                candidate, acq_value = optimize_acqf(
+                    acq_function=acq_function,
+                    bounds=bounds,
+                    q=q,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options=options or {},
+                    inequality_constraints=inequality_constraints,
+                    equality_constraints=equality_constraints,
+                    nonlinear_inequality_constraints=nonlinear_inequality_constraints,
+                    fixed_features=fixed_features,
+                    post_processing_func=post_processing_func,
+                    batch_initial_conditions=batch_initial_conditions,
+                    ic_generator=ic_generator,
+                    return_best_only=True,
+                    **ic_gen_kwargs,
+                )
+            except CandidateGenerationError:
+                # if candidate generation fails, we skip this candidate
+                num_candidate_generation_failures += 1
+                continue
             ff_candidate_list.append(candidate)
             ff_acq_value_list.append(acq_value)
 
+        if len(ff_candidate_list) == 0:
+            raise CandidateGenerationError(
+                "Candidate generation failed for all `fixed_features`."
+            )
+        elif num_candidate_generation_failures > 0:
+            warnings.warn(
+                f"Candidate generation failed for {num_candidate_generation_failures} "
+                "combinations of `fixed_features`. To suppress this warning, make "
+                "sure all equality/inequality constraints can be satisfied by all "
+                "`fixed_features` in `fixed_features_list`.",
+                OptimizationWarning,
+                stacklevel=3,
+            )
         ff_acq_values = torch.stack(ff_acq_value_list)
         best = torch.argmax(ff_acq_values)
         return ff_candidate_list[best], ff_acq_values[best]
