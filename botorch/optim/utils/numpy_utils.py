@@ -9,7 +9,6 @@ r"""Utilities for interfacing Numpy and Torch."""
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator
-
 from itertools import tee
 
 import numpy as np
@@ -124,8 +123,10 @@ def set_tensors_from_ndarray_1d(
             try:
                 size = tnsr.numel()
                 vals = array[index : index + size] if tnsr.ndim else array[index]
-                torch.as_tensor(vals, device=tnsr.device, dtype=tnsr.dtype).view(
-                    tnsr.shape
+                tnsr.copy_(
+                    torch.as_tensor(vals, device=tnsr.device, dtype=tnsr.dtype).view(
+                        tnsr.shape
+                    )
                 )
                 index += size
             except Exception as e:
