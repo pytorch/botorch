@@ -15,37 +15,3 @@ jobs:
     with:
       use_latest_pytorch_gpytorch: true
     secrets: inherit
-
-  tests-conda:
-    name: Tests (conda, ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ["ubuntu-latest", "macos-14", "windows-latest"]
-        python-version: ["3.10", "3.12"]
-    steps:
-    - uses: actions/checkout@v4
-    - uses: conda-incubator/setup-miniconda@v3
-      with:
-        miniconda-version: "latest"
-        activate-environment: test
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      shell: bash -l {0}
-      env:
-        ALLOW_LATEST_GPYTORCH_LINOP: true
-      run: |
-        conda install pytorch torchvision -c pytorch
-        conda install -y pip scipy sphinx pytest flake8
-        pip install git+https://github.com/cornellius-gp/linear_operator.git
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install .[test]
-    - name: Unit tests -- BoTorch
-      shell: bash -l {0}
-      run: |
-        pytest -ra test/
-    - name: Unit tests -- BoTorch Community
-      shell: bash -l {0}
-      run: |
-        pytest -ra test_community/

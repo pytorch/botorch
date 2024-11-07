@@ -51,7 +51,7 @@ function Versions(props) {
               <tr>
                 <td>{`stable (${latestVersion})`}</td>
                 <td>
-                  <code>conda install botorch -c pytorch -c gpytorch</code>
+                  <code>pip install botorch</code>
                 </td>
                 <td>
                   <a href={`${baseUrl}index.html`}>stable</a>
