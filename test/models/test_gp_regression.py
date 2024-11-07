@@ -11,26 +11,19 @@ import warnings
 import torch
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.gp_regression import HeteroskedasticSingleTaskGP, SingleTaskGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
 from botorch.models.transforms.input import InputStandardize
 from botorch.models.transforms.outcome import Log
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.datasets import SupervisedDataset
-from botorch.utils.sampling import manual_seed
 from botorch.utils.test_helpers import get_pvar_expected
 from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels import RBFKernel
-from gpytorch.likelihoods import (
-    _GaussianLikelihoodBase,
-    FixedNoiseGaussianLikelihood,
-    GaussianLikelihood,
-    HeteroskedasticNoise,
-)
+from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean, ZeroMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from gpytorch.mlls.noise_model_added_loss_term import NoiseModelAddedLossTerm
 from gpytorch.priors import LogNormalPrior
 
 
@@ -583,62 +576,3 @@ class TestSingleTaskGPFixedNoise(TestSingleTaskGP):
                     == obs_noise.expand(X_f.shape[:-1] + torch.Size([m]))
                 ).all()
             )
-
-
-class TestHeteroskedasticSingleTaskGP(TestGPRegressionBase):
-    def _get_model_and_data(
-        self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
-    ):
-        with manual_seed(0):
-            train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
-            train_Yvar = (0.1 + 0.1 * torch.rand_like(train_Y)) ** 2
-        model_kwargs = {
-            "train_X": train_X,
-            "train_Y": train_Y,
-            "train_Yvar": train_Yvar,
-            "input_transform": input_transform,
-            "outcome_transform": outcome_transform,
-        }
-        model = HeteroskedasticSingleTaskGP(**model_kwargs)
-        return model, model_kwargs
-
-    def test_custom_init(self) -> None:
-        """
-        This test exists because `TestHeteroskedasticSingleTaskGP` inherits from
-        `TestSingleTaskGP`, which has a `test_custom_init` method that isn't relevant
-        for `TestHeteroskedasticSingleTaskGP`.
-        """
-
-    def test_gp(self):
-        super().test_gp(double_only=True)
-
-    def test_fantasize(self) -> None:
-        """
-        This test exists because `TestHeteroskedasticSingleTaskGP` inherits from
-        `TestSingleTaskGP`, which has a `fantasize` method that isn't relevant
-        for `TestHeteroskedasticSingleTaskGP`.
-        """
-
-    def test_heteroskedastic_likelihood(self):
-        for batch_shape, m, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (1, 2), (torch.float, torch.double)
-        ):
-            tkwargs = {"device": self.device, "dtype": dtype}
-            model, _ = self._get_model_and_data(batch_shape=batch_shape, m=m, **tkwargs)
-            self.assertIsInstance(model.likelihood, _GaussianLikelihoodBase)
-            self.assertFalse(isinstance(model.likelihood, GaussianLikelihood))
-            self.assertIsInstance(model.likelihood.noise_covar, HeteroskedasticNoise)
-            self.assertIsInstance(
-                model.likelihood.noise_covar.noise_model, SingleTaskGP
-            )
-            self.assertIsInstance(
-                model._added_loss_terms["noise_added_loss"], NoiseModelAddedLossTerm
-            )
-
-    def test_condition_on_observations(self):
-        with self.assertRaises(NotImplementedError):
-            super().test_condition_on_observations()
-
-    def test_subset_model(self):
-        with self.assertRaises(NotImplementedError):
-            super().test_subset_model()

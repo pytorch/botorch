@@ -31,8 +31,8 @@ from botorch.acquisition.bayesian_active_learning import (
 )
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.models.fully_bayesian import MCMC_DIM, SaasFullyBayesianSingleTaskGP
-from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.utils import fantasize as fantasize_flag
+from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from botorch_community.acquisition.bayesian_active_learning import DISTANCE_METRICS
 from torch import Tensor

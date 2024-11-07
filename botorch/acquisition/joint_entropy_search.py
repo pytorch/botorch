@@ -29,12 +29,10 @@ import torch
 from botorch import settings
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.acquisition.objective import PosteriorTransform
-
 from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
-from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.model import Model
-
 from botorch.models.utils import check_no_nans, fantasize as fantasize_flag
+from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from torch import Tensor
