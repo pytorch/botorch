@@ -11,7 +11,6 @@
 [![Nightly](https://github.com/pytorch/botorch/actions/workflows/nightly.yml/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ANightly)
 [![Codecov](https://img.shields.io/codecov/c/github/pytorch/botorch.svg)](https://codecov.io/github/pytorch/botorch)
 
-[![Conda](https://img.shields.io/conda/v/conda-forge/botorch.svg)](https://anaconda.org/conda-forge/botorch)
 [![PyPI](https://img.shields.io/pypi/v/botorch.svg)](https://pypi.org/project/botorch)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -66,10 +65,7 @@ Optimization simply use Ax.
 
 ### Option 1: Installing the latest release
 
-The latest release of BoTorch is easily installed either via pip (recommended)
-or [Anaconda](https://www.anaconda.com/distribution/#download-section).
-
-**To install with `pip` (recommended)**, run
+The latest release of BoTorch is easily installed via `pip`:
 
 ```bash
 pip install botorch
@@ -78,18 +74,13 @@ pip install botorch
 _Note_: Make sure the `pip` being used is actually the one from the newly created
 Conda environment. If you're using a Unix-based OS, you can use `which pip` to check.
 
-
-**Alternatively, to install BoTorch from Anaconda**, run
+BoTorch [stopped publishing](https://github.com/pytorch/botorch/discussions/2613#discussion-7431533)
+an official Anaconda package to the `pytorch` channel after the 0.12 release. However,
+users can still use the package published to the `conda-forge` channel and install botorch via
 
 ```bash
 conda install botorch -c gpytorch -c conda-forge
 ```
-The above command installs BoTorch and any needed dependencies.
-` -c gpytorch -c conda-forge` means that the most preferred source to install from is
-the `-gpytorch` channel, the next most preferred is the `conda-forge` channel.
-_Note_: BoTorch [stopped publishing](https://github.com/pytorch/botorch/discussions/2613#discussion-7431533)
-an official anaconda package to the `pytorch` channel after the 0.12 release. However,
-you can still use the package published to the `conda-forge` channel.
 
 ### Option 2: Installing from latest main branch
 

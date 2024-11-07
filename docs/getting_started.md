@@ -13,8 +13,9 @@ Before jumping the gun, we recommend you start with the high-level
 
 #### Installation Requirements:
 
-BoTorch is easily installed via `pip` (recommended) or
-[Anaconda](https://www.anaconda.com/distribution/#download-section):
+BoTorch is easily installed via `pip` (recommended). It is also possible to
+use the (unofficial) [Anaconda](https://www.anaconda.com/distribution/#download-section)
+package from the `-c conda-forge` channel.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--pip-->
