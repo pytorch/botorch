@@ -72,8 +72,8 @@ Noise can be treated in several different ways:
   if you know your observations are noiseless (by passing a zero noise level).
 
 - _Heteroskedastic_: Noise is provided as an input and is modeled to allow for
-  predicting noise out-of-sample. Models like `HeteroskedasticSingleTaskGP` take
-  this approach.
+  predicting noise out-of-sample. BoTorch does not implement a model that
+  supports this out of the box.
 
 ## Standard BoTorch Models
 
@@ -90,10 +90,6 @@ instead.
 - [`SingleTaskGP`](../api/models.html#botorch.models.gp_regression.SingleTaskGP):
   a single-task exact GP that supports both inferred and observed noise. When
   noise observations are not provided, it infers a homoskedastic noise level.
-- [`HeteroskedasticSingleTaskGP`](../api/models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP):
-  a single-task exact GP that differs from `SingleTaskGP` with observed noise in
-  that it models heteroskedastic noise using an additional internal GP model. It
-  requires noise observations.
 - [`MixedSingleTaskGP`](../api/models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP):
   a single-task exact GP that supports mixed search spaces, which combine
   discrete and continuous features.

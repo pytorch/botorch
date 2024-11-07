@@ -7,12 +7,7 @@
 
 import torch
 from botorch.exceptions import UnsupportedError
-from botorch.models import (
-    HeteroskedasticSingleTaskGP,
-    ModelListGP,
-    SingleTaskGP,
-    SingleTaskMultiFidelityGP,
-)
+from botorch.models import ModelListGP, SingleTaskGP, SingleTaskMultiFidelityGP
 from botorch.models.converter import (
     _batched_kernel,
     batched_multi_output_to_single_output,
@@ -58,12 +53,6 @@ class TestConverters(BotorchTestCase):
                 )
                 list_gp = batched_to_model_list(batch_gp)
                 self.assertIsInstance(list_gp, ModelListGP)
-            # test HeteroskedasticSingleTaskGP
-            batch_gp = HeteroskedasticSingleTaskGP(
-                train_X, train_Y, torch.rand_like(train_Y)
-            )
-            with self.assertRaises(NotImplementedError):
-                batched_to_model_list(batch_gp)
             # test with transforms
             input_tf = Normalize(
                 d=2,
@@ -161,12 +150,6 @@ class TestConverters(BotorchTestCase):
             )
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(ModelListGP(gp1, gp2))
-            # test HeteroskedasticSingleTaskGP
-            gp2 = HeteroskedasticSingleTaskGP(
-                train_X, train_Y1, torch.ones_like(train_Y1)
-            )
-            with self.assertRaises(NotImplementedError):
-                model_list_to_batched(ModelListGP(gp2))
             # test custom likelihood
             gp2 = SingleTaskGP(
                 train_X,
@@ -419,11 +402,6 @@ class TestConverters(BotorchTestCase):
             non_batch_model = SimpleGPyTorchModel(train_X, train_Y[:, :1])
             with self.assertRaises(UnsupportedError):
                 batched_multi_output_to_single_output(non_batch_model)
-            gp2 = HeteroskedasticSingleTaskGP(
-                train_X, train_Y, torch.ones_like(train_Y)
-            )
-            with self.assertRaises(NotImplementedError):
-                batched_multi_output_to_single_output(gp2)
             # test custom likelihood
             gp2 = SingleTaskGP(train_X, train_Y, likelihood=GaussianLikelihood())
             with self.assertRaises(NotImplementedError):

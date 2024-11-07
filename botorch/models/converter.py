@@ -17,7 +17,6 @@ import torch
 from botorch.exceptions import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
-from botorch.models.gp_regression import HeteroskedasticSingleTaskGP
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
@@ -82,12 +81,6 @@ def _check_compatibility(models: ModuleList) -> None:
     if not all(isinstance(m, BatchedMultiOutputGPyTorchModel) for m in models):
         raise UnsupportedError(
             "All models must be of type BatchedMultiOutputGPyTorchModel."
-        )
-
-    # TODO: Add support for HeteroskedasticSingleTaskGP.
-    if any(isinstance(m, HeteroskedasticSingleTaskGP) for m in models):
-        raise NotImplementedError(
-            "Conversion of HeteroskedasticSingleTaskGP is currently unsupported."
         )
 
     # TODO: Add support for custom likelihoods.
@@ -289,11 +282,6 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
     warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
     was_training = batch_model.training
     batch_model.train()
-    # TODO: Add support for HeteroskedasticSingleTaskGP.
-    if isinstance(batch_model, HeteroskedasticSingleTaskGP):
-        raise NotImplementedError(
-            "Conversion of HeteroskedasticSingleTaskGP is currently not supported."
-        )
     if isinstance(batch_model, MixedSingleTaskGP):
         raise NotImplementedError(
             "Conversion of MixedSingleTaskGP is currently not supported."
@@ -393,12 +381,7 @@ def batched_multi_output_to_single_output(
     warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
     was_training = batch_mo_model.training
     batch_mo_model.train()
-    # TODO: Add support for HeteroskedasticSingleTaskGP.
-    if isinstance(batch_mo_model, HeteroskedasticSingleTaskGP):
-        raise NotImplementedError(
-            "Conversion of HeteroskedasticSingleTaskGP currently not supported."
-        )
-    elif not isinstance(batch_mo_model, BatchedMultiOutputGPyTorchModel):
+    if not isinstance(batch_mo_model, BatchedMultiOutputGPyTorchModel):
         raise UnsupportedError("Only BatchedMultiOutputGPyTorchModels are supported.")
     # TODO: Add support for custom likelihoods.
     elif getattr(batch_mo_model, "_is_custom_likelihood", False):
