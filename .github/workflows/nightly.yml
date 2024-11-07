@@ -10,7 +10,7 @@ on:
 jobs:
   tests-and-coverage-nightly:
     name: Test & Coverage
-    uses: ./.github/workflows/reusable_test_pip.yml
+    uses: ./.github/workflows/reusable_test.yml
     with:
       use_latest_pytorch_gpytorch: true
     secrets: inherit

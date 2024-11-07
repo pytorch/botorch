@@ -8,9 +8,9 @@ on:
 
 jobs:
 
-  tests-and-coverage-pip:
+  tests-and-coverage:
     name: Test & Coverage
-    uses: ./.github/workflows/reusable_test_pip.yml
+    uses: ./.github/workflows/reusable_test.yml
     with:
       use_latest_pytorch_gpytorch: false
     secrets: inherit
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write # This is required for PyPI OIDC authentication.
-    needs: tests-and-coverage-pip
+    needs: tests-and-coverage
     steps:
     - uses: actions/checkout@v4
     - name: Fetch all history for all tags and branches

@@ -9,9 +9,9 @@ on:
 
 jobs:
 
-  tests-and-coverage-pip:
-    name: Test & Coverage (pip)
-    uses: ./.github/workflows/reusable_test_pip.yml
+  tests-and-coverage:
+    name: Test & Coverage
+    uses: ./.github/workflows/reusable_test.yml
     with:
       use_latest_pytorch_gpytorch: true
     secrets: inherit

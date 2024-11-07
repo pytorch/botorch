@@ -5,16 +5,16 @@ on:
 
 jobs:
 
-  tests-and-coverage-pip-stable:
+  tests-and-coverage-stable:
     name: Test & Coverage
-    uses: ./.github/workflows/reusable_test_pip.yml
+    uses: ./.github/workflows/reusable_test.yml
     with:
       use_latest_pytorch_gpytorch: false
       upload_coverage: false
     secrets: inherit
 
-  tests-and-coverage-min-req-pip:
-    name: Tests and coverage min req. torch, gpytorch & linear_operator versions (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+  tests-and-coverage-min-req:
+    name: Tests and coverage min req. torch, gpytorch & linear_operator versions (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
