@@ -85,7 +85,6 @@ setup(
     project_urls={
         "Documentation": "https://botorch.org",
         "Source": "https://github.com/pytorch/botorch",
-        "conda": "https://anaconda.org/pytorch/botorch",
     },
     keywords=["Bayesian optimization", "PyTorch"],
     classifiers=[

@@ -8,9 +8,9 @@ on:
 
 jobs:
 
-  tests-and-coverage-pip:
+  tests-and-coverage:
     name: Test & Coverage
-    uses: ./.github/workflows/reusable_test_pip.yml
+    uses: ./.github/workflows/reusable_test.yml
     with:
       use_latest_pytorch_gpytorch: false
     secrets: inherit
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write # This is required for PyPI OIDC authentication.
-    needs: tests-and-coverage-pip
+    needs: tests-and-coverage
     steps:
     - uses: actions/checkout@v4
     - name: Fetch all history for all tags and branches
@@ -44,43 +44,9 @@ jobs:
       with:
         verbose: true
 
-  package-deploy-conda:
-    name: Package conda and deploy to anaconda.org
-    runs-on: 8-core-ubuntu
-    needs: tests-and-coverage-pip
-    steps:
-    - uses: actions/checkout@v4
-    - uses: conda-incubator/setup-miniconda@v3
-      with:
-        miniconda-version: "latest"
-        activate-environment: test
-        python-version: "3.10"
-    - name: Fetch all history for all tags and branches
-      run: git fetch --prune --unshallow
-    - name: Install dependencies
-      shell: bash -l {0}
-      run: |
-        conda install -y setuptools_scm conda-build conda-verify anaconda-client
-        conda install -y scipy sphinx pytest flake8 multipledispatch
-        conda install -y -c pytorch pytorch cpuonly
-        conda install -y -c gpytorch gpytorch
-        conda install -y -c conda-forge pyro-ppl>=1.8.4
-        conda config --set anaconda_upload no
-    - name: Build and verify conda package
-      shell: bash -l {0}
-      run: |
-        ./scripts/build_and_verify_conda_package.sh
-    - name: Deploy to anaconda.org
-      shell: bash -l {0}
-      run: |
-        botorch_version=$(python -m setuptools_scm)
-        build_dir="$(pwd)/.conda/conda_build/noarch"
-        pkg_file="${build_dir}/botorch-${botorch_version}-0.tar.bz2"
-        anaconda -t ${{ secrets.ANACONDA_UPLOAD_TOKEN }} upload -u pytorch $pkg_file
-
   publish-versioned-website:
     name: Publish versioned website
-    needs: [package-deploy-pypi, package-deploy-conda]
+    needs: package-deploy-pypi
     uses: ./.github/workflows/reusable_website.yml
     with:
       publish_versioned_website: true

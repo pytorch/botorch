@@ -11,7 +11,6 @@
 [![Nightly](https://github.com/pytorch/botorch/actions/workflows/nightly.yml/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ANightly)
 [![Codecov](https://img.shields.io/codecov/c/github/pytorch/botorch.svg)](https://codecov.io/github/pytorch/botorch)
 
-[![Conda](https://img.shields.io/conda/v/pytorch/botorch.svg)](https://anaconda.org/pytorch/botorch)
 [![PyPI](https://img.shields.io/pypi/v/botorch.svg)](https://pypi.org/project/botorch)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -63,38 +62,25 @@ Optimization simply use Ax.
 - scipy
 - multiple-dispatch
 
-### Prerequisite only for MacOS users with Intel processors:
-Before installing BoTorch, we recommend first manually installing PyTorch, a required dependency of
-BoTorch. Installing it according to the [PyTorch installation instructions](https://pytorch.org/get-started/locally/)
-ensures that it is properly linked against MKL, a library that optimizes mathematical computation for Intel processors.
-This will result in up to an order-of-magnitude speed-up for Bayesian optimization, as at the moment,
-installing PyTorch from pip does not link against MKL.
-
-The PyTorch installation instructions currently recommend:
-1. Install [Anaconda](https://www.anaconda.com/distribution/#download-section). Note that there are different installers for Intel and M1 Macs.
-2. Install PyTorch following the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
-Currently, this suggests running `conda install pytorch torchvision -c pytorch`.
-
-If you want to customize your installation, please follow the [PyTorch installation instructions](https://pytorch.org/get-started/locally/) to build from source.
 
 ### Option 1: Installing the latest release
 
-The latest release of BoTorch is easily installed either via
-[Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended) or pip.
+The latest release of BoTorch is easily installed via `pip`:
 
-**To install BoTorch from Anaconda**, run
-```bash
-conda install botorch -c pytorch -c gpytorch -c conda-forge
-```
-The above command installs BoTorch and any needed dependencies. ` -c pytorch -c gpytorch -c conda-forge` means that the most preferred source to install from is the PyTorch channel, the next most preferred is the GPyTorch channel,
-and the least preferred is conda-forge.
-
-**Alternatively, to install with `pip`**, do
 ```bash
 pip install botorch
 ```
 
-_Note_: Make sure the `pip` being used is actually the one from the newly created Conda environment. If you're using a Unix-based OS, you can use `which pip` to check.
+_Note_: Make sure the `pip` being used is actually the one from the newly created
+Conda environment. If you're using a Unix-based OS, you can use `which pip` to check.
+
+BoTorch [stopped publishing](https://github.com/pytorch/botorch/discussions/2613#discussion-7431533)
+an official Anaconda package to the `pytorch` channel after the 0.12 release. However,
+users can still use the package published to the `conda-forge` channel and install botorch via
+
+```bash
+conda install botorch -c gpytorch -c conda-forge
+```
 
 ### Option 2: Installing from latest main branch
 

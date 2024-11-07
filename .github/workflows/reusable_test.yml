@@ -1,4 +1,4 @@
-name: Reusable Test Workflow w/ pip
+name: Reusable Test Workflow
 
 on:
   workflow_call:
@@ -13,8 +13,8 @@ on:
 
 
 jobs:
-  tests-and-coverage-pip:
-    name: Tests and coverage (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+  tests-and-coverage:
+    name: Tests and coverage (Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

@@ -168,10 +168,10 @@ candidate  # tensor([[0.2981, 0.2401]], dtype=torch.float64)
           <ol>
             <li>
               <h4>Install BoTorch:</h4>
-              <a>via Conda (strongly recommended for OSX):</a>
-              <MarkdownBlock>{bash`conda install botorch -c pytorch -c gpytorch -c conda-forge`}</MarkdownBlock>
-              <a>via pip:</a>
+              <a>via pip (recommended):</a>
               <MarkdownBlock>{bash`pip install botorch`}</MarkdownBlock>
+              <a>via Anaconda (from the unofficial conda-forge channel):</a>
+              <MarkdownBlock>{bash`conda install botorch -c gpytorch -c conda-forge`}</MarkdownBlock>
             </li>
             <li>
               <h4>Fit a model:</h4>
