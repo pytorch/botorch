@@ -202,7 +202,7 @@
 <span class="n">Yraw</span> <span class="o">=</span> <span class="n">qEI</span><span class="p">(</span><span class="n">Xraw</span><span class="p">)</span>  <span class="c1"># evaluate the acquisition function on these q-batches</span>
 
 <span class="c1"># apply the heuristic for sampling promising initial conditions</span>
-<span class="n">X</span> <span class="o">=</span> <span class="n">initialize_q_batch_nonneg</span><span class="p">(</span><span class="n">Xraw</span><span class="p">,</span> <span class="n">Yraw</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">initialize_q_batch_nonneg</span><span class="p">(</span><span class="n">Xraw</span><span class="p">,</span> <span class="n">Yraw</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
 
 <span class="c1"># we'll want gradients for the input</span>
 <span class="n">X</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">);</span>

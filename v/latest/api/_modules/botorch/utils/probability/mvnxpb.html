@@ -47,7 +47,7 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypedDict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypedDict</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -81,7 +81,7 @@
     <span class="n">piv_chol</span><span class="p">:</span> <span class="n">PivotedCholesky</span>
     <span class="n">plug_ins</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="n">log_prob</span><span class="p">:</span> <span class="n">Tensor</span>
-    <span class="n">log_prob_extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span></div>
+    <span class="n">log_prob_extra</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span></div>
 
 
 
@@ -129,7 +129,7 @@
             <span class="n">batch_shape</span> <span class="o">+</span> <span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_prob_extra</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="MVNXPB.build">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.build">[docs]</a>
@@ -142,7 +142,7 @@
         <span class="n">piv_chol</span><span class="p">:</span> <span class="n">PivotedCholesky</span><span class="p">,</span>
         <span class="n">plug_ins</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">log_prob</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">log_prob_extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">log_prob_extra</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Creates an MVNXPB instance from raw arguments. Unlike MVNXPB.__init__,</span>
 <span class="sd">        this methods does not preprocess or copy terms.</span>
@@ -170,7 +170,7 @@
 
 <div class="viewcode-block" id="MVNXPB.solve">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.solve">[docs]</a>
-    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Runs the MVNXPB solver instance for a fixed number of steps.</span>
 
 <span class="sd">        Calculates a bivariate conditional approximation to P(X \in bounds), where</span>
@@ -278,7 +278,7 @@
 
 <div class="viewcode-block" id="MVNXPB.select_pivot">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.mvnxpb.MVNXPB.select_pivot">[docs]</a>
-    <span class="k">def</span> <span class="nf">select_pivot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LongTensor</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">select_pivot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LongTensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""GGE variable prioritization strategy from [Gibson1994monte]_.</span>
 
 <span class="sd">        Returns the index of the random variable least likely to satisfy its bounds</span>
@@ -390,8 +390,8 @@
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">cross_covariance_matrix</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">disable_pivoting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">jitter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">max_tries</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Augment an `n`-dimensional MVNXPB instance to include `m` additional random</span>
 <span class="sd">        variables.</span>
@@ -514,6 +514,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../utils.html">botorch.utils</a></li>
 </ul>

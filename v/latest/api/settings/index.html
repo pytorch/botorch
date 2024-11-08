@@ -37,24 +37,6 @@ This is useful in particular for propating gradients through fantasy models.</p>
 </dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.settings.debug">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.settings.</span></span><span class="sig-name descname"><span class="pre">debug</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#debug"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.settings.debug" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Flag</span></code></p>
-<p>Flag for printing verbose warnings.</p>
-<dl>
-<dt>To make sure a warning is only raised in debug mode:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="n">debug</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="o">&lt;</span><span class="n">some</span> <span class="n">warning</span><span class="o">&gt;</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>state</strong> (<em>bool</em>)</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py class">
 <dt class="sig sig-object py" id="botorch.settings.validate_input_scaling">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.settings.</span></span><span class="sig-name descname"><span class="pre">validate_input_scaling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#validate_input_scaling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.settings.validate_input_scaling" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Flag</span></code></p>
@@ -119,6 +101,7 @@ above will be printed to STDERR</p>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
 </ul>

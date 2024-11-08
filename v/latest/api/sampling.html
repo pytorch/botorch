@@ -42,7 +42,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – An optional seed to use for sampling.</p></li>
 </ul>
 </dd>
 </dl>
@@ -80,7 +80,7 @@ generate the samples via index base samples.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – An optional seed to use for sampling.</p></li>
 </ul>
 </dd>
 </dl>
@@ -182,7 +182,7 @@ acquisition functions and Gaussian posteriors.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – An optional seed to use for sampling.</p></li>
 </ul>
 </dd>
 </dl>
@@ -220,7 +220,7 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – An optional seed to use for sampling.</p></li>
 </ul>
 </dd>
 </dl>
@@ -242,7 +242,7 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – An optional seed to use for sampling.</p></li>
 </ul>
 </dd>
 </dl>
@@ -293,7 +293,7 @@ The returned samples are expected to have output dimension of 1.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
 <li><p><strong>max_num_comparisons</strong> (<em>int</em>) – Max number of comparisons drawn within samples.
 If None, use all possible pairwise comparisons.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – Catch-all for deprecated arguments.</p></li>
@@ -309,7 +309,7 @@ If None, use all possible pairwise comparisons.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
 <li><p><strong>max_num_comparisons</strong> (<em>int</em>) – Max number of comparisons drawn within samples.
 If None, use all possible pairwise comparisons.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – Catch-all for deprecated arguments.</p></li>
@@ -348,7 +348,7 @@ instead, set <cite>inv_transform=True</cite>.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the samples.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed with which to seed the random number generator of the
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed with which to seed the random number generator of the
 underlying SobolEngine.</p></li>
 <li><p><strong>inv_transform</strong> (<em>bool</em>) – If True, use inverse transform instead of Box-Muller.</p></li>
 </ul>
@@ -398,7 +398,7 @@ instead, set <cite>inv_transform=True</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mean</strong> (<em>Tensor</em>) – The mean vector.</p></li>
 <li><p><strong>cov</strong> (<em>Tensor</em>) – The covariance matrix.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed with which to seed the random number generator of the
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The seed with which to seed the random number generator of the
 underlying SobolEngine.</p></li>
 <li><p><strong>inv_transform</strong> (<em>bool</em>) – If True, use inverse transform instead of Box-Muller.</p></li>
 </ul>
@@ -448,7 +448,7 @@ compatible with Sample Average Approximation.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – An optional seed to use for sampling.</p></li>
 </ul>
 </dd>
 </dl>
@@ -485,7 +485,7 @@ under the hood.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The <cite>sample_shape</cite> of the samples to generate. The full shape
 of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – An optional seed to use for sampling.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – An optional seed to use for sampling.</p></li>
 </ul>
 </dd>
 </dl>
@@ -550,8 +550,8 @@ of the samples is given by <cite>posterior._extended_shape(sample_shape)</cite>.
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kernel</strong> (<em>Kernel</em>) – The kernel <span class="math notranslate nohighlight">\(k\)</span> used to define the feature map.</p></li>
 <li><p><strong>points</strong> (<em>Tensor</em>) – A tensor passed as the kernel’s second argument.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
-<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+<li><p><strong>input_transform</strong> (<em>TInputTransform</em><em> | </em><em>None</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>TOutputTransform</em><em> | </em><em>None</em>) – An optional output transform for the module.</p></li>
 </ul>
 </dd>
 </dl>
@@ -601,9 +601,9 @@ n-dimensional feature map <span class="math notranslate nohighlight">\(\phi: \ma
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kernel</strong> (<em>Kernel</em>) – The kernel <span class="math notranslate nohighlight">\(k\)</span> used to define the feature map.</p></li>
 <li><p><strong>weight</strong> (<em>Tensor</em>) – A tensor of weights used to linearly combine the module’s inputs.</p></li>
-<li><p><strong>bias</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A tensor of biases to be added to the linearly combined inputs.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><em>TInputTransform</em><em>]</em>) – An optional input transform for the module.</p></li>
-<li><p><strong>output_transform</strong> (<em>Optional</em><em>[</em><em>TOutputTransform</em><em>]</em>) – An optional output transform for the module.</p></li>
+<li><p><strong>bias</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A tensor of biases to be added to the linearly combined inputs.</p></li>
+<li><p><strong>input_transform</strong> (<em>TInputTransform</em><em> | </em><em>None</em>) – An optional input transform for the module.</p></li>
+<li><p><strong>output_transform</strong> (<em>TOutputTransform</em><em> | </em><em>None</em>) – An optional output transform for the module.</p></li>
 </ul>
 </dd>
 </dl>
@@ -694,8 +694,8 @@ and <a class="reference internal" href="#sutherland2015error" id="id4"><span>[su
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>paths</strong> (<em>Optional</em><em>[</em><em>Mapping</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em><em>]</em>) – An optional mapping of strings to sample paths.</p></li>
-<li><p><strong>join</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>list</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – An optional callable used to combine each path’s outputs.</p></li>
+<li><p><strong>paths</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>] </em><em>| </em><em>None</em>) – An optional mapping of strings to sample paths.</p></li>
+<li><p><strong>join</strong> (<em>Callable</em><em>[</em><em>[</em><em>list</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional callable used to combine each path’s outputs.</p></li>
 <li><p><strong>input_transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional input transform for the module.</p></li>
 <li><p><strong>output_transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional output transform for the module.</p></li>
 </ul>
@@ -762,8 +762,8 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>paths</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>]</em><em>]</em>) – An optional iterable of sample paths.</p></li>
-<li><p><strong>join</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>list</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – An optional callable used to combine each path’s outputs.</p></li>
+<li><p><strong>paths</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="#botorch.sampling.pathwise.paths.SamplePath" title="botorch.sampling.pathwise.paths.SamplePath"><em>SamplePath</em></a><em>] </em><em>| </em><em>None</em>) – An optional iterable of sample paths.</p></li>
+<li><p><strong>join</strong> (<em>Callable</em><em>[</em><em>[</em><em>list</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional callable used to combine each path’s outputs.</p></li>
 <li><p><strong>input_transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional input transform for the module.</p></li>
 <li><p><strong>output_transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional output transform for the module.</p></li>
 </ul>
@@ -808,8 +808,8 @@ where z = input_transform(x).
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>feature_map</strong> (<a class="reference internal" href="#botorch.sampling.pathwise.features.maps.FeatureMap" title="botorch.sampling.pathwise.features.maps.FeatureMap"><em>FeatureMap</em></a>) – A map used to featurize the module’s inputs.</p></li>
-<li><p><strong>weight</strong> (<em>Union</em><em>[</em><em>Parameter</em><em>, </em><em>Tensor</em><em>]</em>) – A tensor of weights used to combine input features.</p></li>
-<li><p><strong>bias_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – An optional module used to define additive offsets.</p></li>
+<li><p><strong>weight</strong> (<em>Parameter</em><em> | </em><em>Tensor</em>) – A tensor of weights used to combine input features.</p></li>
+<li><p><strong>bias_module</strong> (<em>Module</em><em> | </em><em>None</em>) – An optional module used to define additive offsets.</p></li>
 <li><p><strong>input_transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional input transform for the module.</p></li>
 <li><p><strong>output_transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – An optional output transform for the module.</p></li>
 </ul>
@@ -1080,7 +1080,7 @@ registered hooks while the latter silently ignores them.</p>
 <p>Initializes a SineCosineTransform instance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>scale</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An optional tensor used to rescale the module’s outputs.</p>
+<dd class="field-odd"><p><strong>scale</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An optional tensor used to rescale the module’s outputs.</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1183,7 +1183,7 @@ along a given tensor dimension.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>indices</strong> (<em>Iterable</em><em>[</em><em>int</em><em>]</em>) – A LongTensor of feature indices.</p></li>
-<li><p><strong>dim</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>LongTensor</em><em>]</em>) – The dimensional along which to index features.</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>LongTensor</em>) – The dimensional along which to index features.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1219,7 +1219,7 @@ registered hooks while the latter silently ignores them.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a>) – The wrapped OutcomeTransform instance.</p></li>
-<li><p><strong>num_outputs</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>LongTensor</em><em>]</em>) – The number of outcome features that the
+<li><p><strong>num_outputs</strong> (<em>int</em><em> | </em><em>LongTensor</em>) – The number of outcome features that the
 OutcomeTransform transforms.</p></li>
 </ul>
 </dd>
@@ -1314,6 +1314,7 @@ registered hooks while the latter silently ignores them.</p>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
 </ul>

@@ -77,24 +77,6 @@
 
 
 
-<div class="viewcode-block" id="debug">
-<a class="viewcode-back" href="../../settings.html#botorch.settings.debug">[docs]</a>
-<span class="k">class</span> <span class="nc">debug</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Flag for printing verbose warnings.</span>
-
-<span class="sd">    To make sure a warning is only raised in debug mode:</span>
-<span class="sd">        &gt;&gt;&gt; if debug.on():</span>
-<span class="sd">        &gt;&gt;&gt;     warnings.warn(&lt;some warning&gt;)</span>
-<span class="sd">    """</span>
-
-    <span class="n">_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_set_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">cls</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">state</span></div>
-
-
-
 <div class="viewcode-block" id="validate_input_scaling">
 <a class="viewcode-back" href="../../settings.html#botorch.settings.validate_input_scaling">[docs]</a>
 <span class="k">class</span> <span class="nc">validate_input_scaling</span><span class="p">(</span><span class="n">_Flag</span><span class="p">):</span>
@@ -173,6 +155,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utils.html">botorch.utils</a></li>
 </ul>

@@ -40,8 +40,6 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
-
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.approximate_gp</span> <span class="kn">import</span> <span class="n">ApproximateGPyTorchModel</span>
@@ -93,8 +91,8 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">prior_paths</span><span class="p">:</span> <span class="n">SamplePath</span><span class="p">,</span>
         <span class="n">update_paths</span><span class="p">:</span> <span class="n">SamplePath</span><span class="p">,</span>
-        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TInputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">output_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TOutputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">TInputTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">output_transform</span><span class="p">:</span> <span class="n">TOutputTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a MatheronPath instance.</span>
 
@@ -117,7 +115,7 @@
 <div class="viewcode-block" id="get_matheron_path_model">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.posterior_samplers.get_matheron_path_model">[docs]</a>
 <span class="k">def</span> <span class="nf">get_matheron_path_model</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">GP</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">GP</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenericDeterministicModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generates a deterministic model using a single Matheron path drawn</span>
 <span class="sd">    from the model's posterior.</span>
@@ -258,7 +256,7 @@
 
 <span class="nd">@DrawMatheronPaths</span><span class="o">.</span><span class="n">register</span><span class="p">((</span><span class="n">ApproximateGP</span><span class="p">,</span> <span class="n">ApproximateGPyTorchModel</span><span class="p">))</span>
 <span class="k">def</span> <span class="nf">_draw_matheron_paths_ApproximateGP</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ApproximateGP</span><span class="p">,</span> <span class="n">ApproximateGPyTorchModel</span><span class="p">],</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ApproximateGP</span> <span class="o">|</span> <span class="n">ApproximateGPyTorchModel</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Size</span><span class="p">,</span>
     <span class="n">prior_sampler</span><span class="p">:</span> <span class="n">TPathwisePriorSampler</span><span class="p">,</span>
@@ -312,6 +310,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../utils.html">botorch.utils</a></li>
 </ul>

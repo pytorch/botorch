@@ -32,7 +32,6 @@
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">getmembers</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.probability.linalg</span> <span class="kn">import</span> <span class="n">augment_cholesky</span><span class="p">,</span> <span class="n">block_matrix_concat</span>
@@ -57,8 +56,8 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">trunc</span><span class="p">:</span> <span class="n">TruncatedMultivariateNormal</span><span class="p">,</span>
         <span class="n">gauss</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">,</span>
-        <span class="n">cross_covariance_matrix</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LinearOperator</span><span class="p">],</span>
-        <span class="n">validate_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cross_covariance_matrix</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="n">LinearOperator</span><span class="p">,</span>
+        <span class="n">validate_args</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Unified Skew Normal distribution of `Y | a &lt; X &lt; b` for jointly Gaussian</span>
 <span class="sd">        random vectors `X ∈ R^m` and `Y ∈ R^n`.</span>
@@ -326,6 +325,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../utils.html">botorch.utils</a></li>
 </ul>

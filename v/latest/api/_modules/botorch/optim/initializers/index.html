@@ -35,14 +35,15 @@
 <span class="sd">    surrogates and dynamic coordinate search in high-dimensional</span>
 <span class="sd">    expensive black-box optimization, Engineering Optimization, 2013.</span>
 <span class="sd">"""</span>
+
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">multi_objective</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.fixed_feature</span> <span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
@@ -95,8 +96,8 @@
 <div class="viewcode-block" id="transform_constraints">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.transform_constraints">[docs]</a>
 <span class="k">def</span> <span class="nf">transform_constraints</span><span class="p">(</span>
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="kc">None</span><span class="p">],</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Transform constraints to sample from a d*q-dimensional space instead of a</span>
 <span class="sd">    d-dimensional state.</span>
 
@@ -114,7 +115,8 @@
 <span class="sd">        d: Dimensionality of the problem.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List[Tuple[Tensor, Tensor, float]]: List of transformed constraints.</span>
+<span class="sd">        List[Tuple[Tensor, Tensor, float]]: List of transformed constraints, if</span>
+<span class="sd">        there are constraints. Returns `None` otherwise.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
@@ -215,9 +217,9 @@
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">n_burnin</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">n_thinning</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Samples `n` q-baches from a polytope of dimension `d`.</span>
 
@@ -283,12 +285,12 @@
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">generator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">fixed_X_fantasies</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">generator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fixed_X_fantasies</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a batch of initial conditions for random-restart optimziation.</span>
 
@@ -355,8 +357,8 @@
             <span class="s2">"Option 'sample_around_best' is not supported when custom "</span>
             <span class="s2">"generator is be used."</span>
         <span class="p">)</span>
-    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"seed"</span><span class="p">)</span>
-    <span class="n">batch_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"seed"</span><span class="p">)</span>
+    <span class="n">batch_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
         <span class="s2">"init_batch_limit"</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"batch_limit"</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">factor</span><span class="p">,</span> <span class="n">max_factor</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span>
@@ -375,7 +377,7 @@
     <span class="n">q</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">q</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">q</span>
     <span class="c1"># the dimension the samples are drawn from</span>
     <span class="n">effective_dim</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">q</span>
-    <span class="k">if</span> <span class="n">effective_dim</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span> <span class="ow">and</span> <span class="n">settings</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">effective_dim</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Sample dimension q*d=</span><span class="si">{</span><span class="n">effective_dim</span><span class="si">}</span><span class="s2"> exceeding Sobol max dimension "</span>
             <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="si">}</span><span class="s2">). Using iid samples instead."</span><span class="p">,</span>
@@ -428,7 +430,8 @@
                         <span class="p">],</span>
                         <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                     <span class="p">)</span>
-            <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span>
+            <span class="c1"># Keep X on CPU for consistency &amp; to limit GPU memory usage.</span>
+            <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">fixed_X_fantasies</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">d_f</span> <span class="o">:=</span> <span class="n">fixed_X_fantasies</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">!=</span> <span class="p">(</span><span class="n">d_r</span> <span class="o">:=</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
                     <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
@@ -448,19 +451,19 @@
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">batch_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">batch_limit</span> <span class="o">=</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">Y_rnd_list</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="n">start_idx</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="k">while</span> <span class="n">start_idx</span> <span class="o">&lt;</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-                    <span class="n">end_idx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start_idx</span> <span class="o">+</span> <span class="n">batch_limit</span><span class="p">,</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                    <span class="n">Y_rnd_curr</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span>
-                        <span class="n">X_rnd</span><span class="p">[</span><span class="n">start_idx</span><span class="p">:</span><span class="n">end_idx</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
-                    <span class="n">Y_rnd_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Y_rnd_curr</span><span class="p">)</span>
-                    <span class="n">start_idx</span> <span class="o">+=</span> <span class="n">batch_limit</span>
-                <span class="n">Y_rnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">Y_rnd_list</span><span class="p">)</span>
-            <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">init_func</span><span class="p">(</span>
-                <span class="n">X</span><span class="o">=</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_rnd</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span> <span class="o">**</span><span class="n">init_kwargs</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+                <span class="c1"># Evaluate the acquisition function on `X_rnd` using `batch_limit`</span>
+                <span class="c1"># sized chunks.</span>
+                <span class="n">acq_vals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">acq_function</span><span class="p">(</span><span class="n">x_</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                        <span class="k">for</span> <span class="n">x_</span> <span class="ow">in</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">split_size</span><span class="o">=</span><span class="n">batch_limit</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="p">],</span>
+                    <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">batch_initial_conditions</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">init_func</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">acq_vals</span><span class="o">=</span><span class="n">acq_vals</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span> <span class="o">**</span><span class="n">init_kwargs</span>
+            <span class="p">)</span>
+            <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">BadInitialCandidatesWarning</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">batch_initial_conditions</span>
             <span class="k">if</span> <span class="n">factor</span> <span class="o">&lt;</span> <span class="n">max_factor</span><span class="p">:</span>
@@ -471,6 +474,7 @@
         <span class="s2">"Unable to find non-zero acquisition function values - initial conditions "</span>
         <span class="s2">"are being selected randomly."</span><span class="p">,</span>
         <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">batch_initial_conditions</span></div>
 
@@ -484,11 +488,11 @@
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for qKnowledgeGradient.</span>
 
 <span class="sd">    This function generates initial conditions for optimizing one-shot KG using</span>
@@ -606,11 +610,11 @@
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for qHypervolumeKnowledgeGradient.</span>
 
 <span class="sd">    This function generates initial conditions for optimizing one-shot HVKG using</span>
@@ -807,8 +811,8 @@
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">current_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
-    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for optimizing</span>
 <span class="sd">    the value function of qKnowledgeGradient.</span>
@@ -864,7 +868,7 @@
 <span class="sd">        &gt;&gt;&gt; )</span>
 <span class="sd">    """</span>
     <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"seed"</span><span class="p">)</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"seed"</span><span class="p">)</span>
     <span class="n">frac_random</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"frac_random"</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">frac_random</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -928,23 +932,27 @@
 
     <span class="c1"># evaluate the raw samples</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-        <span class="n">Y_rnd</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">)</span>
+        <span class="n">acq_vals</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">)</span>
 
     <span class="c1"># select the restart points using the heuristic</span>
-    <span class="k">return</span> <span class="n">initialize_q_batch</span><span class="p">(</span>
-        <span class="n">X</span><span class="o">=</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_rnd</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
-    <span class="p">)</span></div>
+    <span class="n">X_init</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">initialize_q_batch</span><span class="p">(</span>
+        <span class="n">X</span><span class="o">=</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">acq_vals</span><span class="o">=</span><span class="n">acq_vals</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">X_init</span></div>
 
 
 
 <div class="viewcode-block" id="initialize_q_batch">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.initialize_q_batch">[docs]</a>
-<span class="k">def</span> <span class="nf">initialize_q_batch</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">initialize_q_batch</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">acq_vals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Heuristic for selecting initial conditions for candidate generation.</span>
 
 <span class="sd">    This heuristic selects points from `X` (without replacement) with probability</span>
-<span class="sd">    proportional to `exp(eta * Z)`, where `Z = (Y - mean(Y)) / std(Y)` and `eta`</span>
-<span class="sd">    is a temperature parameter.</span>
+<span class="sd">    proportional to `exp(eta * Z)`, where</span>
+<span class="sd">    `Z = (acq_vals - mean(acq_vals)) / std(acq_vals)`</span>
+<span class="sd">    and `eta` is a temperature parameter.</span>
 
 <span class="sd">    When using an acquisiton function that is non-negative and possibly zero</span>
 <span class="sd">    over large areas of the feature space (e.g. qEI), you should use</span>
@@ -954,22 +962,23 @@
 <span class="sd">        X: A `b x batch_shape x q x d` tensor of `b` - `batch_shape` samples of</span>
 <span class="sd">            `q`-batches from a d`-dim feature space. Typically, these are generated</span>
 <span class="sd">            using qMC sampling.</span>
-<span class="sd">        Y: A tensor of `b x batch_shape` outcomes associated with the samples.</span>
+<span class="sd">        acq_vals: A tensor of `b x batch_shape` outcomes associated with the samples.</span>
 <span class="sd">            Typically, this is the value of the batch acquisition function to be</span>
 <span class="sd">            maximized.</span>
 <span class="sd">        n: The number of initial condition to be generated. Must be less than `b`.</span>
 <span class="sd">        eta: Temperature parameter for weighting samples.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A `n x batch_shape x q x d` tensor of `n` - `batch_shape` `q`-batch initial</span>
-<span class="sd">        conditions, where each batch of `n x q x d` samples is selected independently.</span>
+<span class="sd">        - An `n x batch_shape x q x d` tensor of `n` - `batch_shape` `q`-batch initial</span>
+<span class="sd">          conditions, where each batch of `n x q x d` samples is selected independently.</span>
+<span class="sd">        - An `n x batch_shape` tensor of the corresponding acquisition values.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # To get `n=10` starting points of q-batch size `q=3`</span>
 <span class="sd">        &gt;&gt;&gt; # for model with `d=6`:</span>
 <span class="sd">        &gt;&gt;&gt; qUCB = qUpperConfidenceBound(model, beta=0.1)</span>
-<span class="sd">        &gt;&gt;&gt; Xrnd = torch.rand(500, 3, 6)</span>
-<span class="sd">        &gt;&gt;&gt; Xinit = initialize_q_batch(Xrnd, qUCB(Xrnd), 10)</span>
+<span class="sd">        &gt;&gt;&gt; X_rnd = torch.rand(500, 3, 6)</span>
+<span class="sd">        &gt;&gt;&gt; X_init, acq_init = initialize_q_batch(X=X_rnd, acq_vals=qUCB(X_rnd), n=10)</span>
 <span class="sd">    """</span>
     <span class="n">n_samples</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
@@ -979,19 +988,21 @@
             <span class="sa">f</span><span class="s2">"provided samples (</span><span class="si">{</span><span class="n">n_samples</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="n">n_samples</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">X</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">acq_vals</span>
 
-    <span class="n">Ystd</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">Ystd</span> <span class="o">=</span> <span class="n">acq_vals</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">Ystd</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"All acquisition values for raw samples points are the same for "</span>
             <span class="s2">"at least one batch. Choosing initial conditions at random."</span><span class="p">,</span>
             <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)][:</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">],</span> <span class="n">acq_vals</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span>
 
-    <span class="n">max_val</span><span class="p">,</span> <span class="n">max_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">Z</span> <span class="o">=</span> <span class="p">(</span><span class="n">Y</span> <span class="o">-</span> <span class="n">Y</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span> <span class="o">/</span> <span class="n">Ystd</span>
+    <span class="n">max_val</span><span class="p">,</span> <span class="n">max_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">acq_vals</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="p">(</span><span class="n">acq_vals</span> <span class="o">-</span> <span class="n">acq_vals</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span> <span class="o">/</span> <span class="n">Ystd</span>
     <span class="n">etaZ</span> <span class="o">=</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">Z</span>
     <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">etaZ</span><span class="p">)</span>
     <span class="k">while</span> <span class="n">torch</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
@@ -1007,31 +1018,33 @@
     <span class="k">if</span> <span class="n">max_idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">idcs</span><span class="p">:</span>
         <span class="n">idcs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_idx</span>
     <span class="k">if</span> <span class="n">batch_shape</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">():</span>
-        <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">],</span> <span class="n">acq_vals</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+        <span class="n">X_select</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
             <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">idcs</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">idcs</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
+        <span class="n">acq_select</span> <span class="o">=</span> <span class="n">acq_vals</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">idcs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">X_select</span><span class="p">,</span> <span class="n">acq_select</span></div>
 
 
 
 <div class="viewcode-block" id="initialize_q_batch_nonneg">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.initialize_q_batch_nonneg">[docs]</a>
 <span class="k">def</span> <span class="nf">initialize_q_batch_nonneg</span><span class="p">(</span>
-    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">acq_vals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Heuristic for selecting initial conditions for non-neg. acquisition functions.</span>
 
 <span class="sd">    This function is similar to `initialize_q_batch`, but designed specifically</span>
 <span class="sd">    for acquisition functions that are non-negative and possibly zero over</span>
 <span class="sd">    large areas of the feature space (e.g. qEI). All samples for which</span>
-<span class="sd">    `Y &lt; alpha * max(Y)` will be ignored (assuming that `Y` contains at least</span>
-<span class="sd">    one positive value).</span>
+<span class="sd">    `acq_vals &lt; alpha * max(acq_vals)` will be ignored (assuming that `acq_vals`</span>
+<span class="sd">    contains at least one positive value).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: A `b x q x d` tensor of `b` samples of `q`-batches from a `d`-dim.</span>
 <span class="sd">            feature space. Typically, these are generated using qMC.</span>
-<span class="sd">        Y: A tensor of `b` outcomes associated with the samples. Typically, this</span>
+<span class="sd">        acq_vals: A tensor of `b` outcomes associated with the samples. Typically, this</span>
 <span class="sd">            is the value of the batch acquisition function to be maximized.</span>
 <span class="sd">        n: The number of initial condition to be generated. Must be less than `b`.</span>
 <span class="sd">        eta: Temperature parameter for weighting samples.</span>
@@ -1040,53 +1053,60 @@
 <span class="sd">            `Y &lt; alpha * max(Y)` will be ignored.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A `n x q x d` tensor of `n` `q`-batch initial conditions.</span>
+<span class="sd">        - An `n x q x d` tensor of `n` `q`-batch initial conditions.</span>
+<span class="sd">        - An `n` tensor of the corresponding acquisition values.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # To get `n=10` starting points of q-batch size `q=3`</span>
 <span class="sd">        &gt;&gt;&gt; # for model with `d=6`:</span>
 <span class="sd">        &gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.2)</span>
-<span class="sd">        &gt;&gt;&gt; Xrnd = torch.rand(500, 3, 6)</span>
-<span class="sd">        &gt;&gt;&gt; Xinit = initialize_q_batch(Xrnd, qEI(Xrnd), 10)</span>
+<span class="sd">        &gt;&gt;&gt; X_rnd = torch.rand(500, 3, 6)</span>
+<span class="sd">        &gt;&gt;&gt; X_init, acq_init = initialize_q_batch_nonneg(</span>
+<span class="sd">        ...     X=X_rnd, acq_vals=qEI(X_rnd), n=10</span>
+<span class="sd">        ... )</span>
 <span class="sd">    """</span>
     <span class="n">n_samples</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">n_samples</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"n cannot be larger than the number of provided samples"</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="n">n_samples</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">X</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">acq_vals</span>
 
-    <span class="n">max_val</span><span class="p">,</span> <span class="n">max_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">max_val</span><span class="p">,</span> <span class="n">max_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">acq_vals</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">max_val</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="s2">"All acquisition values for raw sampled points are nonpositive, so "</span>
             <span class="s2">"initial conditions are being selected randomly."</span><span class="p">,</span>
             <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)][:</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">],</span> <span class="n">acq_vals</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span>
 
     <span class="c1"># make sure there are at least `n` points with positive acquisition values</span>
-    <span class="n">pos</span> <span class="o">=</span> <span class="n">Y</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">acq_vals</span> <span class="o">&gt;</span> <span class="mi">0</span>
     <span class="n">num_pos</span> <span class="o">=</span> <span class="n">pos</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">num_pos</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
         <span class="c1"># select all positive points and then fill remaining quota with randomly</span>
         <span class="c1"># selected points</span>
         <span class="n">remaining_indices</span> <span class="o">=</span> <span class="p">(</span><span class="o">~</span><span class="n">pos</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">as_tuple</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">rand_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">remaining_indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">rand_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span>
+            <span class="n">remaining_indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">acq_vals</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
         <span class="n">sampled_remaining_indices</span> <span class="o">=</span> <span class="n">remaining_indices</span><span class="p">[</span><span class="n">rand_indices</span><span class="p">[:</span> <span class="n">n</span> <span class="o">-</span> <span class="n">num_pos</span><span class="p">]]</span>
         <span class="n">pos</span><span class="p">[</span><span class="n">sampled_remaining_indices</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">pos</span><span class="p">],</span> <span class="n">acq_vals</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
     <span class="c1"># select points within alpha of max_val, iteratively decreasing alpha by a</span>
     <span class="c1"># factor of 10 as necessary</span>
-    <span class="n">alpha_pos</span> <span class="o">=</span> <span class="n">Y</span> <span class="o">&gt;=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">max_val</span>
+    <span class="n">alpha_pos</span> <span class="o">=</span> <span class="n">acq_vals</span> <span class="o">&gt;=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">max_val</span>
     <span class="k">while</span> <span class="n">alpha_pos</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">alpha</span>
-        <span class="n">alpha_pos</span> <span class="o">=</span> <span class="n">Y</span> <span class="o">&gt;=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">max_val</span>
-    <span class="n">alpha_pos_idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Y</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">)[</span><span class="n">alpha_pos</span><span class="p">]</span>
-    <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">eta</span> <span class="o">*</span> <span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="n">alpha_pos</span><span class="p">]</span> <span class="o">/</span> <span class="n">max_val</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">alpha_pos</span> <span class="o">=</span> <span class="n">acq_vals</span> <span class="o">&gt;=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">max_val</span>
+    <span class="n">alpha_pos_idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">acq_vals</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">acq_vals</span><span class="o">.</span><span class="n">device</span><span class="p">)[</span><span class="n">alpha_pos</span><span class="p">]</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">eta</span> <span class="o">*</span> <span class="p">(</span><span class="n">acq_vals</span><span class="p">[</span><span class="n">alpha_pos</span><span class="p">]</span> <span class="o">/</span> <span class="n">max_val</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">idcs</span> <span class="o">=</span> <span class="n">alpha_pos_idcs</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">n</span><span class="p">)]</span>
     <span class="k">if</span> <span class="n">max_idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">idcs</span><span class="p">:</span>
         <span class="n">idcs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_idx</span>
-    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span></div>
+    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">],</span> <span class="n">acq_vals</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span></div>
 
 
 
@@ -1099,8 +1119,8 @@
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">best_pct</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
     <span class="n">subset_sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-1</span><span class="p">,</span>
-    <span class="n">prob_perturb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="n">prob_perturb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Find best points and sample nearby points.</span>
 
 <span class="sd">    Args:</span>
@@ -1128,6 +1148,7 @@
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="s2">"Failed to sample around previous best points."</span><span class="p">,</span>
                 <span class="n">BotorchWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">return</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
@@ -1260,7 +1281,7 @@
     <span class="n">n_discrete_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-1</span><span class="p">,</span>
     <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">prob_perturb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">prob_perturb</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample around `X` by perturbing a subset of the dimensions.</span>
 
@@ -1392,6 +1413,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
 </ul>

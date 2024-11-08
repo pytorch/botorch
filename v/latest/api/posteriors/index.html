@@ -468,7 +468,7 @@ Supports <cite>t</cite>-batching.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>posterior</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a><em>, </em><a class="reference internal" href="#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a><em>]</em>) – The posterior over <cite>m</cite> outcomes to be scalarized.
+<li><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a><em> | </em><a class="reference internal" href="#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList"><em>PosteriorList</em></a>) – The posterior over <cite>m</cite> outcomes to be scalarized.
 Supports <cite>t</cite>-batching. Can be either a <cite>GPyTorchPosterior</cite>,
 or a <cite>PosteriorList</cite> that contains GPyTorchPosteriors all with q=1.</p></li>
 <li><p><strong>weights</strong> (<em>Tensor</em>) – A tensor of weights of size <cite>m</cite>.</p></li>
@@ -713,14 +713,14 @@ called from the <cite>KroneckerMultiTaskGP.posterior(…)</cite> method.</p>
 <li><p><strong>distribution</strong> (<em>MultivariateNormal</em>) – Posterior multivariate normal distribution.</p></li>
 <li><p><strong>joint_covariance_matrix</strong> (<em>LinearOperator</em>) – Joint test train covariance matrix over the entire
 tensor.</p></li>
-<li><p><strong>train_train_covar</strong> (<em>LinearOperator</em>) – Covariance matrix of train points in the data space.</p></li>
-<li><p><strong>test_obs_covar</strong> – Covariance matrix of test x train points in the data space.</p></li>
+<li><p><strong>test_train_covar</strong> (<em>LinearOperator</em>) – Covariance matrix of test x train points in the data
+space.</p></li>
 <li><p><strong>train_diff</strong> (<em>Tensor</em>) – Difference between train mean and train responses.</p></li>
+<li><p><strong>test_mean</strong> (<em>Tensor</em>) – Test mean response.</p></li>
+<li><p><strong>train_train_covar</strong> (<em>LinearOperator</em>) – Covariance matrix of train points in the data space.</p></li>
 <li><p><strong>train_noise</strong> (<em>LinearOperator</em><em> | </em><em>Tensor</em>) – Training noise covariance.</p></li>
 <li><p><strong>test_noise</strong> (<em>LinearOperator</em><em> | </em><em>Tensor</em><em> | </em><em>None</em>) – Only used if posterior should contain observation noise.
 Testing noise covariance.</p></li>
-<li><p><strong>test_train_covar</strong> (<em>LinearOperator</em>)</p></li>
-<li><p><strong>test_mean</strong> (<em>Tensor</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -803,10 +803,10 @@ of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p>
 <cite>sample_shape x batch_shape x q x m</cite>-dim tensor of samples from
 the original posterior, returning a tensor of samples of the
 same shape.</p></li>
-<li><p><strong>mean_transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A callable transforming a 2-tuple of mean and
+<li><p><strong>mean_transform</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A callable transforming a 2-tuple of mean and
 variance (both of shape <cite>batch_shape x m x o</cite>) of the original
 posterior to the mean of the transformed posterior.</p></li>
-<li><p><strong>variance_transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A callable transforming a 2-tuple of mean and
+<li><p><strong>variance_transform</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A callable transforming a 2-tuple of mean and
 variance (both of shape <cite>batch_shape x m x o</cite>) of the original
 posterior to a variance of the transformed posterior.</p></li>
 </ul>
@@ -1016,6 +1016,7 @@ candidate produces same value regardless of its position on the t-batch.</p>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
 </ul>

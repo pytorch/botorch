@@ -251,9 +251,9 @@ dimension).</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em>]</em>) – The MCAcquisitionObjective under which the samples are
+<li><p><strong>objective</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>replacement</strong> (<em>bool</em>) – If True, sample with replacement.</p></li>
 </ul>
 </dd>
@@ -376,12 +376,12 @@ procedure as described in <a class="reference external" href="https://doi.org/10
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
-<li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em>]</em>) – The MCAcquisitionObjective under which the samples are evaluated.
+<li><p><strong>objective</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><em>MCAcquisitionObjective</em></a><em> | </em><em>None</em>) – The MCAcquisitionObjective under which the samples are evaluated.
 Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em>]</em>) – An optional PosteriorTransform for the objective
+<li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform for the objective
 function (corresponding to <cite>model</cite>).</p></li>
 <li><p><strong>replacement</strong> (<em>bool</em>) – If True, sample with replacement.</p></li>
-<li><p><strong>constraint_model</strong> (<em>Union</em><em>[</em><a class="reference internal" href="models.html#botorch.models.model_list_gp_regression.ModelListGP" title="botorch.models.model_list_gp_regression.ModelListGP"><em>ModelListGP</em></a><em>, </em><a class="reference internal" href="models.html#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><em>MultiTaskGP</em></a><em>]</em>) – either a ModelListGP where each submodel is a GP model for
+<li><p><strong>constraint_model</strong> (<a class="reference internal" href="models.html#botorch.models.model_list_gp_regression.ModelListGP" title="botorch.models.model_list_gp_regression.ModelListGP"><em>ModelListGP</em></a><em> | </em><a class="reference internal" href="models.html#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><em>MultiTaskGP</em></a>) – either a ModelListGP where each submodel is a GP model for
 one constraint function, or a MultiTaskGP model where each task is one
 constraint function. All constraints are of the form c(x) &lt;= 0. In the
 case when the constraint model predicts that all candidates
@@ -448,6 +448,7 @@ dimension) according to the maximum posterior value under the objective.</p></li
 <li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
 </ul>

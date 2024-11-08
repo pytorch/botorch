@@ -98,18 +98,18 @@ any <cite>model.forward</cite> or <cite>model.likelihood</cite> calls.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
 feature space, <cite>q</cite> is the number of points considered jointly,
 and <cite>b</cite> is the batch dimension.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – For models with an inferred noise level, if True,
+<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – For models with an inferred noise level, if True,
 include observation noise. For models with an observed noise level,
 this must be a <cite>model_batch_shape x 1 x m</cite>-dim tensor or
 a <cite>model_batch_shape x n’ x m</cite>-dim tensor containing the average
 noise for each batch and output. <cite>noise</cite> must be in the
 outcome-transformed space if an outcome transform is used.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -595,12 +595,12 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
-<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – If True, add the observation noise from the
+<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, add the observation noise from the
 likelihood to the posterior. If a Tensor, use it directly as the
 observation noise (must be of shape <cite>(batch_shape) x q</cite>). It is
 assumed to be in the outcome-transformed space if an outcome
 transform is used.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
@@ -610,7 +610,7 @@ distributions over <cite>q</cite> points. Includes observation noise if
 specified.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Union[<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">GPyTorchPosterior</a>, <a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior">TransformedPosterior</a>]</p>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">GPyTorchPosterior</a> | <a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior">TransformedPosterior</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -713,15 +713,15 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered
 jointly.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – If True, add the observation noise from the
+<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, add the observation noise from the
 likelihood to the posterior. If a Tensor, use it directly as the
 observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -730,7 +730,7 @@ distributions over <cite>q</cite> points and the outputs selected by
 <cite>output_indices</cite> each. Includes observation noise if specified.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Union[<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">GPyTorchPosterior</a>, <a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior">TransformedPosterior</a>]</p>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">GPyTorchPosterior</a> | <a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior">TransformedPosterior</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -837,17 +837,17 @@ ignored.</p>
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
 feature space, <cite>q</cite> is the number of points considered jointly,
 and <cite>b</cite> is the batch dimension.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – If True, add the observation noise from the
+<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, add the observation noise from the
 respective likelihoods to the posterior. If a Tensor of shape
 <cite>(batch_shape) x q x m</cite>, use it directly as the observation
 noise (with <cite>observation_noise[…,i]</cite> added to the posterior
 of the <cite>i</cite>-th model).</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -879,7 +879,7 @@ any subclass of <cite>Posterior</cite>, but common choices give a
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Union[<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">GPyTorchPosterior</a>, <a class="reference internal" href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList">PosteriorList</a>]</p>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">GPyTorchPosterior</a> | <a class="reference internal" href="posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="botorch.posteriors.posterior_list.PosteriorList">PosteriorList</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -940,13 +940,13 @@ produces the outputs for the given task indices. If omitted, the
 model produces outputs for tasks in in <cite>self._output_tasks</cite> (specified
 as <cite>output_tasks</cite> while constructing the model), which can overwritten
 using <cite>output_indices</cite>.</p></li>
-<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task values over which to compute the posterior.
+<li><p><strong>output_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task values over which to compute the posterior.
 Only used if <cite>X</cite> does not include the task feature. If omitted,
 defaults to <cite>self._output_tasks</cite>.</p></li>
-<li><p><strong>observation_noise</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>Tensor</em><em>]</em>) – If True, add observation noise from the respective
+<li><p><strong>observation_noise</strong> (<em>bool</em><em> | </em><em>Tensor</em>) – If True, add observation noise from the respective
 likelihoods. If a Tensor, specifies the observation noise levels
 to add.</p></li>
-<li><p><strong>posterior_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em>]</em>) – An optional PosteriorTransform.</p></li>
+<li><p><strong>posterior_transform</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.PosteriorTransform" title="botorch.acquisition.objective.PosteriorTransform"><em>PosteriorTransform</em></a><em> | </em><em>None</em>) – An optional PosteriorTransform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -957,7 +957,7 @@ single or multi output corresponding to the tasks included in
 either the <cite>output_indices</cite> or <cite>self._output_tasks</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Union[<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">GPyTorchPosterior</a>, <a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior">TransformedPosterior</a>]</p>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">GPyTorchPosterior</a> | <a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior">TransformedPosterior</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1091,7 +1091,7 @@ outcome dimension <cite>m</cite> must be explicit, even if <cite>m=1</cite>).</p
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>a</strong> (<em>Tensor</em>) – A <cite>d x m</cite>-dim tensor of linear weights, where <cite>m</cite> is the number
 of outputs (must be explicit if <cite>m=1</cite>)</p></li>
-<li><p><strong>b</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>float</em><em>]</em>) – The affine (offset) term. Either a float (for single-output
+<li><p><strong>b</strong> (<em>Tensor</em><em> | </em><em>float</em>) – The affine (offset) term. Either a float (for single-output
 models or if the offset is shared), or a <cite>m</cite>-dim tensor (with
 different offset values for for the <cite>m</cite> different outputs).</p></li>
 </ul>
@@ -1173,13 +1173,13 @@ dimension <cite>m</cite> must be explicit if <cite>m=1</cite>).</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The base model.</p></li>
-<li><p><strong>w</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A 1-d tensor with length model.num_outputs.
+<li><p><strong>w</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A 1-d tensor with length model.num_outputs.
 If None, draw it from a standard normal distribution.</p></li>
-<li><p><strong>dim</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – dimensionality of w.
+<li><p><strong>dim</strong> (<em>int</em><em> | </em><em>None</em>) – dimensionality of w.
 If None and w is not provided, draw w samples of size model.num_outputs.</p></li>
-<li><p><strong>jitter</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – jitter value to be added for numerical stability, 1e-8 by default.</p></li>
-<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – dtype for w if specified</p></li>
-<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – device for w if specified</p></li>
+<li><p><strong>jitter</strong> (<em>float</em><em> | </em><em>None</em>) – jitter value to be added for numerical stability, 1e-8 by default.</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em><em> | </em><em>None</em>) – dtype for w if specified</p></li>
+<li><p><strong>device</strong> (<em>torch.dtype</em><em> | </em><em>None</em>) – device for w if specified</p></li>
 </ul>
 </dd>
 </dl>
@@ -1297,7 +1297,7 @@ multi-fidelity Bayesian Optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fidelity_weights</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A dictionary mapping a subset of columns of <cite>X</cite>
+<li><p><strong>fidelity_weights</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping a subset of columns of <cite>X</cite>
 (the fidelity parameters) to its associated weight in the
 affine cost expression. If omitted, assumes that the last
 column of <cite>X</cite> is the fidelity parameter with a weight of 1.0.</p></li>
@@ -1366,20 +1366,19 @@ of the q-batch.</p>
 <p>Gaussian Process Regression models based on GPyTorch models.</p>
 <p>These models are often a good starting point and are further documented in the
 tutorials.</p>
-<p><cite>SingleTaskGP</cite> and <cite>HeteroskedasticSingleTaskGP</cite> are single-task exact GP models,
-differing in how they treat noise. They use relatively strong priors on the Kernel
-hyperparameters, which work best when covariates are normalized to the unit cube
-and outcomes are standardized (zero mean, unit variance). By default, these models
-use a <cite>Standardize</cite> outcome transform, which applies this standardization. However,
-they do not (yet) use an input transform by default.</p>
-<p>These models all work in batch mode (each batch having its own hyperparameters).
-When the training observations include multiple outputs, these models use
+<p><cite>SingleTaskGP</cite> is a single-task exact GP model that uses relatively strong priors on
+the Kernel hyperparameters, which work best when covariates are normalized to the unit
+cube and outcomes are standardized (zero mean, unit variance). By default, this model
+uses a <cite>Standardize</cite> outcome transform, which applies this standardization. However,
+it does not (yet) use an input transform by default.</p>
+<p><cite>SingleTaskGP</cite> model works in batch mode (each batch having its own hyperparameters).
+When the training observations include multiple outputs, <cite>SingleTaskGP</cite> uses
 batching to model outputs independently.</p>
-<p>These models all support multiple outputs. However, as single-task models,
-<cite>SingleTaskGP</cite> and <cite>HeteroskedasticSingleTaskGP</cite> should be used only when the
-outputs are independent and all use the same training data. If outputs are
-independent and outputs have different training data, use the <cite>ModelListGP</cite>.
-When modeling correlations between outputs, use a multi-task model like <cite>MultiTaskGP</cite>.</p>
+<p><cite>SingleTaskGP</cite> supports multiple outputs. However, as a single-task model,
+<cite>SingleTaskGP</cite> should be used only when the outputs are independent and all
+use the same training inputs. If outputs are independent but they have different
+training inputs, use the <cite>ModelListGP</cite>. When modeling correlations between outputs,
+use a multi-task model like <cite>MultiTaskGP</cite>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.SingleTaskGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">SingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform=&lt;class</span> <span class="pre">'botorch.utils.types.DEFAULT'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP" title="Link to this definition">¶</a></dt>
@@ -1443,23 +1442,23 @@ noise values, such as <cite>train_Yvar=torch.full_like(train_Y, 1e-6)</cite>.</p
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite> tensor of training features.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An optional <cite>batch_shape x n x m</cite> tensor of observed
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An optional <cite>batch_shape x n x m</cite> tensor of observed
 measurement noise.</p></li>
-<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – A likelihood. If omitted, use a standard
+<li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – A likelihood. If omitted, use a standard
 <cite>GaussianLikelihood</cite> with inferred noise level if <cite>train_Yvar</cite>
 is None, and a <cite>FixedNoiseGaussianLikelihood</cite> with the given
 noise observations if <cite>train_Yvar</cite> is not None.</p></li>
-<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – The module computing the covariance (Kernel) matrix.
+<li><p><strong>covar_module</strong> (<em>Module</em><em> | </em><em>None</em>) – The module computing the covariance (Kernel) matrix.
 If omitted, uses an <cite>RBFKernel</cite>.</p></li>
-<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Mean</em><em>]</em>) – The mean function to be used. If omitted, use a
+<li><p><strong>mean_module</strong> (<em>Mean</em><em> | </em><em>None</em>) – The mean function to be used. If omitted, use a
 <cite>ConstantMean</cite>.</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>, </em><em>_DefaultType</em><em>]</em><em>]</em>) – An outcome transform that is applied to the
+<li><p><strong>outcome_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>_DefaultType</em><em> | </em><em>None</em>) – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
 <cite>.posterior</cite> on the model will be on the original scale). We use a
 <cite>Standardize</cite> transform if no <cite>outcome_transform</cite> is specified.
 Pass down <cite>None</cite> to use no outcome transform.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>) – An input transform that is applied in the model’s
+<li><p><strong>input_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>None</em>) – An input transform that is applied in the model’s
 forward pass.</p></li>
 </ul>
 </dd>
@@ -1489,124 +1488,6 @@ with keys <cite>train_X</cite>, <cite>train_Y</cite>, and, optionally, <cite>tra
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.gp_regression.SingleTaskGP.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP.forward" title="Link to this definition">¶</a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>MultivariateNormal</em></p>
-</dd>
-</dl>
-</dd></dl>
-</dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gp_regression.</span></span><span class="sig-name descname"><span class="pre">HeteroskedasticSingleTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#HeteroskedasticSingleTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code></p>
-<p>A single-task exact GP model using a heteroskedastic noise model.</p>
-<p>This model differs from <cite>SingleTaskGP</cite> with observed observation noise
-variances (<cite>train_Yvar</cite>) in that it can predict noise levels out of sample.
-This is achieved by internally wrapping another GP (a <cite>SingleTaskGP</cite>) to model
-the (log of) the observation noise. Noise levels must be provided to
-<cite>HeteroskedasticSingleTaskGP</cite> as <cite>train_Yvar</cite>.</p>
-<p>Examples of cases in which noise levels are known include online
-experimentation and simulation optimization.</p>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">se</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">+</span> <span class="n">se</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite> tensor of training features.</p></li>
-<li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of observed measurement
-noise.</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>]</em>) – An outcome transform that is applied to the
-training data during instantiation and to the posterior during
-inference (that is, the <cite>Posterior</cite> obtained by calling
-<cite>.posterior</cite> on the model will be on the original scale).
-Note that the noise model internally log-transforms the
-variances, which will happen after this transform is applied.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>) – An input transfrom that is applied in the model’s
-forward pass.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP.condition_on_observations">
-<span class="sig-name descname"><span class="pre">condition_on_observations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">__</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#HeteroskedasticSingleTaskGP.condition_on_observations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.condition_on_observations" title="Link to this definition">¶</a></dt>
-<dd><p>Condition the model on new observations.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
-the feature space, <cite>m</cite> is the number of points per batch, and
-<cite>batch_shape</cite> is the batch shape (must be compatible with the
-batch shape of the model).</p></li>
-<li><p><strong>Y</strong> – A <cite>batch_shape’ x n’ x m</cite>-dim Tensor, where <cite>m</cite> is the number of
-model outputs, <cite>n’</cite> is the number of points per batch, and
-<cite>batch_shape’</cite> is the batch shape of the observations.
-<cite>batch_shape’</cite> must be broadcastable to <cite>batch_shape</cite> using
-standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
-than <cite>X</cite>, its is assumed that the missing batch dimensions are
-the same for all <cite>Y</cite>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>BatchedMultiOutputGPyTorchModel</cite> object of the same type with
-<cite>n + n’</cite> training examples, representing the original model
-conditioned on the new observations <cite>(X, Y)</cite> (and possibly noise
-observations passed in via kwargs).</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>NoReturn</em></p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])],</span> <span class="o">-</span><span class="mi">1</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">new_X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">new_X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">new_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">new_Y</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP.subset_output">
-<span class="sig-name descname"><span class="pre">subset_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idcs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#HeteroskedasticSingleTaskGP.subset_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.subset_output" title="Link to this definition">¶</a></dt>
-<dd><p>Subset the model along the output dimension.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idcs</strong> – The output indices to subset the model to.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The current model, subset to the specified output indices.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>NoReturn</em></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#HeteroskedasticSingleTaskGP.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="admonition note">
@@ -1754,22 +1635,22 @@ discrete optimization variables. We recommend using <cite>optimize_acqf_mixed.</
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
 <li><p><strong>cat_dims</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – A list of indices corresponding to the columns of
 the input <cite>X</cite> that should be considered categorical features.</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An optional <cite>batch_shape x n x m</cite> tensor of observed
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An optional <cite>batch_shape x n x m</cite> tensor of observed
 measurement noise.</p></li>
-<li><p><strong>cont_kernel_factory</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Size</em><em>, </em><em>int</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em><em>, </em><em>Kernel</em><em>]</em><em>]</em>) – A method that accepts  <cite>batch_shape</cite>, <cite>ard_num_dims</cite>,
+<li><p><strong>cont_kernel_factory</strong> (<em>None</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>torch.Size</em><em>, </em><em>int</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em><em>, </em><em>Kernel</em><em>]</em>) – A method that accepts  <cite>batch_shape</cite>, <cite>ard_num_dims</cite>,
 and <cite>active_dims</cite> arguments and returns an instantiated GPyTorch
 <cite>Kernel</cite> object to be used as the base kernel for the continuous
 dimensions. If omitted, this model uses an <cite>RBFKernel</cite> as
 the kernel for the ordinal parameters.</p></li>
-<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – A likelihood. If omitted, use a standard
+<li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – A likelihood. If omitted, use a standard
 GaussianLikelihood with inferred noise level.</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>, </em><em>_DefaultType</em><em>]</em><em>]</em>) – An outcome transform that is applied to the
+<li><p><strong>outcome_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>_DefaultType</em><em> | </em><em>None</em>) – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
 <cite>.posterior</cite> on the model will be on the original scale). We use a
 <cite>Standardize</cite> transform if no <cite>outcome_transform</cite> is specified.
 Pass down <cite>None</cite> to use no outcome transform.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>) – An input transform that is applied in the model’s
+<li><p><strong>input_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>None</em>) – An input transform that is applied in the model’s
 forward pass. Only input transforms are allowed which do not
 transform the categorical dimensions. If you want to use it
 for example in combination with a <cite>OneHotToNumeric</cite> input transform
@@ -1945,35 +1826,35 @@ features (see <cite>task_feature</cite> argument).</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>n x 1</cite> or <cite>b x n x 1</cite> (batch mode) tensor of training
 observations.</p></li>
 <li><p><strong>task_feature</strong> (<em>int</em>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
-<li><p><strong>train_Yvar</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An optional <cite>n</cite> or <cite>b x n</cite> (batch mode) tensor of observed
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An optional <cite>n</cite> or <cite>b x n</cite> (batch mode) tensor of observed
 measurement noise. If None, we infer the noise.
 Note that the inferred noise is common across all tasks.</p></li>
-<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – The mean function to be used. Defaults to <cite>ConstantMean</cite>.</p></li>
-<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – The module for computing the covariance matrix between
+<li><p><strong>mean_module</strong> (<em>Module</em><em> | </em><em>None</em>) – The mean function to be used. Defaults to <cite>ConstantMean</cite>.</p></li>
+<li><p><strong>covar_module</strong> (<em>Module</em><em> | </em><em>None</em>) – The module for computing the covariance matrix between
 the non-task features. Defaults to <cite>RBFKernel</cite>.</p></li>
-<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – A likelihood. The default is selected based on <cite>train_Yvar</cite>.
+<li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – A likelihood. The default is selected based on <cite>train_Yvar</cite>.
 If <cite>train_Yvar</cite> is None, a standard <cite>GaussianLikelihood</cite> with inferred
 noise level is used. Otherwise, a FixedNoiseGaussianLikelihood is used.</p></li>
-<li><p><strong>output_tasks</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of task indices for which to compute model
+<li><p><strong>output_tasks</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
-<li><p><strong>rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The rank to be used for the index kernel. If omitted, use a
+<li><p><strong>rank</strong> (<em>int</em><em> | </em><em>None</em>) – The rank to be used for the index kernel. If omitted, use a
 full rank (i.e. number of tasks) kernel.</p></li>
-<li><p><strong>task_covar_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – A Prior on the task covariance matrix. Must operate
+<li><p><strong>task_covar_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – A Prior on the task covariance matrix. Must operate
 on p.s.d. matrices. A common prior for this is the <cite>LKJ</cite> prior.</p></li>
-<li><p><strong>all_tasks</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – By default, multi-task GPs infer the list of all tasks from
+<li><p><strong>all_tasks</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – By default, multi-task GPs infer the list of all tasks from
 the task features in <cite>train_X</cite>. This is an experimental feature that
 enables creation of multi-task GPs with tasks that don’t appear in the
 training data. Note that when a task is not observed, the corresponding
 task covariance will heavily depend on random initialization and may
 behave unexpectedly.</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>, </em><em>_DefaultType</em><em>]</em><em>]</em>) – An outcome transform that is applied to the
+<li><p><strong>outcome_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>_DefaultType</em><em> | </em><em>None</em>) – An outcome transform that is applied to the
 training data during instantiation and to the posterior during
 inference (that is, the <cite>Posterior</cite> obtained by calling
 <cite>.posterior</cite> on the model will be on the original scale). We use a
 <cite>Standardize</cite> transform if no <cite>outcome_transform</cite> is specified.
 Pass down <cite>None</cite> to use no outcome transform. NOTE: Standardization
 should be applied in a stratified fashion, separately for each task.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>) – An input transform that is applied in the model’s
+<li><p><strong>input_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>None</em>) – An input transform that is applied in the model’s
 forward pass.</p></li>
 </ul>
 </dd>
@@ -2085,16 +1966,16 @@ whole <cite>(n_i * n_f) x (n_i * n_f)</cite> covariance matrix.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite> tensor of training features.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
-<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>MultitaskGaussianLikelihood</em><em>]</em>) – A <cite>MultitaskGaussianLikelihood</cite>. If omitted, uses a
+<li><p><strong>likelihood</strong> (<em>MultitaskGaussianLikelihood</em><em> | </em><em>None</em>) – A <cite>MultitaskGaussianLikelihood</cite>. If omitted, uses a
 <cite>MultitaskGaussianLikelihood</cite> with a <cite>GammaPrior(1.1, 0.05)</cite>
 noise prior.</p></li>
-<li><p><strong>data_covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – The module computing the covariance (Kernel) matrix
+<li><p><strong>data_covar_module</strong> (<em>Module</em><em> | </em><em>None</em>) – The module computing the covariance (Kernel) matrix
 in data space. If omitted, uses an <cite>RBFKernel</cite>.</p></li>
-<li><p><strong>task_covar_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – A Prior on the task covariance matrix. Must operate
+<li><p><strong>task_covar_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – A Prior on the task covariance matrix. Must operate
 on p.s.d. matrices. A common prior for this is the <cite>LKJ</cite> prior. If
 omitted, uses <cite>LKJCovariancePrior</cite> with <cite>eta</cite> parameter as specified
 in the keyword arguments (if not specified, use <cite>eta=1.5</cite>).</p></li>
-<li><p><strong>rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The rank of the ICM kernel. If omitted, use a full rank kernel.</p></li>
+<li><p><strong>rank</strong> (<em>int</em><em> | </em><em>None</em>) – The rank of the ICM kernel. If omitted, use a full rank kernel.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – Additional arguments to override default settings of priors,
 including:
 - eta: The eta parameter on the default LKJ task_covar_prior.
@@ -2104,8 +1985,8 @@ correlations (in magnitude), correlations vanish as eta -&gt; inf.
 for the default LKJCovariancePrior task_covar_prior.
 - likelihood_rank: The rank of the task covariance matrix to fit.
 Defaults to 0 (which corresponds to a diagonal covariance matrix).</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>)</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>]</em>)</p></li>
+<li><p><strong>input_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>outcome_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2202,7 +2083,7 @@ of [a x b x c] will be squeezed to be a vector of [a * b * c].</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>output_shape</strong> (<em>torch.Size</em>) – A <cite>n x output_shape</cite>-dim tensor of training targets.</p></li>
-<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – The batch_shape of the training targets.</p></li>
+<li><p><strong>batch_shape</strong> (<em>torch.Size</em><em> | </em><em>None</em>) – The batch_shape of the training targets.</p></li>
 <li><p><strong>min_stddv</strong> – The minimum standard deviation for which to perform
 standardization (if lower, only de-mean the data).</p></li>
 <li><p><strong>min_stdv</strong> (<em>float</em>)</p></li>
@@ -2281,7 +2162,7 @@ noises associated with the targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.higher_order_gp.HigherOrderGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.higher_order_gp.</span></span><span class="sig-name descname"><span class="pre">HigherOrderGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_modules</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_latent_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learn_latent_pars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.higher_order_gp.</span></span><span class="sig-name descname"><span class="pre">HigherOrderGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_modules=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_latent_dims=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learn_latent_pars=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_init='default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform=&lt;class</span> <span class="pre">'botorch.utils.types.DEFAULT'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ExactGP</span></code>, <a class="reference internal" href="#botorch.models.model.FantasizeMixin" title="botorch.models.model.FantasizeMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FantasizeMixin</span></code></a></p>
 <p>A model for high-dimensional output regression.</p>
 <p>As described in <a class="reference internal" href="#zhe2019hogp" id="id6"><span>[Zhe2019hogp]</span></a>. “Higher-order” means that the predictions
@@ -2316,13 +2197,13 @@ manually enabled by the user during model fitting.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs.</p></li>
 <li><p><strong>train_Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x output_shape</cite>-dim tensor of training targets.</p></li>
-<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – Gaussian likelihood for the model.</p></li>
-<li><p><strong>covar_modules</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Kernel</em><em>]</em><em>]</em>) – List of kernels for each output structure.</p></li>
-<li><p><strong>num_latent_dims</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Sizes for the latent dimensions.</p></li>
+<li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – Gaussian likelihood for the model.</p></li>
+<li><p><strong>covar_modules</strong> (<em>list</em><em>[</em><em>Kernel</em><em>] </em><em>| </em><em>None</em>) – List of kernels for each output structure.</p></li>
+<li><p><strong>num_latent_dims</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Sizes for the latent dimensions.</p></li>
 <li><p><strong>learn_latent_pars</strong> (<em>bool</em>) – If true, learn the latent parameters.</p></li>
 <li><p><strong>latent_init</strong> (<em>str</em>) – [default or gp] how to initialize the latent parameters.</p></li>
-<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>]</em>)</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>)</p></li>
+<li><p><strong>outcome_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>_DefaultType</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>input_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2505,26 +2386,26 @@ generating comparisons [0, 1] and [2, 1].
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>datapoints</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Either <cite>None</cite> or a <cite>batch_shape x n x d</cite> tensor of
+<li><p><strong>datapoints</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Either <cite>None</cite> or a <cite>batch_shape x n x d</cite> tensor of
 training features. If either <cite>datapoints</cite> or <cite>comparisons</cite> is
 <cite>None</cite>, construct a prior-only model.</p></li>
-<li><p><strong>comparisons</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Either <cite>None</cite> or a <cite>batch_shape x m x 2</cite> tensor of
+<li><p><strong>comparisons</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Either <cite>None</cite> or a <cite>batch_shape x m x 2</cite> tensor of
 training comparisons; comparisons[i] is a noisy indicator
 suggesting the utility value of comparisons[i, 0]-th is greater
 than comparisons[i, 1]-th. If either <cite>comparisons</cite> or
 <cite>datapoints</cite> is <cite>None</cite>, construct a prior-only model.</p></li>
-<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.likelihoods.pairwise.PairwiseLikelihood" title="botorch.models.likelihoods.pairwise.PairwiseLikelihood"><em>PairwiseLikelihood</em></a><em>]</em>) – A PairwiseLikelihood.</p></li>
-<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>ScaleKernel</em><em>]</em>) – Covariance module.</p></li>
-<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>) – An input transform that is applied in the model’s
+<li><p><strong>likelihood</strong> (<a class="reference internal" href="#botorch.models.likelihoods.pairwise.PairwiseLikelihood" title="botorch.models.likelihoods.pairwise.PairwiseLikelihood"><em>PairwiseLikelihood</em></a><em> | </em><em>None</em>) – A PairwiseLikelihood.</p></li>
+<li><p><strong>covar_module</strong> (<em>ScaleKernel</em><em> | </em><em>None</em>) – Covariance module.</p></li>
+<li><p><strong>input_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>None</em>) – An input transform that is applied in the model’s
 forward pass.</p></li>
 <li><p><strong>jitter</strong> (<em>float</em>) – Value added to diagonal for numerical stability in
 <cite>psd_safe_cholesky</cite>.</p></li>
-<li><p><strong>xtol</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Stopping creteria in scipy.optimize.fsolve used to find f_map
+<li><p><strong>xtol</strong> (<em>float</em><em> | </em><em>None</em>) – Stopping creteria in scipy.optimize.fsolve used to find f_map
 in <cite>PairwiseGP._update</cite>. If None, default behavior is handled by
 <cite>PairwiseGP._update</cite>.</p></li>
 <li><p><strong>consolidate_rtol</strong> (<em>float</em>) – <cite>rtol</cite> passed to <cite>consolidate_duplicates</cite>.</p></li>
 <li><p><strong>consolidate_atol</strong> (<em>float</em>) – <cite>atol</cite> passed to <cite>consolidate_duplicates</cite>.</p></li>
-<li><p><strong>maxfev</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The maximum number of calls to the function in
+<li><p><strong>maxfev</strong> (<em>int</em><em> | </em><em>None</em>) – The maximum number of calls to the function in
 scipy.optimize.fsolve. If None, default behavior is handled by
 <cite>PairwiseGP._update</cite>.</p></li>
 </ul>
@@ -2989,9 +2870,9 @@ variational implementations of weight space approximate GPs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>Optional</em><em>[</em><em>ApproximateGP</em><em>]</em>) – Instance of gpytorch.approximate GP models. If omitted,
+<li><p><strong>model</strong> (<em>ApproximateGP</em><em> | </em><em>None</em>) – Instance of gpytorch.approximate GP models. If omitted,
 constructs a <cite>_SingleTaskVariationalGP</cite>.</p></li>
-<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – Instance of a GPyTorch likelihood. If omitted, uses a
+<li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – Instance of a GPyTorch likelihood. If omitted, uses a
 either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 <cite>MultitaskGaussianLikelihood`(if `num_outputs&gt;1</cite>).</p></li>
 <li><p><strong>num_outputs</strong> (<em>int</em>) – Number of outputs expected for the GP model.</p></li>
@@ -3118,24 +2999,24 @@ the exact marginal log likelihood.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<em>Tensor</em>) – Training inputs (due to the ability of the SVGP to sub-sample
 this does not have to be all of the training inputs).</p></li>
-<li><p><strong>train_Y</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Training targets (optional).</p></li>
-<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – Instance of a GPyTorch likelihood. If omitted, uses a
+<li><p><strong>train_Y</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Training targets (optional).</p></li>
+<li><p><strong>likelihood</strong> (<em>Likelihood</em><em> | </em><em>None</em>) – Instance of a GPyTorch likelihood. If omitted, uses a
 either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
 <cite>MultitaskGaussianLikelihood`(if `num_outputs&gt;1</cite>).</p></li>
 <li><p><strong>num_outputs</strong> (<em>int</em>) – Number of output responses per input (default: 1).</p></li>
 <li><p><strong>learn_inducing_points</strong> (<em>bool</em>) – If True, the inducing point locations are learned
 jointly with the other model parameters.</p></li>
-<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Kernel</em><em>]</em>) – Kernel function. If omitted, uses an <cite>RBFKernel</cite>.</p></li>
-<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Mean</em><em>]</em>) – Mean of GP model. If omitted, uses a <cite>ConstantMean</cite>.</p></li>
-<li><p><strong>variational_distribution</strong> (<em>Optional</em><em>[</em><em>_VariationalDistribution</em><em>]</em>) – Type of variational distribution to use
+<li><p><strong>covar_module</strong> (<em>Kernel</em><em> | </em><em>None</em>) – Kernel function. If omitted, uses an <cite>RBFKernel</cite>.</p></li>
+<li><p><strong>mean_module</strong> (<em>Mean</em><em> | </em><em>None</em>) – Mean of GP model. If omitted, uses a <cite>ConstantMean</cite>.</p></li>
+<li><p><strong>variational_distribution</strong> (<em>_VariationalDistribution</em><em> | </em><em>None</em>) – Type of variational distribution to use
 (default: CholeskyVariationalDistribution), the properties of the
 variational distribution will encourage scalability or ease of
 optimization.</p></li>
 <li><p><strong>variational_strategy</strong> (<em>type</em><em>[</em><em>_VariationalStrategy</em><em>]</em>) – Type of variational strategy to use (default:
 VariationalStrategy). The default setting uses “whitening” of the
 variational distribution to make training easier.</p></li>
-<li><p><strong>inducing_points</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>int</em><em>]</em><em>]</em>) – The number or specific locations of the inducing points.</p></li>
-<li><p><strong>inducing_point_allocator</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.InducingPointAllocator" title="botorch.models.utils.inducing_point_allocators.InducingPointAllocator"><em>InducingPointAllocator</em></a><em>]</em>) – The <cite>InducingPointAllocator</cite> used to
+<li><p><strong>inducing_points</strong> (<em>Tensor</em><em> | </em><em>int</em><em> | </em><em>None</em>) – The number or specific locations of the inducing points.</p></li>
+<li><p><strong>inducing_point_allocator</strong> (<a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.InducingPointAllocator" title="botorch.models.utils.inducing_point_allocators.InducingPointAllocator"><em>InducingPointAllocator</em></a><em> | </em><em>None</em>) – The <cite>InducingPointAllocator</cite> used to
 initialize the inducing point locations. If omitted,
 uses <cite>GreedyVarianceReduction</cite>.</p></li>
 <li><p><strong>outcome_transform</strong> (<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>None</em>) – An outcome transform that is applied to the training
@@ -3973,14 +3854,14 @@ inputs <cite>x_1</cite> and <cite>x_2</cite> (we expect <cite>d = 1</cite>):</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>power_constraint</strong> (<em>Optional</em><em>[</em><em>Interval</em><em>]</em>) – Constraint to place on power parameter. Default is
+<li><p><strong>power_constraint</strong> (<em>Interval</em><em> | </em><em>None</em>) – Constraint to place on power parameter. Default is
 <cite>Positive</cite>.</p></li>
-<li><p><strong>power_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – Prior over the power parameter.</p></li>
-<li><p><strong>offset_constraint</strong> (<em>Optional</em><em>[</em><em>Interval</em><em>]</em>) – Constraint to place on offset parameter. Default is
+<li><p><strong>power_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – Prior over the power parameter.</p></li>
+<li><p><strong>offset_constraint</strong> (<em>Interval</em><em> | </em><em>None</em>) – Constraint to place on offset parameter. Default is
 <cite>Positive</cite>.</p></li>
 <li><p><strong>active_dims</strong> – List of data dimensions to operate on. <cite>len(active_dims)</cite>
 should equal <cite>num_dimensions</cite>.</p></li>
-<li><p><strong>offset_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>)</p></li>
+<li><p><strong>offset_prior</strong> (<em>Prior</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -4003,14 +3884,14 @@ between inputs <cite>x_1</cite> and <cite>x_2</cite> (we expect <cite>d = 1</cit
 <li><p><strong>lengthscale_constraint</strong> – Constraint to place on lengthscale parameter.
 Default is <cite>Positive</cite>.</p></li>
 <li><p><strong>lengthscale_prior</strong> – Prior over the lengthscale parameter.</p></li>
-<li><p><strong>power_constraint</strong> (<em>Optional</em><em>[</em><em>Interval</em><em>]</em>) – Constraint to place on power parameter. Default is
+<li><p><strong>power_constraint</strong> (<em>Interval</em><em> | </em><em>None</em>) – Constraint to place on power parameter. Default is
 <cite>Positive</cite>.</p></li>
-<li><p><strong>power_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – Prior over the power parameter.</p></li>
-<li><p><strong>offset_constraint</strong> (<em>Optional</em><em>[</em><em>Interval</em><em>]</em>) – Constraint to place on offset parameter. Default is
+<li><p><strong>power_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – Prior over the power parameter.</p></li>
+<li><p><strong>offset_constraint</strong> (<em>Interval</em><em> | </em><em>None</em>) – Constraint to place on offset parameter. Default is
 <cite>Positive</cite>.</p></li>
 <li><p><strong>active_dims</strong> – List of data dimensions to operate on. <cite>len(active_dims)</cite>
 should equal <cite>num_dimensions</cite>.</p></li>
-<li><p><strong>offset_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>)</p></li>
+<li><p><strong>offset_prior</strong> (<em>Prior</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -4041,7 +3922,7 @@ International Conference on Learning Representations. 2018.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>depth</strong> (<em>int</em>) – Depth of neural network.</p></li>
-<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – This will set a separate weight/bias var for each batch.
+<li><p><strong>batch_shape</strong> (<em>torch.Size</em><em> | </em><em>None</em>) – This will set a separate weight/bias var for each batch.
 It should be <span class="math notranslate nohighlight">\(B_1 \times \ldots \times B_k\)</span> if <span class="math notranslate nohighlight">\(\mathbf\)</span> is
 a <span class="math notranslate nohighlight">\(B_1 \times \ldots \times B_k \times N \times D\)</span> tensor.</p></li>
 <li><p><strong>active_dims</strong> (<em>param</em>) – Compute the covariance of only a few input dimensions.
@@ -4106,25 +3987,25 @@ and a polynomial kernel. Here <cite>f_1</cite> is the first fidelity dimension a
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fidelity_dims</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – A list containing either one or two indices specifying
 the fidelity parameters of the input.</p></li>
-<li><p><strong>dimension</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The dimension of <cite>x</cite>. Unused if <cite>active_dims</cite> is specified.</p></li>
-<li><p><strong>power_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – Prior for the power parameter of the polynomial kernel.
+<li><p><strong>dimension</strong> (<em>int</em><em> | </em><em>None</em>) – The dimension of <cite>x</cite>. Unused if <cite>active_dims</cite> is specified.</p></li>
+<li><p><strong>power_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – Prior for the power parameter of the polynomial kernel.
 Default is <cite>None</cite>.</p></li>
-<li><p><strong>power_constraint</strong> (<em>Optional</em><em>[</em><em>Interval</em><em>]</em>) – Constraint on the power parameter of the polynomial
+<li><p><strong>power_constraint</strong> (<em>Interval</em><em> | </em><em>None</em>) – Constraint on the power parameter of the polynomial
 kernel. Default is <cite>Positive</cite>.</p></li>
 <li><p><strong>nu</strong> (<em>float</em>) – The smoothness parameter for the Matern kernel: either 1/2, 3/2,
 or 5/2. Unused if both <cite>covar_module_unbiased</cite> and
 <cite>covar_module_biased</cite> are specified.</p></li>
-<li><p><strong>lengthscale_prior_unbiased</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – Prior on the lengthscale parameter of Matern
+<li><p><strong>lengthscale_prior_unbiased</strong> (<em>Prior</em><em> | </em><em>None</em>) – Prior on the lengthscale parameter of Matern
 kernel <cite>k_0</cite>. Default is <cite>Gamma(1.1, 1/20)</cite>.</p></li>
-<li><p><strong>lengthscale_constraint_unbiased</strong> (<em>Optional</em><em>[</em><em>Interval</em><em>]</em>) – Constraint on the lengthscale parameter
+<li><p><strong>lengthscale_constraint_unbiased</strong> (<em>Interval</em><em> | </em><em>None</em>) – Constraint on the lengthscale parameter
 of the Matern kernel <cite>k_0</cite>. Default is <cite>Positive</cite>.</p></li>
-<li><p><strong>lengthscale_prior_biased</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – Prior on the lengthscale parameter of Matern
+<li><p><strong>lengthscale_prior_biased</strong> (<em>Prior</em><em> | </em><em>None</em>) – Prior on the lengthscale parameter of Matern
 kernels <cite>k_i(i&gt;0)</cite>. Default is <cite>Gamma(5, 1/20)</cite>.</p></li>
-<li><p><strong>lengthscale_constraint_biased</strong> (<em>Optional</em><em>[</em><em>Interval</em><em>]</em>) – Constraint on the lengthscale parameter
+<li><p><strong>lengthscale_constraint_biased</strong> (<em>Interval</em><em> | </em><em>None</em>) – Constraint on the lengthscale parameter
 of the Matern kernels <cite>k_i(i&gt;0)</cite>. Default is <cite>Positive</cite>.</p></li>
-<li><p><strong>covar_module_unbiased</strong> (<em>Optional</em><em>[</em><em>Kernel</em><em>]</em>) – Specify a custom kernel for <cite>k_0</cite>. If omitted,
+<li><p><strong>covar_module_unbiased</strong> (<em>Kernel</em><em> | </em><em>None</em>) – Specify a custom kernel for <cite>k_0</cite>. If omitted,
 use a <cite>MaternKernel</cite>.</p></li>
-<li><p><strong>covar_module_biased</strong> (<em>Optional</em><em>[</em><em>Kernel</em><em>]</em>) – Specify a custom kernel for the biased parts
+<li><p><strong>covar_module_biased</strong> (<em>Kernel</em><em> | </em><em>None</em>) – Specify a custom kernel for the biased parts
 <cite>k_i(i&gt;0)</cite>. If omitted, use a <cite>MaternKernel</cite>.</p></li>
 <li><p><strong>batch_shape</strong> – If specified, use a separate lengthscale for each batch of
 input data. If <cite>x1</cite> is a <cite>batch_shape x n x d</cite> tensor, this should
@@ -4777,7 +4658,7 @@ state.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>m</strong> (<em>int</em>) – The output dimension.</p></li>
-<li><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to standardize. If omitted, all
+<li><p><strong>outputs</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Which of the outputs to standardize. If omitted, all
 outputs will be standardized.</p></li>
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch_shape of the training targets.</p></li>
 <li><p><strong>min_stddv</strong> – The minimum standard deviation for which to perform
@@ -4883,7 +4764,7 @@ log-transformed outcomes and un-transform the model posterior of that GP.</p>
 <p>Log-transform outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to log-transform. If omitted, all
+<dd class="field-odd"><p><strong>outputs</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Which of the outputs to log-transform. If omitted, all
 outputs will be standardized.</p>
 </dd>
 </dl>
@@ -4981,7 +4862,7 @@ power-transformed outcomes and un-transform the model posterior of that GP.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to power-transform. If omitted, all
+<li><p><strong>outputs</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Which of the outputs to power-transform. If omitted, all
 outputs will be standardized.</p></li>
 <li><p><strong>power</strong> (<em>float</em>)</p></li>
 </ul>
@@ -5079,7 +4960,7 @@ constraints as it magnifies values near zero and flattens extreme values.</p>
 <p>Bilog-transform outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>outputs</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Which of the outputs to Bilog-transform. If omitted, all
+<dd class="field-odd"><p><strong>outputs</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Which of the outputs to Bilog-transform. If omitted, all
 outputs will be transformed.</p>
 </dd>
 </dl>
@@ -5176,13 +5057,10 @@ is typically part of a Model and applied within the model.forward()
 method.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.InputTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">InputTransform</span></span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">InputTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base class for input transforms.</p>
 <dl class="simple">
-<dt>Note: Input transforms must inherit from <cite>torch.nn.Module</cite>. This</dt><dd><p>is deferred to the subclasses to avoid any potential conflict
-between <cite>gpytorch.module.Module</cite> and <cite>torch.nn.Module</cite> in <cite>Warp</cite>.</p>
-</dd>
 <dt>Properties:</dt><dd><dl class="simple">
 <dt>is_one_to_many: A boolean denoting whether the transform produces</dt><dd><p>multiple values for each input.</p>
 </dd>
@@ -5194,6 +5072,9 @@ between <cite>gpytorch.module.Module</cite> and <cite>torch.nn.Module</cite> in 
 </dd>
 </dl>
 </dd>
+</dl>
+<p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.InputTransform.is_one_to_many">
@@ -5282,6 +5163,102 @@ pytorch. See <a class="reference external" href="https://github.com/pytorch/pyto
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.InputTransform.preprocess_transform">
 <span class="sig-name descname"><span class="pre">preprocess_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform.preprocess_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.preprocess_transform" title="Link to this definition">¶</a></dt>
+<dd><p>Apply transforms for preprocessing inputs.</p>
+<p>The main use cases for this method are 1) to preprocess training data
+before calling <cite>set_train_data</cite> and 2) preprocess <cite>X_baseline</cite> for noisy
+acquisition functions so that <cite>X_baseline</cite> is “preprocessed” with the
+same transformations as the cached training inputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape x n x d</cite>-dim tensor of (transformed) inputs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.transforms.input.BatchBroadcastedInputTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">BatchBroadcastedInputTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transforms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadcast_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#BatchBroadcastedInputTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.BatchBroadcastedInputTransform" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleDict</span></code></p>
+<p>An input transform representing a list of transforms to be broadcasted.</p>
+<p>A transform list that is broadcasted across a batch dimension specified by
+<cite>broadcast_index</cite>. This is allows using a batched Gaussian process model when
+the input transforms are different for different batch dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transforms</strong> (<em>list</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>) – The transforms to broadcast across the first batch dimension.
+The transform at position i in the list will be applied to <cite>X[i]</cite> for
+a given input tensor <cite>X</cite> in the forward pass.</p></li>
+<li><p><strong>broadcast_index</strong> (<em>int</em>) – The tensor index at which the transforms are broadcasted.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tf1</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tf2</span> <span class="o">=</span> <span class="n">InputStandardize</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tf</span> <span class="o">=</span> <span class="n">BatchBroadcastedTransformList</span><span class="p">(</span><span class="n">transforms</span><span class="o">=</span><span class="p">[</span><span class="n">tf1</span><span class="p">,</span> <span class="n">tf2</span><span class="p">])</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.input.BatchBroadcastedInputTransform.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#BatchBroadcastedInputTransform.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.BatchBroadcastedInputTransform.transform" title="Link to this definition">¶</a></dt>
+<dd><p>Transform the inputs to a model.</p>
+<p>Individual transforms are applied in sequence and results are returned as
+a batched tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape x n x d</cite>-dim tensor of transformed inputs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.input.BatchBroadcastedInputTransform.untransform">
+<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#BatchBroadcastedInputTransform.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.BatchBroadcastedInputTransform.untransform" title="Link to this definition">¶</a></dt>
+<dd><p>Un-transform the inputs to a model.</p>
+<p>Un-transforms of the individual transforms are applied in reverse sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of transformed inputs.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape x n x d</cite>-dim tensor of un-transformed inputs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.input.BatchBroadcastedInputTransform.equals">
+<span class="sig-name descname"><span class="pre">equals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#BatchBroadcastedInputTransform.equals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.BatchBroadcastedInputTransform.equals" title="Link to this definition">¶</a></dt>
+<dd><p>Check if another input transform is equivalent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a>) – Another input transform.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A boolean indicating if the other transform is equivalent.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.input.BatchBroadcastedInputTransform.preprocess_transform">
+<span class="sig-name descname"><span class="pre">preprocess_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#BatchBroadcastedInputTransform.preprocess_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.BatchBroadcastedInputTransform.preprocess_transform" title="Link to this definition">¶</a></dt>
 <dd><p>Apply transforms for preprocessing inputs.</p>
 <p>The main use cases for this method are 1) to preprocess training data
 before calling <cite>set_train_data</cite> and 2) preprocess <cite>X_baseline</cite> for noisy
@@ -5396,7 +5373,7 @@ same transformations as the cached training inputs.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.ReversibleInputTransform">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">ReversibleInputTransform</span></span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ReversibleInputTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.ReversibleInputTransform" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">ReversibleInputTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ReversibleInputTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.ReversibleInputTransform" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>An abstract class for a reversible input transform.</p>
 <dl class="simple">
@@ -5405,6 +5382,9 @@ same transformations as the cached training inputs.</p>
 </dd>
 </dl>
 </dd>
+</dl>
+<p>Initialize internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.ReversibleInputTransform.reverse">
@@ -5462,7 +5442,7 @@ same transformations as the cached training inputs.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.AffineInputTransform">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">AffineInputTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coefficient</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#AffineInputTransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.AffineInputTransform" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReversibleInputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReversibleInputTransform</span></code></a></p>
 <p>Apply affine transformation to input:</p>
 <blockquote>
 <div><p><cite>output = (input - offset) / coefficient</cite></p>
@@ -5475,7 +5455,7 @@ same transformations as the cached training inputs.</p>
 broadcastable with <cite>(batch_shape x n x d)</cite>-dim input tensors.</p></li>
 <li><p><strong>offset</strong> (<em>Tensor</em>) – Tensor of offset coefficients, shape must to be
 broadcastable with <cite>(batch_shape x n x d)</cite>-dim input tensors.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to transform. If omitted,
+<li><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>Tensor</em><em> | </em><em>None</em>) – The indices of the inputs to transform. If omitted,
 take all dimensions of the inputs into account. Either a list of ints
 or a Tensor of type <cite>torch.long</cite>.</p></li>
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch shape of the inputs (assuming input tensors
@@ -5537,9 +5517,9 @@ current module state.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the input space.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to normalize. If omitted,
+<li><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>Tensor</em><em> | </em><em>None</em>) – The indices of the inputs to normalize. If omitted,
 take all dimensions of the inputs into account.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – If provided, use these bounds to normalize the inputs. If
+<li><p><strong>bounds</strong> (<em>Tensor</em><em> | </em><em>None</em>) – If provided, use these bounds to normalize the inputs. If
 omitted, learn the bounds in train mode.</p></li>
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch shape of the inputs (assuming input tensors
 of shape <cite>batch_shape x n x d</cite>). If provided, perform individual
@@ -5557,7 +5537,7 @@ that input dimension will not be normalized. This is equivalent to
 using bounds of <cite>[0, 1]</cite> for this dimension, and helps avoid division
 by zero errors and related numerical issues. See the example below.
 NOTE: This only applies if <cite>learn_bounds=True</cite>.</p></li>
-<li><p><strong>learn_bounds</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – Whether to learn the bounds in train mode. Defaults
+<li><p><strong>learn_bounds</strong> (<em>bool</em><em> | </em><em>None</em>) – Whether to learn the bounds in train mode. Defaults
 to False if bounds are provided, otherwise defaults to True.</p></li>
 <li><p><strong>almost_zero</strong> (<em>float</em>)</p></li>
 </ul>
@@ -5620,7 +5600,7 @@ simply applies the standardization using the current module state.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the input space.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – The indices of the inputs to standardize. If omitted,
+<li><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>Tensor</em><em> | </em><em>None</em>) – The indices of the inputs to standardize. If omitted,
 take all dimensions of the inputs into account.</p></li>
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch shape of the inputs (asssuming input tensors
 of shape <cite>batch_shape x n x d</cite>). If provided, perform individual
@@ -5652,7 +5632,7 @@ numerical issues.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.Round">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">Round</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integer_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approximate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Round"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Round" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a></p>
 <p>A discretization transformation for discrete inputs.</p>
 <p>If <cite>approximate=False</cite> (the default), uses PyTorch’s <cite>round</cite>.</p>
 <p>If <cite>approximate=True</cite>, a differentiable approximate rounding function is
@@ -5700,8 +5680,8 @@ tangent function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>integer_indices</strong> (<em>Union</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>LongTensor</em><em>, </em><em>None</em><em>]</em>) – The indices of the integer inputs.</p></li>
-<li><p><strong>categorical_features</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – A dictionary mapping the starting index of each
+<li><p><strong>integer_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>LongTensor</em><em> | </em><em>None</em>) – The indices of the integer inputs.</p></li>
+<li><p><strong>categorical_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping the starting index of each
 categorical feature to its cardinality. This assumes that categoricals
 are one-hot encoded.</p></li>
 <li><p><strong>transform_on_train</strong> (<em>bool</em>) – A boolean indicating whether to apply the
@@ -5762,7 +5742,7 @@ rounding should be used. Default: False.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.Log10">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">Log10</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Log10"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Log10" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReversibleInputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReversibleInputTransform</span></code></a></p>
 <p>A base-10 log transformation.</p>
 <p>Initialize transform.</p>
 <dl class="field-list simple">
@@ -5808,11 +5788,11 @@ transform when called from within a <cite>fantasize</cite> call. Default: True.<
 <li><p><strong>reverse</strong> (<em>bool</em>) – A boolean indicating whether the forward pass should untransform
 the inputs.</p></li>
 <li><p><strong>eps</strong> (<em>float</em>) – A small value used to clip values to be in the interval (0, 1).</p></li>
-<li><p><strong>concentration1_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – A prior distribution on the concentration1 parameter
+<li><p><strong>concentration1_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – A prior distribution on the concentration1 parameter
 of the Kumaraswamy distribution.</p></li>
-<li><p><strong>concentration0_prior</strong> (<em>Optional</em><em>[</em><em>Prior</em><em>]</em>) – A prior distribution on the concentration0 parameter
+<li><p><strong>concentration0_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – A prior distribution on the concentration0 parameter
 of the Kumaraswamy distribution.</p></li>
-<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – An optional batch shape, for learning independent warping
+<li><p><strong>batch_shape</strong> (<em>torch.Size</em><em> | </em><em>None</em>) – An optional batch shape, for learning independent warping
 parameters for each batch of inputs. This should match the input batch
 shape of the model (i.e., <cite>train_X.shape[:-2]</cite>).
 NOTE: This is only supported for single-output models.</p></li>
@@ -5823,7 +5803,7 @@ NOTE: This is only supported for single-output models.</p></li>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.AppendFeatures">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">AppendFeatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_set</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fkwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_expand</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#AppendFeatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.AppendFeatures" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a></p>
 <p>A transform that appends the input with a given set of features either
 provided beforehand or generated on the fly via a callable.</p>
 <p>As an example, the predefined set of features can be used with
@@ -5873,15 +5853,15 @@ append on the fly via a callable.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>feature_set</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An <cite>n_f x d_f</cite>-dim tensor denoting the features to be
+<li><p><strong>feature_set</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An <cite>n_f x d_f</cite>-dim tensor denoting the features to be
 appended to the inputs. Default: None.</p></li>
-<li><p><strong>f</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A callable mapping a <cite>batch_shape x q x d</cite>-dim input tensor <cite>X</cite>
+<li><p><strong>f</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A callable mapping a <cite>batch_shape x q x d</cite>-dim input tensor <cite>X</cite>
 to a <cite>batch_shape x q x n_f x d_f</cite>-dimensional output tensor.
 Default: None.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – List of indices denoting the indices of the features to be
+<li><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – List of indices denoting the indices of the features to be
 passed into f. Per default all features are passed to <cite>f</cite>.
 Default: None.</p></li>
-<li><p><strong>fkwargs</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of keyword arguments passed to the callable <cite>f</cite>.
+<li><p><strong>fkwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Dictionary of keyword arguments passed to the callable <cite>f</cite>.
 Default: None.</p></li>
 <li><p><strong>skip_expand</strong> (<em>bool</em>) – A boolean indicating whether to expand the input tensor
 before appending features. This is intended for use with an
@@ -5931,9 +5911,23 @@ through an <cite>InputPerturbation</cite> with <cite>n_f</cite> perturbation val
 </dd></dl>
 </dd></dl>
 <dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.transforms.input.InteractionFeatures">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">InteractionFeatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InteractionFeatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.InteractionFeatures" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.AppendFeatures" title="botorch.models.transforms.input.AppendFeatures"><code class="xref py py-class docutils literal notranslate"><span class="pre">AppendFeatures</span></code></a></p>
+<p>A transform that appends the first-order interaction terms $x_i * x_j, i &lt; j$,
+for all or a subset of the input variables.</p>
+<p>Initializes the InteractionFeatures transform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – Indices of the subset of dimensions to compute interaction
+features on.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.FilterFeatures">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">FilterFeatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#FilterFeatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.FilterFeatures" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a></p>
 <p>A transform that filters the input with a given set of features indices.</p>
 <p>As an example, this can be used in a multiobjective optimization with <cite>ModelListGP</cite>
 in which the specific models only share subsets of features (feature selection).
@@ -5996,7 +5990,7 @@ feature indices and filtering out the others.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.InputPerturbation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">InputPerturbation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">perturbation_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiplicative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputPerturbation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.InputPerturbation" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a></p>
 <p>A transform that adds the set of perturbations to the given input.</p>
 <p>Similar to <cite>AppendFeatures</cite>, this can be used with <cite>RiskMeasureMCObjective</cite>
 to optimize risk measures. See <cite>AppendFeatures</cite> for additional discussion
@@ -6007,14 +6001,14 @@ on optimizing risk measures.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>perturbation_set</strong> (<em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – An <cite>n_p x d</cite>-dim tensor denoting the perturbations
+<li><p><strong>perturbation_set</strong> (<em>Tensor</em><em> | </em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – An <cite>n_p x d</cite>-dim tensor denoting the perturbations
 to be added to the inputs. Alternatively, this can be a callable that
 returns <cite>batch x n_p x d</cite>-dim tensor of perturbations for input of
 shape <cite>batch x d</cite>. This is useful for heteroscedastic perturbations.</p></li>
-<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of lower and upper bounds for each
+<li><p><strong>bounds</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>2 x d</cite>-dim tensor of lower and upper bounds for each
 column of the input. If given, the perturbed inputs will be
 clamped to these bounds.</p></li>
-<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices specifying a subset of inputs on which to apply
+<li><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of indices specifying a subset of inputs on which to apply
 the transform. Note that <cite>len(indices)</cite> should be equal to the second
 dimension of <cite>perturbation_set</cite> and <cite>bounds</cite>. The dimensionality of
 the input <cite>X.shape[-1]</cite> can be larger if we only transform a subset.</p></li>
@@ -6071,14 +6065,14 @@ because <cite>n_p</cite> is inaccessible otherwise if <cite>perturbation_set</ci
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.OneHotToNumeric">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">OneHotToNumeric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">categorical_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#OneHotToNumeric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.OneHotToNumeric" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a></p>
 <p>Transform categorical parameters from a one-hot to a numeric representation.</p>
 <p>Initialize.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dim</strong> (<em>int</em>) – The dimension of the one-hot-encoded input.</p></li>
-<li><p><strong>categorical_features</strong> (<em>Optional</em><em>[</em><em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – A dictionary mapping the starting index of each
+<li><p><strong>categorical_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping the starting index of each
 categorical feature to its cardinality. This assumes that categoricals
 are one-hot encoded.</p></li>
 <li><p><strong>transform_on_train</strong> (<em>bool</em>) – A boolean indicating whether to apply the
@@ -6319,6 +6313,25 @@ is <cite>input_batch_shape</cite> against <cite>batch_shape</cite>.</p>
 <dt class="sig sig-object py" id="botorch.models.transforms.utils.subset_transform">
 <span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.utils.</span></span><span class="sig-name descname"><span class="pre">subset_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/utils.html#subset_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.utils.subset_transform" title="Link to this definition">¶</a></dt>
 <dd><p>Decorator of an input transform function to separate out indexing logic.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.transforms.utils.interaction_features">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.utils.</span></span><span class="sig-name descname"><span class="pre">interaction_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/utils.html#interaction_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.utils.interaction_features" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the interaction features between the inputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs.</p></li>
+<li><p><strong>indices</strong> – The input dimensions to generate interaction features for.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>n x q x 1 x (d * (d-1) / 2))</cite>-dim tensor of interaction features.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
 </dd></dl>
 </section>
 </section>
@@ -6934,6 +6947,7 @@ new_indices: new index of each original item in X, a tensor of size X.shape[-2]<
 <li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
 </ul>

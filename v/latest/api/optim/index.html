@@ -51,7 +51,7 @@
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.optim.core.OptimizationResult">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.core.</span></span><span class="sig-name descname"><span class="pre">OptimizationResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Union[float,</span> <span class="pre">int]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'OptimizationStatus'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[float]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[str]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/core.html#OptimizationResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.core.OptimizationResult" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.core.</span></span><span class="sig-name descname"><span class="pre">OptimizationResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'float</span> <span class="pre">|</span> <span class="pre">int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'OptimizationStatus'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'float</span> <span class="pre">|</span> <span class="pre">None'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str</span> <span class="pre">|</span> <span class="pre">None'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/core.html#OptimizationResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.core.OptimizationResult" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -97,7 +97,7 @@ NdarrayOptimizationClosure instance.</p></li>
 <li><p><strong>parameters</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors to be optimized.</p></li>
 <li><p><strong>bounds</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>float</em><em> | </em><em>None</em><em>, </em><em>float</em><em> | </em><em>None</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A dictionary mapping parameter names to lower and upper bounds.</p></li>
 <li><p><strong>callback</strong> (<em>Callable</em><em>[</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><a class="reference internal" href="#botorch.optim.core.OptimizationResult" title="botorch.optim.core.OptimizationResult"><em>OptimizationResult</em></a><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>) – A callable taking <cite>parameters</cite> and an OptimizationResult as arguments.</p></li>
-<li><p><strong>x0</strong> (<em>ndarray</em><em> | </em><em>None</em>) – An optional initialization vector passed to scipy.optimize.minimize.</p></li>
+<li><p><strong>x0</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>] </em><em>| </em><em>None</em>) – An optional initialization vector passed to scipy.optimize.minimize.</p></li>
 <li><p><strong>method</strong> (<em>str</em>) – Solver type, passed along to scipy.minimize.</p></li>
 <li><p><strong>options</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
 <li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Timeout in seconds to wait before aborting the optimization loop
@@ -322,7 +322,8 @@ Using non-linear inequality constraints also requires that <cite>batch_limit</ci
 is set to 1, which will be done automatically if not specified in
 <cite>options</cite>.</p></li>
 <li><p><strong>fixed_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
-should be fixed to a particular value during generation.</p></li>
+should be fixed to a particular value during generation. All indices
+should be non-negative.</p></li>
 <li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
@@ -344,7 +345,8 @@ optimization.</p></li>
 functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
 for nonlinear inequality constraints.</p></li>
 <li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Max amount of time optimization can run for.</p></li>
-<li><p><strong>return_full_tree</strong> (<em>bool</em>)</p></li>
+<li><p><strong>return_full_tree</strong> (<em>bool</em>) – Return the full tree of optimizers of the previous
+iteration.</p></li>
 <li><p><strong>retry_on_optimization_warning</strong> (<em>bool</em>) – Whether to retry candidate generation with a new
 set of initial conditions when it fails with an <cite>OptimizationWarning</cite>.</p></li>
 <li><p><strong>ic_gen_kwargs</strong> (<em>Any</em>) – Additional keyword arguments passed to function specified by
@@ -415,7 +417,8 @@ with each tuple encoding an inequality constraint of the form
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
 <li><p><strong>fixed_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
-should be fixed to a particular value during generation.</p></li>
+should be fixed to a particular value during generation. All indices
+should be non-negative.</p></li>
 <li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
@@ -429,7 +432,8 @@ be used.</p></li>
 functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
 for nonlinear inequality constraints.</p></li>
 <li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Max amount of time optimization can run for.</p></li>
-<li><p><strong>return_full_tree</strong> (<em>bool</em>)</p></li>
+<li><p><strong>return_full_tree</strong> (<em>bool</em>) – Return the full tree of optimizers of the previous
+iteration.</p></li>
 <li><p><strong>retry_on_optimization_warning</strong> (<em>bool</em>) – Whether to retry candidate generation with a new
 set of initial conditions when it fails with an <cite>OptimizationWarning</cite>.</p></li>
 <li><p><strong>ic_gen_kwargs</strong> (<em>Any</em>) – Additional keyword arguments passed to function specified by
@@ -506,11 +510,13 @@ solver. You need to pass in <cite>batch_initial_conditions</cite> in this case.
 Using non-linear inequality constraints also requires that <cite>batch_limit</cite>
 is set to 1, which will be done automatically if not specified in
 <cite>options</cite>.</p></li>
-<li><p><strong>fixed_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
-should be fixed to a particular value during generation.</p></li>
+<li><p><strong>fixed_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that should
+be fixed to a particular value during generation. All indices
+(<cite>feature_index</cite>) should be non-negative.</p></li>
 <li><p><strong>fixed_features_list</strong> (<em>list</em><em>[</em><em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of maps <cite>{feature_index: value}</cite>. The i-th
 item represents the fixed_feature for the i-th optimization. If
-<cite>fixed_features_list</cite> is provided, <cite>optimize_acqf_mixed</cite> is invoked.</p></li>
+<cite>fixed_features_list</cite> is provided, <cite>optimize_acqf_mixed</cite> is invoked.
+All indices (<cite>feature_index</cite>) should be non-negative.</p></li>
 <li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
@@ -563,7 +569,8 @@ function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<em>int</em><em> | </em><em>None</em>) – Number of samples for initialization. This is required
 if <cite>batch_initial_conditions</cite> is not specified.</p></li>
 <li><p><strong>fixed_features_list</strong> (<em>list</em><em>[</em><em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A list of maps <cite>{feature_index: value}</cite>. The i-th
-item represents the fixed_feature for the i-th optimization.</p></li>
+item represents the fixed_feature for the i-th optimization. All
+indices (<cite>feature_index</cite>) should be non-negative.</p></li>
 <li><p><strong>options</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
@@ -617,7 +624,7 @@ for nonlinear inequality constraints.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.optimize.optimize_acqf_discrete">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_discrete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unique</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_discrete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_discrete" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_discrete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unique</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_avoid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_discrete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_discrete" title="Link to this definition">¶</a></dt>
 <dd><p>Optimize over a discrete set of points using batch evaluation.</p>
 <p>For <cite>q &gt; 1</cite> this function generates candidates by means of sequential
 conditioning (rather than joint optimization), since for all but the
@@ -634,6 +641,13 @@ A large limit can cause excessive memory usage if the model has
 a large training set.</p></li>
 <li><p><strong>unique</strong> (<em>bool</em>) – If True return unique choices, o/w choices may be repeated
 (only relevant if <cite>q &gt; 1</cite>).</p></li>
+<li><p><strong>X_avoid</strong> (<em>Tensor</em><em> | </em><em>None</em>) – An <cite>n x d</cite> tensor of candidates that we aren’t allowed to pick.
+These will be removed from the set of choices.</p></li>
+<li><p><strong>constraints</strong> (<em>inequality</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.
+Infeasible points will be removed from the set of choices.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -803,7 +817,8 @@ function is a nullop and simply returns <cite>None</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of transformed constraints.</p>
+<dd class="field-even"><p>List of transformed constraints, if
+there are constraints. Returns <cite>None</cite> otherwise.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>List[Tuple[Tensor, Tensor, float]]</p>
@@ -872,7 +887,7 @@ index <cite>l_i</cite> corresponds to the <cite>l_i</cite>-th feature of that el
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.initializers.sample_q_batches_from_polytope">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">sample_q_batches_from_polytope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_thinning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#sample_q_batches_from_polytope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.sample_q_batches_from_polytope" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">sample_q_batches_from_polytope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_thinning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#sample_q_batches_from_polytope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.sample_q_batches_from_polytope" title="Link to this definition">¶</a></dt>
 <dd><p>Samples <cite>n</cite> q-baches from a polytope of dimension <cite>d</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -883,7 +898,7 @@ index <cite>l_i</cite> corresponds to the <cite>l_i</cite>-th feature of that el
 <li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn-in samples for the Markov chain sampler.</p></li>
 <li><p><strong>n_thinning</strong> (<em>int</em>) – The amount of thinning. The sampler will return every
 <cite>n_thinning</cite> sample (after burn-in).</p></li>
-<li><p><strong>seed</strong> (<em>int</em>) – The random seed.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> | </em><em>None</em>) – The random seed.</p></li>
 <li><p><strong>inequality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
@@ -1159,11 +1174,12 @@ of value function model.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.initializers.initialize_q_batch">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">initialize_q_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#initialize_q_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.initialize_q_batch" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">initialize_q_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acq_vals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#initialize_q_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.initialize_q_batch" title="Link to this definition">¶</a></dt>
 <dd><p>Heuristic for selecting initial conditions for candidate generation.</p>
 <p>This heuristic selects points from <cite>X</cite> (without replacement) with probability
-proportional to <cite>exp(eta * Z)</cite>, where <cite>Z = (Y - mean(Y)) / std(Y)</cite> and <cite>eta</cite>
-is a temperature parameter.</p>
+proportional to <cite>exp(eta * Z)</cite>, where
+<cite>Z = (acq_vals - mean(acq_vals)) / std(acq_vals)</cite>
+and <cite>eta</cite> is a temperature parameter.</p>
 <p>When using an acquisiton function that is non-negative and possibly zero
 over large areas of the feature space (e.g. qEI), you should use
 <cite>initialize_q_batch_nonneg</cite> instead.</p>
@@ -1173,7 +1189,7 @@ over large areas of the feature space (e.g. qEI), you should use
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>b x batch_shape x q x d</cite> tensor of <cite>b</cite> - <cite>batch_shape</cite> samples of
 <cite>q</cite>-batches from a d`-dim feature space. Typically, these are generated
 using qMC sampling.</p></li>
-<li><p><strong>Y</strong> (<em>Tensor</em>) – A tensor of <cite>b x batch_shape</cite> outcomes associated with the samples.
+<li><p><strong>acq_vals</strong> (<em>Tensor</em>) – A tensor of <cite>b x batch_shape</cite> outcomes associated with the samples.
 Typically, this is the value of the batch acquisition function to be
 maximized.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – The number of initial condition to be generated. Must be less than <cite>b</cite>.</p></li>
@@ -1181,37 +1197,41 @@ maximized.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>n x batch_shape x q x d</cite> tensor of <cite>n</cite> - <cite>batch_shape</cite> <cite>q</cite>-batch initial
-conditions, where each batch of <cite>n x q x d</cite> samples is selected independently.</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p>An <cite>n x batch_shape x q x d</cite> tensor of <cite>n</cite> - <cite>batch_shape</cite> <cite>q</cite>-batch initial
+conditions, where each batch of <cite>n x q x d</cite> samples is selected independently.</p></li>
+<li><p>An <cite>n x batch_shape</cite> tensor of the corresponding acquisition values.</p></li>
+</ul>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, <em>Tensor</em>]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># To get `n=10` starting points of q-batch size `q=3`</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># for model with `d=6`:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qUCB</span> <span class="o">=</span> <span class="n">qUpperConfidenceBound</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Xrnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Xinit</span> <span class="o">=</span> <span class="n">initialize_q_batch</span><span class="p">(</span><span class="n">Xrnd</span><span class="p">,</span> <span class="n">qUCB</span><span class="p">(</span><span class="n">Xrnd</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_rnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_init</span><span class="p">,</span> <span class="n">acq_init</span> <span class="o">=</span> <span class="n">initialize_q_batch</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">acq_vals</span><span class="o">=</span><span class="n">qUCB</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">),</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.initializers.initialize_q_batch_nonneg">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">initialize_q_batch_nonneg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#initialize_q_batch_nonneg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.initialize_q_batch_nonneg" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.initializers.</span></span><span class="sig-name descname"><span class="pre">initialize_q_batch_nonneg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acq_vals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#initialize_q_batch_nonneg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.initializers.initialize_q_batch_nonneg" title="Link to this definition">¶</a></dt>
 <dd><p>Heuristic for selecting initial conditions for non-neg. acquisition functions.</p>
 <p>This function is similar to <cite>initialize_q_batch</cite>, but designed specifically
 for acquisition functions that are non-negative and possibly zero over
 large areas of the feature space (e.g. qEI). All samples for which
-<cite>Y &lt; alpha * max(Y)</cite> will be ignored (assuming that <cite>Y</cite> contains at least
-one positive value).</p>
+<cite>acq_vals &lt; alpha * max(acq_vals)</cite> will be ignored (assuming that <cite>acq_vals</cite>
+contains at least one positive value).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>b x q x d</cite> tensor of <cite>b</cite> samples of <cite>q</cite>-batches from a <cite>d</cite>-dim.
 feature space. Typically, these are generated using qMC.</p></li>
-<li><p><strong>Y</strong> (<em>Tensor</em>) – A tensor of <cite>b</cite> outcomes associated with the samples. Typically, this
+<li><p><strong>acq_vals</strong> (<em>Tensor</em>) – A tensor of <cite>b</cite> outcomes associated with the samples. Typically, this
 is the value of the batch acquisition function to be maximized.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – The number of initial condition to be generated. Must be less than <cite>b</cite>.</p></li>
 <li><p><strong>eta</strong> (<em>float</em>) – Temperature parameter for weighting samples.</p></li>
@@ -1221,18 +1241,24 @@ which to ignore samples. All input samples for which
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <cite>n x q x d</cite> tensor of <cite>n</cite> <cite>q</cite>-batch initial conditions.</p>
+<dd class="field-even"><p><ul class="simple">
+<li><p>An <cite>n x q x d</cite> tensor of <cite>n</cite> <cite>q</cite>-batch initial conditions.</p></li>
+<li><p>An <cite>n</cite> tensor of the corresponding acquisition values.</p></li>
+</ul>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em></p>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, <em>Tensor</em>]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># To get `n=10` starting points of q-batch size `q=3`</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># for model with `d=6`:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Xrnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Xinit</span> <span class="o">=</span> <span class="n">initialize_q_batch</span><span class="p">(</span><span class="n">Xrnd</span><span class="p">,</span> <span class="n">qEI</span><span class="p">(</span><span class="n">Xrnd</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_rnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_init</span><span class="p">,</span> <span class="n">acq_init</span> <span class="o">=</span> <span class="n">initialize_q_batch_nonneg</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">X</span><span class="o">=</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">acq_vals</span><span class="o">=</span><span class="n">qEI</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">),</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span>
+<span class="gp">... </span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -1456,33 +1482,358 @@ true for all elements.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.optimize_homotopy.optimize_acqf_homotopy">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_homotopy.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_homotopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">homotopy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_homotopy.html#optimize_acqf_homotopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_homotopy.optimize_acqf_homotopy" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_homotopy.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_homotopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">homotopy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nonlinear_inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gen_candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequential</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic_generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_sec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_full_tree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_on_optimization_warning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">ic_gen_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_homotopy.html#optimize_acqf_homotopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_homotopy.optimize_acqf_homotopy" title="Link to this definition">¶</a></dt>
 <dd><p>Generate a set of candidates via multi-start optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a>) – An AcquisitionFunction.</p></li>
-<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>
+(if inequality_constraints is provided, these bounds can be -inf and
++inf, respectively).</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
 <li><p><strong>homotopy</strong> (<a class="reference internal" href="#botorch.optim.homotopy.Homotopy" title="botorch.optim.homotopy.Homotopy"><em>Homotopy</em></a>) – Homotopy object that will make the necessary modifications to the
 problem when calling <cite>step()</cite>.</p></li>
+<li><p><strong>prune_tolerance</strong> (<em>float</em>) – The minimum distance to prune candidates.</p></li>
 <li><p><strong>num_restarts</strong> (<em>int</em>) – The number of starting points for multistart acquisition
 function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<em>int</em><em> | </em><em>None</em>) – The number of samples for initialization. This is required
 if <cite>batch_initial_conditions</cite> is not specified.</p></li>
+<li><p><strong>options</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation in the initial step of the homotopy.</p></li>
+<li><p><strong>final_options</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation in the final step of
+the homotopy.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>. <cite>indices</cite> and
+<cite>coefficients</cite> should be torch tensors. See the docstring of
+<cite>make_scipy_linear_constraints</cite> for an example. When q=1, or when
+applying the same constraint to each candidate in the batch
+(intra-point constraint), <cite>indices</cite> should be a 1-d tensor.
+For inter-point constraints, in which the constraint is applied to the
+whole batch of candidates, <cite>indices</cite> must be a 2-d tensor, where
+in each row <cite>indices[i] =(k_i, l_i)</cite> the first index <cite>k_i</cite> corresponds
+to the <cite>k_i</cite>-th element of the <cite>q</cite>-batch and the second index <cite>l_i</cite>
+corresponds to the <cite>l_i</cite>-th feature of that element.</p></li>
+<li><p><strong>equality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an equality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>. See the docstring of
+<cite>make_scipy_linear_constraints</cite> for an example.</p></li>
+<li><p><strong>nonlinear_inequality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Callable</em><em>, </em><em>bool</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples representing the nonlinear
+inequality constraints. The first element in the tuple is a callable
+representing a constraint of the form <cite>callable(x) &gt;= 0</cite>. In case of an
+intra-point constraint, <cite>callable()`takes in an one-dimensional tensor of
+shape `d</cite> and returns a scalar. In case of an inter-point constraint,
+<cite>callable()</cite> takes a two dimensional tensor of shape <cite>q x d</cite> and again
+returns a scalar. The second element is a boolean, indicating if it is an
+intra-point or inter-point constraint (<cite>True</cite> for intra-point. <cite>False</cite> for
+inter-point). For more information on intra-point vs inter-point
+constraints, see the docstring of the <cite>inequality_constraints</cite> argument to
+<cite>optimize_acqf()</cite>. The constraints will later be passed to the scipy
+solver. You need to pass in <cite>batch_initial_conditions</cite> in this case.
+Using non-linear inequality constraints also requires that <cite>batch_limit</cite>
+is set to 1, which will be done automatically if not specified in
+<cite>options</cite>.</p></li>
 <li><p><strong>fixed_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
-<li><p><strong>options</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation.</p></li>
-<li><p><strong>final_options</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em> | </em><em>str</em><em>] </em><em>| </em><em>None</em>) – Options for candidate generation in the last homotopy step.</p></li>
+<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization
+result appropriately (i.e., according to <cite>round-trip</cite>
+transformations).</p></li>
 <li><p><strong>batch_initial_conditions</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A tensor to specify the initial conditions. Set
 this if you do not want to use default initialization strategy.</p></li>
-<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Post processing function (such as rounding or clamping)
-that is applied before choosing the final candidate.</p></li>
-<li><p><strong>prune_tolerance</strong> (<em>float</em>)</p></li>
+<li><p><strong>gen_candidates</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A callable for generating candidates (and their associated
+acquisition values) given a tensor of initial conditions and an
+acquisition function. Other common inputs include lower and upper bounds
+and a dictionary of options, but refer to the documentation of specific
+generation functions (e.g gen_candidates_scipy and gen_candidates_torch)
+for method-specific inputs. Default: <cite>gen_candidates_scipy</cite></p></li>
+<li><p><strong>sequential</strong> (<em>bool</em>) – If False, uses joint optimization, otherwise uses sequential
+optimization.</p></li>
+<li><p><strong>ic_generator</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>qKnowledgeGradient</em></a><em>, </em><em>Tensor</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>int</em><em>, </em><em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em><em>, </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>bool</em><em> | </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em><em>, </em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em><em>]</em><em>, </em><em>Tensor</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Function for generating initial conditions. Not needed when
+<cite>batch_initial_conditions</cite> are provided. Defaults to
+<cite>gen_one_shot_kg_initial_conditions</cite> for <cite>qKnowledgeGradient</cite> acquisition
+functions and <cite>gen_batch_initial_conditions</cite> otherwise. Must be specified
+for nonlinear inequality constraints.</p></li>
+<li><p><strong>timeout_sec</strong> (<em>float</em><em> | </em><em>None</em>) – Max amount of time optimization can run for.</p></li>
+<li><p><strong>return_full_tree</strong> (<em>bool</em>) – Return the full tree of optimizers of the previous
+iteration.</p></li>
+<li><p><strong>retry_on_optimization_warning</strong> (<em>bool</em>) – Whether to retry candidate generation with a new
+set of initial conditions when it fails with an <cite>OptimizationWarning</cite>.</p></li>
+<li><p><strong>ic_gen_kwargs</strong> (<em>Any</em>) – Additional keyword arguments passed to function specified by
+<cite>ic_generator</cite></p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>tuple[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.optim.optimize_mixed">
+<span id="acquisition-function-optimization-with-mixed-integer-variables"></span><h3>Acquisition Function Optimization with Mixed Integer Variables<a class="headerlink" href="#module-botorch.optim.optimize_mixed" title="Link to this heading">¶</a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_mixed.get_nearest_neighbors">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_mixed.</span></span><span class="sig-name descname"><span class="pre">get_nearest_neighbors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discrete_dims</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_mixed.html#get_nearest_neighbors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_mixed.get_nearest_neighbors" title="Link to this definition">¶</a></dt>
+<dd><p>Generate all 1-Manhattan distance neighbors of a given input. The neighbors
+are generated for the discrete dimensions only.</p>
+<p>NOTE: This assumes that <cite>current_x</cite> is detached and uses in-place operations,
+which are known to be incompatible with autograd.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>current_x</strong> (<em>Tensor</em>) – The design to find the neighbors of. A tensor of shape <cite>d</cite>.</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>discrete_dims</strong> (<em>Tensor</em>) – A tensor of indices corresponding to binary and
+integer parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor of shape <cite>num_neighbors x d</cite>, denoting all unique 1-Manhattan
+distance neighbors.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_mixed.get_spray_points">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_mixed.</span></span><span class="sig-name descname"><span class="pre">get_spray_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cont_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discrete_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_spray_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std_cont_perturbation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_mixed.html#get_spray_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_mixed.get_spray_points" title="Link to this definition">¶</a></dt>
+<dd><p>Generate spray points by perturbing the Pareto optimal points.</p>
+<p>Given the points on the Pareto frontier, we create perturbations (spray points)
+by adding Gaussian perturbation to the continuous parameters and 1-Manhattan
+distance neighbors of the discrete (binary and integer) parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_baseline</strong> (<em>Tensor</em>) – Tensor of best acquired points across BO run.</p></li>
+<li><p><strong>cont_dims</strong> (<em>Tensor</em>) – Indices of continuous parameters/input dimensions.</p></li>
+<li><p><strong>discrete_dims</strong> (<em>Tensor</em>) – Indices of binary/integer parameters/input dimensions.</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>num_spray_points</strong> (<em>int</em>) – Number of spray points to return.</p></li>
+<li><p><strong>std_cont_perturbation</strong> (<em>float</em>) – standard deviation of Normal perturbations of
+continuous dimensions. Default is STD_CONT_PERTURBATION = 0.2.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A (num_spray_points x d)-dim tensor of perturbed points.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_mixed.sample_feasible_points">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_mixed.</span></span><span class="sig-name descname"><span class="pre">sample_feasible_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opt_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discrete_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_points</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_mixed.html#sample_feasible_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_mixed.sample_feasible_points" title="Link to this definition">¶</a></dt>
+<dd><p>Sample feasible points from the optimization domain.</p>
+<p>Feasibility is determined according to the discrete dimensions taking
+integer values and the inequality constraints being satisfied.</p>
+<p>If there are no inequality constraints, Sobol is used to generate the base points.
+Otherwise, we use the polytope sampler to generate the base points. The base points
+are then rounded to the nearest integer values for the discrete dimensions, and
+the infeasible points are filtered out (in case rounding leads to infeasibility).</p>
+<p>This method will do 10 attempts to generate <cite>num_points</cite> feasible points, and
+return the points generated so far. If no points are generated, it will error out.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>opt_inputs</strong> (<a class="reference internal" href="#botorch.optim.optimize.OptimizeAcqfInputs" title="botorch.optim.optimize.OptimizeAcqfInputs"><em>OptimizeAcqfInputs</em></a>) – Common set of arguments for acquisition optimization.</p></li>
+<li><p><strong>discrete_dims</strong> (<em>Tensor</em>) – A tensor of indices corresponding to binary and
+integer parameters.</p></li>
+<li><p><strong>num_points</strong> (<em>int</em>) – The number of points to sample.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor of shape <cite>num_points x d</cite> containing the sampled points.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_mixed.generate_starting_points">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_mixed.</span></span><span class="sig-name descname"><span class="pre">generate_starting_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opt_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discrete_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cont_dims</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_mixed.html#generate_starting_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_mixed.generate_starting_points" title="Link to this definition">¶</a></dt>
+<dd><p>Generate initial starting points for the alternating optimization.</p>
+<p>This method attempts to generate the initial points using the specified
+options and completes any missing points using <cite>sample_feasible_points</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>opt_inputs</strong> (<a class="reference internal" href="#botorch.optim.optimize.OptimizeAcqfInputs" title="botorch.optim.optimize.OptimizeAcqfInputs"><em>OptimizeAcqfInputs</em></a>) – Common set of arguments for acquisition optimization.
+This function utilizes <cite>acq_function</cite>, <cite>bounds</cite>, <cite>num_restarts</cite>,
+<cite>raw_samples</cite>, <cite>options</cite>, <cite>fixed_features</cite> and constraints
+from <cite>opt_inputs</cite>.</p></li>
+<li><p><strong>discrete_dims</strong> (<em>Tensor</em>) – A tensor of indices corresponding to integer and
+binary parameters.</p></li>
+<li><p><strong>cont_dims</strong> (<em>Tensor</em>) – A tensor of indices corresponding to continuous parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a (num_restarts x d)-dim tensor of starting points
+and a (num_restarts)-dim tensor of their respective acquisition values.
+In rare cases, this method may return fewer than <cite>num_restarts</cite> points.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple of two tensors</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_mixed.discrete_step">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_mixed.</span></span><span class="sig-name descname"><span class="pre">discrete_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opt_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discrete_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_mixed.html#discrete_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_mixed.discrete_step" title="Link to this definition">¶</a></dt>
+<dd><p>Discrete nearest neighbour search.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>opt_inputs</strong> (<a class="reference internal" href="#botorch.optim.optimize.OptimizeAcqfInputs" title="botorch.optim.optimize.OptimizeAcqfInputs"><em>OptimizeAcqfInputs</em></a>) – Common set of arguments for acquisition optimization.
+This function utilizes <cite>acq_function</cite>, <cite>bounds</cite>, <cite>options</cite>
+and constraints from <cite>opt_inputs</cite>.</p></li>
+<li><p><strong>discrete_dims</strong> (<em>Tensor</em>) – A tensor of indices corresponding to binary and
+integer parameters.</p></li>
+<li><p><strong>current_x</strong> (<em>Tensor</em>) – Starting point. A tensor of shape <cite>d</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>a (d)-dim tensor of optimized point</dt><dd><p>and a scalar tensor of correspondins acquisition value.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple of two tensors</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_mixed.continuous_step">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_mixed.</span></span><span class="sig-name descname"><span class="pre">continuous_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opt_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discrete_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_mixed.html#continuous_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_mixed.continuous_step" title="Link to this definition">¶</a></dt>
+<dd><p>Continuous search using L-BFGS-B through optimize_acqf.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>opt_inputs</strong> (<a class="reference internal" href="#botorch.optim.optimize.OptimizeAcqfInputs" title="botorch.optim.optimize.OptimizeAcqfInputs"><em>OptimizeAcqfInputs</em></a>) – Common set of arguments for acquisition optimization.
+This function utilizes <cite>acq_function</cite>, <cite>bounds</cite>, <cite>options</cite>,
+<cite>fixed_features</cite> and constraints from <cite>opt_inputs</cite>.</p></li>
+<li><p><strong>discrete_dims</strong> (<em>Tensor</em>) – A tensor of indices corresponding to binary and
+integer parameters.</p></li>
+<li><p><strong>current_x</strong> (<em>Tensor</em>) – Starting point. A tensor of shape <cite>d</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>a (1 x d)-dim tensor of optimized points</dt><dd><p>and a (1)-dim tensor of acquisition values.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple of two tensors</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_mixed.optimize_acqf_mixed_alternating">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_mixed.</span></span><span class="sig-name descname"><span class="pre">optimize_acqf_mixed_alternating</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discrete_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequential</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_mixed.html#optimize_acqf_mixed_alternating"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_mixed.optimize_acqf_mixed_alternating" title="Link to this definition">¶</a></dt>
+<dd><p>Optimizes acquisition function over mixed binary and continuous input spaces.
+Multiple random restarting starting points are picked by evaluating a large set
+of initial candidates. From each starting point, alternating discrete local search
+and continuous optimization via (L-BFGS) is performed for a fixed number of
+iterations.</p>
+<p>NOTE: This method assumes that all discrete variables are integer valued.</p>
+<p># TODO: Support categorical variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a>) – BoTorch Acquisition function.</p></li>
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>discrete_dims</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – A list of indices corresponding to integer and binary parameters.</p></li>
+<li><p><strong>options</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Dictionary specifying optimization options. Supports the following:</p></li>
+<li><p><strong>"initialization_strategy"</strong> (<em>-</em>) – Strategy used to generate the initial candidates.
+“random”, “continuous_relaxation” or “equally_spaced” (linspace style).</p></li>
+<li><p><strong>"tol"</strong> (<em>-</em>) – The algorithm terminates if the absolute improvement in acquisition
+value of one iteration is smaller than this number.</p></li>
+<li><p><strong>"maxiter_alternating"</strong> (<em>-</em>) – Number of alternating steps. Defaults to 64.</p></li>
+<li><p><strong>"maxiter_discrete"</strong> (<em>-</em>) – Maximum number of iterations in each discrete step.
+Defaults to 4.</p></li>
+<li><p><strong>"maxiter_continuous"</strong> (<em>-</em>) – Maximum number of iterations in each continuous step.
+Defaults to 8.</p></li>
+<li><p><strong>"num_spray_points"</strong> (<em>-</em>) – Number of spray points (around <cite>X_baseline</cite>) to add to
+the points generated by the initialization strategy. Defaults to 20 if
+all discrete variables are binary and to 0 otherwise.</p></li>
+<li><p><strong>"std_cont_perturbation"</strong> (<em>-</em>) – Standard deviation of the normal perturbations of
+the continuous variables used to generate the spray points.
+Defaults to 0.1.</p></li>
+<li><p><strong>"batch_limit"</strong> (<em>-</em>) – The maximum batch size for jointly evaluating candidates
+during optimization.</p></li>
+<li><p><strong>"init_batch_limit"</strong> (<em>-</em>) – The maximum batch size for jointly evaluating candidates
+during initialization. During initialization, candidates are evaluated
+in a <cite>no_grad</cite> context, which reduces memory usage. As a result,
+<cite>init_batch_limit</cite> can be set to a larger value than <cite>batch_limit</cite>.
+Defaults to <cite>batch_limit</cite>, if given.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – Number of candidates.</p></li>
+<li><p><strong>raw_samples</strong> (<em>int</em>) – Number of initial candidates used to select starting points from.
+Defaults to 1024.</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em>) – Number of random restarts. Defaults to 20.</p></li>
+<li><p><strong>post_processing_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that post-processes an optimization result
+appropriately (i.e., according to <cite>round-trip</cite> transformations).</p></li>
+<li><p><strong>sequential</strong> (<em>bool</em>) – Whether to use joint or sequential optimization across q-batch.
+This currently only supports sequential optimization.</p></li>
+<li><p><strong>fixed_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – A map <cite>{feature_index: value}</cite> for features that
+should be fixed to a particular value during generation.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>. <cite>indices</cite> and
+<cite>coefficients</cite> should be torch tensors. See the docstring of
+<cite>make_scipy_linear_constraints</cite> for an example.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>a (q x d)-dim tensor of optimized points</dt><dd><p>and a (q)-dim tensor of their respective acquisition values.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple of two tensors</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_mixed.complement_indices_like">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_mixed.</span></span><span class="sig-name descname"><span class="pre">complement_indices_like</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_mixed.html#complement_indices_like"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_mixed.complement_indices_like" title="Link to this definition">¶</a></dt>
+<dd><p>Computes a tensor of complement indices: {range(d) \ indices}.
+Same as complement_indices but returns an integer tensor like indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>d</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.optim.optimize_mixed.complement_indices">
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.optimize_mixed.</span></span><span class="sig-name descname"><span class="pre">complement_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize_mixed.html#complement_indices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize_mixed.complement_indices" title="Link to this definition">¶</a></dt>
+<dd><p>Computes a list of complement indices: {range(d) \ indices}.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – a list of integers.</p></li>
+<li><p><strong>d</strong> (<em>int</em>) – an integer dimension in which to compute the complement.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of integer indices.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1506,8 +1857,8 @@ that is applied before choosing the final candidate.</p></li>
 <li><p><strong>parameters</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors whose <cite>grad</cite> fields are to be returned.</p></li>
 <li><p><strong>backward</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>None</em><em>]</em>) – Callable that takes the (reduced) output of <cite>forward</cite> and sets the
 <cite>grad</cite> attributes of tensors in <cite>parameters</cite>.</p></li>
-<li><p><strong>reducer</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Optional callable used to reduce the output of the forward pass.</p></li>
-<li><p><strong>callback</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>, </em><em>None</em><em>]</em><em>]</em>) – Optional callable that takes the reduced output of <cite>forward</cite> and
+<li><p><strong>reducer</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Optional callable used to reduce the output of the forward pass.</p></li>
+<li><p><strong>callback</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Optional callable that takes the reduced output of <cite>forward</cite> and
 the gradients of <cite>parameters</cite> as positional arguments.</p></li>
 <li><p><strong>context_manager</strong> (<em>Callable</em>) – A ContextManager used to wrap each forward-backward call.
 When passed as <cite>None</cite>, <cite>context_manager</cite> defaults to a <cite>zero_grad_ctx</cite>
@@ -1519,7 +1870,7 @@ that zeroes the gradients of <cite>parameters</cite> upon entry.</p></li>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.optim.closures.core.NdarrayOptimizationClosure">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.closures.core.</span></span><span class="sig-name descname"><span class="pre">NdarrayOptimizationClosure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_array=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_tensor=&lt;built-in</span> <span class="pre">method</span> <span class="pre">as_tensor</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_state=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value=0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persistent=True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/closures/core.html#NdarrayOptimizationClosure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.closures.core.NdarrayOptimizationClosure" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.optim.closures.core.</span></span><span class="sig-name descname"><span class="pre">NdarrayOptimizationClosure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_array</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persistent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/closures/core.html#NdarrayOptimizationClosure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.closures.core.NdarrayOptimizationClosure" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Adds stateful behavior and a numpy.ndarray-typed API to a closure with an
 expected return type Tuple[Tensor, Union[Tensor, Sequence[Optional[Tensor]]]].</p>
@@ -1527,19 +1878,18 @@ expected return type Tuple[Tensor, Union[Tensor, Sequence[Optional[Tensor]]]].</
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A ForwardBackwardClosure instance.</p></li>
+<li><p><strong>closure</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Sequence</em><em>[</em><em>Tensor</em><em> | </em><em>None</em><em>]</em><em>]</em><em>]</em>) – A ForwardBackwardClosure instance.</p></li>
 <li><p><strong>parameters</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>) – A dictionary of tensors representing the closure’s state.
 Expected to correspond with the first <cite>len(parameters)</cite> optional
 gradient tensors returned by <cite>closure</cite>.</p></li>
-<li><p><strong>as_array</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>) – Callable used to convert tensors to ndarrays.</p></li>
-<li><p><strong>as_tensor</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – Callable used to convert ndarrays to tensors.</p></li>
-<li><p><strong>get_state</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>) – Callable that returns the closure’s state as an ndarray. When
+<li><p><strong>as_array</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>npt.NDArray</em><em>]</em>) – Callable used to convert tensors to ndarrays.</p></li>
+<li><p><strong>get_state</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>npt.NDArray</em><em>]</em>) – Callable that returns the closure’s state as an ndarray. When
 passed as <cite>None</cite>, defaults to calling <cite>get_tensors_as_ndarray_1d</cite>
 on <cite>closure.parameters</cite> while passing <cite>as_array</cite> (if given by the user).</p></li>
-<li><p><strong>set_state</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>]</em><em>, </em><em>None</em><em>]</em>) – Callable that takes a 1-dimensional ndarray and sets the
+<li><p><strong>set_state</strong> (<em>Callable</em><em>[</em><em>[</em><em>npt.NDArray</em><em>]</em><em>, </em><em>None</em><em>]</em>) – Callable that takes a 1-dimensional ndarray and sets the
 closure’s state. When passed as <cite>None</cite>, <cite>set_state</cite> defaults to
 calling <cite>set_tensors_from_ndarray_1d</cite> with <cite>closure.parameters</cite> and
-a given ndarray while passing <cite>as_tensor</cite>.</p></li>
+a given ndarray.</p></li>
 <li><p><strong>fill_value</strong> (<em>float</em>) – Fill value for parameters whose gradients are None. In most
 cases, <cite>fill_value</cite> should either be zero or NaN.</p></li>
 <li><p><strong>persistent</strong> (<em>bool</em>) – Boolean specifying whether an ndarray should be retained
@@ -1549,7 +1899,7 @@ as a persistent buffer for gradients.</p></li>
 </dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.optim.closures.core.NdarrayOptimizationClosure.state">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#botorch.optim.closures.core.NdarrayOptimizationClosure.state" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarType_co</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.optim.closures.core.NdarrayOptimizationClosure.state" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 </section>
@@ -1666,7 +2016,7 @@ satisfy imposed bounds only up to numerical accuracy.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – input Tensor with shape <cite>… x p</cite>, where <cite>p</cite> is the number of features</p></li>
-<li><p><strong>fixed_features</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – A dictionary with keys as column indices and values
+<li><p><strong>fixed_features</strong> (<em>Mapping</em><em>[</em><em>int</em><em>, </em><em>float</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – A mapping with keys as column indices and values
 equal to what the feature should be set to in <cite>X</cite>. If the value is
 None, that column is just considered fixed. Keys should be in the
 range <cite>[0, p - 1]</cite>.</p></li>
@@ -1852,7 +2202,7 @@ define the set of names to be excluded.</p>
 <dd class="field-even"><p>An ndarray with the same data as <cite>values</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>ndarray</em></p>
+<dd class="field-odd"><p><em>ndarray</em>[<em>Any</em>, <em>dtype</em>[<em>_ScalarType_co</em>]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1863,26 +2213,25 @@ define the set of names to be excluded.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tensors</strong> (<em>Iterator</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
-<li><p><strong>out</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>out</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>dtype</strong> (<em>dtype</em><em> | </em><em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>as_array</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>)</p></li>
+<li><p><strong>as_array</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>ndarray</em></p>
+<dd class="field-even"><p><em>ndarray</em>[<em>Any</em>, <em>dtype</em>[<em>_ScalarType_co</em>]]</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.optim.utils.numpy_utils.set_tensors_from_ndarray_1d">
-<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.numpy_utils.</span></span><span class="sig-name descname"><span class="pre">set_tensors_from_ndarray_1d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_tensor=&lt;built-in</span> <span class="pre">method</span> <span class="pre">as_tensor</span> <span class="pre">of</span> <span class="pre">type</span> <span class="pre">object&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/numpy_utils.html#set_tensors_from_ndarray_1d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.numpy_utils.set_tensors_from_ndarray_1d" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.optim.utils.numpy_utils.</span></span><span class="sig-name descname"><span class="pre">set_tensors_from_ndarray_1d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils/numpy_utils.html#set_tensors_from_ndarray_1d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.utils.numpy_utils.set_tensors_from_ndarray_1d" title="Link to this definition">¶</a></dt>
 <dd><p>Sets the values of one more tensors based off of a vector of assignments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tensors</strong> (<em>Iterator</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
-<li><p><strong>array</strong> (<em>ndarray</em>)</p></li>
-<li><p><strong>as_tensor</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>)</p></li>
+<li><p><strong>array</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1905,7 +2254,7 @@ define the set of names to be excluded.</p>
 <dd class="field-even"><p>An ndarray of bounds.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>ndarray</em> | None</p>
+<dd class="field-odd"><p><em>ndarray</em>[<em>Any</em>, <em>dtype</em>[<em>_ScalarType_co</em>]] | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1925,8 +2274,8 @@ track of the runtime and the optimization variables at the current iteration.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fun</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>, </em><em>...</em><em>]</em><em>, </em><em>float</em><em>]</em>)</p></li>
-<li><p><strong>x0</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>fun</strong> (<em>Callable</em><em>[</em><em>[</em><em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em><em>, </em><em>...</em><em>]</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>x0</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>args</strong> (<em>tuple</em><em>[</em><em>Any</em><em>, </em><em>...</em><em>]</em>)</p></li>
 <li><p><strong>method</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>jac</strong> (<em>str</em><em> | </em><em>Callable</em><em> | </em><em>bool</em><em> | </em><em>None</em>)</p></li>
@@ -2038,9 +2387,9 @@ element of the q-batch, for each of the 3 t-batches:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>ndarray</em>) – The input array.</p></li>
+<li><p><strong>x</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>) – The input array.</p></li>
 <li><p><strong>flat_idxr</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The indices in <cite>x</cite> to consider.</p></li>
-<li><p><strong>coeffs</strong> (<em>ndarray</em>) – The coefficients corresponding to the indices.</p></li>
+<li><p><strong>coeffs</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>) – The coefficients corresponding to the indices.</p></li>
 <li><p><strong>rhs</strong> (<em>float</em>) – The right-hand-side of the constraint.</p></li>
 </ul>
 </dd>
@@ -2059,9 +2408,9 @@ element of the q-batch, for each of the 3 t-batches:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>ndarray</em>) – The input array.</p></li>
+<li><p><strong>x</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>) – The input array.</p></li>
 <li><p><strong>flat_idxr</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The indices for the elements of x that appear in the constraint.</p></li>
-<li><p><strong>coeffs</strong> (<em>ndarray</em>) – The coefficients corresponding to the indices.</p></li>
+<li><p><strong>coeffs</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>) – The coefficients corresponding to the indices.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – number of elements</p></li>
 </ul>
 </dd>
@@ -2069,7 +2418,7 @@ element of the q-batch, for each of the 3 t-batches:</p>
 <dd class="field-even"><p>The Jacobian.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>ndarray</em></p>
+<dd class="field-odd"><p><em>ndarray</em>[<em>Any</em>, <em>dtype</em>[<em>_ScalarType_co</em>]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2251,7 +2600,7 @@ called.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>homotopy_parameters</strong> (<em>list</em><em>[</em><a class="reference internal" href="#botorch.optim.homotopy.HomotopyParameter" title="botorch.optim.homotopy.HomotopyParameter"><em>HomotopyParameter</em></a><em>]</em>) – List of homotopy parameters</p></li>
-<li><p><strong>callbacks</strong> (<em>Optional</em><em>[</em><em>list</em><em>[</em><em>Callable</em><em>]</em><em>]</em>) – Optional list of callbacks that are executed each time
+<li><p><strong>callbacks</strong> (<em>list</em><em>[</em><em>Callable</em><em>] </em><em>| </em><em>None</em>) – Optional list of callbacks that are executed each time
 <cite>restart</cite>, <cite>reset</cite>, or <cite>step</cite> are called. These may be used to, e.g.,
 reinitialize the acquisition function which is needed when using qNEHVI.</p></li>
 </ul>
@@ -2324,6 +2673,7 @@ reinitialize the acquisition function which is needed when using qNEHVI.</p></li
 <li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
 </ul>

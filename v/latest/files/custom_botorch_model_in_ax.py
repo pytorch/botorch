@@ -10,14 +10,15 @@
 # If you want to do something non-standard, or would like to have full insight into every aspect of the implementation, please see [this tutorial](./closed_loop_botorch_only) for how to write your own full optimization loop in BoTorch.
 # 
 
-# In[1]:
+# In[ ]:
 
 
 import os
 from contextlib import contextmanager, nullcontext
 
-from ax.utils.testing.mock import fast_botorch_optimize_context_manager
 import plotly.io as pio
+
+from ax.utils.testing.mock import mock_botorch_optimize_context_manager
 
 # Ax uses Plotly to produce interactive plots. These are great for viewing and analysis,
 # though they also lead to large file sizes, which is not ideal for files living in GH.
@@ -81,17 +82,23 @@ class SimpleCustomGP(ExactGP, GPyTorchModel):
 
 
 from ax.models.torch.botorch_modular.model import BoTorchModel
-from ax.models.torch.botorch_modular.surrogate import Surrogate
-
+from ax.models.torch.botorch_modular.surrogate import Surrogate, SurrogateSpec
+from ax.models.torch.botorch_modular.utils import ModelConfig
 
 ax_model = BoTorchModel(
     surrogate=Surrogate(
-        # The model class to use
-        botorch_model_class=SimpleCustomGP,
-        # Optional, MLL class with which to optimize model parameters
-        # mll_class=ExactMarginalLogLikelihood,
-        # Optional, dictionary of keyword arguments to model constructor
-        # model_options={}
+        surrogate_spec=SurrogateSpec(
+            model_configs=[
+                ModelConfig(
+                    # The model class to use
+                    botorch_model_class=SimpleCustomGP,
+                    # Optional, MLL class with which to optimize model parameters
+                    # mll_class=ExactMarginalLogLikelihood,
+                    # Optional, dictionary of keyword arguments to model constructor
+                    # model_options={}
+                )
+            ]
+        )
     ),
     # Optional, acquisition function class to use - see custom acquisition tutorial
     # botorch_acqf_class=qExpectedImprovement,
@@ -146,7 +153,7 @@ gs = GenerationStrategy(
             num_trials=-1,  # No limitation on how many trials should be produced from this step
             # For `BOTORCH_MODULAR`, we pass in kwargs to specify what surrogate or acquisition function to use.
             model_kwargs={
-                "surrogate": Surrogate(SimpleCustomGP),
+                "surrogate_spec": SurrogateSpec(model_configs=[ModelConfig(botorch_model_class=SimpleCustomGP)]),
             },
         ),
     ]
@@ -208,7 +215,7 @@ def evaluate(parameters):
 
 
 if SMOKE_TEST:
-    fast_smoke_test = fast_botorch_optimize_context_manager
+    fast_smoke_test = mock_botorch_optimize_context_manager
 else:
     fast_smoke_test = nullcontext
 
@@ -386,7 +393,7 @@ with fast_smoke_test():
         model_bridge = Models.BOTORCH_MODULAR(
             experiment=exp,
             data=exp.fetch_data(),
-            surrogate=Surrogate(SimpleCustomGP),
+            surrogate_spec=SurrogateSpec(model_configs=[ModelConfig(SimpleCustomGP)]),
         )
         trial = exp.new_trial(generator_run=model_bridge.gen(1))
         trial.run()

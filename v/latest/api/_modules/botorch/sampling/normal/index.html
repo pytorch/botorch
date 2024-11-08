@@ -94,7 +94,7 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
     <span class="k">def</span> <span class="nf">_update_base_samples</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="p">:</span> <span class="n">NormalMCSampler</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="p">:</span> <span class="n">MCSampler</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Update the sampler to use the original base samples for X_baseline.</span>
 
@@ -130,7 +130,15 @@
             <span class="n">expanded_samples</span> <span class="o">=</span> <span class="n">current_base_samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
                 <span class="n">expanded_shape</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="p">(</span><span class="n">HigherOrderGPPosterior</span><span class="p">,</span> <span class="n">MultitaskGPPosterior</span><span class="p">)):</span>
+            <span class="n">non_transformed_posterior</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">posterior</span><span class="o">.</span><span class="n">_posterior</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">TransformedPosterior</span><span class="p">)</span>
+                <span class="k">else</span> <span class="n">posterior</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">non_transformed_posterior</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">HigherOrderGPPosterior</span><span class="p">,</span> <span class="n">MultitaskGPPosterior</span><span class="p">),</span>
+            <span class="p">):</span>
                 <span class="n">n_train_samples</span> <span class="o">=</span> <span class="n">current_base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span>
                 <span class="c1"># The train base samples.</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">n_train_samples</span><span class="p">]</span> <span class="o">=</span> <span class="n">expanded_samples</span><span class="p">[</span>
@@ -141,11 +149,7 @@
                     <span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">n_train_samples</span><span class="p">:</span>
                 <span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">batch_shape</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">posterior</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">batch_shape</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">TransformedPosterior</span><span class="p">)</span>
-                    <span class="k">else</span> <span class="n">posterior</span><span class="o">.</span><span class="n">batch_shape</span>
-                <span class="p">)</span>
+                <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">non_transformed_posterior</span><span class="o">.</span><span class="n">batch_shape</span>
                 <span class="n">single_output</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="nb">len</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
                 <span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
@@ -271,6 +275,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
 </ul>

@@ -85,7 +85,7 @@ Xraw = bounds[0] + (bounds[1] - bounds[0]) * torch.rand(100 * N, q, d)
 Yraw = qEI(Xraw)  # evaluate the acquisition function on these q-batches
 
 # apply the heuristic for sampling promising initial conditions
-X = initialize_q_batch_nonneg(Xraw, Yraw, N)
+X, _ = initialize_q_batch_nonneg(Xraw, Yraw, N)
 
 # we'll want gradients for the input
 X.requires_grad_(True);

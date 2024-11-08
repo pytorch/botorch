@@ -48,18 +48,14 @@
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">pi</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
-
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
-
 <span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">SaasFullyBayesianSingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">check_no_nans</span><span class="p">,</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span>
+<span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -98,10 +94,9 @@
         <span class="n">optimal_inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">optimal_outputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">condition_noiseless</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PosteriorTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">estimation_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"LB"</span><span class="p">,</span>
-        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Joint entropy search acquisition function.</span>
@@ -118,11 +113,11 @@
 <span class="sd">                [Tu2022joint]_. These are sampled identically, so this only controls</span>
 <span class="sd">                the fashion in which the GP is reshaped as a result of conditioning</span>
 <span class="sd">                on the optimum.</span>
+<span class="sd">            posterior_transform: PosteriorTransform to negate or scalarize the output.</span>
 <span class="sd">            estimation_type: estimation_type: A string to determine which entropy</span>
 <span class="sd">                estimate is computed: Lower bound" ("LB") or "Monte Carlo" ("MC").</span>
 <span class="sd">                Lower Bound is recommended due to the relatively high variance</span>
 <span class="sd">                of the MC estimator.</span>
-<span class="sd">            maximize: If true, we consider a maximization problem.</span>
 <span class="sd">            X_pending: A `m x d`-dim Tensor of `m` design points that have been</span>
 <span class="sd">                submitted for function evaluation, but have not yet been evaluated.</span>
 <span class="sd">            num_samples: The number of Monte Carlo samples used for the Monte Carlo</span>
@@ -139,16 +134,13 @@
         <span class="c1"># and three-dimensional otherwise.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimal_inputs</span> <span class="o">=</span> <span class="n">optimal_inputs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimal_outputs</span> <span class="o">=</span> <span class="n">optimal_outputs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimal_output_values</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">posterior_transform</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_outputs</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">posterior_transform</span>
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_outputs</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span> <span class="o">=</span> <span class="n">posterior_transform</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
 
-        <span class="c1"># The optima (can be maxima, can be minima) come in as the largest</span>
-        <span class="c1"># values if we optimize, or the smallest (likely substantially negative)</span>
-        <span class="c1"># if we minimize. Inside the acquisition function, however, we always</span>
-        <span class="c1"># want to consider MAX-values. As such, we need to flip them if</span>
-        <span class="c1"># we want to minimize.</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
-            <span class="n">optimal_outputs</span> <span class="o">=</span> <span class="o">-</span><span class="n">optimal_outputs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">=</span> <span class="n">optimal_inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">condition_noiseless</span> <span class="o">=</span> <span class="n">condition_noiseless</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span> <span class="o">=</span> <span class="n">model</span>
@@ -233,7 +225,9 @@
 <span class="sd">            A `batch_shape`-dim Tensor of acquisition values at the given design</span>
 <span class="sd">            points `X`.</span>
 <span class="sd">        """</span>
-        <span class="n">initial_posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">initial_posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
+        <span class="p">)</span>
         <span class="c1"># need to check if there is a two-dimensional batch shape -</span>
         <span class="c1"># the sampled optima appear in the dimension right after</span>
         <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
@@ -251,15 +245,17 @@
 
         <span class="c1"># Compute the mixture mean and variance</span>
         <span class="n">posterior_m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
-            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span>
+            <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">noiseless_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
-            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span>
+            <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">variance</span>
 
         <span class="n">mean_m</span> <span class="o">=</span> <span class="n">posterior_m</span><span class="o">.</span><span class="n">mean</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
-            <span class="n">mean_m</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean_m</span>
         <span class="n">variance_m</span> <span class="o">=</span> <span class="n">posterior_m</span><span class="o">.</span><span class="n">variance</span>
 
         <span class="n">check_no_nans</span><span class="p">(</span><span class="n">variance_m</span><span class="p">)</span>
@@ -270,7 +266,7 @@
             <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">normalized_mvs</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_outputs</span> <span class="o">-</span> <span class="n">mean_m</span><span class="p">)</span> <span class="o">/</span> <span class="n">stdv</span>
+        <span class="n">normalized_mvs</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_output_values</span> <span class="o">-</span> <span class="n">mean_m</span><span class="p">)</span> <span class="o">/</span> <span class="n">stdv</span>
         <span class="n">cdf_mvs</span> <span class="o">=</span> <span class="n">normal</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">normalized_mvs</span><span class="p">)</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
         <span class="n">pdf_mvs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">normal</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">normalized_mvs</span><span class="p">))</span>
 
@@ -324,7 +320,9 @@
 <span class="sd">            A `batch_shape`-dim Tensor of acquisition values at the given design</span>
 <span class="sd">            points `X`.</span>
 <span class="sd">        """</span>
-        <span class="n">initial_posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">initial_posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
+        <span class="p">)</span>
 
         <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="n">sample_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
@@ -341,15 +339,17 @@
 
         <span class="c1"># Compute the mixture mean and variance</span>
         <span class="n">posterior_m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
-            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span>
+            <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">noiseless_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional_model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
-            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">),</span>
+            <span class="n">observation_noise</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">variance</span>
 
         <span class="n">mean_m</span> <span class="o">=</span> <span class="n">posterior_m</span><span class="o">.</span><span class="n">mean</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
-            <span class="n">mean_m</span> <span class="o">=</span> <span class="o">-</span><span class="n">mean_m</span>
         <span class="n">variance_m</span> <span class="o">=</span> <span class="n">posterior_m</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">CLAMP_LB</span><span class="p">)</span>
         <span class="n">conditional_samples</span><span class="p">,</span> <span class="n">conditional_logprobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_monte_carlo_variables</span><span class="p">(</span>
             <span class="n">posterior_m</span>
@@ -410,6 +410,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_utils.html">botorch.test_utils</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
 </ul>
