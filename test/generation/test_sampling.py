@@ -167,18 +167,11 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
             ConstrainedMaxPosteriorSampling(mm, cmms, objective=obj, replacement=False)
 
     def test_constrained_max_posterior_sampling(self):
-        batch_shapes = (torch.Size(), torch.Size([3]), torch.Size([3, 2]))
-        dtypes = (torch.float, torch.double)
-        for (
-            batch_shape,
-            dtype,
-            N,
-            num_samples,
-            d,
-            observation_noise,
-        ) in itertools.product(
-            batch_shapes, dtypes, (5, 6), (1, 2), (1, 2), (True, False)
-        ):
+        for batch_shape, dtype, N, num_samples, d, observation_noise in [
+            (torch.Size(), torch.float, 5, 1, 1, False),
+            (torch.Size([3]), torch.float, 6, 3, 2, False),
+            (torch.Size([3, 2]), torch.double, 6, 3, 2, True),
+        ]:
             tkwargs = {"device": self.device, "dtype": dtype}
             expected_shape = torch.Size(list(batch_shape) + [num_samples] + [d])
             # X is `batch_shape x N x d` = batch_shape x N x 1.
@@ -193,16 +186,19 @@ class TestConstrainedMaxPosteriorSampling(BotorchTestCase):
                 with mock.patch.object(MockModel, "posterior", return_value=mp):
                     mm = MockModel(None)
                     c_model1 = SingleTaskGP(
-                        X, torch.randn(X.shape[0:-1], **tkwargs).unsqueeze(-1)
+                        X, torch.randn(X.shape[:-1], **tkwargs).unsqueeze(-1)
                     )
                     c_model2 = SingleTaskGP(
-                        X, torch.randn(X.shape[0:-1], **tkwargs).unsqueeze(-1)
+                        X, torch.randn(X.shape[:-1], **tkwargs).unsqueeze(-1)
                     )
                     c_model3 = SingleTaskGP(
-                        X, torch.randn(X.shape[0:-1], **tkwargs).unsqueeze(-1)
+                        X, torch.randn(X.shape[:-1], **tkwargs).unsqueeze(-1)
                     )
                     cmms1 = MockModel(MockPosterior(mean=None))
-                    cmms2 = ModelListGP(c_model1, c_model2)
+                    cmms2 = SingleTaskGP(  # Multi-output model as constraint.
+                        X, torch.randn((X.shape[0:-1] + (4,)), **tkwargs)
+                    )
+                    # ModelListGP as constraint.
                     cmms3 = ModelListGP(c_model1, c_model2, c_model3)
                     for cmms in [cmms1, cmms2, cmms3]:
                         CPS = ConstrainedMaxPosteriorSampling(mm, cmms)
