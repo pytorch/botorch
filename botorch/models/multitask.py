@@ -195,7 +195,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
             >>> train_X = torch.cat([
             >>>     torch.cat([X1, i1], -1), torch.cat([X2, i2], -1),
             >>> ])
-            >>> train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)
+            >>> train_Y = torch.cat([f1(X1), f2(X2)]).unsqueeze(-1)
             >>> model = MultiTaskGP(train_X, train_Y, task_feature=-1)
         """
         with torch.no_grad():
