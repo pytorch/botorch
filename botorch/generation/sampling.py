@@ -334,10 +334,19 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         )
         Y_samples = posterior.rsample(sample_shape=torch.Size([num_samples]))
 
-        c_posterior = self.constraint_model.posterior(
-            X=X, observation_noise=observation_noise
+        # Loop over the constraint models (if possible) to reduce peak memory usage.
+        constraint_models = (
+            self.constraint_model.models
+            if isinstance(self.constraint_model, ModelListGP)
+            else [self.constraint_model]
         )
-        C_samples = c_posterior.rsample(sample_shape=torch.Size([num_samples]))
+        C_samples_list = []
+        for c_model in constraint_models:
+            c_posterior = c_model.posterior(X=X, observation_noise=observation_noise)
+            C_samples_list.append(
+                c_posterior.rsample(sample_shape=torch.Size([num_samples]))
+            )
+        C_samples = torch.cat(C_samples_list, dim=-1)
 
         # Convert the objective and constraint samples into a scalar-valued "score"
         scores = self._convert_samples_to_scores(
