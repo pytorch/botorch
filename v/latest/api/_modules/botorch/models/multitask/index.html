@@ -223,7 +223,7 @@
 <span class="sd">            &gt;&gt;&gt; train_X = torch.cat([</span>
 <span class="sd">            &gt;&gt;&gt;     torch.cat([X1, i1], -1), torch.cat([X2, i2], -1),</span>
 <span class="sd">            &gt;&gt;&gt; ])</span>
-<span class="sd">            &gt;&gt;&gt; train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)</span>
+<span class="sd">            &gt;&gt;&gt; train_Y = torch.cat([f1(X1), f2(X2)]).unsqueeze(-1)</span>
 <span class="sd">            &gt;&gt;&gt; model = MultiTaskGP(train_X, train_Y, task_feature=-1)</span>
 <span class="sd">        """</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
