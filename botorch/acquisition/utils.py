@@ -15,7 +15,6 @@ from collections.abc import Callable
 
 import torch
 from botorch.acquisition.objective import (
-    IdentityMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
     ScalarizedPosteriorTransform,
@@ -34,6 +33,7 @@ from botorch.utils.objective import compute_feasibility_indicator
 from botorch.utils.sampling import optimize_posterior_samples
 from botorch.utils.transforms import is_ensemble, normalize_indices
 from gpytorch.models import GP
+from pyre_extensions import none_throws
 from torch import Tensor
 
 
@@ -244,6 +244,76 @@ def get_infeasible_cost(
     return -(lb.clamp_max(0.0))
 
 
+def _prune_inferior_shared_processing(
+    model: Model,
+    X: Tensor,
+    is_moo: bool,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
+    num_samples: int = 2048,
+    max_frac: float = 1.0,
+    sampler: MCSampler | None = None,
+    marginalize_dim: int | None = None,
+) -> tuple[int, Tensor, Tensor]:
+    r"""Shared data processing for `prune_inferior_points` and
+    `prune_inferior_points_multi_objective`.
+
+    Returns:
+        - max_points: The maximum number of points to keep.
+        - obj_vals: The objective values of the points in `X`.
+        - infeas: A boolean tensor indicating feasibility of `X`.
+    """
+    func_name = (
+        "prune_inferior_points_multi_objective" if is_moo else "prune_inferior_points"
+    )
+    if marginalize_dim is None and is_ensemble(model):
+        marginalize_dim = MCMC_DIM
+
+    if X.ndim > 2:
+        raise UnsupportedError(
+            f"Batched inputs `X` are currently unsupported by `{func_name}`"
+        )
+    if X.size(-2) == 0:
+        raise ValueError("X must have at least one point.")
+    if max_frac <= 0 or max_frac > 1.0:
+        raise ValueError(f"max_frac must take values in (0, 1], is {max_frac}")
+    max_points = math.ceil(max_frac * X.size(-2))
+    with torch.no_grad():
+        posterior = model.posterior(X=X, posterior_transform=posterior_transform)
+    if sampler is None:
+        sampler = get_sampler(
+            posterior=posterior, sample_shape=torch.Size([num_samples])
+        )
+    samples = sampler(posterior)
+    if objective is not None:
+        obj_vals = objective(samples=samples, X=X)
+    elif is_moo:
+        obj_vals = samples
+    else:
+        obj_vals = samples.squeeze(-1)
+    if obj_vals.ndim > (2 + is_moo):
+        if obj_vals.ndim == (3 + is_moo) and marginalize_dim is not None:
+            if marginalize_dim < 0:
+                # Update `marginalize_dim` to be positive while accounting for
+                # removal of output dimension in SOO.
+                marginalize_dim = (not is_moo) + none_throws(
+                    normalize_indices([marginalize_dim], d=obj_vals.ndim)
+                )[0]
+            obj_vals = obj_vals.mean(dim=marginalize_dim)
+        else:
+            raise UnsupportedError(
+                "Models with multiple batch dims are currently unsupported by "
+                f"`{func_name}`."
+            )
+    infeas = ~compute_feasibility_indicator(
+        constraints=constraints,
+        samples=samples,
+        marginalize_dim=marginalize_dim,
+    )
+    return max_points, obj_vals, infeas
+
+
 def prune_inferior_points(
     model: Model,
     X: Tensor,
@@ -292,48 +362,16 @@ def prune_inferior_points(
         with `N_nz` the number of points in `X` that have non-zero (empirical,
         under `num_samples` samples) probability of being the best point.
     """
-    if marginalize_dim is None and is_ensemble(model):
-        # TODO: Properly deal with marginalizing fully Bayesian models
-        marginalize_dim = MCMC_DIM
-
-    if X.ndim > 2:
-        # TODO: support batched inputs (req. dealing with ragged tensors)
-        raise UnsupportedError(
-            "Batched inputs `X` are currently unsupported by prune_inferior_points"
-        )
-    if X.size(-2) == 0:
-        raise ValueError("X must have at least one point.")
-    if max_frac <= 0 or max_frac > 1.0:
-        raise ValueError(f"max_frac must take values in (0, 1], is {max_frac}")
-    max_points = math.ceil(max_frac * X.size(-2))
-    with torch.no_grad():
-        posterior = model.posterior(X=X, posterior_transform=posterior_transform)
-    if sampler is None:
-        sampler = get_sampler(
-            posterior=posterior, sample_shape=torch.Size([num_samples])
-        )
-    samples = sampler(posterior)
-    if objective is None:
-        objective = IdentityMCObjective()
-    obj_vals = objective(samples, X=X)
-    if obj_vals.ndim > 2:
-        if obj_vals.ndim == 3 and marginalize_dim is not None:
-            if marginalize_dim < 0:
-                # we do this again in compute_feasibility_indicator, but that will
-                # have no effect since marginalize_dim will be non-negative
-                marginalize_dim = (
-                    1 + normalize_indices([marginalize_dim], d=obj_vals.ndim)[0]
-                )
-            obj_vals = obj_vals.mean(dim=marginalize_dim)
-        else:
-            # TODO: support batched inputs (req. dealing with ragged tensors)
-            raise UnsupportedError(
-                "Models with multiple batch dims are currently unsupported by"
-                " prune_inferior_points."
-            )
-    infeas = ~compute_feasibility_indicator(
+    max_points, obj_vals, infeas = _prune_inferior_shared_processing(
+        model=model,
+        X=X,
+        is_moo=False,
+        objective=objective,
+        posterior_transform=posterior_transform,
         constraints=constraints,
-        samples=samples,
+        num_samples=num_samples,
+        max_frac=max_frac,
+        sampler=sampler,
         marginalize_dim=marginalize_dim,
     )
     if infeas.any():
