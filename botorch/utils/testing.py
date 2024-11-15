@@ -17,7 +17,11 @@ from unittest import mock, TestCase
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.exceptions.warnings import BotorchTensorDimensionWarning, InputDataWarning
+from botorch.exceptions.warnings import (
+    BotorchTensorDimensionWarning,
+    InputDataWarning,
+    NumericsWarning,
+)
 from botorch.models.model import FantasizeMixin, Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
@@ -67,6 +71,16 @@ class BotorchTestCase(TestCase):
                 "ignore",
                 message=r"Data \(input features\) is not",
                 category=InputDataWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message="has known numerical issues",
+                category=NumericsWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message="Model converter code is deprecated",
+                category=DeprecationWarning,
             )
 
     def assertAllClose(
