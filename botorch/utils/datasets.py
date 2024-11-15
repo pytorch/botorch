@@ -8,7 +8,6 @@ r"""Representations for different kinds of datasets."""
 
 from __future__ import annotations
 
-import warnings
 from typing import Any
 
 import torch
@@ -146,39 +145,6 @@ class SupervisedDataset:
             )
             and self.feature_names == other.feature_names
             and self.outcome_names == other.outcome_names
-        )
-
-
-class FixedNoiseDataset(SupervisedDataset):
-    r"""A SupervisedDataset with an additional field `Yvar` that stipulates
-    observations variances so that `Y[i] ~ N(f(X[i]), Yvar[i])`.
-
-    NOTE: This is deprecated. Use `SupervisedDataset` instead.
-    Will be removed in a future release (~v0.11).
-    """
-
-    def __init__(
-        self,
-        X: BotorchContainer | Tensor,
-        Y: BotorchContainer | Tensor,
-        Yvar: BotorchContainer | Tensor,
-        feature_names: list[str],
-        outcome_names: list[str],
-        validate_init: bool = True,
-    ) -> None:
-        r"""Initialize a `FixedNoiseDataset` -- deprecated!"""
-        warnings.warn(
-            "`FixedNoiseDataset` is deprecated. Use `SupervisedDataset` instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(
-            X=X,
-            Y=Y,
-            feature_names=feature_names,
-            outcome_names=outcome_names,
-            Yvar=Yvar,
-            validate_init=validate_init,
         )
 
 

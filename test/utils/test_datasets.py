@@ -10,7 +10,6 @@ from botorch.exceptions.errors import InputDataError, UnsupportedError
 from botorch.utils.containers import DenseContainer, SliceContainer
 from botorch.utils.datasets import (
     ContextualDataset,
-    FixedNoiseDataset,
     MultiTaskDataset,
     RankingDataset,
     SupervisedDataset,
@@ -129,7 +128,7 @@ class TestDatasets(BotorchTestCase):
         Yvar = rand(3, 1)
         feature_names = ["x1", "x2"]
         outcome_names = ["y"]
-        dataset = FixedNoiseDataset(
+        dataset = SupervisedDataset(
             X=X,
             Y=Y,
             Yvar=Yvar,
@@ -141,17 +140,6 @@ class TestDatasets(BotorchTestCase):
         self.assertTrue(torch.equal(dataset.Yvar, Yvar))
         self.assertEqual(dataset.feature_names, feature_names)
         self.assertEqual(dataset.outcome_names, outcome_names)
-
-        with self.assertRaisesRegex(
-            ValueError, "`Y` and `Yvar`"
-        ), self.assertWarnsRegex(DeprecationWarning, "SupervisedDataset"):
-            FixedNoiseDataset(
-                X=X,
-                Y=Y,
-                Yvar=Yvar.squeeze(),
-                feature_names=feature_names,
-                outcome_names=outcome_names,
-            )
 
     def test_ranking(self):
         # Test `_validate`
