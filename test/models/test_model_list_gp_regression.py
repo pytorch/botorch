@@ -110,7 +110,7 @@ class TestModelListGP(BotorchTestCase):
                     m.outcome_transform, (Log, Standardize, ChainedOutcomeTransform)
                 )
             else:
-                assert not hasattr(m, "outcome_transform")
+                self.assertIsNone(m.outcome_transform)
 
         # test constructing likelihood wrapper
         mll = SumMarginalLogLikelihood(model.likelihood, model)
@@ -161,7 +161,7 @@ class TestModelListGP(BotorchTestCase):
             submodel = model.models[0]
             p0 = submodel.posterior(test_x)
             tmp_tf = submodel.outcome_transform
-            del submodel.outcome_transform
+            submodel.outcome_transform = None
             p0_tf = submodel.posterior(test_x)
             submodel.outcome_transform = tmp_tf
             expected_var = tmp_tf.untransform_posterior(p0_tf).variance

@@ -445,13 +445,13 @@ def get_gp_samples(
         stacklevel=2,
     )
     # Get transforms from the model.
-    intf = getattr(model, "input_transform", None)
-    octf = getattr(model, "outcome_transform", None)
+    intf = model.input_transform
+    octf = model.outcome_transform
     # Remove the outcome transform - leads to buggy draws.
     if octf is not None:
-        del model.outcome_transform
+        model.outcome_transform = None
     if intf is not None:
-        del model.input_transform
+        model.input_transform = None
 
     if num_outputs > 1:
         if not isinstance(model, ModelListGP):
@@ -471,11 +471,11 @@ def get_gp_samples(
         train_X = models[m].train_inputs[0]
         train_targets = models[m].train_targets
         _model = models[m]
-        _intf = getattr(_model, "input_transform", None)
-        _octf = getattr(_model, "outcome_transform", None)
+        _intf = _model.input_transform
+        _octf = _model.outcome_transform
         # Remove the outcome transform - leads to buggy draws.
         if _octf is not None:
-            del _model.outcome_transform
+            _model.outcome_transform = None
 
         octfs.append(_octf)
         intfs.append(_intf)

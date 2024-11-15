@@ -22,7 +22,7 @@ from botorch.sampling.pathwise import (
     KernelEvaluationMap,
 )
 from botorch.sampling.pathwise.utils import get_train_inputs, get_train_targets
-from botorch.utils.context_managers import delattr_ctx
+from botorch.utils.context_managers import disable_attr_ctx
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
 from gpytorch.likelihoods import BernoulliLikelihood
@@ -133,7 +133,7 @@ class TestPathwiseUpdates(BotorchTestCase):
             )
 
         # Disable sampling of noise variables `e` used to obtain `y = f + e`
-        with delattr_ctx(model, "outcome_transform"), patch.object(
+        with disable_attr_ctx(model, "outcome_transform"), patch.object(
             torch,
             "randn_like",
             return_value=noise_values,
@@ -150,10 +150,7 @@ class TestPathwiseUpdates(BotorchTestCase):
         self.assertIsInstance(update_paths, GeneralizedLinearPath)
         self.assertIsInstance(update_paths.feature_map, KernelEvaluationMap)
         self.assertTrue(update_paths.feature_map.points.equal(Z))
-        self.assertIs(
-            update_paths.feature_map.input_transform,
-            getattr(model, "input_transform", None),
-        )
+        self.assertIs(update_paths.feature_map.input_transform, model.input_transform)
 
         # Compare with manually computed update weights `Cov(y, y)^{-1} (y - f - e)`
         Luu = psd_safe_cholesky(Kuu.to_dense())
@@ -170,7 +167,7 @@ class TestPathwiseUpdates(BotorchTestCase):
         Z2 = torch.rand(16, Z.shape[-1], device=self.device, dtype=Z.dtype)
         X2 = (
             model.input_transform.untransform(Z2)
-            if hasattr(model, "input_transform")
+            if model.input_transform is not None
             else Z2
         )
         features = update_paths.feature_map(X2)

@@ -193,14 +193,14 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
             if inp_trans is not None:
                 self.assertIsInstance(model.input_transform, Normalize)
             else:
-                self.assertFalse(hasattr(model, "input_transform"))
+                self.assertIsNone(model.input_transform)
             if out_trans is not None:
                 self.assertIsInstance(model.outcome_transform, Log)
 
                 posterior = model.posterior(test_X)
                 self.assertIsInstance(posterior, TransformedPosterior)
             else:
-                self.assertFalse(hasattr(model, "outcome_transform"))
+                self.assertIsNone(model.outcome_transform)
 
         # test user warnings when using transforms
         with self.assertWarnsRegex(

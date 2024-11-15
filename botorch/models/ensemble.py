@@ -78,7 +78,7 @@ class EnsembleModel(Model, ABC):
         # NOTE: The `outcome_transform` `untransform`s the predictions rather than the
         # `posterior` (as is done in GP models). This is more general since it works
         # even if the transform doesn't support `untransform_posterior`.
-        if hasattr(self, "outcome_transform"):
+        if self.outcome_transform is not None:
             values, _ = self.outcome_transform.untransform(values)
         if output_indices is not None:
             values = values[..., output_indices]

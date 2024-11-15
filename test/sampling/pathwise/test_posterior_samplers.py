@@ -109,7 +109,7 @@ class TestPosteriorSamplers(BotorchTestCase):
         self.assertEqual(samples.shape, sample_shape + batch_shape + X.shape[-2:-1])
 
         sample_moments = get_sample_moments(samples, sample_shape)
-        if hasattr(model, "outcome_transform"):
+        if model.outcome_transform is not None:
             # Do this instead of untransforming exact moments
             sample_moments = standardize_moments(
                 model.outcome_transform, *sample_moments

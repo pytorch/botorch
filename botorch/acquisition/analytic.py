@@ -1107,9 +1107,8 @@ def _get_noiseless_fantasy_model(
 
     # Set the outcome and input transforms of the fantasy model.
     # The transforms should already be in eval mode but just set them to be sure
-    outcome_transform = getattr(model, "outcome_transform", None)
-    if outcome_transform is not None:
-        outcome_transform = deepcopy(outcome_transform).eval()
+    if model.outcome_transform is not None:
+        outcome_transform = deepcopy(model.outcome_transform).eval()
         fantasy_model.outcome_transform = outcome_transform
         # Need to transform the outcome just as in the SingleTaskGP constructor.
         # Need to unsqueeze for BoTorch and then squeeze again for GPyTorch.
@@ -1119,9 +1118,8 @@ def _get_noiseless_fantasy_model(
             Y_fantasized.unsqueeze(-1), Yvar.unsqueeze(-1)
         )
         Y_fantasized = Y_fantasized.squeeze(-1)
-    input_transform = getattr(model, "input_transform", None)
-    if input_transform is not None:
-        fantasy_model.input_transform = deepcopy(input_transform).eval()
+    if model.input_transform is not None:
+        fantasy_model.input_transform = deepcopy(model.input_transform).eval()
 
     # update training inputs/targets to be batch mode fantasies
     fantasy_model.set_train_data(

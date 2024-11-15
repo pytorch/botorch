@@ -36,7 +36,7 @@ from botorch.sampling.pathwise.utils import (
     TInputTransform,
     TOutputTransform,
 )
-from botorch.utils.context_managers import delattr_ctx
+from botorch.utils.context_managers import disable_attr_ctx
 from botorch.utils.dispatcher import Dispatcher
 from botorch.utils.transforms import is_ensemble
 from gpytorch.models import ApproximateGP, ExactGP, GP
@@ -203,7 +203,7 @@ def _draw_matheron_paths_ExactGP(
 ) -> MatheronPath:
     (train_X,) = get_train_inputs(model, transformed=True)
     train_Y = get_train_targets(model, transformed=True)
-    with delattr_ctx(model, "outcome_transform"):
+    with disable_attr_ctx(model, "outcome_transform"):
         # Generate draws from the prior
         prior_paths = prior_sampler(model=model, sample_shape=sample_shape)
         sample_values = prior_paths.forward(train_X)
@@ -236,7 +236,7 @@ def _draw_matheron_paths_ApproximateGP(
         if isinstance(model, ApproximateGPyTorchModel)
         else model.variational_strategy.inducing_points
     )
-    with delattr_ctx(model, "outcome_transform"):
+    with disable_attr_ctx(model, "outcome_transform"):
         # Generate draws from the prior
         prior_paths = prior_sampler(model=model, sample_shape=sample_shape)
         sample_values = prior_paths.forward(Z)  # `forward` bypasses transforms

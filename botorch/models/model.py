@@ -27,6 +27,8 @@ from botorch.exceptions.errors import (
     InputDataError,
 )
 from botorch.logging import shape_to_str
+from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.utils.assorted import fantasize as fantasize_flag
 from botorch.posteriors import Posterior, PosteriorList
 from botorch.sampling.base import MCSampler
@@ -76,6 +78,8 @@ class Model(Module, ABC):
     _original_train_inputs: Tensor | None = None
     _is_fully_bayesian = False
     _is_ensemble = False
+    outcome_transform: OutcomeTransform | None = None
+    input_transform: InputTransform | None = None
 
     @abstractmethod
     def posterior(
@@ -206,6 +210,7 @@ class Model(Module, ABC):
         Args:
             X: A tensor of inputs
             input_transform: A Module that performs the input transformation.
+                If omitted, defaults to `self.input_transform`.
 
         Returns:
             A tensor of transformed inputs
@@ -213,14 +218,14 @@ class Model(Module, ABC):
         if input_transform is not None:
             input_transform.to(X)
             return input_transform(X)
-        try:
+        elif self.input_transform is not None:
             return self.input_transform(X)
-        except AttributeError:
+        else:
             return X
 
     def _set_transformed_inputs(self) -> None:
         r"""Update training inputs with transformed inputs."""
-        if hasattr(self, "input_transform") and not self._has_transformed_inputs:
+        if self.input_transform is not None and not self._has_transformed_inputs:
             if hasattr(self, "train_inputs"):
                 self._original_train_inputs = self.train_inputs[0]
                 with torch.no_grad():
@@ -241,7 +246,7 @@ class Model(Module, ABC):
 
     def _revert_to_original_inputs(self) -> None:
         r"""Revert training inputs back to original."""
-        if hasattr(self, "input_transform") and self._has_transformed_inputs:
+        if self.input_transform is not None and self._has_transformed_inputs:
             self.set_train_data(self._original_train_inputs, strict=False)
             self._has_transformed_inputs = False
 
@@ -573,10 +578,7 @@ class ModelList(Model):
         """
         transformed_X_list = []
         for model in self.models:
-            try:
-                transformed_X_list.append(model.input_transform(X))
-            except AttributeError:
-                transformed_X_list.append(X)
+            transformed_X_list.append(model.transform_inputs(X))
         return transformed_X_list
 
     def load_state_dict(

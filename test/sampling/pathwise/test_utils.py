@@ -14,14 +14,13 @@ from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.pathwise.utils import (
-    get_input_transform,
     get_output_transform,
     get_train_inputs,
     get_train_targets,
     InverseLengthscaleTransform,
     OutcomeUntransformer,
 )
-from botorch.utils.context_managers import delattr_ctx
+from botorch.utils.context_managers import disable_attr_ctx
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, ScaleKernel
 
@@ -77,10 +76,6 @@ class TestGetters(BotorchTestCase):
                 )
             )
 
-    def test_get_input_transform(self):
-        for model in self.models:
-            self.assertIs(get_input_transform(model), model.input_transform)
-
     def test_get_output_transform(self):
         for model in self.models:
             transform = get_output_transform(model)
@@ -106,7 +101,7 @@ class TestGetters(BotorchTestCase):
             model.eval()
             self.assertTrue(X.equal(get_train_inputs(model, transformed=False)[0]))
             self.assertTrue(Z.equal(get_train_inputs(model, transformed=True)[0]))
-            with delattr_ctx(model, "input_transform"), patch.object(
+            with disable_attr_ctx(model, "input_transform"), patch.object(
                 model, "_original_train_inputs", new=None
             ):
                 self.assertTrue(Z.equal(get_train_inputs(model, transformed=False)[0]))
@@ -137,7 +132,7 @@ class TestGetters(BotorchTestCase):
             model.eval()
             self.assertTrue(F.equal(get_train_targets(model, transformed=True)))
             self.assertTrue(Y.equal(get_train_targets(model, transformed=False)))
-            with delattr_ctx(model, "outcome_transform"):
+            with disable_attr_ctx(model, "outcome_transform"):
                 self.assertTrue(F.equal(get_train_targets(model, transformed=True)))
                 self.assertTrue(F.equal(get_train_targets(model, transformed=False)))
 

@@ -197,7 +197,7 @@ class GPyTorchModel(Model, ABC):
                 else:
                     mvn = self.likelihood(mvn, X)
         posterior = GPyTorchPosterior(distribution=mvn)
-        if hasattr(self, "outcome_transform"):
+        if self.outcome_transform is not None:
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:
             return posterior_transform(posterior)
@@ -239,7 +239,7 @@ class GPyTorchModel(Model, ABC):
         """
         Yvar = noise
 
-        if hasattr(self, "outcome_transform"):
+        if self.outcome_transform is not None:
             # pass the transformed data to get_fantasy_model below
             # (unless we've already trasnformed if BatchedMultiOutputGPyTorchModel)
             if not isinstance(self, BatchedMultiOutputGPyTorchModel):
@@ -464,7 +464,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                     mvn = MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
 
         posterior = GPyTorchPosterior(distribution=mvn)
-        if hasattr(self, "outcome_transform"):
+        if self.outcome_transform is not None:
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:
             return posterior_transform(posterior)
@@ -505,7 +505,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
         noise = kwargs.get("noise")
-        if hasattr(self, "outcome_transform"):
+        if self.outcome_transform is not None:
             # We need to apply transforms before shifting batch indices around.
             # `noise` is assumed to already be outcome-transformed.
             Y, _ = self.outcome_transform(Y)
@@ -585,11 +585,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             mod_batch_shape(new_model, mod_name, m if m > 1 else 0)
 
         # subset outcome transform if present
-        try:
+        if new_model.outcome_transform is not None:
             subset_octf = new_model.outcome_transform.subset_output(idcs=idcs)
             new_model.outcome_transform = subset_octf
-        except AttributeError:
-            pass
 
         # Subset fixed noise likelihood if present.
         if isinstance(self.likelihood, FixedNoiseGaussianLikelihood):
@@ -681,7 +679,7 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
         # Nonlinear transforms untransform to a `TransformedPosterior`,
         # which can't be made into a `GPyTorchPosterior`
         returns_untransformed = any(
-            hasattr(mod, "outcome_transform") and (not mod.outcome_transform._is_linear)
+            mod.outcome_transform is not None and not mod.outcome_transform._is_linear
             for mod in self.models
         )
         # NOTE: We're not passing in the posterior transform here. We'll apply it later.
@@ -918,7 +916,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 interleaved=False,
             )
             posterior = GPyTorchPosterior(distribution=mtmvn)
-        if hasattr(self, "outcome_transform"):
+        if self.outcome_transform is not None:
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:
             return posterior_transform(posterior)

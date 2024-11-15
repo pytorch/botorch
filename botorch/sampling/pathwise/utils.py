@@ -193,14 +193,9 @@ class OutcomeUntransformer(TensorTransform):
         return output_values.transpose(-2, -1)
 
 
-def get_input_transform(model: GPyTorchModel) -> InputTransform | None:
-    r"""Returns a model's input_transform or None."""
-    return getattr(model, "input_transform", None)
-
-
 def get_output_transform(model: GPyTorchModel) -> OutcomeUntransformer | None:
     r"""Returns a wrapped version of a model's outcome_transform or None."""
-    transform = getattr(model, "outcome_transform", None)
+    transform = model.outcome_transform
     if transform is None:
         return None
 
@@ -229,7 +224,7 @@ def _get_train_inputs_Model(model: Model, transformed: bool = False) -> tuple[Te
             return (original_train_input,)
 
     (X,) = model.train_inputs
-    transform = get_input_transform(model)
+    transform = model.input_transform
     if transform is None:
         return (X,)
 
@@ -246,7 +241,7 @@ def _get_train_inputs_SingleTaskVariationalGP(
     if model.training != transformed:
         return (X,)
 
-    transform = get_input_transform(model)
+    transform = model.input_transform
     if transform is None:
         return (X,)
 
@@ -279,7 +274,7 @@ def _get_train_targets_Model(model: Model, transformed: bool = False) -> Tensor:
     Y = model.train_targets
 
     # Note: Avoid using `get_output_transform` here since it creates a Module
-    transform = getattr(model, "outcome_transform", None)
+    transform = model.outcome_transform
     if transformed or transform is None:
         return Y
 
@@ -293,7 +288,7 @@ def _get_train_targets_SingleTaskVariationalGP(
     model: Model, transformed: bool = False
 ) -> Tensor:
     Y = model.model.train_targets
-    transform = getattr(model, "outcome_transform", None)
+    transform = model.outcome_transform
     if transformed or transform is None:
         return Y
 

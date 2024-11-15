@@ -219,8 +219,8 @@ class PairwiseGP(Model, GP, FantasizeMixin):
 
         if input_transform is not None:
             input_transform.to(datapoints)
-            # input transformation is applied in set_train_data
-            self.input_transform = input_transform
+        # input transformation is applied in set_train_data
+        self.input_transform = input_transform
 
         # Compatibility variables with fit_gpytorch_*: Dummy likelihood
         # Likelihood is tightly tied with this model and

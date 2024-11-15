@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-
 from typing import Any
 
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
@@ -16,7 +15,6 @@ from botorch.sampling.pathwise.features import gen_kernel_features
 from botorch.sampling.pathwise.features.generators import TKernelFeatureMapGenerator
 from botorch.sampling.pathwise.paths import GeneralizedLinearPath, PathList, SamplePath
 from botorch.sampling.pathwise.utils import (
-    get_input_transform,
     get_output_transform,
     get_train_inputs,
     TInputTransform,
@@ -101,7 +99,7 @@ def _draw_kernel_feature_paths_ExactGP(
         num_inputs=train_X.shape[-1],
         mean_module=model.mean_module,
         covar_module=model.covar_module,
-        input_transform=get_input_transform(model),
+        input_transform=model.input_transform,
         output_transform=get_output_transform(model),
         **kwargs,
     )
@@ -125,7 +123,7 @@ def _draw_kernel_feature_paths_ApproximateGPyTorchModel(
     return DrawKernelFeaturePaths(
         model.model,
         num_inputs=train_X.shape[-1],
-        input_transform=get_input_transform(model),
+        input_transform=model.input_transform,
         output_transform=get_output_transform(model),
         **kwargs,
     )

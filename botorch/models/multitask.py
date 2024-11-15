@@ -266,10 +266,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         )
         self.register_buffer("_task_mapper", task_mapper)
         self._expected_task_values = set(all_tasks)
-        if input_transform is not None:
-            self.input_transform = input_transform
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
+        self.input_transform = input_transform
+        self.outcome_transform = outcome_transform
         self.to(train_X)
 
     def _split_inputs(self, x: Tensor) -> tuple[Tensor, Tensor]:
@@ -515,10 +513,8 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
             task_covar_prior=task_covar_prior,
         )
 
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
-        if input_transform is not None:
-            self.input_transform = input_transform
+        self.outcome_transform = outcome_transform
+        self.input_transform = input_transform
         self.to(train_X)
 
     def forward(self, X: Tensor) -> MultitaskMultivariateNormal:
@@ -771,7 +767,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
             test_noise=test_noise,
         )
 
-        if hasattr(self, "outcome_transform"):
+        if self.outcome_transform is not None:
             posterior = self.outcome_transform.untransform_posterior(posterior)
         return posterior
 

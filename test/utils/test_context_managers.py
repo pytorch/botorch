@@ -10,7 +10,7 @@ from string import ascii_lowercase
 
 import torch
 from botorch.utils.context_managers import (
-    delattr_ctx,
+    disable_attr_ctx,
     module_rollback_ctx,
     parameter_rollback_ctx,
     TensorCheckpoint,
@@ -29,11 +29,11 @@ class TestContextManagers(BotorchTestCase):
             param = Parameter(values.to(torch.float64), requires_grad=bool(i % 2))
             module.register_parameter(name, param)
 
-    def test_delattr_ctx(self):
+    def test_disable_attr_ctx(self):
         # Test temporary removal of attributes
         a = self.module.a
         b = self.module.b
-        with delattr_ctx(self.module, "a", "b"):
+        with disable_attr_ctx(self.module, "a", "b"):
             self.assertIsNone(getattr(self.module, "a", None))
             self.assertIsNone(getattr(self.module, "b", None))
             self.assertTrue(self.module.c is not None)
@@ -43,7 +43,7 @@ class TestContextManagers(BotorchTestCase):
         self.assertTrue(self.module.b.equal(b))
 
         with self.assertRaisesRegex(ValueError, "Attribute .* missing"):
-            with delattr_ctx(self.module, "z", enforce_hasattr=True):
+            with disable_attr_ctx(self.module, "z", enforce_hasattr=True):
                 pass  # pragma: no cover
 
     def test_parameter_rollback_ctx(self):
@@ -115,7 +115,7 @@ class TestContextManagers(BotorchTestCase):
         self.assertTrue(self.module.c.equal(c))
 
         # Test that items in checkpoint get inserted into state_dict
-        with delattr_ctx(self.module, "a"):
+        with disable_attr_ctx(self.module, "a"):
             with self.assertRaisesRegex(  # should fail when attempting to rollback
                 RuntimeError, r'Unexpected key\(s\) in state_dict: "a"'
             ):

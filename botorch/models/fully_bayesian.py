@@ -396,10 +396,8 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
         self.pyro_model: PyroModel = pyro_model
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
-        if input_transform is not None:
-            self.input_transform = input_transform
+        self.outcome_transform = outcome_transform
+        self.input_transform = input_transform
 
     def _check_if_fitted(self):
         r"""Raise an exception if the model hasn't been fitted."""

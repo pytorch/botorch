@@ -18,7 +18,6 @@ from botorch.models.transforms.input import InputTransform
 from botorch.sampling.pathwise.features import KernelEvaluationMap
 from botorch.sampling.pathwise.paths import GeneralizedLinearPath, SamplePath
 from botorch.sampling.pathwise.utils import (
-    get_input_transform,
     get_train_inputs,
     get_train_targets,
     TInputTransform,
@@ -133,7 +132,7 @@ def _gaussian_update_ExactGP(
         sample_values=sample_values,
         noise_covariance=noise_covariance,
         scale_tril=scale_tril,
-        input_transform=get_input_transform(model),
+        input_transform=model.input_transform,
     )
 
 
@@ -144,7 +143,7 @@ def _gaussian_update_ApproximateGPyTorchModel(
     **kwargs: Any,
 ) -> GeneralizedLinearPath:
     return GaussianUpdate(
-        model.model, likelihood, input_transform=get_input_transform(model), **kwargs
+        model.model, likelihood, input_transform=model.input_transform, **kwargs
     )
 
 

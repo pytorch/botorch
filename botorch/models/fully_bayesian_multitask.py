@@ -282,10 +282,8 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             task_rank=self._rank,
         )
         self.pyro_model: MultitaskSaasPyroModel = pyro_model
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
-        if input_transform is not None:
-            self.input_transform = input_transform
+        self.outcome_transform = outcome_transform
+        self.input_transform = input_transform
 
     def train(self, mode: bool = True) -> None:
         r"""Puts the model in `train` mode."""

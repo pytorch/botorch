@@ -88,10 +88,8 @@ class SimpleBatchedMultiOutputGPyTorchModel(
             RBFKernel(batch_shape=self._aug_batch_shape),
             batch_shape=self._aug_batch_shape,
         )
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
-        if input_transform is not None:
-            self.input_transform = input_transform
+        self.outcome_transform = outcome_transform
+        self.input_transform = input_transform
         self.to(train_X)
 
     def forward(self, x):
@@ -137,7 +135,7 @@ class TestGPyTorchModel(BotorchTestCase):
             if use_octf:
                 # ensure un-transformation is applied
                 tmp_tf = model.outcome_transform
-                del model.outcome_transform
+                model.outcome_transform = None
                 p_tf = model.posterior(test_X)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(p_tf).variance

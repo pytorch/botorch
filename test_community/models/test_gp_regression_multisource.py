@@ -215,7 +215,7 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
             if use_octf:
                 # ensure un-transformation is applied
                 tmp_tf = model.outcome_transform
-                del model.outcome_transform
+                model.outcome_transform = None
                 pp_tf = model.posterior(X, observation_noise=True)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(pp_tf).variance

@@ -283,7 +283,7 @@ class TestMultiTaskGP(BotorchTestCase):
             if use_octf:
                 # ensure un-transformation is applied
                 tmp_tf = model.outcome_transform
-                del model.outcome_transform
+                model.outcome_transform = None
                 p_utf = model.posterior(test_x)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(p_utf).variance
@@ -562,7 +562,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             if use_octf:
                 # ensure un-transformation is applied
                 tmp_tf = model.outcome_transform
-                del model.outcome_transform
+                model.outcome_transform = None
                 p_tf = model.posterior(test_x)
                 model.outcome_transform = tmp_tf
                 expected_var = tmp_tf.untransform_posterior(p_tf).variance

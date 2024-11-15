@@ -121,8 +121,7 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction, MCSamplerMixin, A
                 "Multi-Objective MC acquisition functions."
             )
         if (
-            hasattr(model, "input_transform")
-            and isinstance(model.input_transform, InputPerturbation)
+            isinstance(model.input_transform, InputPerturbation)
             and constraints is not None
         ):
             raise UnsupportedError(

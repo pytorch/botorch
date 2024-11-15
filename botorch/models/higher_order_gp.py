@@ -274,10 +274,8 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             dtype=train_Y.dtype,
         )
 
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
-        if input_transform is not None:
-            self.input_transform = input_transform
+        self.outcome_transform = outcome_transform
+        self.input_transform = input_transform
 
     def _initialize_latents(
         self,
@@ -414,7 +412,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             conditioned on the new observations `(X, Y)` (and possibly noise
             observations passed in via kwargs).
         """
-        if hasattr(self, "outcome_transform"):
+        if self.outcome_transform is not None:
             # we need to apply transforms before shifting batch indices around
             Y, noise = self.outcome_transform(Y=Y, Yvar=noise)
         # Do not check shapes when fantasizing as they are not expected to match.
@@ -539,7 +537,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 output_shape=X.shape[:-1] + self.target_shape,
                 num_outputs=self._num_outputs,
             )
-            if hasattr(self, "outcome_transform"):
+            if self.outcome_transform is not None:
                 posterior = self.outcome_transform.untransform_posterior(posterior)
             return posterior
 

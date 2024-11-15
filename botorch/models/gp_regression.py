@@ -203,12 +203,10 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             }
             if train_Yvar is None:
                 self._subset_batch_dict["likelihood.noise_covar.raw_noise"] = -2
-        self.covar_module: Module = covar_module
         # TODO: Allow subsetting of other covar modules
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
-        if input_transform is not None:
-            self.input_transform = input_transform
+        self.covar_module: Module = covar_module
+        self.outcome_transform = outcome_transform
+        self.input_transform = input_transform
         self.to(train_X)
 
     @classmethod

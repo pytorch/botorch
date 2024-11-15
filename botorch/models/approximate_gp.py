@@ -171,7 +171,7 @@ class ApproximateGPyTorchModel(GPyTorchModel):
             dist = self.likelihood(dist)
 
         posterior = GPyTorchPosterior(distribution=dist)
-        if hasattr(self, "outcome_transform"):
+        if self.outcome_transform is not None:
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:
             posterior = posterior_transform(posterior)
@@ -449,15 +449,14 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         super().__init__(model=model, likelihood=likelihood, num_outputs=num_outputs)
 
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
         if input_transform is not None:
             warnings.warn(
                 TRANSFORM_WARNING.format(ttype="input"),
                 UserInputWarning,
                 stacklevel=3,
             )
-            self.input_transform = input_transform
+        self.outcome_transform = outcome_transform
+        self.input_transform = input_transform
 
         # for model fitting utilities
         # TODO: make this a flag?

@@ -289,7 +289,7 @@ def get_pvar_expected(
 
     # If the model has an outcome transform, we need to untransform the
     # variance according to that transform.
-    if hasattr(model, "outcome_transform"):
+    if model.outcome_transform is not None:
         _, pvar_exp = model.outcome_transform.untransform(
             Y=torch.zeros_like(pvar_exp), Yvar=pvar_exp
         )
@@ -331,10 +331,8 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP, FantasizeMixin):
         super().__init__(train_X, train_Y, likelihood)
         self.mean_module = ConstantMean()
         self.covar_module = ScaleKernel(RBFKernel())
-        if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
-        if input_transform is not None:
-            self.input_transform = input_transform
+        self.outcome_transform = outcome_transform
+        self.input_transform = input_transform
         self._num_outputs = 1
         self.to(train_X)
         self.transformed_call_args = []

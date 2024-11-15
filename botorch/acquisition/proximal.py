@@ -113,21 +113,19 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         if isinstance(model, BatchedMultiOutputGPyTorchModel) and model.num_outputs > 1:
             train_inputs = train_inputs[0]
 
-        input_transform = _get_input_transform(model)
-
         last_X = train_inputs[-1].reshape(1, 1, -1)
 
         # if transformed_weighting, transform X to calculate diff
         # (proximal weighting in transformed space)
         # otherwise,un-transform the last observed point to real space
         # (proximal weighting in real space)
-        if input_transform is not None:
+        if model.input_transform is not None:
             if self.transformed_weighting:
                 # transformed space weighting
-                diff = input_transform.transform(X) - last_X
+                diff = model.input_transform.transform(X) - last_X
             else:
                 # real space weighting
-                diff = X - input_transform.untransform(last_X)
+                diff = X - model.input_transform.untransform(last_X)
 
         else:
             # no transformation
@@ -173,7 +171,7 @@ def _validate_model(model: Model, proximal_weights: Tensor) -> None:
         # check to make sure that the training inputs and input transformers for each
         # model match and are reversible
         train_inputs = model.train_inputs[0][0]
-        input_transform = _get_input_transform(model.models[0])
+        input_transform = model.models[0].input_transform
 
         for i in range(len(model.train_inputs)):
             if not torch.equal(train_inputs, model.train_inputs[i][0]):
@@ -182,7 +180,7 @@ def _validate_model(model: Model, proximal_weights: Tensor) -> None:
                     "training inputs"
                 )
 
-            if not input_transform == _get_input_transform(model.models[i]):
+            if input_transform != model.models[i].input_transform:
                 raise UnsupportedError(
                     "Proximal acquisition function does not support non-identical "
                     "input transforms"
@@ -207,11 +205,3 @@ def _validate_model(model: Model, proximal_weights: Tensor) -> None:
             "`proximal_weights` must be a one dimensional tensor with "
             "same feature dimension as model."
         )
-
-
-def _get_input_transform(model: Model) -> InputTransform | None:
-    """get input transform if defined"""
-    try:
-        return model.input_transform
-    except AttributeError:
-        return None

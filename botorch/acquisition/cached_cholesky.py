@@ -45,7 +45,7 @@ def supports_cache_root(model: Model) -> bool:
     ) or not isinstance(model, GPyTorchModel):
         return False
     # Models that return a TransformedPosterior are not supported.
-    if hasattr(model, "outcome_transform") and (not model.outcome_transform._is_linear):
+    if model.outcome_transform is not None and not model.outcome_transform._is_linear:
         return False
     return True
 

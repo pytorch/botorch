@@ -199,11 +199,11 @@ class TestGPRegressionBase(BotorchTestCase):
                 self.assertEqual(model.outcome_transform._batch_shape, batch_shape)
                 self.assertEqual(model.outcome_transform._m, m)
             elif octf == "None":
-                self.assertFalse(hasattr(model, "outcome_transform"))
+                self.assertIsNone(model.outcome_transform)
             else:
                 self.assertIsInstance(model.outcome_transform, Log)
             # Make sure there is no input transform
-            self.assertFalse(hasattr(model, "input_transform"))
+            self.assertIsNone(model.input_transform)
 
     def test_custom_init(self):
         extra_model_kwargs = self._get_extra_model_kwargs()

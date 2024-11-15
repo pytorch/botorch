@@ -90,7 +90,7 @@ def _check_compatibility(models: ModuleList) -> None:
         )
 
     # TODO: Add support for outcome transforms.
-    if any(getattr(m, "outcome_transform", None) is not None for m in models):
+    if any(m.outcome_transform is not None for m in models):
         raise UnsupportedError(
             "Conversion of models with outcome transforms is unsupported. "
             "To fix this error, explicitly pass `outcome_transform=None`.",
@@ -111,15 +111,14 @@ def _check_compatibility(models: ModuleList) -> None:
     # check that there are no batched input transforms
     default_size = torch.Size([])
     for m in models:
-        if hasattr(m, "input_transform"):
-            if (
-                m.input_transform is not None
-                and len(getattr(m.input_transform, "batch_shape", default_size)) != 0
-            ):
-                raise UnsupportedError("Batched input_transforms are not supported.")
+        if (
+            m.input_transform is not None
+            and len(getattr(m.input_transform, "batch_shape", default_size)) != 0
+        ):
+            raise UnsupportedError("Batched input_transforms are not supported.")
 
     # check that all models have the same input transforms
-    if any(hasattr(m, "input_transform") for m in models):
+    if any(m.input_transform is not None for m in models):
         if not all(
             m.input_transform.equals(models[0].input_transform) for m in models[1:]
         ):
@@ -180,7 +179,7 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
         kwargs["outcome_transform"] = None
 
     # construct the batched GP model
-    input_transform = getattr(models[0], "input_transform", None)
+    input_transform = models[0].input_transform
     batch_gp = models[0].__class__(input_transform=input_transform, **kwargs)
     adjusted_batch_keys, non_adjusted_batch_keys = _get_adjusted_batch_keys(
         batch_state_dict=batch_gp.state_dict(), input_transform=input_transform
@@ -286,8 +285,8 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
         raise NotImplementedError(
             "Conversion of MixedSingleTaskGP is currently not supported."
         )
-    input_transform = getattr(batch_model, "input_transform", None)
-    outcome_transform = getattr(batch_model, "outcome_transform", None)
+    input_transform = batch_model.input_transform
+    outcome_transform = batch_model.outcome_transform
     batch_sd = batch_model.state_dict()
 
     adjusted_batch_keys, non_adjusted_batch_keys = _get_adjusted_batch_keys(
@@ -388,11 +387,11 @@ def batched_multi_output_to_single_output(
         raise NotImplementedError(
             "Conversion of models with custom likelihoods is currently unsupported."
         )
-    input_transform = getattr(batch_mo_model, "input_transform", None)
+    input_transform = batch_mo_model.input_transform
     batch_sd = batch_mo_model.state_dict()
 
     # TODO: add support for outcome transforms.
-    if hasattr(batch_mo_model, "outcome_transform"):
+    if batch_mo_model.outcome_transform is not None:
         raise NotImplementedError(
             "Converting batched multi-output models with outcome transforms "
             "is not currently supported."

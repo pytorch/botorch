@@ -26,16 +26,16 @@ class TensorCheckpoint(NamedTuple):
 
 
 @contextmanager
-def delattr_ctx(
+def disable_attr_ctx(
     instance: object, *attrs: str, enforce_hasattr: bool = False
 ) -> Generator[None, None, None]:
-    r"""Contextmanager for temporarily deleting attributes."""
+    r"""Contextmanager for temporarily setting attributes to None."""
     try:
         cache = {}
         for key in attrs:
             if hasattr(instance, key):
                 cache[key] = getattr(instance, key)
-                delattr(instance, key)
+                setattr(instance, key, None)
             elif enforce_hasattr:
                 raise ValueError(
                     f"Attribute {key} missing from {type(instance)} instance."

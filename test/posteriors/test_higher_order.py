@@ -106,7 +106,7 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
 
             model.eval()
             eval_mode_variance = model(test_x).variance.reshape_as(posterior_variance)
-            if hasattr(model, "outcome_transform"):
+            if model.outcome_transform is not None:
                 eval_mode_variance = model.outcome_transform.untransform(
                     eval_mode_variance, eval_mode_variance
                 )[1]
