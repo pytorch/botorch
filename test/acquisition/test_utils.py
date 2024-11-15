@@ -9,7 +9,6 @@ from unittest import mock
 from unittest.mock import patch
 
 import torch
-
 from botorch.acquisition.objective import (
     ExpectationPosteriorTransform,
     GenericMCObjective,
@@ -34,7 +33,6 @@ from botorch.exceptions.errors import (
     UnsupportedError,
 )
 from botorch.models import SingleTaskGP
-
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultivariateNormal
 

@@ -10,7 +10,6 @@ Utilities for multi-objective acquisition functions.
 
 from __future__ import annotations
 
-import math
 import warnings
 from collections.abc import Callable
 from math import ceil
@@ -18,16 +17,12 @@ from typing import Any
 
 import torch
 from botorch.acquisition import monte_carlo  # noqa F401
-from botorch.acquisition.multi_objective.objective import (
-    IdentityMCMultiOutputObjective,
-    MCMultiOutputObjective,
-)
+from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
+from botorch.acquisition.utils import _prune_inferior_shared_processing
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.deterministic import GenericDeterministicModel
-from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
-from botorch.sampling.get_sampler import get_sampler
 from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
@@ -39,9 +34,8 @@ from botorch.utils.multi_objective.box_decompositions.dominated import (
     DominatedPartitioning,
 )
 from botorch.utils.multi_objective.pareto import is_non_dominated
-from botorch.utils.objective import compute_feasibility_indicator
 from botorch.utils.sampling import draw_sobol_samples
-from botorch.utils.transforms import is_ensemble
+from pyre_extensions import assert_is_instance
 from torch import Tensor
 
 
@@ -115,40 +109,14 @@ def prune_inferior_points_multi_objective(
         with `N_nz` the number of points in `X` that have non-zero (empirical,
         under `num_samples` samples) probability of being pareto optimal.
     """
-    if marginalize_dim is None and is_ensemble(model):
-        # TODO: Properly deal with marginalizing fully Bayesian models
-        marginalize_dim = MCMC_DIM
-
-    if X.ndim > 2:
-        # TODO: support batched inputs (req. dealing with ragged tensors)
-        raise UnsupportedError(
-            "Batched inputs `X` are currently unsupported by "
-            "prune_inferior_points_multi_objective"
-        )
-    if X.size(-2) == 0:
-        raise ValueError("X must have at least one point.")
-    if max_frac <= 0 or max_frac > 1.0:
-        raise ValueError(f"max_frac must take values in (0, 1], is {max_frac}")
-    max_points = math.ceil(max_frac * X.size(-2))
-    with torch.no_grad():
-        posterior = model.posterior(X=X)
-    sampler = get_sampler(posterior, sample_shape=torch.Size([num_samples]))
-    samples = sampler(posterior)
-    if objective is None:
-        objective = IdentityMCMultiOutputObjective()
-    obj_vals = objective(samples, X=X)
-    if obj_vals.ndim > 3:
-        if obj_vals.ndim == 4 and marginalize_dim is not None:
-            obj_vals = obj_vals.mean(dim=marginalize_dim)
-        else:
-            # TODO: support batched inputs (req. dealing with ragged tensors)
-            raise UnsupportedError(
-                "Models with multiple batch dims are currently unsupported by"
-                " prune_inferior_points_multi_objective."
-            )
-    infeas = ~compute_feasibility_indicator(
+    max_points, obj_vals, infeas = _prune_inferior_shared_processing(
+        model=model,
+        X=X,
+        is_moo=True,
+        objective=objective,
         constraints=constraints,
-        samples=samples,
+        num_samples=num_samples,
+        max_frac=max_frac,
         marginalize_dim=marginalize_dim,
     )
     if infeas.any():
@@ -168,9 +136,9 @@ def prune_inferior_points_multi_objective(
 
 def compute_sample_box_decomposition(
     pareto_fronts: Tensor,
-    partitioning: BoxDecomposition = DominatedPartitioning,
+    partitioning: type[BoxDecomposition] = DominatedPartitioning,
     maximize: bool = True,
-    num_constraints: int | None = 0,
+    num_constraints: int = 0,
 ) -> Tensor:
     r"""Computes the box decomposition associated with some sampled optimal
     objectives. This also supports the single-objective and constrained optimization
@@ -195,7 +163,10 @@ def compute_sample_box_decomposition(
         the hyper-rectangles. The number `J` is the smallest number of boxes needed
         to partition all the Pareto samples.
     """
-    tkwargs = {"dtype": pareto_fronts.dtype, "device": pareto_fronts.device}
+    tkwargs: dict[str, Any] = {
+        "dtype": pareto_fronts.dtype,
+        "device": pareto_fronts.device,
+    }
     # We will later compute `norm.log_prob(NEG_INF)`, this is `-inf` if `NEG_INF` is
     # too small.
     NEG_INF = -1e10
@@ -214,16 +185,18 @@ def compute_sample_box_decomposition(
 
     if M == 1:
         # Only consider a Pareto front with one element.
-        extreme_values = weight * torch.max(weight * pareto_fronts, dim=-2).values
+        extreme_values = assert_is_instance(
+            weight * torch.max(weight * pareto_fronts, dim=-2).values, Tensor
+        )
         ref_point = weight * ref_point.expand(extreme_values.shape)
 
         if maximize:
             hypercell_bounds = torch.stack(
-                [ref_point, extreme_values], axis=-2
+                [ref_point, extreme_values], dim=-2
             ).unsqueeze(-1)
         else:
             hypercell_bounds = torch.stack(
-                [extreme_values, ref_point], axis=-2
+                [extreme_values, ref_point], dim=-2
             ).unsqueeze(-1)
     else:
         bd_list = []
@@ -244,9 +217,7 @@ def compute_sample_box_decomposition(
     # Add an extra box for the inequality constraint.
     if K > 0:
         # `num_pareto_samples x 2 x (J - 1) x K`
-        feasible_boxes = torch.zeros(
-            hypercell_bounds.shape[:-1] + torch.Size([K]), **tkwargs
-        )
+        feasible_boxes = torch.zeros(hypercell_bounds.shape[:-1] + (K,), **tkwargs)
 
         feasible_boxes[..., 0, :, :] = NEG_INF
         # `num_pareto_samples x 2 x (J - 1) x (M + K)`
@@ -254,7 +225,7 @@ def compute_sample_box_decomposition(
 
         # `num_pareto_samples x 2 x 1 x (M + K)`
         infeasible_box = torch.zeros(
-            hypercell_bounds.shape[:-2] + torch.Size([1, M + K]), **tkwargs
+            hypercell_bounds.shape[:-2] + (1, M + K), **tkwargs
         )
         infeasible_box[..., 1, :, M:] = -NEG_INF
         infeasible_box[..., 0, :, 0:M] = NEG_INF
@@ -292,11 +263,12 @@ def random_search_optimizer(
         - A `num_points x M`-dim Tensor containing the collection of optimal
             objectives.
     """
-    tkwargs = {"dtype": bounds.dtype, "device": bounds.device}
+    tkwargs: dict[str, Any] = {"dtype": bounds.dtype, "device": bounds.device}
     weight = 1.0 if maximize else -1.0
     optimal_inputs = torch.tensor([], **tkwargs)
     optimal_outputs = torch.tensor([], **tkwargs)
     num_tries = 0
+    num_found = 0
     ratio = 2
     while ratio > 1 and num_tries < max_tries:
         X = draw_sobol_samples(bounds=bounds, n=pop_size, q=1).squeeze(-2)
