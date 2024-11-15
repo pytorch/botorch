@@ -22,10 +22,7 @@ import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import OptimizationGradientError
 from botorch.exceptions.warnings import OptimizationWarning
-from botorch.generation.utils import (
-    _convert_nonlinear_inequality_constraints,
-    _remove_fixed_features_from_optimization,
-)
+from botorch.generation.utils import _remove_fixed_features_from_optimization
 from botorch.logging import logger
 from botorch.optim.parameter_constraints import (
     _arrayify,
@@ -135,16 +132,6 @@ def gen_candidates_scipy(
         # if there are we need to make sure features are fixed to specific values
         else:
             reduced_domain = None not in fixed_features.values()
-
-    if nonlinear_inequality_constraints:
-        if not isinstance(nonlinear_inequality_constraints, list):
-            raise ValueError(
-                "`nonlinear_inequality_constraints` must be a list of tuples, "
-                f"got {type(nonlinear_inequality_constraints)}."
-            )
-        nonlinear_inequality_constraints = _convert_nonlinear_inequality_constraints(
-            nonlinear_inequality_constraints
-        )
 
     if reduced_domain:
         _no_fixed_features = _remove_fixed_features_from_optimization(
