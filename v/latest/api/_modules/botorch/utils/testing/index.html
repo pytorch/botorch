@@ -40,7 +40,11 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionWarning</span><span class="p">,</span> <span class="n">InputDataWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BotorchTensorDimensionWarning</span><span class="p">,</span>
+    <span class="n">InputDataWarning</span><span class="p">,</span>
+    <span class="n">NumericsWarning</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">FantasizeMixin</span><span class="p">,</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
@@ -94,6 +98,16 @@
                 <span class="s2">"ignore"</span><span class="p">,</span>
                 <span class="n">message</span><span class="o">=</span><span class="sa">r</span><span class="s2">"Data \(input features\) is not"</span><span class="p">,</span>
                 <span class="n">category</span><span class="o">=</span><span class="n">InputDataWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
+                <span class="s2">"ignore"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"has known numerical issues"</span><span class="p">,</span>
+                <span class="n">category</span><span class="o">=</span><span class="n">NumericsWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span>
+                <span class="s2">"ignore"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Model converter code is deprecated"</span><span class="p">,</span>
+                <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">,</span>
             <span class="p">)</span></div>
 
 

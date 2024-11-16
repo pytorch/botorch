@@ -8127,13 +8127,13 @@ setting. An objective <cite>y</cite> is feasible if <cite>y &lt;= 0</cite>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pareto_fronts</strong> (<em>Tensor</em>) – A <cite>num_pareto_samples x num_pareto_points x M</cite> dim Tensor
 containing the sampled optimal set of objectives.</p></li>
-<li><p><strong>partitioning</strong> (<a class="reference internal" href="utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition" title="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition"><em>BoxDecomposition</em></a>) – A <cite>BoxDecomposition</cite> module that is used to obtain the
+<li><p><strong>partitioning</strong> (<em>type</em><em>[</em><a class="reference internal" href="utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition" title="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition"><em>BoxDecomposition</em></a><em>]</em>) – A <cite>BoxDecomposition</cite> module that is used to obtain the
 hyper-rectangle bounds for integration. In the unconstrained case, this
 gives the partition of the dominated space. In the constrained case, this
 gives the partition of the feasible dominated space union the infeasible
 space.</p></li>
 <li><p><strong>maximize</strong> (<em>bool</em>) – If true, the box-decomposition is computed assuming maximization.</p></li>
-<li><p><strong>num_constraints</strong> (<em>int</em><em> | </em><em>None</em>) – The number of constraints <cite>K</cite>.</p></li>
+<li><p><strong>num_constraints</strong> (<em>int</em>) – The number of constraints <cite>K</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

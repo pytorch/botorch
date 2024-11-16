@@ -365,28 +365,6 @@ the observation noise.</p></li>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt class="sig sig-object py" id="botorch.utils.datasets.FixedNoiseDataset">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#FixedNoiseDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.FixedNoiseDataset" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupervisedDataset</span></code></a></p>
-<p>A SupervisedDataset with an additional field <cite>Yvar</cite> that stipulates
-observations variances so that <cite>Y[i] ~ N(f(X[i]), Yvar[i])</cite>.</p>
-<p>NOTE: This is deprecated. Use <cite>SupervisedDataset</cite> instead.
-Will be removed in a future release (~v0.11).</p>
-<p>Initialize a <cite>FixedNoiseDataset</cite> – deprecated!</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>BotorchContainer</em></a><em> | </em><em>Tensor</em>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>BotorchContainer</em></a><em> | </em><em>Tensor</em>)</p></li>
-<li><p><strong>Yvar</strong> (<a class="reference internal" href="#botorch.utils.containers.BotorchContainer" title="botorch.utils.containers.BotorchContainer"><em>BotorchContainer</em></a><em> | </em><em>Tensor</em>)</p></li>
-<li><p><strong>feature_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>outcome_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>)</p></li>
-<li><p><strong>validate_init</strong> (<em>bool</em>)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">RankingDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#RankingDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.RankingDataset" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">SupervisedDataset</span></code></a></p>

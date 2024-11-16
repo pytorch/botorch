@@ -45,10 +45,7 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">OptimizationGradientError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">OptimizationWarning</span>
-<span class="kn">from</span> <span class="nn">botorch.generation.utils</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">_convert_nonlinear_inequality_constraints</span><span class="p">,</span>
-    <span class="n">_remove_fixed_features_from_optimization</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.generation.utils</span> <span class="kn">import</span> <span class="n">_remove_fixed_features_from_optimization</span>
 <span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.parameter_constraints</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_arrayify</span><span class="p">,</span>
@@ -160,16 +157,6 @@
         <span class="c1"># if there are we need to make sure features are fixed to specific values</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">reduced_domain</span> <span class="o">=</span> <span class="kc">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_features</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-
-    <span class="k">if</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nonlinear_inequality_constraints</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"`nonlinear_inequality_constraints` must be a list of tuples, "</span>
-                <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">nonlinear_inequality_constraints</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
-            <span class="p">)</span>
-        <span class="n">nonlinear_inequality_constraints</span> <span class="o">=</span> <span class="n">_convert_nonlinear_inequality_constraints</span><span class="p">(</span>
-            <span class="n">nonlinear_inequality_constraints</span>
-        <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">reduced_domain</span><span class="p">:</span>
         <span class="n">_no_fixed_features</span> <span class="o">=</span> <span class="n">_remove_fixed_features_from_optimization</span><span class="p">(</span>

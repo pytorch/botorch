@@ -31,7 +31,6 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -171,42 +170,6 @@
             <span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">feature_names</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">outcome_names</span>
-        <span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="FixedNoiseDataset">
-<a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.FixedNoiseDataset">[docs]</a>
-<span class="k">class</span> <span class="nc">FixedNoiseDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""A SupervisedDataset with an additional field `Yvar` that stipulates</span>
-<span class="sd">    observations variances so that `Y[i] ~ N(f(X[i]), Yvar[i])`.</span>
-
-<span class="sd">    NOTE: This is deprecated. Use `SupervisedDataset` instead.</span>
-<span class="sd">    Will be removed in a future release (~v0.11).</span>
-<span class="sd">    """</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">:</span> <span class="n">BotorchContainer</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">Y</span><span class="p">:</span> <span class="n">BotorchContainer</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">Yvar</span><span class="p">:</span> <span class="n">BotorchContainer</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">feature_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-        <span class="n">outcome_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-        <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize a `FixedNoiseDataset` -- deprecated!"""</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="s2">"`FixedNoiseDataset` is deprecated. Use `SupervisedDataset` instead."</span><span class="p">,</span>
-            <span class="ne">DeprecationWarning</span><span class="p">,</span>
-            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
-            <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span>
-            <span class="n">feature_names</span><span class="o">=</span><span class="n">feature_names</span><span class="p">,</span>
-            <span class="n">outcome_names</span><span class="o">=</span><span class="n">outcome_names</span><span class="p">,</span>
-            <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">,</span>
-            <span class="n">validate_init</span><span class="o">=</span><span class="n">validate_init</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
