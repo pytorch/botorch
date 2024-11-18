@@ -8,9 +8,13 @@ r"""Representations for different kinds of data."""
 
 from __future__ import annotations
 
+import dataclasses
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 from typing import Any
+
+import torch
 
 from torch import device as Device, dtype as Dtype, LongTensor, Size, Tensor
 
@@ -102,6 +106,9 @@ class DenseContainer(BotorchContainer):
                     f"`event shape` {self.event_shape}."
                 )
 
+    def clone(self) -> DenseContainer:
+        return dataclasses.replace(self)
+
 
 @dataclass(eq=False)
 class SliceContainer(BotorchContainer):
@@ -149,3 +156,10 @@ class SliceContainer(BotorchContainer):
                 f"Shapes of `values` {values.shape} and `indices` "
                 f"{indices.shape} incompatible with `event_shape` {event_shape}."
             )
+
+    def clone(self) -> SliceContainer:
+        return type(self)(
+            values=self.values.clone(),
+            indices=self.indices.clone(),
+            event_shape=torch.Size(self.event_shape),
+        )
