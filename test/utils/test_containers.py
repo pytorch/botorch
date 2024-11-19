@@ -84,6 +84,9 @@ class TestContainers(BotorchTestCase):
             # Test `__call__`
             self.assertTrue(X().equal(values))
 
+            # Test `clone`
+            self.assertEqual(X.clone(), X)
+
     def test_slice(self):
         for arity in (2, 4):
             for vals in (

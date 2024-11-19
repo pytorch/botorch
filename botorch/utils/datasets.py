@@ -8,6 +8,8 @@ r"""Representations for different kinds of datasets."""
 
 from __future__ import annotations
 
+import copy
+
 from typing import Any
 
 import torch
@@ -70,6 +72,7 @@ class SupervisedDataset:
         self._Yvar = Yvar
         self.feature_names = feature_names
         self.outcome_names = outcome_names
+        self.validate_init = validate_init
         if validate_init:
             self._validate()
 
@@ -145,6 +148,52 @@ class SupervisedDataset:
             )
             and self.feature_names == other.feature_names
             and self.outcome_names == other.outcome_names
+        )
+
+    def clone(
+        self, deepcopy: bool = False, mask: Tensor | None = None
+    ) -> SupervisedDataset:
+        """Return a copy of the dataset.
+
+        Args:
+            deepcopy: If True, perform a deep copy. Otherwise, use the same
+                tensors/lists.
+            mask: A `n`-dim boolean mask indicating which rows to keep. This is used
+                along the -2 dimension.
+
+        Returns:
+            The new dataset.
+        """
+        new_X = self._X
+        new_Y = self._Y
+        new_Yvar = self._Yvar
+        feature_names = self.feature_names
+        outcome_names = self.outcome_names
+        if mask is not None:
+            if any(isinstance(x, BotorchContainer) for x in [new_X, new_Y, new_Yvar]):
+                raise NotImplementedError(
+                    "Masking is not supported for BotorchContainers."
+                )
+            new_X = new_X[..., mask, :]
+            new_Y = new_Y[..., mask, :]
+            if new_Yvar is not None:
+                new_Yvar = new_Yvar[..., mask, :]
+        if deepcopy:
+            new_X = new_X.clone()
+            new_Y = new_Y.clone()
+            new_Yvar = new_Yvar.clone() if new_Yvar is not None else None
+            feature_names = copy.copy(self.feature_names)
+            outcome_names = copy.copy(self.outcome_names)
+        kwargs = {}
+        if new_Yvar is not None:
+            kwargs = {"Yvar": new_Yvar}
+        return type(self)(
+            X=new_X,
+            Y=new_Y,
+            feature_names=feature_names,
+            outcome_names=outcome_names,
+            validate_init=self.validate_init,
+            **kwargs,
         )
 
 
@@ -339,7 +388,7 @@ class MultiTaskDataset(SupervisedDataset):
                 outcome_names=[outcome_name],
             )
             datasets.append(new_dataset)
-        # Return the new
+        # Return the new dataset
         return cls(
             datasets=datasets,
             target_outcome_name=outcome_names_per_task.get(
@@ -464,6 +513,37 @@ class MultiTaskDataset(SupervisedDataset):
             and self.datasets == other.datasets
             and self.target_outcome_name == other.target_outcome_name
             and self.task_feature_index == other.task_feature_index
+        )
+
+    def clone(
+        self, deepcopy: bool = False, mask: Tensor | None = None
+    ) -> MultiTaskDataset:
+        """Return a copy of the dataset.
+
+        Args:
+            deepcopy: If True, perform a deep copy. Otherwise, use the same
+                tensors/lists/datasets.
+            mask: A `n`-dim boolean mask indicating which rows to keep from the target
+                dataset. This is used along the -2 dimension.
+
+        Returns:
+            The new dataset.
+        """
+        datasets = list(self.datasets.values())
+        if mask is not None or deepcopy:
+            new_datasets = []
+            for outcome, ds in self.datasets.items():
+                new_datasets.append(
+                    ds.clone(
+                        deepcopy=deepcopy,
+                        mask=mask if outcome == self.target_outcome_name else None,
+                    )
+                )
+            datasets = new_datasets
+        return MultiTaskDataset(
+            datasets=datasets,
+            target_outcome_name=self.target_outcome_name,
+            task_feature_index=self.task_feature_index,
         )
 
 
@@ -627,3 +707,33 @@ class ContextualDataset(SupervisedDataset):
                     raise InputDataError(
                         f"{outcome} is missing in metric_decomposition."
                     )
+
+    def clone(
+        self, deepcopy: bool = False, mask: Tensor | None = None
+    ) -> ContextualDataset:
+        """Return a copy of the dataset.
+
+        Args:
+            deepcopy: If True, perform a deep copy. Otherwise, use the same
+                tensors/lists/datasets.
+            mask: A `n`-dim boolean mask indicating which rows to keep. This is used
+                along the -2 dimension. `n` here corresponds to the number of rows in
+                an individual dataset.
+
+        Returns:
+            The new dataset.
+        """
+        datasets = list(self.datasets.values())
+        if mask is not None or deepcopy:
+            datasets = [ds.clone(deepcopy=deepcopy, mask=mask) for ds in datasets]
+        if deepcopy:
+            parameter_decomposition = copy.deepcopy(self.parameter_decomposition)
+            metric_decomposition = copy.deepcopy(self.metric_decomposition)
+        else:
+            parameter_decomposition = self.parameter_decomposition
+            metric_decomposition = self.metric_decomposition
+        return ContextualDataset(
+            datasets=datasets,
+            parameter_decomposition=parameter_decomposition,
+            metric_decomposition=metric_decomposition,
+        )
