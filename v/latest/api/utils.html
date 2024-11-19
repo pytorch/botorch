@@ -145,6 +145,15 @@ be reworked to take advantage of dataclasses’ <cite>kw_only</cite> flag.</p>
 <dt class="sig sig-object py" id="botorch.utils.containers.DenseContainer.dtype">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dtype</span></em><a class="headerlink" href="#botorch.utils.containers.DenseContainer.dtype" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.containers.DenseContainer.clone">
+<span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#DenseContainer.clone"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.DenseContainer.clone" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.containers.DenseContainer" title="botorch.utils.containers.DenseContainer"><em>DenseContainer</em></a></p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.containers.SliceContainer">
@@ -185,6 +194,15 @@ taken from the leading dimension of an n-dimensional source tensor.</p>
 <dt class="sig sig-object py" id="botorch.utils.containers.SliceContainer.dtype">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dtype</span></em><a class="headerlink" href="#botorch.utils.containers.SliceContainer.dtype" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.containers.SliceContainer.clone">
+<span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#SliceContainer.clone"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.SliceContainer.clone" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.containers.SliceContainer" title="botorch.utils.containers.SliceContainer"><em>SliceContainer</em></a></p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.context_managers">
@@ -363,6 +381,27 @@ the observation noise.</p></li>
 <dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.Yvar">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.Yvar" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.datasets.SupervisedDataset.clone">
+<span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">deepcopy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#SupervisedDataset.clone"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.SupervisedDataset.clone" title="Link to this definition">¶</a></dt>
+<dd><p>Return a copy of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>deepcopy</strong> (<em>bool</em>) – If True, perform a deep copy. Otherwise, use the same
+tensors/lists.</p></li>
+<li><p><strong>mask</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n</cite>-dim boolean mask indicating which rows to keep. This is used
+along the -2 dimension.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The new dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.datasets.SupervisedDataset" title="botorch.utils.datasets.SupervisedDataset"><em>SupervisedDataset</em></a></p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.datasets.RankingDataset">
@@ -503,6 +542,27 @@ remaining tasks are populated with 1, 2, …, len(datasets) - 1.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.datasets.MultiTaskDataset.clone">
+<span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">deepcopy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#MultiTaskDataset.clone"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.MultiTaskDataset.clone" title="Link to this definition">¶</a></dt>
+<dd><p>Return a copy of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>deepcopy</strong> (<em>bool</em>) – If True, perform a deep copy. Otherwise, use the same
+tensors/lists/datasets.</p></li>
+<li><p><strong>mask</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n</cite>-dim boolean mask indicating which rows to keep from the target
+dataset. This is used along the -2 dimension.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The new dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.datasets.MultiTaskDataset" title="botorch.utils.datasets.MultiTaskDataset"><em>MultiTaskDataset</em></a></p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset">
@@ -542,6 +602,28 @@ by LCEA model if there is only one dataset.</p>
 <dd><p>Concatenates the Yvars from the child datasets to create the Y expected
 by LCEM model if there are multiple datasets; Or return the Yvar expected
 by LCEA model if there is only one dataset.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.datasets.ContextualDataset.clone">
+<span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">deepcopy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/datasets.html#ContextualDataset.clone"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.datasets.ContextualDataset.clone" title="Link to this definition">¶</a></dt>
+<dd><p>Return a copy of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>deepcopy</strong> (<em>bool</em>) – If True, perform a deep copy. Otherwise, use the same
+tensors/lists/datasets.</p></li>
+<li><p><strong>mask</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>n</cite>-dim boolean mask indicating which rows to keep. This is used
+along the -2 dimension. <cite>n</cite> here corresponds to the number of rows in
+an individual dataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The new dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.datasets.ContextualDataset" title="botorch.utils.datasets.ContextualDataset"><em>ContextualDataset</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 </dd></dl>
 </section>
