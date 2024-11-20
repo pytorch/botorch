@@ -747,7 +747,7 @@ class qSimpleRegret(SampleReducingMCAcquisitionFunction):
     non-negative. `qSimpleRegret` acquisition values can be negative, so we instead use
     a `ConstrainedMCObjective` which applies constraints to the objectives (e.g. before
     computing the acquisition function) and shifts negative objective values using
-    by an infeasible cost to ensure non-negativity (before applying constraints and
+    an infeasible cost to ensure non-negativity (before applying constraints and
     shifting them back).
 
     Example:
@@ -813,11 +813,11 @@ class qUpperConfidenceBound(SampleReducingMCAcquisitionFunction):
     `SampleReducingMCAcquisitionFunction` computes the acquisition values on the sample
     level and then weights the sample-level acquisition values by a soft feasibility
     indicator. Hence, it expects non-log acquisition function values to be
-    non-negative. `qSimpleRegret` acquisition values can be negative, so we instead use
-    a `ConstrainedMCObjective` which applies constraints to the objectives (e.g. before
-    computing the acquisition function) and shifts negative objective values using
-    by an infeasible cost to ensure non-negativity (before applying constraints and
-    shifting them back).
+    non-negative. `qUpperConfidenceBound` acquisition values can be negative, so we
+    instead use a `ConstrainedMCObjective` which applies constraints to the objectives
+    (e.g. before computing the acquisition function) and shifts negative objective
+    values using an infeasible cost to ensure non-negativity (before applying
+    constraints and shifting them back).
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
@@ -887,3 +887,133 @@ class qLowerConfidenceBound(qUpperConfidenceBound):
     def _get_beta_prime(self, beta: float) -> float:
         """Multiply beta prime by -1 to get the lower confidence bound."""
         return -super()._get_beta_prime(beta=beta)
+
+
+class qPosteriorMean(SampleReducingMCAcquisitionFunction):
+    r"""MC-based batch Posterior Mean.
+
+    Constraints should be provided as a `ConstrainedMCObjective`.
+    Passing `constraints` as an argument is not supported. This is because
+    `SampleReducingMCAcquisitionFunction` computes the acquisition values on the sample
+    level and then weights the sample-level acquisition values by a soft feasibility
+    indicator. Hence, it expects non-log acquisition function values to be
+    non-negative. `qPosteriorMean` acquisition values can be negative, so we instead use
+    a `ConstrainedMCObjective` which applies constraints to the objectives (e.g. before
+    computing the acquisition function) and shifts negative objective values using
+    an infeasible cost to ensure non-negativity (before applying constraints and
+    shifting them back).
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> sampler = SobolQMCNormalSampler(1024)
+        >>> qPM = qPosteriorMean(model, sampler)
+        >>> qpm = qPM(test_X)
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
+    ) -> None:
+        r"""q-Posterior Mean.
+
+        Args:
+            model: A fitted model.
+            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`
+                more details.
+            objective: The MCAcquisitionObjective under which the samples are
+                evaluated. Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
+            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
+                points that have been submitted for function evaluation but have not yet
+                been evaluated. Concatenated into X upon forward call. Copied and set to
+                have no gradient.
+        """
+        super().__init__(
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+        )
+
+    def _sample_forward(self, obj: Tensor) -> Tensor:
+        r"""Evaluate qPosteriorMean per sample on the candidate set `X`.
+
+        Args:
+            obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.
+
+        Returns:
+            A `sample_shape x batch_shape x q`-dim Tensor of acquisition values.
+        """
+        mean = obj.mean(dim=0, keepdim=True).broadcast_to(obj.shape)
+        return mean
+
+
+class qPosteriorStandardDeviation(SampleReducingMCAcquisitionFunction):
+    r"""MC-based batch Posterior Standard Deviation.
+
+    An acquisition function for pure exploration.
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> sampler = SobolQMCNormalSampler(1024)
+        >>> qPSTD = qPosteriorStandardDeviation(model, sampler)
+        >>> std = qPSTD(test_X)
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
+        constraints: list[Callable[[Tensor], Tensor]] | None = None,
+        eta: Tensor | float = 1e-3,
+    ) -> None:
+        r"""q-Posterior Mean.
+
+        Args:
+            model: A fitted model.
+            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`
+                more details.
+            objective: The MCAcquisitionObjective under which the samples are
+                evaluated. Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
+            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
+                points that have been submitted for function evaluation but have not yet
+                been evaluated. Concatenated into X upon forward call. Copied and set to
+                have no gradient.
+            constraints: A list of constraint callables which map a Tensor of posterior
+                samples of dimension `sample_shape x batch-shape x q x m`-dim to a
+                `sample_shape x batch-shape x q`-dim Tensor. The associated constraints
+                are considered satisfied if the output is less than zero.
+            eta: Temperature parameter(s) governing the smoothness of the sigmoid
+                approximation to the constraint indicators. For more details, on this
+                parameter, see the docs of `compute_smoothed_feasibility_indicator`.
+        """
+        super().__init__(
+            model=model,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+            constraints=constraints,
+            eta=eta,
+        )
+
+    def _sample_forward(self, obj: Tensor) -> Tensor:
+        r"""Evaluate qPosteriorStandardDeviation per sample on the candidate set `X`.
+
+        Args:
+            obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.
+
+        Returns:
+            A `sample_shape x batch_shape x q`-dim Tensor of acquisition values.
+        """
+        mean = obj.mean(dim=0)
+        return (obj - mean).abs()
