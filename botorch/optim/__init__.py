@@ -22,7 +22,11 @@ from botorch.optim.homotopy import (
     LinearHomotopySchedule,
     LogLinearHomotopySchedule,
 )
-from botorch.optim.initializers import initialize_q_batch, initialize_q_batch_nonneg
+from botorch.optim.initializers import (
+    initialize_q_batch,
+    initialize_q_batch_nonneg,
+    initialize_q_batch_topk,
+)
 from botorch.optim.optimize import (
     gen_batch_initial_conditions,
     optimize_acqf,
@@ -43,6 +47,7 @@ __all__ = [
     "gen_batch_initial_conditions",
     "initialize_q_batch",
     "initialize_q_batch_nonneg",
+    "initialize_q_batch_topk",
     "OptimizationResult",
     "OptimizationStatus",
     "optimize_acqf",
