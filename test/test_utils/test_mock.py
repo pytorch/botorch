@@ -98,7 +98,7 @@ class TestMock(BotorchTestCase):
         ) as mock_neighbors:
             optimize_acqf_mixed_alternating(
                 acq_function=SinAcqusitionFunction(),
-                bounds=torch.tensor([[-2.0, 0.0], [2.0, 200.0]]),
+                bounds=torch.tensor([[-2.0, 0.0], [2.0, 20.0]]),
                 discrete_dims=[1],
                 num_restarts=1,
             )
