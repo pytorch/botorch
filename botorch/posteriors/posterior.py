@@ -10,7 +10,7 @@ Abstract base module for all botorch posteriors.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 
 import torch
 from torch import Tensor
@@ -77,12 +77,14 @@ class Posterior(ABC):
         with torch.no_grad():
             return self.rsample(sample_shape=sample_shape)
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def device(self) -> torch.device:
         r"""The torch device of the distribution."""
         pass  # pragma: no cover
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def dtype(self) -> torch.dtype:
         r"""The torch dtype of the distribution."""
         pass  # pragma: no cover

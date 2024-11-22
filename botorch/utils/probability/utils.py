@@ -161,7 +161,7 @@ def log_ndtr(x: Tensor) -> Tensor:
     if not (x.dtype == torch.float32 or x.dtype == torch.float64):
         raise TypeError(
             f"log_Phi only supports torch.float32 and torch.float64 "
-            f"dtypes, but received {x.dtype = }."
+            f"dtypes, but received {x.dtype=}."
         )
     neg_inv_sqrt_2, log_2 = get_constants_like((_neg_inv_sqrt_2, _log_2), x)
     return log_erfc(neg_inv_sqrt_2 * x) - log_2
@@ -181,7 +181,7 @@ def log_erfc(x: Tensor) -> Tensor:
     if not (x.dtype == torch.float32 or x.dtype == torch.float64):
         raise TypeError(
             f"log_erfc only supports torch.float32 and torch.float64 "
-            f"dtypes, but received {x.dtype = }."
+            f"dtypes, but received {x.dtype=}."
         )
     is_pos = x > 0
     x_pos = x.masked_fill(~is_pos, 0)
