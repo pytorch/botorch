@@ -62,6 +62,10 @@
 <span class="n">MAX_ITER_ALTER</span> <span class="o">=</span> <span class="mi">64</span>  <span class="c1"># Maximum number of alternating iterations.</span>
 <span class="n">MAX_ITER_DISCRETE</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># Maximum number of discrete iterations.</span>
 <span class="n">MAX_ITER_CONT</span> <span class="o">=</span> <span class="mi">8</span>  <span class="c1"># Maximum number of continuous iterations.</span>
+<span class="c1"># Maximum number of discrete values for a discrete dimension.</span>
+<span class="c1"># If there are more values for a dimension, we will use continuous</span>
+<span class="c1"># relaxation to optimize it.</span>
+<span class="n">MAX_DISCRETE_VALUES</span> <span class="o">=</span> <span class="mi">20</span>
 <span class="c1"># Maximum number of iterations for optimizing the continuous relaxation</span>
 <span class="c1"># during initialization</span>
 <span class="n">MAX_ITER_INIT</span> <span class="o">=</span> <span class="mi">100</span>
@@ -75,12 +79,47 @@
     <span class="s2">"maxiter_discrete"</span><span class="p">,</span>
     <span class="s2">"maxiter_continuous"</span><span class="p">,</span>
     <span class="s2">"maxiter_init"</span><span class="p">,</span>
+    <span class="s2">"max_discrete_values"</span><span class="p">,</span>
     <span class="s2">"num_spray_points"</span><span class="p">,</span>
     <span class="s2">"std_cont_perturbation"</span><span class="p">,</span>
     <span class="s2">"batch_limit"</span><span class="p">,</span>
     <span class="s2">"init_batch_limit"</span><span class="p">,</span>
 <span class="p">}</span>
 <span class="n">SUPPORTED_INITIALIZATION</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"continuous_relaxation"</span><span class="p">,</span> <span class="s2">"equally_spaced"</span><span class="p">,</span> <span class="s2">"random"</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_setup_continuous_relaxation</span><span class="p">(</span>
+    <span class="n">discrete_dims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">max_discrete_values</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Update `discrete_dims` and `post_processing_func` to use</span>
+<span class="sd">    continuous relaxation for discrete dimensions that have more than</span>
+<span class="sd">    `max_discrete_values` values. These dimensions are removed from</span>
+<span class="sd">    `discrete_dims` and `post_processing_func` is updated to round</span>
+<span class="sd">    them to the nearest integer.</span>
+<span class="sd">    """</span>
+    <span class="n">discrete_dims_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">discrete_dims</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+    <span class="n">num_discrete_values</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">discrete_dims_t</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">discrete_dims_t</span><span class="p">]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+    <span class="n">dims_to_relax</span> <span class="o">=</span> <span class="n">discrete_dims_t</span><span class="p">[</span><span class="n">num_discrete_values</span> <span class="o">&gt;</span> <span class="n">max_discrete_values</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">dims_to_relax</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># No dimension needs continuous relaxation.</span>
+        <span class="k">return</span> <span class="n">discrete_dims</span><span class="p">,</span> <span class="n">post_processing_func</span>
+    <span class="c1"># Remove relaxed dims from `discrete_dims`.</span>
+    <span class="n">discrete_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">discrete_dims</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">dims_to_relax</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="nf">new_post_processing_func</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Round the relaxed dimensions to the nearest integer and apply the original</span>
+<span class="sd">        `post_processing_func`."""</span>
+        <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">dims_to_relax</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">dims_to_relax</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">post_processing_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">post_processing_func</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">X</span>
+
+    <span class="k">return</span> <span class="n">discrete_dims</span><span class="p">,</span> <span class="n">new_post_processing_func</span>
 
 
 <span class="k">def</span> <span class="nf">_filter_infeasible</span><span class="p">(</span>
@@ -575,6 +614,9 @@
 <span class="sd">    iterations.</span>
 
 <span class="sd">    NOTE: This method assumes that all discrete variables are integer valued.</span>
+<span class="sd">    The discrete dimensions that have more than</span>
+<span class="sd">    `options.get("max_discrete_values", MAX_DISCRETE_VALUES)` values will</span>
+<span class="sd">    be optimized using continuous relaxation.</span>
 
 <span class="sd">    # TODO: Support categorical variables.</span>
 
@@ -592,6 +634,9 @@
 <span class="sd">            Defaults to 4.</span>
 <span class="sd">        - "maxiter_continuous": Maximum number of iterations in each continuous step.</span>
 <span class="sd">            Defaults to 8.</span>
+<span class="sd">        - "max_discrete_values": Maximum number of values for a discrete dimension</span>
+<span class="sd">            to be optimized using discrete step / local search. The discrete dimensions</span>
+<span class="sd">            with more values will be optimized using continuous relaxation.</span>
 <span class="sd">        - "num_spray_points": Number of spray points (around `X_baseline`) to add to</span>
 <span class="sd">            the points generated by the initialization strategy. Defaults to 20 if</span>
 <span class="sd">            all discrete variables are binary and to 0 otherwise.</span>
@@ -641,6 +686,17 @@
             <span class="sa">f</span><span class="s2">"Received an unsupported option </span><span class="si">{</span><span class="n">unsupported_keys</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">SUPPORTED_OPTIONS</span><span class="si">=}</span><span class="s2">."</span>
         <span class="p">)</span>
 
+    <span class="c1"># Update discrete dims and post processing functions to account for any</span>
+    <span class="c1"># dimensions that should be using continuous relaxation.</span>
+    <span class="n">discrete_dims</span><span class="p">,</span> <span class="n">post_processing_func</span> <span class="o">=</span> <span class="n">_setup_continuous_relaxation</span><span class="p">(</span>
+        <span class="n">discrete_dims</span><span class="o">=</span><span class="n">discrete_dims</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">max_discrete_values</span><span class="o">=</span><span class="n">assert_is_instance</span><span class="p">(</span>
+            <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_discrete_values"</span><span class="p">,</span> <span class="n">MAX_DISCRETE_VALUES</span><span class="p">),</span> <span class="nb">int</span>
+        <span class="p">),</span>
+        <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">opt_inputs</span> <span class="o">=</span> <span class="n">OptimizeAcqfInputs</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
@@ -666,7 +722,7 @@
     <span class="c1"># Remove fixed features from dims, so they don't get optimized.</span>
     <span class="n">discrete_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">dim</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">discrete_dims</span> <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_features</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">discrete_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"There must be at least one discrete parameter."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_optimize_acqf</span><span class="p">(</span><span class="n">opt_inputs</span><span class="o">=</span><span class="n">opt_inputs</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
         <span class="nb">isinstance</span><span class="p">(</span><span class="n">discrete_dims</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
         <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">discrete_dims</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">discrete_dims</span><span class="p">)</span>
