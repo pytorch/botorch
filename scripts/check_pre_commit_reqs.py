@@ -59,12 +59,9 @@ def main():
     req_versions = parse_requirements(requirements_file)
     config_versions = parse_precommit_config(config_file)
 
-    # Packages to check
-    packages = ["ufmt", "black", "usort", "ruff-api"]
-
     # Check versions
     mismatches = []
-    for pkg in packages:
+    for pkg, req_ver in req_versions.items():
         req_ver = req_versions.get(pkg, None)
         config_ver = config_versions.get(pkg, None)
 

@@ -18,6 +18,7 @@ repos:
         - black==24.4.2
         - usort==1.0.8.post1
         - ruff-api==0.1.0
+        - stdlibs==2024.1.28
         args: [format]
 
 -   repo: https://github.com/pycqa/flake8
