@@ -436,7 +436,7 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
         n_f = 100
         num_pareto = 3
         msg = (
-            rf".*\({n_f*num_pareto}\) must be less than"
+            rf".*\({n_f * num_pareto}\) must be less than"
             rf" the `q`-batch dimension of `X` \({X.size(-2)}\)\."
         )
         with self.assertRaisesRegex(ValueError, msg):

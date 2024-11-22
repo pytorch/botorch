@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 import warnings
-from abc import abstractproperty
+from abc import abstractmethod
 from collections import OrderedDict
 from collections.abc import Sequence
 from itertools import product
@@ -138,7 +138,8 @@ class BaseTestProblemTestCaseMixIn:
                     )
                     self.assertEqual(res.shape, batch_shape + tail_shape)
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def functions(self) -> Sequence[BaseTestProblem]:
         # The functions that should be tested. Typically defined as a class
         # attribute on the test case subclassing this class.

@@ -39,6 +39,13 @@ flake8 .
 
 from the repository root.
 
+#### Pre-commit hooks
+
+Contributors can use [pre-commit](https://pre-commit.com/) to run `ufmt` and
+`flake8` as part of the commit process. To install the hooks, install `pre-commit`
+via `pip install pre-commit` and run `pre-commit install` from the repository
+root.
+
 #### Docstring formatting
 
 BoTorch uses
