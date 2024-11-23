@@ -1089,7 +1089,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span> <span class="ow">or</span> <span class="n">u</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"LogExpectedImprovement only supports torch.float32 and torch.float64 "</span>
-            <span class="sa">f</span><span class="s2">"dtypes, but received </span><span class="si">{</span><span class="n">u</span><span class="o">.</span><span class="n">dtype</span><span class="w"> </span><span class="si">= }</span><span class="s2">."</span>
+            <span class="sa">f</span><span class="s2">"dtypes, but received </span><span class="si">{</span><span class="n">u</span><span class="o">.</span><span class="n">dtype</span><span class="si">=}</span><span class="s2">."</span>
         <span class="p">)</span>
     <span class="c1"># The function has two branching decisions. The first is u &lt; bound, and in this</span>
     <span class="c1"># case, just taking the logarithm of the naive _ei_helper implementation works.</span>
