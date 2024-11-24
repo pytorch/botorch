@@ -1100,7 +1100,10 @@ def initialize_q_batch_topk(
         >>> # for model with `d=6`:
         >>> qUCB = qUpperConfidenceBound(model, beta=0.1)
         >>> X_rnd = torch.rand(500, 3, 6)
-        >>> X_init, acq_init = initialize_q_batch_topk(X=X_rnd, acq_vals=qUCB(X_rnd), n=10)
+        >>> X_init, acq_init = initialize_q_batch_topk(
+        ...     X=X_rnd, acq_vals=qUCB(X_rnd), n=10
+        ... )
+
     """
     n_samples = X.shape[0]
     if n > n_samples:
@@ -1122,8 +1125,8 @@ def initialize_q_batch_topk(
         idcs = torch.randperm(n=n_samples, device=X.device)[:n]
         return X[idcs], acq_vals[idcs]
 
-    idcs = acq_vals.topk(n, largest=largest, sorted=sorted).indices
-    return X[idcs], acq_vals[idcs]
+    topk_out, topk_idcs = acq_vals.topk(n, largest=largest, sorted=sorted)
+    return X[topk_idcs], topk_out
 
 
 def sample_points_around_best(
