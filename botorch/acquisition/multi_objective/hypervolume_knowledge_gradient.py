@@ -557,7 +557,7 @@ def _split_hvkg_fantasy_points(
     """
     if n_f * num_pareto > X.size(-2):
         raise ValueError(
-            f"`n_f*num_pareto` ({n_f*num_pareto}) must be less than"
+            f"`n_f*num_pareto` ({n_f * num_pareto}) must be less than"
             f" the `q`-batch dimension of `X` ({X.size(-2)})."
         )
     split_sizes = [X.size(-2) - n_f * num_pareto, n_f * num_pareto]

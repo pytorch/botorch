@@ -10,39 +10,18 @@ on:
 
 jobs:
 
-  ufmt:
-    name: Code formatting and sorting with ufmt
+  lint:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-    - name: Install dependencies
-      run: |
-        # pin dependencies to match Meta-internal versions
-        pip install -r requirements-fmt.txt
-    - name: ufmt
-      run: |
-        ufmt diff .
+      - uses: actions/checkout@v4
 
-  flake8:
-    name: Lint with flake8
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-    - name: Install dependencies
-      run: |
-        pip install flake8 flake8-docstrings
-    - name: Flake8
-      run: |
-        flake8
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install pre-commit
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files --show-diff-on-failure

@@ -248,7 +248,7 @@ def _optimize_acqf_sequential_q(
             if base_X_pending is not None
             else candidates
         )
-        logger.info(f"Generated sequential candidate {i+1} of {opt_inputs.q}")
+        logger.info(f"Generated sequential candidate {i + 1} of {opt_inputs.q}")
     opt_inputs.acq_function.set_X_pending(base_X_pending)
     return candidates, torch.stack(acq_value_list)
 
@@ -325,7 +325,7 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
             opt_warnings += ws
             batch_candidates_list.append(batch_candidates_curr)
             batch_acq_values_list.append(batch_acq_values_curr)
-            logger.info(f"Generated candidate batch {i+1} of {len(batched_ics)}.")
+            logger.info(f"Generated candidate batch {i + 1} of {len(batched_ics)}.")
 
         batch_candidates = torch.cat(batch_candidates_list)
         has_scalars = batch_acq_values_list[0].ndim == 0

@@ -540,7 +540,7 @@ def check_tau(tau: FloatOrTensor, name: str) -> FloatOrTensor:
     """Checks the validity of the tau arguments of the functions below, and returns
     `tau` if it is valid."""
     if isinstance(tau, Tensor) and tau.numel() != 1:
-        raise ValueError(name + f" is not a scalar: {tau.numel() = }.")
+        raise ValueError(f"{name} is not a scalar: {tau.numel()=}.")
     if not (tau > 0):
-        raise ValueError(name + f" is non-positive: {tau = }.")
+        raise ValueError(f"{name} is non-positive: {tau=}.")
     return tau

@@ -982,7 +982,7 @@ def _log_ei_helper(u: Tensor) -> Tensor:
     if not (u.dtype == torch.float32 or u.dtype == torch.float64):
         raise TypeError(
             f"LogExpectedImprovement only supports torch.float32 and torch.float64 "
-            f"dtypes, but received {u.dtype = }."
+            f"dtypes, but received {u.dtype=}."
         )
     # The function has two branching decisions. The first is u < bound, and in this
     # case, just taking the logarithm of the naive _ei_helper implementation works.

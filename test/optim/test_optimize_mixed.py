@@ -19,12 +19,14 @@ from botorch.models.deterministic import DeterministicModel
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.optim.optimize import _optimize_acqf, OptimizeAcqfInputs
 from botorch.optim.optimize_mixed import (
+    _setup_continuous_relaxation,
     complement_indices,
     continuous_step,
     discrete_step,
     generate_starting_points,
     get_nearest_neighbors,
     get_spray_points,
+    MAX_DISCRETE_VALUES,
     optimize_acqf_mixed_alternating,
     sample_feasible_points,
 )
@@ -544,11 +546,10 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         self.assertEqual(candidates.shape[-1], dim)
         c_binary = candidates[:, binary_dims + [2]]
         self.assertTrue(((c_binary == 0) | (c_binary == 1)).all())
-        # Only continuous parameters will raise an error.
-        with self.assertRaisesRegex(
-            ValueError,
-            "There must be at least one discrete parameter",
-        ):
+        # Only continuous parameters should fallback to optimize_acqf.
+        with mock.patch(
+            f"{OPT_MODULE}._optimize_acqf", wraps=_optimize_acqf
+        ) as wrapped_optimize:
             optimize_acqf_mixed_alternating(
                 acq_function=acqf,
                 bounds=bounds,
@@ -556,8 +557,18 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 options=options,
                 q=1,
                 raw_samples=20,
-                num_restarts=20,
+                num_restarts=2,
             )
+        wrapped_optimize.assert_called_once_with(
+            opt_inputs=_make_opt_inputs(
+                acq_function=acqf,
+                bounds=bounds,
+                options=options,
+                q=1,
+                raw_samples=20,
+                num_restarts=2,
+            )
+        )
         # Only discrete works fine.
         candidates, _ = optimize_acqf_mixed_alternating(
             acq_function=acqf,
@@ -720,3 +731,71 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         wrapped_sample_feasible.assert_called_once()
         # Should request 4 candidates, since all 4 are infeasible.
         self.assertEqual(wrapped_sample_feasible.call_args.kwargs["num_points"], 4)
+
+    def test_optimize_acqf_mixed_continuous_relaxation(self) -> None:
+        # Testing with integer variables.
+        train_X, train_Y, binary_dims, cont_dims = self._get_data()
+        # Update the data to introduce integer dimensions.
+        binary_dims = [0]
+        integer_dims = [3, 4]
+        discrete_dims = binary_dims + integer_dims
+        bounds = torch.tensor(
+            [[0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 40.0, 15.0]],
+            dtype=torch.double,
+            device=self.device,
+        )
+        # Update the model to have a different optimizer.
+        root = torch.tensor([0.0, 0.0, 0.0, 25.0, 10.0], device=self.device)
+        model = QuadraticDeterministicModel(root)
+        acqf = qLogNoisyExpectedImprovement(model=model, X_baseline=train_X)
+
+        for max_discrete_values, post_processing_func in (
+            (None, None),
+            (5, lambda X: X + 10),
+        ):
+            options = {
+                "batch_limit": 5,
+                "init_batch_limit": 20,
+                "maxiter_alternating": 1,
+            }
+            if max_discrete_values is not None:
+                options["max_discrete_values"] = max_discrete_values
+            with mock.patch(
+                f"{OPT_MODULE}._setup_continuous_relaxation",
+                wraps=_setup_continuous_relaxation,
+            ) as wrapped_setup, mock.patch(
+                f"{OPT_MODULE}.discrete_step", wraps=discrete_step
+            ) as wrapped_discrete:
+                candidates, _ = optimize_acqf_mixed_alternating(
+                    acq_function=acqf,
+                    bounds=bounds,
+                    discrete_dims=discrete_dims,
+                    q=3,
+                    raw_samples=32,
+                    num_restarts=4,
+                    options=options,
+                    post_processing_func=post_processing_func,
+                )
+            wrapped_setup.assert_called_once_with(
+                discrete_dims=discrete_dims,
+                bounds=bounds,
+                max_discrete_values=max_discrete_values or MAX_DISCRETE_VALUES,
+                post_processing_func=post_processing_func,
+            )
+            discrete_call_args = wrapped_discrete.call_args.kwargs
+            expected_dims = [0, 4] if max_discrete_values is None else [0]
+            self.assertAllClose(
+                discrete_call_args["discrete_dims"],
+                torch.tensor(expected_dims, device=self.device),
+            )
+            # Check that dim 3 is rounded.
+            X = torch.ones(1, 5, device=self.device) * 0.6
+            X_expected = X.clone()
+            X_expected[0, 3] = 1.0
+            if max_discrete_values is not None:
+                X_expected[0, 4] = 1.0
+            if post_processing_func is not None:
+                X_expected = post_processing_func(X_expected)
+            self.assertAllClose(
+                discrete_call_args["opt_inputs"].post_processing_func(X), X_expected
+            )
