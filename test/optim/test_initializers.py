@@ -31,13 +31,13 @@ from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.optim.initializers import (
-    initialize_q_batch,
-    initialize_q_batch_nonneg,
-    initialize_q_batch_topk,
     gen_batch_initial_conditions,
     gen_one_shot_hvkg_initial_conditions,
     gen_one_shot_kg_initial_conditions,
     gen_value_function_initial_conditions,
+    initialize_q_batch,
+    initialize_q_batch_nonneg,
+    initialize_q_batch_topn,
     sample_perturbed_subset_dims,
     sample_points_around_best,
     sample_q_batches_from_polytope,
@@ -157,12 +157,12 @@ class TestInitializeQBatch(BotorchTestCase):
                 with self.assertRaises(RuntimeError):
                     initialize_q_batch(X=X, acq_vals=acq_vals, n=10)
 
-    def test_initialize_q_batch_topk(self):
+    def test_initialize_q_batch_topn(self):
         for dtype in (torch.float, torch.double):
             # basic test
             X = torch.rand(5, 3, 4, device=self.device, dtype=dtype)
             acq_vals = torch.rand(5, device=self.device, dtype=dtype)
-            ics_X, ics_acq_vals = initialize_q_batch_topk(X=X, acq_vals=acq_vals, n=2)
+            ics_X, ics_acq_vals = initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=2)
             self.assertEqual(ics_X.shape, torch.Size([2, 3, 4]))
             self.assertEqual(ics_X.device, X.device)
             self.assertEqual(ics_X.dtype, X.dtype)
@@ -170,24 +170,24 @@ class TestInitializeQBatch(BotorchTestCase):
             self.assertEqual(ics_acq_vals.device, acq_vals.device)
             self.assertEqual(ics_acq_vals.dtype, acq_vals.dtype)
             # ensure nothing happens if we want all samples
-            ics_X, ics_acq_vals = initialize_q_batch_topk(X=X, acq_vals=acq_vals, n=5)
+            ics_X, ics_acq_vals = initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=5)
             self.assertTrue(torch.equal(X, ics_X))
             self.assertTrue(torch.equal(acq_vals, ics_acq_vals))
             # make sure things work with constant inputs
             acq_vals = torch.ones(5, device=self.device, dtype=dtype)
-            ics, _ = initialize_q_batch_topk(X=X, acq_vals=acq_vals, n=2)
+            ics, _ = initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=2)
             self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
             self.assertEqual(ics.device, X.device)
             self.assertEqual(ics.dtype, X.dtype)
             # ensure raises correct warning
             acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
             with warnings.catch_warnings(record=True) as w:
-                ics, _ = initialize_q_batch_topk(X=X, acq_vals=acq_vals, n=2)
+                ics, _ = initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=2)
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
             self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
             with self.assertRaises(RuntimeError):
-                initialize_q_batch_topk(X=X, acq_vals=acq_vals, n=10)
+                initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=10)
 
     def test_initialize_q_batch_largeZ(self):
         for dtype in (torch.float, torch.double):

@@ -25,7 +25,7 @@ from botorch.optim.homotopy import (
 from botorch.optim.initializers import (
     initialize_q_batch,
     initialize_q_batch_nonneg,
-    initialize_q_batch_topk,
+    initialize_q_batch_topn,
 )
 from botorch.optim.optimize import (
     gen_batch_initial_conditions,
@@ -47,7 +47,7 @@ __all__ = [
     "gen_batch_initial_conditions",
     "initialize_q_batch",
     "initialize_q_batch_nonneg",
-    "initialize_q_batch_topk",
+    "initialize_q_batch_topn",
     "OptimizationResult",
     "OptimizationStatus",
     "optimize_acqf",

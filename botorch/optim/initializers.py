@@ -329,8 +329,8 @@ def gen_batch_initial_conditions(
     device = bounds.device
     bounds_cpu = bounds.cpu()
 
-    if options.get("topk"):
-        init_func = initialize_q_batch_topk
+    if options.get("topn"):
+        init_func = initialize_q_batch_topn
         init_func_opts = ["sorted", "largest"]
     elif options.get("nonnegative") or is_nonnegative(acq_function):
         init_func = initialize_q_batch_nonneg
@@ -1079,7 +1079,7 @@ def initialize_q_batch_nonneg(
     return X[idcs], acq_vals[idcs]
 
 
-def initialize_q_batch_topk(
+def initialize_q_batch_topn(
     X: Tensor, acq_vals: Tensor, n: int, largest: bool = True, sorted: bool = True
 ) -> tuple[Tensor, Tensor]:
     r"""Take the top `n` initial conditions for candidate generation.
@@ -1100,7 +1100,7 @@ def initialize_q_batch_topk(
         >>> # for model with `d=6`:
         >>> qUCB = qUpperConfidenceBound(model, beta=0.1)
         >>> X_rnd = torch.rand(500, 3, 6)
-        >>> X_init, acq_init = initialize_q_batch_topk(
+        >>> X_init, acq_init = initialize_q_batch_topn(
         ...     X=X_rnd, acq_vals=qUCB(X_rnd), n=10
         ... )
 
