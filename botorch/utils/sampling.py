@@ -103,7 +103,7 @@ def draw_sobol_samples(
     samples_raw = samples_raw.view(*batch_shape, n, q, d).to(device=bounds.device)
     if batch_shape != torch.Size():
         samples_raw = samples_raw.permute(-3, *range(len(batch_shape)), -2, -1)
-    return unnormalize(samples_raw, bounds)
+    return bounds[0] + (bounds[1] - bounds[0]) * samples_raw
 
 
 def draw_sobol_normal_samples(
