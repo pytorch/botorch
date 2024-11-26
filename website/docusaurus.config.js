@@ -12,6 +12,9 @@ module.exports={
     "/js/mathjax.js",
     "https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"
   ],
+  "markdown": {
+    format: "detect"
+  },
   "stylesheets": [
     "/css/code_block_buttons.css"
   ],
