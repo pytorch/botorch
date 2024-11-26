@@ -48,7 +48,7 @@ jobs:
     #     git push --force origin HEAD:main
     - name: Build website
       run: |
-        bash scripts/make_docs.sh -b
+        bash scripts/build_docs.sh -b
     - name: Deploy
       uses: JamesIves/github-pages-deploy-action@releases/v4
       with:
