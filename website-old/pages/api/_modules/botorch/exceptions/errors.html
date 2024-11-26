@@ -1,0 +1,173 @@
+
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.exceptions.errors</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Botorch Errors.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span> <span class="nn">numpy.typing</span> <span class="k">as</span> <span class="nn">npt</span>
+
+
+<div class="viewcode-block" id="BotorchError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.BotorchError">[docs]</a>
+<span class="k">class</span> <span class="nc">BotorchError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Base botorch exception."""</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="CandidateGenerationError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.CandidateGenerationError">[docs]</a>
+<span class="k">class</span> <span class="nc">CandidateGenerationError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised during generating candidates."""</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="DeprecationError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.DeprecationError">[docs]</a>
+<span class="k">class</span> <span class="nc">DeprecationError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised due to deprecations"""</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="InputDataError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.InputDataError">[docs]</a>
+<span class="k">class</span> <span class="nc">InputDataError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised when input data does not comply with conventions."""</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="UnsupportedError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.UnsupportedError">[docs]</a>
+<span class="k">class</span> <span class="nc">UnsupportedError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Currently unsupported feature."""</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="BotorchTensorDimensionError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.BotorchTensorDimensionError">[docs]</a>
+<span class="k">class</span> <span class="nc">BotorchTensorDimensionError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised when a tensor violates a botorch convention."""</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="ModelFittingError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.ModelFittingError">[docs]</a>
+<span class="k">class</span> <span class="nc">ModelFittingError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised when attempts to fit a model terminate unsuccessfully."""</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="OptimizationTimeoutError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.OptimizationTimeoutError">[docs]</a>
+<span class="k">class</span> <span class="nc">OptimizationTimeoutError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised when optimization times out."""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">current_x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            *args: Standard args to `BoTorchError`.</span>
+<span class="sd">            current_x: A numpy array representing the current iterate.</span>
+<span class="sd">            runtime: The total runtime in seconds after which the optimization</span>
+<span class="sd">                timed out.</span>
+<span class="sd">            **kwargs: Standard kwargs to `BoTorchError`.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_x</span> <span class="o">=</span> <span class="n">current_x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="o">=</span> <span class="n">runtime</span></div>
+
+
+
+<div class="viewcode-block" id="OptimizationGradientError">
+<a class="viewcode-back" href="../../../exceptions.html#botorch.exceptions.errors.OptimizationGradientError">[docs]</a>
+<span class="k">class</span> <span class="nc">OptimizationGradientError</span><span class="p">(</span><span class="n">BotorchError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Exception raised when gradient array `gradf` containts NaNs."""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">current_x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            *args: Standard args to `BoTorchError`.</span>
+<span class="sd">            current_x: A numpy array representing the current iterate.</span>
+<span class="sd">            **kwargs: Standard kwargs to `BoTorchError`.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_x</span> <span class="o">=</span> <span class="n">current_x</span></div>
+
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_utils.html">botorch.test_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div>

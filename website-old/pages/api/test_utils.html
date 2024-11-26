@@ -1,0 +1,101 @@
+
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<section id="module-botorch.test_utils">
+<span id="botorch-test-utils"></span><h1>botorch.test_utils<a class="headerlink" href="#module-botorch.test_utils" title="Link to this heading">¶</a></h1>
+<p>test_utils has its own directory with ‘botorch/’ to avoid circular dependencies:
+Anything in ‘tests/’ can depend on anything in ‘botorch/test_utils/’, and
+anything in ‘botorch/test_utils/’ can depend on anything in the rest of
+‘botorch/’.</p>
+<section id="module-botorch.test_utils.mock">
+<span id="mock"></span><h2>Mock<a class="headerlink" href="#module-botorch.test_utils.mock" title="Link to this heading">¶</a></h2>
+<p>Utilities for speeding up optimization in tests.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.test_utils.mock.mock_optimize_context_manager">
+<span class="sig-prename descclassname"><span class="pre">botorch.test_utils.mock.</span></span><span class="sig-name descname"><span class="pre">mock_optimize_context_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_utils/mock.html#mock_optimize_context_manager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_utils.mock.mock_optimize_context_manager" title="Link to this definition">¶</a></dt>
+<dd><p>A context manager that uses mocks to speed up optimization for testing.
+Currently, the primary tactic is to force the underlying scipy methods to stop
+after just one iteration.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>force: If True will not raise an AssertionError if no mocks are called.</dt><dd><p>USE RESPONSIBLY.</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>force</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Generator</em>[None, None, None]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.test_utils.mock.mock_optimize">
+<span class="sig-prename descclassname"><span class="pre">botorch.test_utils.mock.</span></span><span class="sig-name descname"><span class="pre">mock_optimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_utils/mock.html#mock_optimize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_utils.mock.mock_optimize" title="Link to this definition">¶</a></dt>
+<dd><p>Wraps <cite>f</cite> in <cite>mock_optimize_context_manager</cite> for use as a decorator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>f</strong> (<em>Callable</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Callable</em></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+</section>
+</div>
+</div>
+</div>
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BoTorch</a></h1>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.test_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="index.html">Documentation overview</a><ul>
+<li>Previous: <a href="test_functions.html" title="previous chapter">botorch.test_functions</a></li>
+<li>Next: <a href="exceptions.html" title="next chapter">botorch.exceptions</a></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div>

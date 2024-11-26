@@ -1,0 +1,9 @@
+{
+  "docs": {
+    "About": ["introduction", "design_philosophy", "botorch_and_ax", "papers"],
+    "General": ["getting_started"],
+    "Basic Concepts": ["overview", "models", "posteriors", "acquisition", "optimization"],
+    "Advanced Topics": ["constraints", "objectives", "batching", "samplers"],
+    "Multi-Objective Optimization": ["multi_objective"]
+  }
+}

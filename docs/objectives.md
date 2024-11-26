@@ -43,7 +43,7 @@ inputs to a `sample_shape x batch_shape x q`-dimensional tensor of sampled
 objective values.
 
 For instance, say you have a multi-output model with $o=2$ outputs, and you want
-to optimize a $obj(y) = 1 - \\|y - y_0\\|_2$, where $y_0 \in \mathbb{R}^2$.
+to optimize a $obj(y) = 1 - \|y - y_0\|_2$, where $y_0 \in \mathbb{R}^2$.
 For this you would use the following custom objective (here we can ignore the
 inputs $X$ as the objective does not depend on it):
 ```python

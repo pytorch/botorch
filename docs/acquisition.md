@@ -36,7 +36,9 @@ functions that consider multiple design points jointly (i.e. $q > 1$).
 An alternative is to use Monte-Carlo (MC) sampling to approximate the integrals.
 An MC approximation of $\alpha$ at $X$ using $N$ MC samples is
 
-$$ \alpha(X) \approx \frac{1}{N} \sum_{i=1}^N a(\xi_{i}) $$
+$$
+\alpha(X) \approx \frac{1}{N} \sum_{i=1}^N a(\xi_{i})
+$$
 
 where $\xi_i \sim \mathbb{P}(f(X) \mid \mathcal{D})$.
 
@@ -44,17 +46,17 @@ For instance, for q-Expected Improvement (qEI), we have:
 
 $$
 \text{qEI}(X) \approx \frac{1}{N} \sum_{i=1}^N \max_{j=1,..., q}
-\bigl\\{ \max(\xi_{ij} - f^\*, 0) \bigr\\},
+\bigl\{ \max(\xi_{ij} - f^*, 0) \bigr\},
 \qquad \xi_{i} \sim \mathbb{P}(f(X) \mid \mathcal{D})
 $$
 
-where $f^\*$ is the best function value observed so far (assuming noiseless
+where $f^*$ is the best function value observed so far (assuming noiseless
 observations). Using the reparameterization trick ([^KingmaWelling2014],
 [^Rezende2014]),
 
 $$
 \text{qEI}(X) \approx \frac{1}{N} \sum_{i=1}^N \max_{j=1,..., q}
-\bigl\\{ \max\bigl( \mu(X)\_j + (L(X) \epsilon_i)\_j - f^\*, 0 \bigr) \bigr\\},
+\bigl\{ \max\bigl( \mu(X)\_j + (L(X) \epsilon_i)\_j - f^*, 0 \bigr) \bigr\},
 \qquad \epsilon_{i} \sim \mathcal{N}(0, I)
 $$
 
@@ -65,10 +67,10 @@ All MC-based acquisition functions in BoTorch are derived from
 [`MCAcquisitionFunction`](../api/acquisition.html#mcacquisitionfunction).
 
 Acquisition functions expect input tensors $X$ of shape
-$\textit{batch_shape} \times q \times d$, where $d$ is the dimension of the
+$\textit{batch\_shape} \times q \times d$, where $d$ is the dimension of the
 feature space, $q$ is the number of points considered jointly, and
-$\textit{batch_shape}$ is the batch-shape of the input tensor. The output
-$\alpha(X)$ will have shape $\textit{batch_shape}$, with each element
+$\textit{batch\_shape}$ is the batch-shape of the input tensor. The output
+$\alpha(X)$ will have shape $\textit{batch\_shape}$, with each element
 corresponding to the respective $q \times d$ batch tensor in the input $X$.
 Note that for analytic acquisition functions, it must be that $q=1$.
 
@@ -135,15 +137,19 @@ summary statistics of the posterior distribution at the evaluated point(s).
 A popular acquisition function is Expected Improvement of a single point
 for a Gaussian posterior, given by
 
-$$ \text{EI}(x) = \mathbb{E}\bigl[
+$$
+\text{EI}(x) = \mathbb{E}\bigl[
 \max(y - f^\*, 0) \mid y\sim \mathcal{N}(\mu(x), \sigma^2(x))
-\bigr] $$
+\bigr]
+$$
 
 where $\mu(x)$ and $\sigma(x)$ are the posterior mean and variance of $f$ at the
-point $x$, and $f^\*$ is again the best function value observed so far (assuming
+point $x$, and $f^*$ is again the best function value observed so far (assuming
 noiseless observations). It can be shown that
 
-$$ \text{EI}(x) = \sigma(x) \bigl( z \Phi(z) + \varphi(z) \bigr)$$
+$$
+\text{EI}(x) = \sigma(x) \bigl( z \Phi(z) + \varphi(z) \bigr)
+$$
 
 where $z = \frac{\mu(x) - f_{\max}}{\sigma(x)}$ and $\Phi$ and $\varphi$ are
 the cdf and pdf of the standard normal distribution, respectively.

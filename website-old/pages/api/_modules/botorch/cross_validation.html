@@ -1,0 +1,270 @@
+
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.cross_validation</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Cross-validation utilities using batch evaluation mode.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">NamedTuple</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">MultiTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+
+<div class="viewcode-block" id="CVFolds">
+<a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.CVFolds">[docs]</a>
+<span class="k">class</span> <span class="nc">CVFolds</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">test_X</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">test_Y</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">test_Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="CVResults">
+<a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.CVResults">[docs]</a>
+<span class="k">class</span> <span class="nc">CVResults</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span>
+    <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span>
+    <span class="n">observed_Y</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">observed_Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="gen_loo_cv_folds">
+<a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.gen_loo_cv_folds">[docs]</a>
+<span class="k">def</span> <span class="nf">gen_loo_cv_folds</span><span class="p">(</span>
+    <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CVFolds</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Generate LOO CV folds w.r.t. to `n`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training</span>
+<span class="sd">            features.</span>
+<span class="sd">        train_Y: A `n x (m)` or `batch_shape x n x (m)` (batch mode) tensor of</span>
+<span class="sd">            training observations.</span>
+<span class="sd">        train_Yvar: An `n x (m)` or `batch_shape x n x (m)` (batch mode) tensor</span>
+<span class="sd">            of observed measurement noise.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        CVFolds NamedTuple with the following fields:</span>
+
+<span class="sd">        - train_X: A `n x (n-1) x d` or `batch_shape x n x (n-1) x d` tensor of</span>
+<span class="sd">          training features.</span>
+<span class="sd">        - test_X: A `n x 1 x d` or `batch_shape x n x 1 x d` tensor of test features.</span>
+<span class="sd">        - train_Y: A `n x (n-1) x m` or `batch_shape x n x (n-1) x m` tensor of</span>
+<span class="sd">          training observations.</span>
+<span class="sd">        - test_Y: A `n x 1 x m` or `batch_shape x n x 1 x m` tensor of test</span>
+<span class="sd">          observations.</span>
+<span class="sd">        - train_Yvar: A `n x (n-1) x m` or `batch_shape x n x (n-1) x m` tensor</span>
+<span class="sd">          of observed measurement noise.</span>
+<span class="sd">        - test_Yvar: A `n x 1 x m` or `batch_shape x n x 1 x m` tensor of observed</span>
+<span class="sd">          measurement noise.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; train_X = torch.rand(10, 1)</span>
+<span class="sd">        &gt;&gt;&gt; train_Y = torch.rand_like(train_X)</span>
+<span class="sd">        &gt;&gt;&gt; cv_folds = gen_loo_cv_folds(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; cv_folds.train_X.shape</span>
+<span class="sd">        torch.Size([10, 9, 1])</span>
+<span class="sd">    """</span>
+    <span class="n">masks</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">masks</span> <span class="o">=</span> <span class="n">masks</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">train_X</span><span class="o">.</span><span class="n">dim</span><span class="p">():</span>
+        <span class="c1"># add output dimension</span>
+        <span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">train_X_cv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">train_X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">~</span><span class="n">m</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">masks</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">3</span>
+    <span class="p">)</span>
+    <span class="n">test_X_cv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">masks</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">train_Y_cv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">train_Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">~</span><span class="n">m</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">masks</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">3</span>
+    <span class="p">)</span>
+    <span class="n">test_Y_cv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">train_Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">masks</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">train_Yvar_cv</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">test_Yvar_cv</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">train_Yvar_cv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">train_Yvar</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">~</span><span class="n">m</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">masks</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">3</span>
+        <span class="p">)</span>
+        <span class="n">test_Yvar_cv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">train_Yvar</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">masks</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">3</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">CVFolds</span><span class="p">(</span>
+        <span class="n">train_X</span><span class="o">=</span><span class="n">train_X_cv</span><span class="p">,</span>
+        <span class="n">test_X</span><span class="o">=</span><span class="n">test_X_cv</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y_cv</span><span class="p">,</span>
+        <span class="n">test_Y</span><span class="o">=</span><span class="n">test_Y_cv</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar_cv</span><span class="p">,</span>
+        <span class="n">test_Yvar</span><span class="o">=</span><span class="n">test_Yvar_cv</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="batch_cross_validation">
+<a class="viewcode-back" href="../../cross_validation.html#botorch.cross_validation.batch_cross_validation">[docs]</a>
+<span class="k">def</span> <span class="nf">batch_cross_validation</span><span class="p">(</span>
+    <span class="n">model_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">GPyTorchModel</span><span class="p">],</span>
+    <span class="n">mll_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">MarginalLogLikelihood</span><span class="p">],</span>
+    <span class="n">cv_folds</span><span class="p">:</span> <span class="n">CVFolds</span><span class="p">,</span>
+    <span class="n">fit_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">model_init_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CVResults</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Perform cross validation by using GPyTorch batch mode.</span>
+
+<span class="sd">    WARNING: This function is currently very memory inefficient; use it only</span>
+<span class="sd">        for problems of small size.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_cls: A GPyTorchModel class. This class must initialize the likelihood</span>
+<span class="sd">            internally. Note: Multi-task GPs are not currently supported.</span>
+<span class="sd">        mll_cls: A MarginalLogLikelihood class.</span>
+<span class="sd">        cv_folds: A CVFolds tuple.</span>
+<span class="sd">        fit_args: Arguments passed along to fit_gpytorch_mll.</span>
+<span class="sd">        model_init_kwargs: Keyword arguments passed to the model constructor.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A CVResults tuple with the following fields</span>
+
+<span class="sd">        - model: GPyTorchModel for batched cross validation</span>
+<span class="sd">        - posterior: GPyTorchPosterior where the mean has shape `n x 1 x m` or</span>
+<span class="sd">          `batch_shape x n x 1 x m`</span>
+<span class="sd">        - observed_Y: A `n x 1 x m` or `batch_shape x n x 1 x m` tensor of observations.</span>
+<span class="sd">        - observed_Yvar: A `n x 1 x m` or `batch_shape x n x 1 x m` tensor of observed</span>
+<span class="sd">          measurement noise.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.cross_validation import (</span>
+<span class="sd">        ...     batch_cross_validation, gen_loo_cv_folds</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models import SingleTaskGP</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models.transforms.input import Normalize</span>
+<span class="sd">        &gt;&gt;&gt; from botorch.models.transforms.outcome import Standardize</span>
+<span class="sd">        &gt;&gt;&gt; from gpytorch.mlls import ExactMarginalLogLikelihood</span>
+
+<span class="sd">        &gt;&gt;&gt; train_X = torch.rand(10, 1)</span>
+<span class="sd">        &gt;&gt;&gt; train_Y = torch.rand_like(train_X)</span>
+<span class="sd">        &gt;&gt;&gt; cv_folds = gen_loo_cv_folds(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; input_transform = Normalize(d=train_X.shape[-1])</span>
+<span class="sd">        &gt;&gt;&gt; outcome_transform = Standardize(</span>
+<span class="sd">        ...     m=train_Y.shape[-1], batch_shape=cv_folds.train_Y.shape[:-2]</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; cv_results = batch_cross_validation(</span>
+<span class="sd">        ...    model_cls=SingleTaskGP,</span>
+<span class="sd">        ...    mll_cls=ExactMarginalLogLikelihood,</span>
+<span class="sd">        ...    cv_folds=cv_folds,</span>
+<span class="sd">        ...    model_init_kwargs={</span>
+<span class="sd">        ...        "input_transform": input_transform,</span>
+<span class="sd">        ...        "outcome_transform": outcome_transform,</span>
+<span class="sd">        ...    },</span>
+<span class="sd">        ... )</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model_cls</span><span class="p">,</span> <span class="n">MultiTaskGP</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"Multi-task GPs are not currently supported by `batch_cross_validation`."</span>
+        <span class="p">)</span>
+    <span class="n">model_init_kws</span> <span class="o">=</span> <span class="n">model_init_kwargs</span> <span class="k">if</span> <span class="n">model_init_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">cv_folds</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">model_init_kws</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cv_folds</span><span class="o">.</span><span class="n">train_Yvar</span>
+    <span class="n">model_cv</span> <span class="o">=</span> <span class="n">model_cls</span><span class="p">(</span>
+        <span class="n">train_X</span><span class="o">=</span><span class="n">cv_folds</span><span class="o">.</span><span class="n">train_X</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="o">=</span><span class="n">cv_folds</span><span class="o">.</span><span class="n">train_Y</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">model_init_kws</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">mll_cv</span> <span class="o">=</span> <span class="n">mll_cls</span><span class="p">(</span><span class="n">model_cv</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model_cv</span><span class="p">)</span>
+    <span class="n">mll_cv</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">cv_folds</span><span class="o">.</span><span class="n">train_X</span><span class="p">)</span>
+
+    <span class="n">fit_args</span> <span class="o">=</span> <span class="n">fit_args</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">mll_cv</span> <span class="o">=</span> <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll_cv</span><span class="p">,</span> <span class="o">**</span><span class="n">fit_args</span><span class="p">)</span>
+
+    <span class="c1"># Evaluate on the hold-out set in batch mode</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">model_cv</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
+            <span class="n">cv_folds</span><span class="o">.</span><span class="n">test_X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">CVResults</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model_cv</span><span class="p">,</span>
+        <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
+        <span class="n">observed_Y</span><span class="o">=</span><span class="n">cv_folds</span><span class="o">.</span><span class="n">test_Y</span><span class="p">,</span>
+        <span class="n">observed_Yvar</span><span class="o">=</span><span class="n">cv_folds</span><span class="o">.</span><span class="n">test_Yvar</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">BoTorch</a></h1>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../test_utils.html">botorch.test_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../index.html">Documentation overview</a><ul>
+<li><a href="../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div>

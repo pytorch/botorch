@@ -1,0 +1,196 @@
+
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.test_utils.mock</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">"""</span>
+<span class="sd">Utilities for speeding up optimization in tests.</span>
+
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Generator</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span><span class="p">,</span> <span class="n">ExitStack</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">mock</span>
+
+<span class="kn">from</span> <span class="nn">botorch.optim.initializers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">gen_batch_initial_conditions</span><span class="p">,</span>
+    <span class="n">gen_one_shot_kg_initial_conditions</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.utils.timeout</span> <span class="kn">import</span> <span class="n">minimize_with_timeout</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">OptimizeResult</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+
+<div class="viewcode-block" id="mock_optimize_context_manager">
+<a class="viewcode-back" href="../../../test_utils.html#botorch.test_utils.mock.mock_optimize_context_manager">[docs]</a>
+<span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">mock_optimize_context_manager</span><span class="p">(</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""A context manager that uses mocks to speed up optimization for testing.</span>
+<span class="sd">    Currently, the primary tactic is to force the underlying scipy methods to stop</span>
+<span class="sd">    after just one iteration.</span>
+
+<span class="sd">        force: If True will not raise an AssertionError if no mocks are called.</span>
+<span class="sd">            USE RESPONSIBLY.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="nf">one_iteration_minimize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizeResult</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"options"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"options"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"options"</span><span class="p">][</span><span class="s2">"maxiter"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">minimize_with_timeout</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">minimal_gen_ics</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"num_restarts"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"raw_samples"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
+
+        <span class="k">return</span> <span class="n">gen_batch_initial_conditions</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">minimal_gen_os_ics</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"num_restarts"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"raw_samples"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
+
+        <span class="k">return</span> <span class="n">gen_one_shot_kg_initial_conditions</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">ExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">es</span><span class="p">:</span>
+        <span class="c1"># Note this `minimize_with_timeout` is defined in optim.utils.timeout;</span>
+        <span class="c1"># this mock only has an effect when calling a function used in</span>
+        <span class="c1"># `botorch.generation.gen`, such as `gen_candidates_scipy`.</span>
+        <span class="n">mock_generation</span> <span class="o">=</span> <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span>
+            <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span>
+                <span class="s2">"botorch.generation.gen.minimize_with_timeout"</span><span class="p">,</span>
+                <span class="n">wraps</span><span class="o">=</span><span class="n">one_iteration_minimize</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Similarly, works when using calling a function defined in</span>
+        <span class="c1"># `optim.core`, such as `scipy_minimize` and `torch_minimize`.</span>
+        <span class="n">mock_fit</span> <span class="o">=</span> <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span>
+            <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span>
+                <span class="s2">"botorch.optim.core.minimize_with_timeout"</span><span class="p">,</span>
+                <span class="n">wraps</span><span class="o">=</span><span class="n">one_iteration_minimize</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Works when calling a function in `optim.optimize` such as</span>
+        <span class="c1"># `optimize_acqf`</span>
+        <span class="n">mock_gen_ics</span> <span class="o">=</span> <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span>
+            <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span>
+                <span class="s2">"botorch.optim.optimize.gen_batch_initial_conditions"</span><span class="p">,</span>
+                <span class="n">wraps</span><span class="o">=</span><span class="n">minimal_gen_ics</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Works when calling a function in `optim.optimize` such as</span>
+        <span class="c1"># `optimize_acqf`</span>
+        <span class="n">mock_gen_os_ics</span> <span class="o">=</span> <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span>
+            <span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span>
+                <span class="s2">"botorch.optim.optimize.gen_one_shot_kg_initial_conditions"</span><span class="p">,</span>
+                <span class="n">wraps</span><span class="o">=</span><span class="n">minimal_gen_os_ics</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Reduce default number of iterations in `optimize_acqf_mixed_alternating`.</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">"MAX_ITER_ALTER"</span><span class="p">,</span>
+            <span class="s2">"MAX_ITER_DISCRETE"</span><span class="p">,</span>
+            <span class="s2">"MAX_ITER_CONT"</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">mock</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="sa">f</span><span class="s2">"botorch.optim.optimize_mixed.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">new</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">yield</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">force</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="n">mock_</span><span class="o">.</span><span class="n">call_count</span> <span class="o">&lt;</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">mock_</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">mock_generation</span><span class="p">,</span>
+            <span class="n">mock_fit</span><span class="p">,</span>
+            <span class="n">mock_gen_ics</span><span class="p">,</span>
+            <span class="n">mock_gen_os_ics</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
+            <span class="s2">"No mocks were called in the context manager. Please remove unused "</span>
+            <span class="s2">"mock_optimize_context_manager()."</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="mock_optimize">
+<a class="viewcode-back" href="../../../test_utils.html#botorch.test_utils.mock.mock_optimize">[docs]</a>
+<span class="k">def</span> <span class="nf">mock_optimize</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Wraps `f` in `mock_optimize_context_manager` for use as a decorator."""</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="c1"># pyre-fixme[3]: Return type must be annotated.</span>
+    <span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">mock_optimize_context_manager</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">inner</span></div>
+
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_utils.html">botorch.test_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div>

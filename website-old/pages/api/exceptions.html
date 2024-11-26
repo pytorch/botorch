@@ -1,0 +1,219 @@
+
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<section id="module-botorch.exceptions">
+<span id="botorch-exceptions"></span><h1>botorch.exceptions<a class="headerlink" href="#module-botorch.exceptions" title="Link to this heading">¶</a></h1>
+<section id="module-botorch.exceptions.errors">
+<span id="errors"></span><h2>Errors<a class="headerlink" href="#module-botorch.exceptions.errors" title="Link to this heading">¶</a></h2>
+<p>Botorch Errors.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.errors.BotorchError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.errors.</span></span><span class="sig-name descname"><span class="pre">BotorchError</span></span><a class="reference internal" href="_modules/botorch/exceptions/errors.html#BotorchError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.errors.BotorchError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Base botorch exception.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.errors.CandidateGenerationError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.errors.</span></span><span class="sig-name descname"><span class="pre">CandidateGenerationError</span></span><a class="reference internal" href="_modules/botorch/exceptions/errors.html#CandidateGenerationError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.errors.CandidateGenerationError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.errors.BotorchError" title="botorch.exceptions.errors.BotorchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchError</span></code></a></p>
+<p>Exception raised during generating candidates.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.errors.DeprecationError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.errors.</span></span><span class="sig-name descname"><span class="pre">DeprecationError</span></span><a class="reference internal" href="_modules/botorch/exceptions/errors.html#DeprecationError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.errors.DeprecationError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.errors.BotorchError" title="botorch.exceptions.errors.BotorchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchError</span></code></a></p>
+<p>Exception raised due to deprecations</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.errors.InputDataError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.errors.</span></span><span class="sig-name descname"><span class="pre">InputDataError</span></span><a class="reference internal" href="_modules/botorch/exceptions/errors.html#InputDataError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.errors.InputDataError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.errors.BotorchError" title="botorch.exceptions.errors.BotorchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchError</span></code></a></p>
+<p>Exception raised when input data does not comply with conventions.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.errors.UnsupportedError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.errors.</span></span><span class="sig-name descname"><span class="pre">UnsupportedError</span></span><a class="reference internal" href="_modules/botorch/exceptions/errors.html#UnsupportedError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.errors.UnsupportedError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.errors.BotorchError" title="botorch.exceptions.errors.BotorchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchError</span></code></a></p>
+<p>Currently unsupported feature.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.errors.BotorchTensorDimensionError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.errors.</span></span><span class="sig-name descname"><span class="pre">BotorchTensorDimensionError</span></span><a class="reference internal" href="_modules/botorch/exceptions/errors.html#BotorchTensorDimensionError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.errors.BotorchTensorDimensionError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.errors.BotorchError" title="botorch.exceptions.errors.BotorchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchError</span></code></a></p>
+<p>Exception raised when a tensor violates a botorch convention.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.errors.ModelFittingError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.errors.</span></span><span class="sig-name descname"><span class="pre">ModelFittingError</span></span><a class="reference internal" href="_modules/botorch/exceptions/errors.html#ModelFittingError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.errors.ModelFittingError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Exception raised when attempts to fit a model terminate unsuccessfully.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.errors.OptimizationTimeoutError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.errors.</span></span><span class="sig-name descname"><span class="pre">OptimizationTimeoutError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runtime</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/exceptions/errors.html#OptimizationTimeoutError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.errors.OptimizationTimeoutError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.errors.BotorchError" title="botorch.exceptions.errors.BotorchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchError</span></code></a></p>
+<p>Exception raised when optimization times out.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>Any</em>) – Standard args to <cite>BoTorchError</cite>.</p></li>
+<li><p><strong>current_x</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>) – A numpy array representing the current iterate.</p></li>
+<li><p><strong>runtime</strong> (<em>float</em>) – The total runtime in seconds after which the optimization
+timed out.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Standard kwargs to <cite>BoTorchError</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.errors.OptimizationGradientError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.errors.</span></span><span class="sig-name descname"><span class="pre">OptimizationGradientError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/exceptions/errors.html#OptimizationGradientError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.errors.OptimizationGradientError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.errors.BotorchError" title="botorch.exceptions.errors.BotorchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchError</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></p>
+<p>Exception raised when gradient array <cite>gradf</cite> containts NaNs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> (<em>Any</em>) – Standard args to <cite>BoTorchError</cite>.</p></li>
+<li><p><strong>current_x</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>) – A numpy array representing the current iterate.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Standard kwargs to <cite>BoTorchError</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+<section id="module-botorch.exceptions.warnings">
+<span id="warnings"></span><h2>Warnings<a class="headerlink" href="#module-botorch.exceptions.warnings" title="Link to this heading">¶</a></h2>
+<p>Botorch Warnings.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.BotorchWarning">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">BotorchWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#BotorchWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.BotorchWarning" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Warning</span></code></p>
+<p>Base botorch warning.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.BadInitialCandidatesWarning">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">BadInitialCandidatesWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#BadInitialCandidatesWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.BadInitialCandidatesWarning" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
+<p>Warning issued if set of initial candidates for optimziation is bad.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.InputDataWarning">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">InputDataWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#InputDataWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.InputDataWarning" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
+<p>Warning raised when input data does not comply with conventions.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.CostAwareWarning">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">CostAwareWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#CostAwareWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.CostAwareWarning" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
+<p>Warning raised in the context of cost-aware acquisition strategies.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.OptimizationWarning">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">OptimizationWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#OptimizationWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.OptimizationWarning" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
+<p>Optimization-related warnings.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.SamplingWarning">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">SamplingWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#SamplingWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.SamplingWarning" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
+<p>Sampling related warnings.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.BotorchTensorDimensionWarning">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">BotorchTensorDimensionWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#BotorchTensorDimensionWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.BotorchTensorDimensionWarning" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
+<p>Warning raised when a tensor possibly violates a botorch convention.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.UserInputWarning">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">UserInputWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#UserInputWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.UserInputWarning" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
+<p>Warning raised when a potential issue is detected with user provided inputs.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.NumericsWarning">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">NumericsWarning</span></span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#NumericsWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.NumericsWarning" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.exceptions.warnings.BotorchWarning" title="botorch.exceptions.warnings.BotorchWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">BotorchWarning</span></code></a></p>
+<p>Warning raised when numerical issues are detected.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.exceptions.warnings.legacy_ei_numerics_warning">
+<span class="sig-prename descclassname"><span class="pre">botorch.exceptions.warnings.</span></span><span class="sig-name descname"><span class="pre">legacy_ei_numerics_warning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">legacy_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/exceptions/warnings.html#legacy_ei_numerics_warning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.exceptions.warnings.legacy_ei_numerics_warning" title="Link to this definition">¶</a></dt>
+<dd><p>Raises a warning for legacy EI acquisition functions that are known to have
+numerical issues and should be replaced with the LogEI version for virtually all
+use-cases except for explicit benchmarking of the numerical issues of legacy EI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>legacy_name</strong> (<em>str</em>) – The name of the legacy EI acquisition function.</p></li>
+<li><p><strong>logei_name</strong> – The name of the associated LogEI acquisition function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+</section>
+</div>
+</div>
+</div>
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BoTorch</a></h1>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test_utils.html">botorch.test_utils</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="index.html">Documentation overview</a><ul>
+<li>Previous: <a href="test_utils.html" title="previous chapter">botorch.test_utils</a></li>
+<li>Next: <a href="utils.html" title="next chapter">botorch.utils</a></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div>
