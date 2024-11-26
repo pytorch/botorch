@@ -37,9 +37,9 @@ module.exports={
         "theme": {
           "customCss": "static/css/custom.css"
         },
-        "gtag": {
-          "trackingID": "G-CXN3PGE3CC"
-        }
+        // "gtag": {
+        //   "trackingID": "G-CXN3PGE3CC"
+        // }
       }
     ]
   ],
@@ -85,9 +85,9 @@ module.exports={
         "src": "img/botorch.png"
       }
     },
-    "algolia": {
-      "apiKey": "207c27d819f967749142d8611de7cb19",
-      "indexName": "botorch"
-    }
+    // "algolia": {
+    //   "apiKey": "207c27d819f967749142d8611de7cb19",
+    //   "indexName": "botorch"
+    // }
   }
 }
