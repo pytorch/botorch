@@ -8,7 +8,6 @@ module.exports={
   "organizationName": "pytorch",
   "projectName": "botorch",
   "scripts": [
-    "https://buttons.github.io/buttons.js",
     "/js/code_block_buttons.js",
     "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js",
     "/js/mathjax.js",
@@ -89,10 +88,72 @@ module.exports={
     },
     "image": "img/botorch.png",
     "footer": {
-      "links": [],
+      style: 'dark',
       "logo": {
-        "src": "img/botorch.png"
-      }
+        alt: "Botorch",
+        "src": "img/meta_opensource_logo_negative.svg",
+      },
+      links: [
+        {
+          title: 'Docs',
+          items: [
+            {
+              label: 'Introduction',
+              to: 'docs/introduction',
+            },
+            {
+              label: 'Getting Started',
+              to: 'docs/getting_started',
+            },
+            {
+              label: 'Tutorials',
+              to: 'docs/tutorials/',
+            },
+            {
+              label: 'API Reference',
+              to: 'api/', // TODO: add link to API reference
+            },
+            {
+              label: 'Paper',
+              href: 'https://arxiv.org/abs/1910.06403',
+            },
+          ],
+        },
+        {
+          title: 'Social',
+          items: [
+            {
+              label: 'GitHub',
+              href: 'https://github.com/pytorch/botorch',
+            },
+            {
+              html: `<iframe
+                src="https://ghbtns.com/github-btn.html?user=pytorch&amp;repo=botorch&amp;type=star&amp;count=true&amp;size=small"
+                title="GitHub Stars"
+              />`,
+            },
+          ],
+        },
+        {
+          title: 'Legal',
+          // Please do not remove the privacy and terms, it's a legal requirement.
+          items: [
+            {
+              label: 'Privacy',
+              href: 'https://opensource.facebook.com/legal/privacy/',
+              target: '_blank',
+              rel: 'noreferrer noopener',
+            },
+            {
+              label: 'Terms',
+              href: 'https://opensource.facebook.com/legal/terms/',
+              target: '_blank',
+              rel: 'noreferrer noopener',
+            },
+          ],
+        },
+      ],
+      copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc.`,
     },
     // "algolia": {
     //   "apiKey": "207c27d819f967749142d8611de7cb19",
