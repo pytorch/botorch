@@ -1,3 +1,5 @@
+import {themes as prismThemes} from 'prism-react-renderer';
+
 module.exports={
   "title": "BoTorch",
   "tagline": "Bayesian Optimization in PyTorch",
@@ -48,6 +50,10 @@ module.exports={
   ],
   "plugins": [],
   "themeConfig": {
+    prism: {
+      theme: prismThemes.github,
+      darkTheme: prismThemes.dracula,
+    },
     "navbar": {
       "title": "BoTorch",
       "logo": {
