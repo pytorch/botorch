@@ -1,0 +1,56 @@
+name: Publish Website
+
+on:
+  workflow_call:
+    inputs:
+      new_version:
+        required: false
+        type: string
+      run_tutorials:
+        required: false
+        type: boolean
+        default: false
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+
+jobs:
+
+  publish-website:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        pip install ."[dev, tutorials]"
+    # - if: ${{ inputs.run_tutorials }}
+    #   name: Run Tutorials
+    #   run: |
+    #     python scripts/run_tutorials.py -w $(pwd)
+    # - if: ${{ inputs.new_version }}
+    #   name: Create new docusaurus version
+    #   run: |
+    #     git config --global user.name "github-actions[bot]"
+    #     git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+    #     python3 scripts/convert_ipynb_to_mdx.py --clean
+    #     cd website
+    #     yarn
+    #     yarn docusaurus docs:version ${{ inputs.new_version }}
+
+    #     git add --all
+    #     git commit -m "Create version ${{ inputs.new_version }} of site in Docusaurus"
+    #     git push --force origin HEAD:main
+    - name: Build website
+      run: |
+        bash scripts/make_docs.sh -b
+    - name: Deploy
+      uses: JamesIves/github-pages-deploy-action@releases/v4
+      with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: website/build # The folder the action should deploy.

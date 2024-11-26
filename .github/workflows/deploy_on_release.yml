@@ -8,47 +8,46 @@ on:
 
 jobs:
 
-  tests-and-coverage:
-    name: Test & Coverage
-    uses: ./.github/workflows/reusable_test.yml
-    with:
-      use_latest_pytorch_gpytorch: false
-    secrets: inherit
+  # tests-and-coverage:
+  #   name: Test & Coverage
+  #   uses: ./.github/workflows/reusable_test.yml
+  #   with:
+  #     use_latest_pytorch_gpytorch: false
+  #   secrets: inherit
 
-  package-deploy-pypi:
-    name: Package and deploy to pypi.org
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write # This is required for PyPI OIDC authentication.
-    needs: tests-and-coverage
-    steps:
-    - uses: actions/checkout@v4
-    - name: Fetch all history for all tags and branches
-      run: git fetch --prune --unshallow
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-    - name: Install dependencies
-      run: |
-        pip install .[test]
-        pip install --upgrade build setuptools setuptools_scm wheel
-    - name: Build packages (wheel and source distribution)
-      run: |
-        python -m build --sdist --wheel
-    - name: Verify packages
-      run: |
-        ./scripts/verify_py_packages.sh
-    - name: Deploy to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        verbose: true
+  # package-deploy-pypi:
+  #   name: Package and deploy to pypi.org
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     id-token: write # This is required for PyPI OIDC authentication.
+  #   needs: tests-and-coverage
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Fetch all history for all tags and branches
+  #     run: git fetch --prune --unshallow
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: "3.10"
+  #   - name: Install dependencies
+  #     run: |
+  #       pip install .[test]
+  #       pip install --upgrade build setuptools setuptools_scm wheel
+  #   - name: Build packages (wheel and source distribution)
+  #     run: |
+  #       python -m build --sdist --wheel
+  #   - name: Verify packages
+  #     run: |
+  #       ./scripts/verify_py_packages.sh
+  #   - name: Deploy to PyPI
+  #     uses: pypa/gh-action-pypi-publish@release/v1
+  #     with:
+  #       verbose: true
 
-  publish-versioned-website:
-    name: Publish versioned website
-    needs: package-deploy-pypi
-    uses: ./.github/workflows/reusable_website.yml
+  version-and-publish-website:
+    # needs: package-deploy-pypi
+    name: Version and Publish website
+    uses: ./.github/workflows/publish_website.yml
     with:
-      publish_versioned_website: true
-      release_tag: ${{ github.event.release.tag_name }}
+      new_version: ${{ github.event.release.tag_name }}
     secrets: inherit
