@@ -98,14 +98,20 @@ def make_contextual_dataset(
 class TestDatasets(BotorchTestCase):
     def test_supervised(self):
         # Generate some data
-        X = rand(3, 2)
-        Y = rand(3, 1)
+        n_rows = 3
+        X = rand(n_rows, 2)
+        Y = rand(n_rows, 1)
         feature_names = ["x1", "x2"]
         outcome_names = ["y"]
+        group_indices = tensor(range(n_rows))
 
         # Test `__init__`
         dataset = SupervisedDataset(
-            X=X, Y=Y, feature_names=feature_names, outcome_names=outcome_names
+            X=X,
+            Y=Y,
+            feature_names=feature_names,
+            outcome_names=outcome_names,
+            group_indices=group_indices,
         )
         self.assertIsInstance(dataset.X, Tensor)
         self.assertIsInstance(dataset._X, Tensor)
@@ -113,12 +119,14 @@ class TestDatasets(BotorchTestCase):
         self.assertIsInstance(dataset._Y, Tensor)
         self.assertEqual(dataset.feature_names, feature_names)
         self.assertEqual(dataset.outcome_names, outcome_names)
+        self.assertTrue(torch.equal(dataset.group_indices, group_indices))
 
         dataset2 = SupervisedDataset(
             X=DenseContainer(X, X.shape[-1:]),
             Y=DenseContainer(Y, Y.shape[-1:]),
             feature_names=feature_names,
             outcome_names=outcome_names,
+            group_indices=group_indices,
         )
         self.assertIsInstance(dataset2.X, Tensor)
         self.assertIsInstance(dataset2._X, DenseContainer)
@@ -155,6 +163,14 @@ class TestDatasets(BotorchTestCase):
                 Y=rand(2, 1),
                 feature_names=feature_names,
                 outcome_names=[],
+            )
+        with self.assertRaisesRegex(ValueError, "group_indices"):
+            SupervisedDataset(
+                X=rand(2, 2),
+                Y=rand(2, 1),
+                feature_names=feature_names,
+                outcome_names=outcome_names,
+                group_indices=tensor(range(n_rows + 1)),
             )
 
         # Test with Yvar.
