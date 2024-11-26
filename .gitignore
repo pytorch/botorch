@@ -94,6 +94,7 @@ sphinx/build/
 website/build/
 website/i18n/
 website/node_modules/
+website/.docusaurus/
 
 ## Generated for tutorials
 website/_tutorials/
