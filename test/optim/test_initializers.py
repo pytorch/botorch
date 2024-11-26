@@ -1551,9 +1551,3 @@ class TestSampleAroundBest(BotorchTestCase):
             self.assertTrue(
                 ((X_rnd.unsqueeze(0) == X_train.unsqueeze(1)).all(dim=-1)).sum() == 0
             )
-
-
-if __name__ == "__main__":
-    import pytest
-
-    pytest.main([__file__])
