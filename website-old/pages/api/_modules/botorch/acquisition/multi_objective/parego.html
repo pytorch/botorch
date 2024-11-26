@@ -1,0 +1,206 @@
+
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.acquisition.multi_objective.parego</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.logei</span> <span class="kn">import</span> <span class="n">qLogNoisyExpectedImprovement</span><span class="p">,</span> <span class="n">TAU_MAX</span><span class="p">,</span> <span class="n">TAU_RELU</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.base</span> <span class="kn">import</span> <span class="n">MultiObjectiveMCAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="n">MCMultiOutputObjective</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">GenericMCObjective</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">MCMC_DIM</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.scalarization</span> <span class="kn">import</span> <span class="n">get_chebyshev_scalarization</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">sample_simplex</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">is_ensemble</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+
+<div class="viewcode-block" id="qLogNParEGO">
+<a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.parego.qLogNParEGO">[docs]</a>
+<span class="k">class</span> <span class="nc">qLogNParEGO</span><span class="p">(</span><span class="n">qLogNoisyExpectedImprovement</span><span class="p">,</span> <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">scalarization_weights</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">MCMultiOutputObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">fat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">tau_relu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TAU_RELU</span><span class="p">,</span>
+        <span class="n">tau_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TAU_MAX</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-LogNParEGO supporting m &gt;= 2 outcomes. This acquisition function</span>
+<span class="sd">        utilizes qLogNEI to compute the expected improvement over Chebyshev</span>
+<span class="sd">        scalarization of the objectives.</span>
+
+<span class="sd">        This is adapted from qNParEGO proposed in [Daulton2020qehvi]_ to utilize</span>
+<span class="sd">        log-improvement acquisition functions of [Ament2023logei]_. See [Knowles2005]_</span>
+<span class="sd">        for the original ParEGO algorithm.</span>
+
+<span class="sd">        This implementation assumes maximization of all objectives. If any of the model</span>
+<span class="sd">        outputs are to be minimized, either an `objective` should be used to negate the</span>
+<span class="sd">        model outputs or the `scalarization_weights` should be provided with negative</span>
+<span class="sd">        weights for the outputs to be minimized.</span>
+
+<span class="sd">         Args:</span>
+<span class="sd">            model: A fitted multi-output model, producing outputs for `m` objectives</span>
+<span class="sd">                and any number of outcome constraints.</span>
+<span class="sd">                NOTE: The model posterior must have a `mean` attribute.</span>
+<span class="sd">            X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points</span>
+<span class="sd">                that have already been observed. These points are considered as</span>
+<span class="sd">                the potential best design point.</span>
+<span class="sd">            scalarization_weights: A `m`-dim Tensor of weights to be used in the</span>
+<span class="sd">                Chebyshev scalarization. If omitted, samples from the unit simplex.</span>
+<span class="sd">            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`</span>
+<span class="sd">                more details.</span>
+<span class="sd">            objective: The MultiOutputMCAcquisitionObjective under which the samples are</span>
+<span class="sd">                evaluated before applying Chebyshev scalarization.</span>
+<span class="sd">                Defaults to `IdentityMultiOutputObjective()`.</span>
+<span class="sd">            constraints: A list of constraint callables which map a Tensor of posterior</span>
+<span class="sd">                samples of dimension `sample_shape x batch-shape x q x m'`-dim to a</span>
+<span class="sd">                `sample_shape x batch-shape x q`-dim Tensor. The associated constraints</span>
+<span class="sd">                are satisfied if `constraint(samples) &lt; 0`.</span>
+<span class="sd">            X_pending: A `batch_shape x q' x d`-dim Tensor of `q'` design points</span>
+<span class="sd">                that have points that have been submitted for function evaluation</span>
+<span class="sd">                but have not yet been evaluated. Concatenated into `X` upon</span>
+<span class="sd">                forward call. Copied and set to have no gradient.</span>
+<span class="sd">            eta: Temperature parameter(s) governing the smoothness of the sigmoid</span>
+<span class="sd">                approximation to the constraint indicators. See the docs of</span>
+<span class="sd">                `compute_(log_)smoothed_constraint_indicator` for details.</span>
+<span class="sd">            fat: Toggles the logarithmic / linear asymptotic behavior of the smooth</span>
+<span class="sd">                approximation to the ReLU.</span>
+<span class="sd">            prune_baseline: If True, remove points in `X_baseline` that are</span>
+<span class="sd">                highly unlikely to be the best point. This can significantly</span>
+<span class="sd">                improve performance and is generally recommended. In order to</span>
+<span class="sd">                customize pruning parameters, instead manually call</span>
+<span class="sd">                `botorch.acquisition.utils.prune_inferior_points` on `X_baseline`</span>
+<span class="sd">                before instantiating the acquisition function.</span>
+<span class="sd">            cache_root: A boolean indicating whether to cache the root</span>
+<span class="sd">                decomposition over `X_baseline` and use low-rank updates.</span>
+<span class="sd">            tau_max: Temperature parameter controlling the sharpness of the smooth</span>
+<span class="sd">                approximations to max.</span>
+<span class="sd">            tau_relu: Temperature parameter controlling the sharpness of the smooth</span>
+<span class="sd">                approximations to ReLU.</span>
+<span class="sd">        """</span>
+        <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">org_objective</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span>
+        <span class="c1"># Create the composite objective.</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">Y_baseline</span> <span class="o">=</span> <span class="n">org_objective</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_baseline</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_ensemble</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+            <span class="n">Y_baseline</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Y_baseline</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">MCMC_DIM</span><span class="p">)</span>
+        <span class="n">scalarization_weights</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">scalarization_weights</span>
+            <span class="k">if</span> <span class="n">scalarization_weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">sample_simplex</span><span class="p">(</span>
+                <span class="n">d</span><span class="o">=</span><span class="n">Y_baseline</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X_baseline</span><span class="o">.</span><span class="n">dtype</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">chebyshev_scalarization</span> <span class="o">=</span> <span class="n">get_chebyshev_scalarization</span><span class="p">(</span>
+            <span class="n">weights</span><span class="o">=</span><span class="n">scalarization_weights</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">Y_baseline</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">composite_objective</span> <span class="o">=</span> <span class="n">GenericMCObjective</span><span class="p">(</span>
+            <span class="n">objective</span><span class="o">=</span><span class="k">lambda</span> <span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="kc">None</span><span class="p">:</span> <span class="n">chebyshev_scalarization</span><span class="p">(</span>
+                <span class="n">org_objective</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">qLogNoisyExpectedImprovement</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="c1"># This overwrites self.objective with the composite objective.</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">composite_objective</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+            <span class="n">fat</span><span class="o">=</span><span class="n">fat</span><span class="p">,</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">prune_baseline</span><span class="p">,</span>
+            <span class="n">cache_root</span><span class="o">=</span><span class="n">cache_root</span><span class="p">,</span>
+            <span class="n">tau_max</span><span class="o">=</span><span class="n">tau_max</span><span class="p">,</span>
+            <span class="n">tau_relu</span><span class="o">=</span><span class="n">tau_relu</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Set these after __init__ calls so that they're not overwritten / deleted.</span>
+        <span class="c1"># These are intended mainly for easier debugging &amp; transparency.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_org_objective</span><span class="p">:</span> <span class="n">MCMultiOutputObjective</span> <span class="o">=</span> <span class="n">org_objective</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chebyshev_scalarization</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">chebyshev_scalarization</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scalarization_weights</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="n">scalarization_weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y_baseline</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="n">Y_baseline</span></div>
+
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">BoTorch</a></h1>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../test_utils.html">botorch.test_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../../index.html">Documentation overview</a><ul>
+<li><a href="../../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div>

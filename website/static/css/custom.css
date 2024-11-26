@@ -53,19 +53,17 @@ html body {
   background-color: inherit;
 }
 
-.navigationSlider .slidingNav ul li.siteNavItemActive > a,
-.navigationSlider .slidingNav ul li.siteNavGroupActive > a {
+.navigationSlider .slidingNav ul li.siteNavItemActive>a,
+.navigationSlider .slidingNav ul li.siteNavGroupActive>a {
   background-color: inherit;
 }
 
 .homeContainer {
   background: rgb(2, 0, 36);
-  background: linear-gradient(
-    180deg,
-    rgba(2, 0, 36, 1),
-    rgba(34, 34, 34, 1) 0%,
-    rgba(28, 96, 247, 1) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(2, 0, 36, 1),
+      rgba(34, 34, 34, 1) 0%,
+      rgba(28, 96, 247, 1) 100%);
   padding: 30px 0px;
 }
 
@@ -102,7 +100,7 @@ div.productShowcaseSection {
   color: #6c6c6c;
 }
 
-.productShowcaseSection > h2 {
+.productShowcaseSection>h2 {
   font-variant: small-caps;
   font-weight: 360;
   margin: 0px;
@@ -298,8 +296,7 @@ a.docs-prev:hover {
   max-width: 1400px;
 }
 
-@media only screen and (min-width: 1024px) {
-}
+@media only screen and (min-width: 1024px) {}
 
 @media only screen and (max-width: 1023px) {
   .fixedHeaderContainer header a:nth-child(2) {
@@ -315,8 +312,6 @@ a.docs-prev:hover {
   }
 }
 
-@media only screen and (min-width: 1400px) {
-}
+@media only screen and (min-width: 1400px) {}
 
-@media only screen and (min-width: 1500px) {
-}
+@media only screen and (min-width: 1500px) {}
