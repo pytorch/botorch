@@ -35,7 +35,7 @@ module.exports={
         },
         "blog": {},
         "theme": {
-          "customCss": "../src/css/customTheme.css"
+          "customCss": "static/css/custom.css"
         },
         "gtag": {
           "trackingID": "G-CXN3PGE3CC"
@@ -48,7 +48,7 @@ module.exports={
     "navbar": {
       "title": "BoTorch",
       "logo": {
-        "src": "img/botorch_logo_lockup_white.png"
+        "src": "img/botorch.png"
       },
       "items": [
         {
