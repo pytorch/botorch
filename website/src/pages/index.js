@@ -60,49 +60,49 @@ const Feature = ({imageUrl, title, content, image}) => {
   );
 }
 
+const Features = () => (
+  <div className="padding--xl">
+    <h2 className="text--center padding--md">Key Features</h2>
+    {features && features.length > 0 && (
+      <div className="row">
+        {features.map(({ title, imageUrl, content, image }) => (
+          <Feature
+            key={title}
+            title={title}
+            imageUrl={imageUrl}
+            content={content}
+            image={image}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+)
+
 const HomeSplash = () => {
   const {siteConfig} = useDocusaurusContext();
-  const language = 'en';
-  const docsUrl = "docs"
-  const docsPart = `${docsUrl ? `${docsUrl}/` : ''}`;
-  const langPart = `${language ? `${language}/` : ''}`;
-  const docUrl = doc => `${docsPart}${langPart}${doc}`;
-
   return (
-    // <SplashContainer>
-    //   <Logo img_src={useBaseUrl('img/botorch_logo_lockup_top.png')} />
-    //   <div className="inner">
-    //     <ProjectTitle siteConfig={siteConfig} />
-    //     <PromoSection>
-    //       <Button href={docUrl('introduction.html')}>Introduction</Button>
-    //       <Button href={'#quickstart'}>Get Started</Button>
-    //       <Button href={useBaseUrl('tutorials/')}>Tutorials</Button>
-    //     </PromoSection>
-    //   </div>
-    // </SplashContainer>
     <div className="homeContainer text--center" style={{ height: "30rem" }}>
-      <div className="container">
-        <div className="padding-vert--md">
-          <img src={useBaseUrl('img/botorch_logo_lockup_top.png')} alt="Project Logo" style={{ width: "300px" }} />
-          <p className="hero__subtitle text--secondary">{siteConfig.tagline}</p>
-        </div>
-        <div>
-          <Link
-            to="/docs/introduction"
-            className="button button--lg button--outline button--secondary margin--sm">
-            Introduction
-          </Link>
-          <Link
-            to="#quickstart"
-            className="button button--lg button--outline button--secondary margin--sm">
-            Get started
-          </Link>
-          <Link
-            to="/docs/tutorials/"
-            className="button button--lg button--outline button--secondary margin--sm">
-            Tutorials
-          </Link>
-        </div>
+      <div className="padding-vert--md">
+        <img src={useBaseUrl('img/botorch_logo_lockup_top.png')} alt="Project Logo" style={{ width: "300px" }} />
+        <p className="hero__subtitle text--secondary margin-vert--md">{siteConfig.tagline}</p>
+      </div>
+      <div>
+        <Link
+          to="/docs/introduction"
+          className="button button--lg button--outline button--secondary margin--sm">
+          Introduction
+        </Link>
+        <Link
+          to="#quickstart"
+          className="button button--lg button--outline button--secondary margin--sm">
+          Get started
+        </Link>
+        <Link
+          to="/docs/tutorials/"
+          className="button button--lg button--outline button--secondary margin--sm">
+          Tutorials
+        </Link>
       </div>
     </div>
   );
@@ -110,35 +110,6 @@ const HomeSplash = () => {
 
 export default () => {
   const {siteConfig} = useDocusaurusContext();
-  const language = 'en';
-
-  const Block = props => (
-    <div
-      padding={['bottom', 'top']}
-      id={props.id}
-      background={props.background}>
-      <div
-        align="center"
-        contents={props.children}
-        layout={props.layout}
-      />
-    </div>
-  );
-
-  const Description = () => (
-    <Block background="light">
-      {[
-        {
-          content:
-            'This is another description of how this project is useful',
-          image: useBaseUrl('img/botorch_logo_lockup_white.svg'),
-          imageAlign: 'right',
-          title: 'Description',
-        },
-      ]}
-    </Block>
-  );
-  // getStartedSection
   // Example for model fitting
   const modelFitCodeExample = `import torch
 from botorch.models import SingleTaskGP
@@ -183,7 +154,8 @@ candidate  # tensor([[0.2981, 0.2401]], dtype=torch.float64)`;
     <div
       className="padding--xl"
       id="quickstart"
-      style={{}}>
+      style={{ 'background-color': 'var(--ifm-color-emphasis-100)' }}
+    >
       <h2 className='text--center padding--md'>Get Started</h2>
       <div>
         <ol>
@@ -225,58 +197,12 @@ candidate  # tensor([[0.2981, 0.2401]], dtype=torch.float64)`;
     </div>
   );
 
-  const Showcase = () => {
-    if ((siteConfig.users || []).length === 0) {
-      return null;
-    }
-
-    const showcase = siteConfig.users
-      .filter(user => user.pinned)
-      .map(user => (
-        <a href={user.infoLink} key={user.infoLink}>
-          <img src={user.image} alt={user.caption} title={user.caption} />
-        </a>
-      ));
-
-    const pageUrl = page => (language ? `${language}/` : '') + page;
-
-    return (
-      <div className="productShowcaseSection paddingBottom">
-        <h2>Who is Using This?</h2>
-        <p>This project is used by all these people</p>
-        <div className="logos">{showcase}</div>
-        <div className="more-users">
-          <a className="button" href={pageUrl('users.html')}>
-            More {siteConfig.title} Users
-          </a>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <Layout title={siteConfig.title} description={siteConfig.tagline}>
-      <HomeSplash siteConfig={siteConfig} language={language} />
-      <div className="landingPage mainContainer">
-        <div className="padding--xl">
-        <h2 className="text--center padding--md">Key Features</h2>
-        {features && features.length > 0 && (
-          <div className="row">
-            {features.map(({title, imageUrl, content, image}) => (
-              <Feature
-                key={title}
-                title={title}
-                imageUrl={imageUrl}
-                content={content}
-                image={image}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-        <Reference />
-        <QuickStart />
-      </div>
+      <HomeSplash siteConfig={siteConfig}/>
+      <Features />
+      <Reference />
+      <QuickStart />
     </Layout>
   );
 }
