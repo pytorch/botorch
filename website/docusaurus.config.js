@@ -1,4 +1,6 @@
 import {themes as prismThemes} from 'prism-react-renderer';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 module.exports={
   "title": "BoTorch",
@@ -10,14 +12,19 @@ module.exports={
   "scripts": [
     "/js/code_block_buttons.js",
     "https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js",
-    "/js/mathjax.js",
-    "https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"
   ],
   "markdown": {
     format: "detect"
   },
   "stylesheets": [
-    "/css/code_block_buttons.css"
+    "/css/code_block_buttons.css",
+    {
+      href: 'https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css',
+      type: 'text/css',
+      integrity:
+        'sha384-odtC+0UGzzFL/6PNoE8rX/SPcQDXBJ+uRepguP4QkPCm2LBxH3FA3y+fKSiJ+AmM',
+      crossorigin: 'anonymous',
+    },
   ],
   "favicon": "img/botorch.ico",
   "customFields": {
@@ -35,7 +42,9 @@ module.exports={
           "showLastUpdateTime": true,
           "editUrl": "https://github.com/pytorch/botorch/edit/main/docs/",
           "path": "../docs",
-          "sidebarPath": "../website-old/sidebars.json"
+          "sidebarPath": "../website-old/sidebars.json",
+          remarkPlugins: [remarkMath],
+          rehypePlugins: [rehypeKatex],
         },
         "blog": {},
         "theme": {
