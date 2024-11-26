@@ -190,21 +190,21 @@ candidate  # tensor([[0.2981, 0.2401]], dtype=torch.float64)`;
           <li>
             <h4>Install BoTorch:</h4>
             via pip (recommended):
-            <CodeBlock languague="bash">pip install botorch</CodeBlock>
+            <CodeBlock language="bash">pip install botorch</CodeBlock>
             via Anaconda (from the unofficial conda-forge channel):
-            <CodeBlock languague="bash">conda install botorch -c gpytorch -c conda-forge</CodeBlock>
+            <CodeBlock language="bash">conda install botorch -c gpytorch -c conda-forge</CodeBlock>
           </li>
           <li>
             <h4>Fit a model:</h4>
-            <CodeBlock languague="python" >{modelFitCodeExample}</CodeBlock>
+            <CodeBlock language="python" >{modelFitCodeExample}</CodeBlock>
           </li>
           <li>
             <h4>Construct an acquisition function:</h4>
-            <CodeBlock languague="python" >{constrAcqFuncExample}</CodeBlock>
+            <CodeBlock language="python" >{constrAcqFuncExample}</CodeBlock>
           </li>
           <li>
             <h4>Optimize the acquisition function:</h4>
-            <CodeBlock languague="python" >{optAcqFuncExample}</CodeBlock>
+            <CodeBlock language="python" >{optAcqFuncExample}</CodeBlock>
           </li>
         </ol>
       </div>
