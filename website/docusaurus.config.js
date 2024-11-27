@@ -42,7 +42,7 @@ module.exports={
           "showLastUpdateTime": true,
           "editUrl": "https://github.com/pytorch/botorch/edit/main/docs/",
           "path": "../docs",
-          "sidebarPath": "../website-old/sidebars.json",
+          "sidebarPath": "../website/sidebars.js",
           remarkPlugins: [remarkMath],
           rehypePlugins: [rehypeKatex],
         },
@@ -69,12 +69,14 @@ module.exports={
       },
       "items": [
         {
-          "to": "docs/introduction",
+          "type": "docSidebar",
+          "sidebarId": "docs",
           "label": "Docs",
           "position": "left"
         },
         {
-          "href": "/tutorials/",
+          "type": "docSidebar",
+          "sidebarId": "tutorials",
           "label": "Tutorials",
           "position": "left"
         },

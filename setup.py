@@ -26,6 +26,10 @@ TUTORIALS_REQUIRES = [
     "papermill",
     "pykeops",
     "torchvision",
+    "mdformat",
+    "lxml",
+    "mdformat-myst",
+    "tabulate",
 ]
 
 # Check for python version
