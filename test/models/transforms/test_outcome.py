@@ -15,6 +15,7 @@ from botorch.models.transforms.outcome import (
     ChainedOutcomeTransform,
     InfeasibleTransform,
     Log,
+    LogWarperTransform,
     OutcomeTransform,
     Power,
     Standardize,
@@ -988,3 +989,91 @@ class TestInfeasibleTransform(BotorchTestCase):
         assert not torch.isnan(Y_tf).any()
         Y_untf, _ = transform.untransform(Y_tf, None)
         assert torch.allclose(Y_untf, Y, rtol=1e-4)
+
+
+class TestLogWarperTransform(BotorchTestCase):
+    def test_log_warper_transform_init(self):
+        """Test initialization of LogWarperTransform."""
+        batch_shape = torch.Size([2, 3])
+        transform = LogWarperTransform(offset=2.0, batch_shape=batch_shape)
+        self.assertEqual(transform._batch_shape, batch_shape)
+        self.assertEqual(transform.offset.item(), 2.0)
+
+        # Test invalid offset
+        with self.assertRaisesRegex(ValueError, "offset must be positive"):
+            LogWarperTransform(offset=0.0)
+        with self.assertRaisesRegex(ValueError, "offset must be positive"):
+            LogWarperTransform(offset=-1.0)
+
+    def test_log_warper_transform_forward(self):
+        """Test forward transformation."""
+        batch_shape = torch.Size([2])
+        transform = LogWarperTransform(offset=2.0, batch_shape=batch_shape)
+
+        # Create test data with NaN values
+        Y = torch.randn(*batch_shape, 3, 2)
+        Y[..., 0, 0] = float("nan")
+        Y_orig = Y.clone()
+
+        # Test forward pass in training mode
+        transform.train()
+        Y_tf, _ = transform.forward(Y, None)
+
+        # Check that transform is now trained
+        labels_min = transform._labels_min.clone()
+        labels_max = transform._labels_max.clone()
+
+        assert transform._is_trained
+        assert torch.isfinite(labels_min).all()
+        assert torch.isfinite(labels_max).all()
+        assert (torch.isnan(Y_tf) == torch.isnan(Y_orig)).all()
+
+        # Test forward pass in eval mode
+        transform.eval()
+        Y_tf_eval, _ = transform.forward(Y_tf, None)
+
+        # Check that NaN values are replaced consistently
+        assert (torch.isnan(Y_tf_eval) == torch.isnan(Y_tf)).all()
+        assert torch.allclose(labels_min, transform._labels_min)
+        assert torch.allclose(labels_max, transform._labels_max)
+
+    def test_log_warper_transform_untransform(self):
+        """Test untransform functionality."""
+        batch_shape = torch.Size([2])
+        transform = LogWarperTransform(offset=2.0, batch_shape=batch_shape)
+
+        # Should raise error if not trained
+        with self.assertRaises(RuntimeError):
+            transform.untransform(torch.tensor([1.0, 2.0]), None)
+
+        # Train the transform first
+        Y = torch.randn(*batch_shape, 3, 2)
+        Y[..., 0, 0] = float("nan")
+
+        transform.train()
+        Y_tf, _ = transform.forward(Y, None)
+
+        # Test untransform
+        Y_untf, _ = transform.untransform(Y_tf, None)
+
+        # Check that values are properly untransformed
+        assert torch.allclose(Y_untf[:, 1:], Y[:, 1:], rtol=1e-4)
+
+        # test the nan values don't change
+        assert torch.isnan(Y_untf[..., 0, 0]).all()
+
+    def test_log_warper_transform_batch_shape_validation(self):
+        """Test batch shape validation."""
+        transform = LogWarperTransform(offset=2.0, batch_shape=torch.Size([2]))
+
+        # Wrong batch shape should raise error
+        with self.assertRaises(RuntimeError):
+            transform.forward(torch.randn(3, 4, 2), None)
+
+    def test_log_warper_transform_empty_input(self):
+        """Test handling of empty input."""
+        transform = LogWarperTransform(offset=2.0, batch_shape=torch.Size([]))
+
+        # Empty input should raise error
+        with self.assertRaises(ValueError):
+            transform.forward(torch.tensor([]).reshape(0, 1), None)

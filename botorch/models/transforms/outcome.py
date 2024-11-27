@@ -913,6 +913,7 @@ class InfeasibleTransform(OutcomeTransform):
         )
         Y = torch.where(torch.isnan(Y), expanded_bad_value, Y)
         Y = torch.where(~torch.isnan(Y), Y + expanded_shift, Y)
+        # TODO: Handle Yvar
         return Y, Yvar
 
     def untransform(
@@ -940,4 +941,115 @@ class InfeasibleTransform(OutcomeTransform):
             *Y.shape[:-2], Y.shape[-2], -1
         )
         Y -= expanded_shift
+        # TODO: Handle Yvar
         return Y, Yvar
+
+
+class LogWarperTransform(OutcomeTransform):
+    """Warps an array of labels to highlight the difference between good values.
+
+    Note that this warping is performed on finite values of the array and NaNs are
+    untouched.
+    """
+
+    def __init__(
+        self, batch_shape: torch.Size | None = None, offset: float = 1.5
+    ) -> None:
+        """Initialize transform.
+
+        Args:
+            offset: Offset parameter for the log transformation. Must be > 0.
+        """
+        super().__init__()
+        if offset <= 0:
+            raise ValueError("offset must be positive")
+        self._is_trained = False
+        self._batch_shape = batch_shape
+        self.register_buffer("offset", torch.tensor(offset))
+        self.register_buffer("_labels_min", torch.tensor(float("nan")))
+        self.register_buffer("_labels_max", torch.tensor(float("nan")))
+
+    def forward(
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
+        """Transform the outcomes.
+
+        Args:
+            Y: A `batch_shape x n x m`-dim tensor of training targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of observation noises
+                associated with the training targets (if applicable).
+
+        Returns:
+            A two-tuple with the transformed outcomes:
+            - The transformed outcome observations.
+            - The transformed observation noise (if applicable).
+        """
+        if self.training:
+            if Y.shape[:-2] != self._batch_shape:
+                raise RuntimeError(
+                    f"Expected Y.shape[:-2] to be {self._batch_shape}, matching "
+                    "the `batch_shape` argument to `Standardize`, but got "
+                    f"Y.shape[:-2]={Y.shape[:-2]}."
+                )
+
+            if Y.shape[-2] < 1:
+                raise ValueError(f"Can't standardize with no observations. {Y.shape=}.")
+
+            if torch.isnan(Y).all(dim=-2).any():
+                raise RuntimeError("For at least one batch, all outcomes are NaN")
+
+            self._labels_min = _nanmin(Y, dim=-2).values
+            self._labels_max = _nanmax(Y, dim=-2).values
+
+            self._is_trained = torch.tensor(True)
+
+        expanded_labels_min = self._labels_min.unsqueeze(-2).expand(
+            *Y.shape[:-2], Y.shape[-2], -1
+        )
+        expanded_labels_max = self._labels_max.unsqueeze(-2).expand(
+            *Y.shape[:-2], Y.shape[-2], -1
+        )
+
+        # Calculate normalized difference
+        norm_diff = (expanded_labels_max - Y) / (
+            expanded_labels_max - expanded_labels_min
+        )
+        Y_transformed = 0.5 - (
+            torch.log1p(norm_diff * (self.offset - 1)) / torch.log(self.offset)
+        )
+
+        # TODO: Handle Yvar
+        return Y_transformed, Yvar
+
+    def untransform(
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
+        """Un-transform the outcomes.
+
+        Args:
+            Y: A `batch_shape x n x m`-dim tensor of transformed targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of transformed observation
+                noises associated with the targets (if applicable).
+
+        Returns:
+            A two-tuple with the un-transformed outcomes:
+            - The un-transformed outcome observations.
+            - The un-transformed observation noise (if applicable).
+        """
+        if not self._is_trained:
+            raise RuntimeError("forward() needs to be called before untransform()")
+
+        expanded_labels_min = self._labels_min.unsqueeze(-2).expand(
+            *Y.shape[:-2], Y.shape[-2], -1
+        )
+        expanded_labels_max = self._labels_max.unsqueeze(-2).expand(
+            *Y.shape[:-2], Y.shape[-2], -1
+        )
+
+        Y_untransformed = expanded_labels_max - (
+            (torch.exp(torch.log(self.offset) * (0.5 - Y)) - 1)
+            * (expanded_labels_max - expanded_labels_min)
+            / (self.offset - 1)
+        )
+
+        return Y_untransformed, Yvar
