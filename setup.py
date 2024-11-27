@@ -27,6 +27,7 @@ TUTORIALS_REQUIRES = [
     "pykeops",
     "torchvision",
     "mdformat",
+    "pandas",
     "lxml",
     "mdformat-myst",
     "tabulate",
