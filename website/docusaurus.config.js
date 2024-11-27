@@ -90,9 +90,10 @@ module.exports={
         },
         {
           "href": "https://github.com/pytorch/botorch",
-          "label": "GitHub",
-          "position": "left"
-        }
+          "className": "header-github-link",
+          "aria-label": "GitHub",
+          "position": "right"
+        },
       ]
     },
     "image": "img/botorch.png",
