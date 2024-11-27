@@ -26,6 +26,10 @@ LIB_DIR = SCRIPTS_DIR.parent.resolve()
 WEBSITE_DIR = LIB_DIR.joinpath("website")
 DOCS_DIR = LIB_DIR.joinpath("docs")
 TUTORIALS_DIR = DOCS_DIR.joinpath("tutorials")
+
+ORGANIZATION = "cristianlara"
+PROJECT = "botorch"
+
 # Data display priority. Below lists the priority for displaying data from cell outputs.
 # Cells can output many different items, and some will output a fallback display, e.g.
 # text/plain if text/html is not working. The below priorities help ensure the output in
@@ -185,8 +189,8 @@ def create_buttons(
         str: MDX formatted buttons.
     """
     version = get_current_git_tag() or "main"
-    github_url = f"https://github.com/cristianlara/Ax/blob/{version}/tutorials/{nb_metadata['id']}/{nb_metadata['id']}.ipynb"
-    colab_url = f"https://colab.research.google.com/github/cristianlara/Ax/blob/{version}/tutorials/{nb_metadata['id']}/{nb_metadata['id']}.ipynb"
+    github_url = f"https://github.com/{ORGANIZATION}/{PROJECT}/blob/{version}/tutorials/{nb_metadata['id']}/{nb_metadata['id']}.ipynb"
+    colab_url = f"https://colab.research.google.com/github/{ORGANIZATION}/{PROJECT}/blob/{version}/tutorials/{nb_metadata['id']}/{nb_metadata['id']}.ipynb"
     return f'<LinkButtons\n  githubUrl="{github_url}"\n  colabUrl="{colab_url}"\n/>\n\n'
 
 
