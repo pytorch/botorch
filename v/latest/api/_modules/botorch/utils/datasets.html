@@ -38,6 +38,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">InputDataError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">SliceContainer</span>
+<span class="kn">from</span> <span class="nn">pyre_extensions</span> <span class="kn">import</span> <span class="n">none_throws</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">long</span><span class="p">,</span> <span class="n">ones</span><span class="p">,</span> <span class="n">Tensor</span>
 
 
@@ -80,6 +81,7 @@
         <span class="n">outcome_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">Yvar</span><span class="p">:</span> <span class="n">BotorchContainer</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">group_indices</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructs a `SupervisedDataset`.</span>
 
@@ -91,12 +93,17 @@
 <span class="sd">            Yvar: An optional `Tensor` or `BotorchContainer` representing</span>
 <span class="sd">                the observation noise.</span>
 <span class="sd">            validate_init: If `True`, validates the input shapes.</span>
+<span class="sd">            group_indices: A `Tensor` representing the which rows of X and Y are</span>
+<span class="sd">                grouped together. This is used to support applications in which multiple</span>
+<span class="sd">                observations should be considered as a group, e.g., learning-curve-based</span>
+<span class="sd">                modeling. If provided, its shape must be compatible with X and Y.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_X</span> <span class="o">=</span> <span class="n">X</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_Y</span> <span class="o">=</span> <span class="n">Y</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span> <span class="o">=</span> <span class="n">Yvar</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">=</span> <span class="n">feature_names</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">=</span> <span class="n">outcome_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span> <span class="o">=</span> <span class="n">group_indices</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_init</span> <span class="o">=</span> <span class="n">validate_init</span>
         <span class="k">if</span> <span class="n">validate_init</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
@@ -123,6 +130,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">validate_feature_names</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">validate_outcome_names</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">validate_group_indices</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Checks that the shapes of the inputs are compatible with each other.</span>
 
@@ -135,6 +143,8 @@
 <span class="sd">                `outcomes_names` matches the # of columns of `self.Y`. If a</span>
 <span class="sd">                particular dataset, e.g., `RankingDataset`, is known to violate</span>
 <span class="sd">                this assumption, this can be set to `False`.</span>
+<span class="sd">            validate_group_indices: By default, we validate that the shape of</span>
+<span class="sd">                `group_indices` matches the shape of X and Y.</span>
 <span class="sd">        """</span>
         <span class="n">shape_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="n">BotorchContainer</span><span class="p">):</span>
@@ -160,8 +170,20 @@
                 <span class="s2">"`Y` must have the same number of columns as the number of "</span>
                 <span class="s2">"outcomes in `outcome_names`."</span>
             <span class="p">)</span>
+        <span class="k">if</span> <span class="n">validate_group_indices</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">shape_X</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"shape_X (</span><span class="si">{</span><span class="n">shape_X</span><span class="si">}</span><span class="s2">) must have the same shape as "</span>
+                    <span class="sa">f</span><span class="s2">"group_indices (</span><span class="si">{</span><span class="n">none_throws</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">)."</span>
+                <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">group_indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">group_indices_equal</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">other</span><span class="o">.</span><span class="n">group_indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">group_indices_equal</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">group_indices_equal</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">group_indices</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
             <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
@@ -173,6 +195,7 @@
             <span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">feature_names</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">outcome_names</span>
+            <span class="ow">and</span> <span class="n">group_indices_equal</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="SupervisedDataset.clone">
@@ -287,7 +310,11 @@
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="n">validate_feature_names</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">validate_outcome_names</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span>
+            <span class="n">validate_feature_names</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">validate_outcome_names</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">validate_group_indices</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">"The `values` field of `X` must have the same number of columns as "</span>
@@ -365,6 +392,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">has_heterogeneous_features</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
             <span class="n">datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">feature_names</span> <span class="o">!=</span> <span class="n">ds</span><span class="o">.</span><span class="n">feature_names</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
         <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="MultiTaskDataset.from_joint_dataset">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">[docs]</a>
@@ -630,6 +658,7 @@
             <span class="n">c</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">parameter_decomposition</span><span class="p">[</span><span class="n">c</span><span class="p">]]</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_buckets</span>
         <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
