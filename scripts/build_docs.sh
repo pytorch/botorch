@@ -90,6 +90,13 @@ yarn
 #   cd website || exit
 # fi  # end of not only Docusaurus block
 
+if [[ $ONLY_DOCUSAURUS == false ]]; then
+  echo "-----------------------------------"
+  echo "Generating tutorials"
+  echo "-----------------------------------"
+  python3 scripts/convert_ipynb_to_mdx.py --clean
+fi  # end of not only Docusaurus block
+
 if [[ $BUILD_STATIC == true ]]; then
   echo "-----------------------------------"
   echo "Building static site"
