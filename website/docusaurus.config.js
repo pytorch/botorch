@@ -57,15 +57,6 @@ module.exports={
     ]
   ],
   "plugins": [],
-  "headTags": [
-    {
-      "tagName": 'meta',
-      "attributes": {
-        "name": 'algolia-site-verification',
-        "content": '01AB264E579973B8',
-      },
-    },
-  ],
   "themeConfig": {
     prism: {
       theme: prismThemes.github,
