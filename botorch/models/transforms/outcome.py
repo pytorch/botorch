@@ -276,20 +276,22 @@ class Standardize(OutcomeTransform):
                     "the `batch_shape` argument to `Standardize`, but got "
                     f"Y.shape[:-2]={Y.shape[:-2]}."
                 )
+
             if Y.size(-1) != self._m:
                 raise RuntimeError(
                     f"Wrong output dimension. Y.size(-1) is {Y.size(-1)}; expected "
                     f"{self._m}."
                 )
+
             if Y.shape[-2] < 1:
                 raise ValueError(f"Can't standardize with no observations. {Y.shape=}.")
-
             elif Y.shape[-2] == 1:
                 stdvs = torch.ones(
                     (*Y.shape[:-2], 1, Y.shape[-1]), dtype=Y.dtype, device=Y.device
                 )
             else:
                 stdvs = Y.std(dim=-2, keepdim=True)
+
             stdvs = stdvs.where(stdvs >= self._min_stdv, torch.full_like(stdvs, 1.0))
             means = Y.mean(dim=-2, keepdim=True)
             if self._outputs is not None:
@@ -823,3 +825,119 @@ class Bilog(OutcomeTransform):
             posterior=posterior,
             sample_transform=lambda x: x.sign() * x.abs().expm1(),
         )
+
+
+def _nanmax(
+    tensor: Tensor, dim: int | None = None, keepdim: bool = False
+) -> Tensor | tuple[Tensor, Tensor]:
+    min_value = torch.finfo(tensor.dtype).min
+    if dim is None:
+        return tensor.nan_to_num(min_value).max()
+    return tensor.nan_to_num(min_value).max(dim=dim, keepdim=keepdim)
+
+
+def _nanmin(
+    tensor: Tensor, dim: int | None = None, keepdim: bool = False
+) -> Tensor | tuple[Tensor, Tensor]:
+    max_value = torch.finfo(tensor.dtype).max
+    if dim is None:
+        return tensor.nan_to_num(max_value).min()
+    return tensor.nan_to_num(max_value).min(dim=dim, keepdim=keepdim)
+
+
+class InfeasibleTransform(OutcomeTransform):
+    """Transforms infeasible (NaN) values to feasible values."""
+
+    def __init__(self, batch_shape: torch.Size | None = None) -> None:
+        """Transforms infeasible (NaN) values to feasible values.
+
+        Args:
+            batch_shape: The batch shape of the outcomes.
+        """
+        super().__init__()
+        self._is_trained = False
+        self.register_buffer("_shift", None)
+        self.register_buffer("warped_bad_value", torch.tensor(float("nan")))
+
+        self._batch_shape = batch_shape
+
+    def forward(
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
+        """Transform the outcomes by handling NaN values.
+
+        Args:
+            Y: A `batch_shape x n x m`-dim tensor of training targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of observation noises
+                associated with the training targets (if applicable).
+
+        Returns:
+            A two-tuple with the transformed outcomes:
+            - The transformed outcome observations.
+            - The transformed observation noise (if applicable).
+        """
+        if self.training:
+            if Y.shape[:-2] != self._batch_shape:
+                raise RuntimeError(
+                    f"Expected Y.shape[:-2] to be {self._batch_shape}, matching "
+                    "the `batch_shape` argument to `Standardize`, but got "
+                    f"Y.shape[:-2]={Y.shape[:-2]}."
+                )
+
+            if Y.shape[-2] < 1:
+                raise ValueError(f"Can't standardize with no observations. {Y.shape=}.")
+
+            if torch.isnan(Y).all(dim=-2).any():
+                raise RuntimeError("For at least one batch, all outcomes are NaN")
+
+            labels_range = _nanmax(Y, dim=-2).values - _nanmin(Y, dim=-2).values
+            warped_bad_value = _nanmin(Y, dim=-2).values - (0.5 * labels_range + 1)
+            num_feasible = Y.shape[-2] - torch.isnan(Y).sum(dim=-2)
+
+            # Estimate the relative frequency of feasible points
+            p_feasible = (0.5 + num_feasible) / (1 + Y.numel())
+
+            self.warped_bad_value = warped_bad_value
+            self._shift = -torch.nanmean(Y, dim=-2) * p_feasible - warped_bad_value * (
+                1 - p_feasible
+            )
+
+            self._is_trained = torch.tensor(True)
+
+        # Expand warped_bad_value to match Y's shape
+        expanded_bad_value = self.warped_bad_value.unsqueeze(-2).expand(
+            *Y.shape[:-2], Y.shape[-2], -1
+        )
+        expanded_shift = self._shift.unsqueeze(-2).expand(
+            *Y.shape[:-2], Y.shape[-2], -1
+        )
+        Y = torch.where(torch.isnan(Y), expanded_bad_value, Y)
+        Y = torch.where(~torch.isnan(Y), Y + expanded_shift, Y)
+        return Y, Yvar
+
+    def untransform(
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
+        """Un-transform the outcomes.
+
+        Args:
+            Y: A `batch_shape x n x m`-dim tensor of transformed targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of transformed observation
+                noises associated with the targets (if applicable).
+
+        Returns:
+            A two-tuple with the un-transformed outcomes:
+            - The un-transformed outcome observations.
+            - The un-transformed observation noise (if applicable).
+        """
+        if not self._is_trained:
+            raise RuntimeError(
+                "forward() needs to be called before untransform() is called."
+            )
+
+        # Expand shift to match Y's shape
+        expanded_shift = self._shift.unsqueeze(-2).expand(
+            *Y.shape[:-2], Y.shape[-2], -1
+        )
+        Y -= expanded_shift
+        return Y, Yvar

@@ -9,8 +9,11 @@ from copy import deepcopy
 
 import torch
 from botorch.models.transforms.outcome import (
+    _nanmax,
+    _nanmin,
     Bilog,
     ChainedOutcomeTransform,
+    InfeasibleTransform,
     Log,
     OutcomeTransform,
     Power,
@@ -49,6 +52,70 @@ def _get_test_posterior(shape, device, dtype, interleaved=True, lazy=False):
 class NotSoAbstractOutcomeTransform(OutcomeTransform):
     def forward(self, Y, Yvar):
         pass
+
+
+class TestNanMax(BotorchTestCase):
+    def test_nanmax_basic(self):
+        tensor = torch.tensor([1.0, float("nan"), 3.0, 2.0])
+        result = _nanmax(tensor)
+        expected = torch.tensor(3.0)
+        self.assertEqual(result, expected)
+
+    def test_nanmax_with_dim(self):
+        tensor = torch.tensor([[1.0, float("nan")], [3.0, 2.0]])
+        result = _nanmax(tensor, dim=1)
+        expected = torch.tensor([1.0, 3.0])
+        self.assertTrue(torch.equal(result.values, expected))
+
+    def test_nanmax_with_keepdim(self):
+        tensor = torch.tensor([[1.0, float("nan")], [3.0, 2.0]])
+        result = _nanmax(tensor, dim=1, keepdim=True)
+        expected = torch.tensor([[1.0], [3.0]])
+        self.assertTrue(torch.equal(result.values, expected))
+
+    def test_nanmax_all_nan(self):
+        tensor = torch.tensor([float("nan"), float("nan")])
+        result = _nanmax(tensor)
+        expected = torch.tensor(torch.finfo(tensor.dtype).min)
+        self.assertEqual(result, expected)
+
+    def test_nanmax_no_nan(self):
+        tensor = torch.tensor([1.0, 2.0, 3.0])
+        result = _nanmax(tensor)
+        expected = torch.tensor(3.0)
+        self.assertEqual(result, expected)
+
+
+class TestNanMin(BotorchTestCase):
+    def test_nanmin_basic(self):
+        tensor = torch.tensor([1.0, float("nan"), 3.0, 2.0])
+        result = _nanmin(tensor)
+        expected = torch.tensor(1.0)
+        self.assertEqual(result, expected)
+
+    def test_nanmin_with_dim(self):
+        tensor = torch.tensor([[1.0, float("nan")], [3.0, 2.0]])
+        result = _nanmin(tensor, dim=1)
+        expected = torch.tensor([1.0, 2.0])
+        self.assertTrue(torch.equal(result.values, expected))
+
+    def test_nanmin_with_keepdim(self):
+        tensor = torch.tensor([[1.0, float("nan")], [3.0, 2.0]])
+        result = _nanmin(tensor, dim=1, keepdim=True)
+        expected = torch.tensor([[1.0], [2.0]])
+        self.assertTrue(torch.equal(result.values, expected))
+
+    def test_nanmin_all_nan(self):
+        tensor = torch.tensor([float("nan"), float("nan")])
+        result = _nanmin(tensor)
+        expected = torch.tensor(torch.finfo(tensor.dtype).max)
+        self.assertEqual(result, expected)
+
+    def test_nanmin_no_nan(self):
+        tensor = torch.tensor([1.0, 2.0, 3.0])
+        result = _nanmin(tensor)
+        expected = torch.tensor(1.0)
+        self.assertEqual(result, expected)
 
 
 class TestOutcomeTransforms(BotorchTestCase):
@@ -817,3 +884,107 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]], None)
             self.assertTrue(torch.equal(Y_tf_subset, Y_tf[..., [0]]))
             self.assertIsNone(Yvar_tf_subset)
+
+
+class TestInfeasibleTransform(BotorchTestCase):
+    def test_infeasible_transform_init(self):
+        """Test initialization of InfeasibleTransform."""
+        batch_shape = torch.Size([2, 3])
+        transform = InfeasibleTransform(batch_shape=batch_shape)
+        assert transform._batch_shape == batch_shape
+        assert not transform._is_trained
+        assert transform._shift is None
+        assert torch.isnan(transform.warped_bad_value)
+
+    def test_infeasible_transform_forward(self):
+        """Test forward transformation with NaN values."""
+        batch_shape = torch.Size([2])
+        transform = InfeasibleTransform(batch_shape=batch_shape)
+
+        # Create test data with NaN values
+        Y = torch.randn(*batch_shape, 3, 2)
+        Y[..., 0, 0] = float("nan")
+        Y_orig = Y.clone()
+
+        # Test forward pass in training mode
+        transform.train()
+        Y_tf, _ = transform.forward(Y, None)
+
+        # Check that transform is now trained
+        assert transform._is_trained
+        assert transform._shift is not None
+        assert not torch.isnan(transform.warped_bad_value).all()
+
+        # Check that NaN values are replaced with warped_bad_value
+        assert not torch.isnan(Y_tf).any()
+
+        # Test forward pass in eval mode
+        transform.eval()
+        Y_tf_eval, _ = transform.forward(Y_orig, None)
+
+        # Check that NaN values are replaced consistently
+        assert not torch.isnan(Y_tf_eval).any()
+
+    def test_infeasible_transform_untransform(self):
+        """Test untransform functionality."""
+        transform = InfeasibleTransform(batch_shape=torch.Size([]))
+
+        # Should raise error if not trained
+        with self.assertRaises(RuntimeError):
+            transform.untransform(torch.tensor([1.0, 2.0]), None)
+
+        # Train the transform first
+        batch_shape = torch.Size([2])
+        transform = InfeasibleTransform(batch_shape=batch_shape)
+        Y = torch.randn(*batch_shape, 3, 2)
+        Y[..., 0, 0] = float("nan")
+
+        transform.train()
+        Y_tf, _ = transform.forward(Y, None)
+
+        # Test untransform
+        Y_untf, _ = transform.untransform(Y_tf, None)
+
+        # Check that values are properly untransformed
+        assert torch.allclose(Y_untf[:, 1:], Y[:, 1:], rtol=1e-4)
+
+        # test the unwarped_bad_value
+        assert torch.allclose(transform.warped_bad_value[:, 0], Y_untf[..., 0, 0])
+
+    def test_infeasible_transform_batch_shape_validation(self):
+        """Test batch shape validation."""
+        transform = InfeasibleTransform(batch_shape=torch.Size([2]))
+
+        # Wrong batch shape should raise error
+        with self.assertRaises(RuntimeError):
+            transform.forward(torch.randn(3, 4, 2), None)
+
+    def test_infeasible_transform_empty_input(self):
+        """Test handling of empty input."""
+        transform = InfeasibleTransform(batch_shape=torch.Size([]))
+
+        # Empty input should raise error
+        with self.assertRaises(ValueError):
+            transform.forward(torch.tensor([]).reshape(0, 1), None)
+
+    def test_infeasible_transform_all_nan(self):
+        """Test handling of all-NaN input."""
+        transform = InfeasibleTransform(batch_shape=torch.Size([]))
+
+        Y = torch.tensor([[float("nan"), float("nan")]])
+        transform.train()
+        with self.assertRaises(RuntimeError):
+            transform.forward(Y, None)
+
+    def test_infeasible_transform_no_nan(self):
+        """Test handling of input with no NaN values."""
+        transform = InfeasibleTransform(batch_shape=torch.Size([]))
+
+        Y = torch.tensor([[1.0, 2.0, 3.0]])
+        transform.train()
+        Y_tf, _ = transform.forward(Y, None)
+
+        # Check that transformation preserves finite values
+        assert not torch.isnan(Y_tf).any()
+        Y_untf, _ = transform.untransform(Y_tf, None)
+        assert torch.allclose(Y_untf, Y, rtol=1e-4)
