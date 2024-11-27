@@ -42,7 +42,7 @@ module.exports={
           "showLastUpdateTime": true,
           "editUrl": "https://github.com/pytorch/botorch/edit/main/docs/",
           "path": "../docs",
-          "sidebarPath": "../website-old/sidebars.json",
+          "sidebarPath": "../website/sidebars.json",
           remarkPlugins: [remarkMath],
           rehypePlugins: [rehypeKatex],
         },
