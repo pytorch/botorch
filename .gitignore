@@ -100,7 +100,7 @@ website/.docusaurus/
 website/_tutorials/
 website/static/files/
 docs/tutorials/*
-!docs/tutorials/index.js
+!docs/tutorials/index.mdx
 
 ## Generated for Sphinx
 website/pages/api/
