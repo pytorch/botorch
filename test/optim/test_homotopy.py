@@ -143,6 +143,38 @@ class TestHomotopy(BotorchTestCase):
         )
         self.assertEqual(candidate[0, 0], torch.tensor(1, **tkwargs))
 
+        # test fixed feature list
+        fixed_features_list = [{0: 1.0}]
+        model = GenericDeterministicModel(
+            f=lambda x: 5 - (x - p).sum(dim=-1, keepdims=True) ** 2
+        )
+        acqf = PosteriorMean(model=model)
+        # test raise error when fixed_features and fixed_features_list are both provided
+        with self.assertRaisesRegex(
+            ValueError,
+            "Èither `fixed_feature` or `fixed_features_list` can be provided, not both.",
+        ):
+            optimize_acqf_homotopy(
+                q=1,
+                acq_function=acqf,
+                bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+                homotopy=Homotopy(homotopy_parameters=[hp]),
+                num_restarts=2,
+                raw_samples=16,
+                fixed_features_list=fixed_features_list,
+                fixed_features=fixed_features,
+            )
+        candidate, acqf_val = optimize_acqf_homotopy(
+            q=1,
+            acq_function=acqf,
+            bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+            homotopy=Homotopy(homotopy_parameters=[hp]),
+            num_restarts=2,
+            raw_samples=16,
+            fixed_features_list=fixed_features_list,
+        )
+        self.assertEqual(candidate[0, 0], torch.tensor(1, **tkwargs))
+
         # With q > 1.
         acqf = qExpectedImprovement(model=model, best_f=0.0)
         candidate, acqf_val = optimize_acqf_homotopy(
