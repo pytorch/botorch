@@ -308,6 +308,7 @@ def sanitize_mdx(mdx: str) -> str:
     # Remove some lingering HTML tags that break MDX.
     mdx = mdx.replace("<markdowncell>", "")
     mdx = mdx.replace("<TODO>", "")
+    mdx = mdx.replace("<br>", "<br />")
     # Remove any HTML comments from the Markdown. They are fine to keep in the
     # notebooks, but are not really useful in the MDX.
     mdx = re.sub("(<!--.*?-->)", "", mdx, flags=re.DOTALL)
