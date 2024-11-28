@@ -152,7 +152,7 @@ class TestHomotopy(BotorchTestCase):
         # test raise error when fixed_features and fixed_features_list are both provided
         with self.assertRaisesRegex(
             ValueError,
-            "Èither `fixed_feature` or `fixed_features_list` can be provided, not both.",
+            "Either `fixed_feature` or `fixed_features_list` can be provided, not both.",
         ):
             optimize_acqf_homotopy(
                 q=1,
