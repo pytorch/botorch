@@ -162,7 +162,7 @@ def optimize_acqf_homotopy(
     """
     if fixed_features and fixed_features_list:
         raise ValueError(
-            "Èither `fixed_feature` or `fixed_features_list` can be provided, not both."
+            "Either `fixed_feature` or `fixed_features_list` can be provided, not both."
         )
 
     shared_optimize_acqf_kwargs = {
@@ -172,11 +172,11 @@ def optimize_acqf_homotopy(
         "equality_constraints": equality_constraints,
         "nonlinear_inequality_constraints": nonlinear_inequality_constraints,
         "return_best_only": False,  # False to make n_restarts persist through homotopy.
-        "gen_candidates": gen_candidates,
-        "sequential": sequential,
+        # "gen_candidates": gen_candidates,
+        # "sequential": sequential, this is not needed as we are always using q=1 here.
         "ic_generator": ic_generator,
         "timeout_sec": timeout_sec,
-        "return_full_tree": return_full_tree,
+        # "return_full_tree": return_full_tree, is this really needed here
         "retry_on_optimization_warning": retry_on_optimization_warning,
         **ic_gen_kwargs,
     }
@@ -227,7 +227,7 @@ def optimize_acqf_homotopy(
                 q=1,
                 options=final_options,
                 batch_initial_conditions=candidates,
-                fixed_features=fixed_features_list,
+                fixed_features_list=fixed_features_list,
                 **shared_optimize_acqf_kwargs,
             )
         else:
@@ -237,7 +237,7 @@ def optimize_acqf_homotopy(
                 q=1,
                 options=final_options,
                 batch_initial_conditions=candidates,
-                fixed_features_list=fixed_features,
+                fixed_features=fixed_features,
                 **shared_optimize_acqf_kwargs,
             )
 
