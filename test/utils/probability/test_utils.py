@@ -320,7 +320,7 @@ class TestProbabilityUtils(BotorchTestCase):
 
         float16_msg = (
             "only supports torch.float32 and torch.float64 dtypes, but received "
-            "x.dtype = torch.float16."
+            "x.dtype=torch.float16."
         )
         with self.assertRaisesRegex(TypeError, expected_regex=float16_msg):
             log_erfc(torch.tensor(1.0, dtype=torch.float16, device=self.device))

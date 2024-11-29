@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 import warnings
-from abc import abstractproperty
+from abc import abstractmethod
 from collections import OrderedDict
 from collections.abc import Sequence
 from itertools import product
@@ -17,7 +17,11 @@ from unittest import mock, TestCase
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.exceptions.warnings import BotorchTensorDimensionWarning, InputDataWarning
+from botorch.exceptions.warnings import (
+    BotorchTensorDimensionWarning,
+    InputDataWarning,
+    NumericsWarning,
+)
 from botorch.models.model import FantasizeMixin, Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
@@ -67,6 +71,16 @@ class BotorchTestCase(TestCase):
                 "ignore",
                 message=r"Data \(input features\) is not",
                 category=InputDataWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message="has known numerical issues",
+                category=NumericsWarning,
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message="Model converter code is deprecated",
+                category=DeprecationWarning,
             )
 
     def assertAllClose(
@@ -124,7 +138,8 @@ class BaseTestProblemTestCaseMixIn:
                     )
                     self.assertEqual(res.shape, batch_shape + tail_shape)
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def functions(self) -> Sequence[BaseTestProblem]:
         # The functions that should be tested. Typically defined as a class
         # attribute on the test case subclassing this class.

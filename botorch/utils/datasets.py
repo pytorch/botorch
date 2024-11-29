@@ -8,12 +8,14 @@ r"""Representations for different kinds of datasets."""
 
 from __future__ import annotations
 
-import warnings
+import copy
+
 from typing import Any
 
 import torch
 from botorch.exceptions.errors import InputDataError, UnsupportedError
 from botorch.utils.containers import BotorchContainer, SliceContainer
+from pyre_extensions import none_throws
 from torch import long, ones, Tensor
 
 
@@ -54,6 +56,7 @@ class SupervisedDataset:
         outcome_names: list[str],
         Yvar: BotorchContainer | Tensor | None = None,
         validate_init: bool = True,
+        group_indices: Tensor | None = None,
     ) -> None:
         r"""Constructs a `SupervisedDataset`.
 
@@ -65,12 +68,18 @@ class SupervisedDataset:
             Yvar: An optional `Tensor` or `BotorchContainer` representing
                 the observation noise.
             validate_init: If `True`, validates the input shapes.
+            group_indices: A `Tensor` representing the which rows of X and Y are
+                grouped together. This is used to support applications in which multiple
+                observations should be considered as a group, e.g., learning-curve-based
+                modeling. If provided, its shape must be compatible with X and Y.
         """
         self._X = X
         self._Y = Y
         self._Yvar = Yvar
         self.feature_names = feature_names
         self.outcome_names = outcome_names
+        self.group_indices = group_indices
+        self.validate_init = validate_init
         if validate_init:
             self._validate()
 
@@ -96,6 +105,7 @@ class SupervisedDataset:
         self,
         validate_feature_names: bool = True,
         validate_outcome_names: bool = True,
+        validate_group_indices: bool = True,
     ) -> None:
         r"""Checks that the shapes of the inputs are compatible with each other.
 
@@ -108,6 +118,8 @@ class SupervisedDataset:
                 `outcomes_names` matches the # of columns of `self.Y`. If a
                 particular dataset, e.g., `RankingDataset`, is known to violate
                 this assumption, this can be set to `False`.
+            validate_group_indices: By default, we validate that the shape of
+                `group_indices` matches the shape of X and Y.
         """
         shape_X = self.X.shape
         if isinstance(self._X, BotorchContainer):
@@ -133,8 +145,20 @@ class SupervisedDataset:
                 "`Y` must have the same number of columns as the number of "
                 "outcomes in `outcome_names`."
             )
+        if validate_group_indices and self.group_indices is not None:
+            if self.group_indices.shape != shape_X:
+                raise ValueError(
+                    f"shape_X ({shape_X}) must have the same shape as "
+                    f"group_indices ({none_throws(self.group_indices).shape})."
+                )
 
     def __eq__(self, other: Any) -> bool:
+        if self.group_indices is None and other.group_indices is None:
+            group_indices_equal = True
+        elif self.group_indices is None or other.group_indices is None:
+            group_indices_equal = False
+        else:
+            group_indices_equal = torch.equal(self.group_indices, other.group_indices)
         return (
             type(other) is type(self)
             and torch.equal(self.X, other.X)
@@ -146,39 +170,53 @@ class SupervisedDataset:
             )
             and self.feature_names == other.feature_names
             and self.outcome_names == other.outcome_names
+            and group_indices_equal
         )
 
+    def clone(
+        self, deepcopy: bool = False, mask: Tensor | None = None
+    ) -> SupervisedDataset:
+        """Return a copy of the dataset.
 
-class FixedNoiseDataset(SupervisedDataset):
-    r"""A SupervisedDataset with an additional field `Yvar` that stipulates
-    observations variances so that `Y[i] ~ N(f(X[i]), Yvar[i])`.
+        Args:
+            deepcopy: If True, perform a deep copy. Otherwise, use the same
+                tensors/lists.
+            mask: A `n`-dim boolean mask indicating which rows to keep. This is used
+                along the -2 dimension.
 
-    NOTE: This is deprecated. Use `SupervisedDataset` instead.
-    Will be removed in a future release (~v0.11).
-    """
-
-    def __init__(
-        self,
-        X: BotorchContainer | Tensor,
-        Y: BotorchContainer | Tensor,
-        Yvar: BotorchContainer | Tensor,
-        feature_names: list[str],
-        outcome_names: list[str],
-        validate_init: bool = True,
-    ) -> None:
-        r"""Initialize a `FixedNoiseDataset` -- deprecated!"""
-        warnings.warn(
-            "`FixedNoiseDataset` is deprecated. Use `SupervisedDataset` instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__(
-            X=X,
-            Y=Y,
+        Returns:
+            The new dataset.
+        """
+        new_X = self._X
+        new_Y = self._Y
+        new_Yvar = self._Yvar
+        feature_names = self.feature_names
+        outcome_names = self.outcome_names
+        if mask is not None:
+            if any(isinstance(x, BotorchContainer) for x in [new_X, new_Y, new_Yvar]):
+                raise NotImplementedError(
+                    "Masking is not supported for BotorchContainers."
+                )
+            new_X = new_X[..., mask, :]
+            new_Y = new_Y[..., mask, :]
+            if new_Yvar is not None:
+                new_Yvar = new_Yvar[..., mask, :]
+        if deepcopy:
+            new_X = new_X.clone()
+            new_Y = new_Y.clone()
+            new_Yvar = new_Yvar.clone() if new_Yvar is not None else None
+            feature_names = copy.copy(self.feature_names)
+            outcome_names = copy.copy(self.outcome_names)
+        kwargs = {}
+        if new_Yvar is not None:
+            kwargs = {"Yvar": new_Yvar}
+        return type(self)(
+            X=new_X,
+            Y=new_Y,
             feature_names=feature_names,
             outcome_names=outcome_names,
-            Yvar=Yvar,
-            validate_init=validate_init,
+            validate_init=self.validate_init,
+            **kwargs,
         )
 
 
@@ -241,7 +279,11 @@ class RankingDataset(SupervisedDataset):
         )
 
     def _validate(self) -> None:
-        super()._validate(validate_feature_names=False, validate_outcome_names=False)
+        super()._validate(
+            validate_feature_names=False,
+            validate_outcome_names=False,
+            validate_group_indices=False,
+        )
         if len(self.feature_names) != self._X.values.shape[-1]:
             raise ValueError(
                 "The `values` field of `X` must have the same number of columns as "
@@ -316,6 +358,7 @@ class MultiTaskDataset(SupervisedDataset):
         self.has_heterogeneous_features = any(
             datasets[0].feature_names != ds.feature_names for ds in datasets[1:]
         )
+        self.group_indices = None
 
     @classmethod
     def from_joint_dataset(
@@ -373,7 +416,7 @@ class MultiTaskDataset(SupervisedDataset):
                 outcome_names=[outcome_name],
             )
             datasets.append(new_dataset)
-        # Return the new
+        # Return the new dataset
         return cls(
             datasets=datasets,
             target_outcome_name=outcome_names_per_task.get(
@@ -500,6 +543,37 @@ class MultiTaskDataset(SupervisedDataset):
             and self.task_feature_index == other.task_feature_index
         )
 
+    def clone(
+        self, deepcopy: bool = False, mask: Tensor | None = None
+    ) -> MultiTaskDataset:
+        """Return a copy of the dataset.
+
+        Args:
+            deepcopy: If True, perform a deep copy. Otherwise, use the same
+                tensors/lists/datasets.
+            mask: A `n`-dim boolean mask indicating which rows to keep from the target
+                dataset. This is used along the -2 dimension.
+
+        Returns:
+            The new dataset.
+        """
+        datasets = list(self.datasets.values())
+        if mask is not None or deepcopy:
+            new_datasets = []
+            for outcome, ds in self.datasets.items():
+                new_datasets.append(
+                    ds.clone(
+                        deepcopy=deepcopy,
+                        mask=mask if outcome == self.target_outcome_name else None,
+                    )
+                )
+            datasets = new_datasets
+        return MultiTaskDataset(
+            datasets=datasets,
+            target_outcome_name=self.target_outcome_name,
+            task_feature_index=self.task_feature_index,
+        )
+
 
 class ContextualDataset(SupervisedDataset):
     """This is a contextual dataset that is constructed from either a single
@@ -538,6 +612,7 @@ class ContextualDataset(SupervisedDataset):
             c: [self.feature_names.index(i) for i in parameter_decomposition[c]]
             for c in self.context_buckets
         }
+        self.group_indices = None
 
     @property
     def X(self) -> Tensor:
@@ -661,3 +736,33 @@ class ContextualDataset(SupervisedDataset):
                     raise InputDataError(
                         f"{outcome} is missing in metric_decomposition."
                     )
+
+    def clone(
+        self, deepcopy: bool = False, mask: Tensor | None = None
+    ) -> ContextualDataset:
+        """Return a copy of the dataset.
+
+        Args:
+            deepcopy: If True, perform a deep copy. Otherwise, use the same
+                tensors/lists/datasets.
+            mask: A `n`-dim boolean mask indicating which rows to keep. This is used
+                along the -2 dimension. `n` here corresponds to the number of rows in
+                an individual dataset.
+
+        Returns:
+            The new dataset.
+        """
+        datasets = list(self.datasets.values())
+        if mask is not None or deepcopy:
+            datasets = [ds.clone(deepcopy=deepcopy, mask=mask) for ds in datasets]
+        if deepcopy:
+            parameter_decomposition = copy.deepcopy(self.parameter_decomposition)
+            metric_decomposition = copy.deepcopy(self.metric_decomposition)
+        else:
+            parameter_decomposition = self.parameter_decomposition
+            metric_decomposition = self.metric_decomposition
+        return ContextualDataset(
+            datasets=datasets,
+            parameter_decomposition=parameter_decomposition,
+            metric_decomposition=metric_decomposition,
+        )
