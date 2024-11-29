@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from itertools import product
 
 import torch
 from botorch.models.transforms.utils import (
@@ -845,6 +846,19 @@ def _nanmin(
     return tensor.nan_to_num(max_value).min(dim=dim, keepdim=keepdim)
 
 
+def _check_batched_output(Y: Tensor, batch_shape: Tensor) -> None:
+    """Utility for common output transform checks."""
+    if Y.shape[:-2] != batch_shape:
+        raise RuntimeError(
+            f"Expected Y.shape[:-2] to be {batch_shape}, matching "
+            "the `batch_shape` argument to `Standardize`, but got "
+            f"Y.shape[:-2]={Y.shape[:-2]}."
+        )
+
+    if Y.shape[-2] < 1:
+        raise ValueError(f"Can't transform with no observations. {Y.shape=}.")
+
+
 class InfeasibleTransform(OutcomeTransform):
     """Transforms infeasible (NaN) values to feasible values."""
 
@@ -876,17 +890,9 @@ class InfeasibleTransform(OutcomeTransform):
             - The transformed outcome observations.
             - The transformed observation noise (if applicable).
         """
+        _check_batched_output(Y, self._batch_shape)
+
         if self.training:
-            if Y.shape[:-2] != self._batch_shape:
-                raise RuntimeError(
-                    f"Expected Y.shape[:-2] to be {self._batch_shape}, matching "
-                    "the `batch_shape` argument to `Standardize`, but got "
-                    f"Y.shape[:-2]={Y.shape[:-2]}."
-                )
-
-            if Y.shape[-2] < 1:
-                raise ValueError(f"Can't standardize with no observations. {Y.shape=}.")
-
             if torch.isnan(Y).all(dim=-2).any():
                 raise RuntimeError("For at least one batch, all outcomes are NaN")
 
@@ -984,23 +990,14 @@ class LogWarperTransform(OutcomeTransform):
             - The transformed outcome observations.
             - The transformed observation noise (if applicable).
         """
+        _check_batched_output(Y, self._batch_shape)
+
         if self.training:
-            if Y.shape[:-2] != self._batch_shape:
-                raise RuntimeError(
-                    f"Expected Y.shape[:-2] to be {self._batch_shape}, matching "
-                    "the `batch_shape` argument to `Standardize`, but got "
-                    f"Y.shape[:-2]={Y.shape[:-2]}."
-                )
-
-            if Y.shape[-2] < 1:
-                raise ValueError(f"Can't standardize with no observations. {Y.shape=}.")
-
             if torch.isnan(Y).all(dim=-2).any():
                 raise RuntimeError("For at least one batch, all outcomes are NaN")
 
             self._labels_min = _nanmin(Y, dim=-2).values
             self._labels_max = _nanmax(Y, dim=-2).values
-
             self._is_trained = torch.tensor(True)
 
         expanded_labels_min = self._labels_min.unsqueeze(-2).expand(
@@ -1053,3 +1050,109 @@ class LogWarperTransform(OutcomeTransform):
         )
 
         return Y_untransformed, Yvar
+
+
+class HalfRankTransform(OutcomeTransform):
+    """Warps half of the outcomes to fit into a Gaussian distribution.
+
+    This transform warps values below the median to follow a Gaussian distribution while
+    leaving values above the median unchanged. NaN values are preserved.
+    """
+
+    def __init__(self, batch_shape: torch.Size | None = None) -> None:
+        """Initialize transform.
+
+        Args:
+            outputs: Which of the outputs to transform. If omitted, all outputs
+                will be transformed.
+        """
+        super().__init__()
+        self._batch_shape = batch_shape
+        self._is_trained = False
+        self.register_buffer("_original_labels", torch.tensor([]))
+        self.register_buffer("_warped_labels", torch.tensor([]))
+        self.register_buffer("_original_label_median", torch.tensor(float("nan")))
+
+    def _get_std_above_median(self, unique_y: Tensor, y_median: Tensor) -> Tensor:
+        # Estimate std of good half
+        good_half = unique_y[unique_y >= y_median]
+        std = torch.sqrt(((good_half - y_median) ** 2).mean())
+
+        if std == 0:
+            std = torch.sqrt(((unique_y - y_median) ** 2).mean())
+
+        if torch.isnan(std):
+            std = torch.abs(unique_y - y_median).mean()
+
+        return std
+
+    def forward(
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
+        """Transform the outcomes.
+
+        Args:
+            Y: A `batch_shape x n x m`-dim tensor of training targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of observation noises
+                associated with the training targets (if applicable).
+
+        Returns:
+            A two-tuple with the transformed outcomes:
+            - The transformed outcome observations.
+            - The transformed observation noise (if applicable).
+        """
+        _check_batched_output(Y, self._batch_shape)
+
+        if self.training:
+            if torch.isnan(Y).all(dim=-2).any():
+                raise RuntimeError("For at least one batch, all outcomes are NaN")
+
+            Y_transformed = Y.clone()
+
+            # Compute median for each batch
+            Y_medians = torch.nanmedian(Y, dim=-2)
+
+            for dim in range(Y.shape[-1]):
+                for batch_idx in product((range(n) for n in self._batch_shape)):
+                    y_median = Y_medians[dim]
+                    y = Y[*batch_idx, :, dim]
+
+                    # Get finite values and their ranks for each batch
+                    is_finite_mask = ~torch.isnan(y)
+                    ranks = torch.zeros_like(y)
+
+                    unique_y, unique_idx = torch.unique(
+                        y[is_finite_mask], return_index=True
+                    )
+
+                    for i, val in enumerate(unique_y):
+                        ranks[y == val] = i + 1
+
+                    ranks = torch.where(is_finite_mask, ranks, len(unique_y) + 1)
+
+                    # Transform values below median
+                    below_median_mask = y < y_median
+
+                    # Calculate rank quantiles
+                    dedup_median_index = torch.searchsorted(unique_y, y_median)
+                    denominator = dedup_median_index + 0.5 * (
+                        unique_y[dedup_median_index] == y_median
+                    )
+                    rank_quantile = 0.5 * (ranks[below_median_mask] - 0.5) / denominator
+
+                    y_above_median_std = self._get_std_above_median(unique_y, y_median)
+
+                    # Apply transformation
+                    rank_ppf = (
+                        torch.erfinv(2 * rank_quantile - 1)
+                        * y_above_median_std
+                        * torch.sqrt(torch.tensor(2.0))
+                    )
+                    Y_transformed[*batch_idx, below_median_mask, dim] = (
+                        rank_ppf + y_median
+                    )
+
+                    # TODO: what do I need to save?
+
+            self._is_trained = torch.tensor(True)
+            return Y_transformed, Yvar
