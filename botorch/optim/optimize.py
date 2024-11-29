@@ -936,7 +936,7 @@ def optimize_acqf_mixed(
         - a tensor of associated acquisition values of dim `num_restarts`
             if `return_best_only=False` else a scalar acquisition value.
     """
-    if return_best_only is False and q > 1:
+    if not return_best_only and q > 1:
         raise ValueError("`return_best_only=False` is only allowed for q=1.")
 
     if not fixed_features_list:
