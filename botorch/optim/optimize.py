@@ -937,7 +937,7 @@ def optimize_acqf_mixed(
             if `return_best_only=False` else a scalar acquisition value.
     """
     if not return_best_only and q > 1:
-        raise ValueError("`return_best_only=False` is only allowed for q=1.")
+        raise NotImplementedError("`return_best_only=False` is only supported for q=1.")
 
     if not fixed_features_list:
         raise ValueError("fixed_features_list must be non-empty.")
