@@ -941,6 +941,7 @@ class qPosteriorStandardDeviation(SampleReducingMCAcquisitionFunction):
             constraints=constraints,
             eta=eta,
         )
+        self._scale = math.sqrt(math.pi / 2)
 
     def _sample_forward(self, obj: Tensor) -> Tensor:
         r"""Evaluate qPosteriorStandardDeviation per sample on the candidate set `X`.
@@ -952,4 +953,4 @@ class qPosteriorStandardDeviation(SampleReducingMCAcquisitionFunction):
             A `sample_shape x batch_shape x q`-dim Tensor of acquisition values.
         """
         mean = obj.mean(dim=0)
-        return (obj - mean).abs()
+        return (obj - mean).abs() * self._scale
