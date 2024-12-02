@@ -66,7 +66,7 @@ def _update_constant_bounds(bounds: Tensor) -> Tensor:
     return bounds
 
 
-def normalize(X: Tensor, bounds: Tensor) -> Tensor:
+def normalize(X: Tensor, bounds: Tensor, update_constant_bounds: bool = True) -> Tensor:
     r"""Min-max normalize X w.r.t. the provided bounds.
 
     NOTE: If the upper and lower bounds are identical for a dimension, that dimension
@@ -89,11 +89,15 @@ def normalize(X: Tensor, bounds: Tensor) -> Tensor:
         >>> bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])
         >>> X_normalized = normalize(X, bounds)
     """
-    bounds = _update_constant_bounds(bounds=bounds)
+    bounds = (
+        _update_constant_bounds(bounds=bounds) if update_constant_bounds else bounds
+    )
     return (X - bounds[0]) / (bounds[1] - bounds[0])
 
 
-def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
+def unnormalize(
+    X: Tensor, bounds: Tensor, update_constant_bounds: bool = True
+) -> Tensor:
     r"""Un-normalizes X w.r.t. the provided bounds.
 
     NOTE: If the upper and lower bounds are identical for a dimension, that dimension
@@ -116,7 +120,9 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
         >>> bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])
         >>> X = unnormalize(X_normalized, bounds)
     """
-    bounds = _update_constant_bounds(bounds=bounds)
+    bounds = (
+        _update_constant_bounds(bounds=bounds) if update_constant_bounds else bounds
+    )
     return X * (bounds[1] - bounds[0]) + bounds[0]
 
 
