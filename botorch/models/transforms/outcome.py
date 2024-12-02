@@ -892,6 +892,11 @@ class InfeasibleTransform(OutcomeTransform):
         """
         _check_batched_output(Y, self._batch_shape)
 
+        if Yvar is not None:
+            raise NotImplementedError(
+                "InfeasibleTransform does not support transforming observation noise"
+            )
+
         if self.training:
             if torch.isnan(Y).all(dim=-2).any():
                 raise RuntimeError("For at least one batch, all outcomes are NaN")
@@ -919,7 +924,7 @@ class InfeasibleTransform(OutcomeTransform):
         )
         Y = torch.where(torch.isnan(Y), expanded_bad_value, Y)
         Y = torch.where(~torch.isnan(Y), Y + expanded_shift, Y)
-        # TODO: Handle Yvar
+
         return Y, Yvar
 
     def untransform(
@@ -940,6 +945,11 @@ class InfeasibleTransform(OutcomeTransform):
         if not self._is_trained:
             raise RuntimeError(
                 "forward() needs to be called before untransform() is called."
+            )
+
+        if Yvar is not None:
+            raise NotImplementedError(
+                "InfeasibleTransform does not support untransforming observation noise"
             )
 
         # Expand shift to match Y's shape
@@ -992,6 +1002,11 @@ class LogWarperTransform(OutcomeTransform):
         """
         _check_batched_output(Y, self._batch_shape)
 
+        if Yvar is not None:
+            raise NotImplementedError(
+                "LogWarperTransform does not support transforming observation noise"
+            )
+
         if self.training:
             if torch.isnan(Y).all(dim=-2).any():
                 raise RuntimeError("For at least one batch, all outcomes are NaN")
@@ -1015,7 +1030,6 @@ class LogWarperTransform(OutcomeTransform):
             torch.log1p(norm_diff * (self.offset - 1)) / torch.log(self.offset)
         )
 
-        # TODO: Handle Yvar
         return Y_transformed, Yvar
 
     def untransform(
@@ -1035,6 +1049,11 @@ class LogWarperTransform(OutcomeTransform):
         """
         if not self._is_trained:
             raise RuntimeError("forward() needs to be called before untransform()")
+
+        if Yvar is not None:
+            raise NotImplementedError(
+                "LogWarperTransform does not support untransforming observation noise"
+            )
 
         expanded_labels_min = self._labels_min.unsqueeze(-2).expand(
             *Y.shape[:-2], Y.shape[-2], -1
@@ -1069,9 +1088,9 @@ class HalfRankTransform(OutcomeTransform):
         super().__init__()
         self._batch_shape = batch_shape
         self._is_trained = False
-        self.register_buffer("_original_labels", torch.tensor([]))
-        self.register_buffer("_warped_labels", torch.tensor([]))
-        self.register_buffer("_original_label_median", torch.tensor(float("nan")))
+        self._unique_labels = {}
+        self._warped_labels = {}
+        self.register_buffer("_original_label_medians", torch.tensor([]))
 
     def _get_std_above_median(self, unique_y: Tensor, y_median: Tensor) -> Tensor:
         # Estimate std of good half
@@ -1101,6 +1120,11 @@ class HalfRankTransform(OutcomeTransform):
             - The transformed outcome observations.
             - The transformed observation noise (if applicable).
         """
+        if Yvar is not None:
+            raise NotImplementedError(
+                "HalfRankTransform does not support transforming observation noise"
+            )
+
         _check_batched_output(Y, self._batch_shape)
 
         if self.training:
@@ -1110,35 +1134,41 @@ class HalfRankTransform(OutcomeTransform):
             Y_transformed = Y.clone()
 
             # Compute median for each batch
-            Y_medians = torch.nanmedian(Y, dim=-2)
+            Y_medians = torch.nanmedian(Y, dim=-2).values
+
+            self._original_label_medians.resize_(
+                torch.Size((*self._batch_shape, Y.shape[-1]))
+            )
 
             for dim in range(Y.shape[-1]):
-                for batch_idx in product((range(n) for n in self._batch_shape)):
-                    y_median = Y_medians[dim]
+                batch_indices = (
+                    product(*([m for m in range(n)] for n in self._batch_shape))
+                    if len(self._batch_shape) > 0
+                    else [  # this allows it to work with no batch dim
+                        ...,
+                    ]
+                )
+                for batch_idx in batch_indices:
+                    y_median = Y_medians[*batch_idx, dim]
                     y = Y[*batch_idx, :, dim]
 
                     # Get finite values and their ranks for each batch
                     is_finite_mask = ~torch.isnan(y)
                     ranks = torch.zeros_like(y)
 
-                    unique_y, unique_idx = torch.unique(
-                        y[is_finite_mask], return_index=True
-                    )
+                    unique_y = torch.unique(y[is_finite_mask])
 
                     for i, val in enumerate(unique_y):
                         ranks[y == val] = i + 1
 
                     ranks = torch.where(is_finite_mask, ranks, len(unique_y) + 1)
 
-                    # Transform values below median
-                    below_median_mask = y < y_median
-
                     # Calculate rank quantiles
                     dedup_median_index = torch.searchsorted(unique_y, y_median)
                     denominator = dedup_median_index + 0.5 * (
                         unique_y[dedup_median_index] == y_median
                     )
-                    rank_quantile = 0.5 * (ranks[below_median_mask] - 0.5) / denominator
+                    rank_quantile = 0.5 * (ranks - 0.5) / denominator
 
                     y_above_median_std = self._get_std_above_median(unique_y, y_median)
 
@@ -1148,11 +1178,93 @@ class HalfRankTransform(OutcomeTransform):
                         * y_above_median_std
                         * torch.sqrt(torch.tensor(2.0))
                     )
-                    Y_transformed[*batch_idx, below_median_mask, dim] = (
-                        rank_ppf + y_median
+                    Y_transformed[*batch_idx, :, dim] = torch.where(
+                        y < y_median,
+                        rank_ppf + y_median,
+                        Y_transformed[*batch_idx, :, dim],
                     )
 
-                    # TODO: what do I need to save?
+                    # save intermediate values for untransform
+                    self._original_label_medians[*batch_idx, dim] = y_median
+                    self._unique_labels[(*batch_idx, dim)] = unique_y
+                    self._warped_labels[(*batch_idx, dim)] = unique_y
 
             self._is_trained = torch.tensor(True)
-            return Y_transformed, Yvar
+
+        return Y_transformed, Yvar
+
+    def untransform(
+        self, Y: Tensor, Yvar: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
+        """Un-transform the outcomes.
+
+        Args:
+            Y: A `batch_shape x n x m`-dim tensor of transformed targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of transformed observation
+                noises associated with the targets (if applicable).
+
+        Returns:
+            A two-tuple with the un-transformed outcomes:
+            - The un-transformed outcome observations.
+            - The un-transformed observation noise (if applicable).
+        """
+        if not self._is_trained:
+            raise RuntimeError("forward() needs to be called before untransform()")
+
+        if Yvar is not None:
+            raise NotImplementedError(
+                "HalfRankTransform does not support untransforming observation noise"
+            )
+
+        Y_utf = Y.clone()
+
+        for dim in range(Y.shape[-1]):
+            batch_indices = (
+                product(*(range(n) for n in self._batch_shape))
+                if len(self._batch_shape) > 0
+                else [  # this allows it to work with no batch dim
+                    ...,
+                ]
+            )
+            for batch_idx in batch_indices:
+                y = Y[*batch_idx, :, dim]
+                unique_labels = self._unique_labels[(*batch_idx, dim)]
+                warped_labels = self._warped_labels[(*batch_idx, dim)]
+
+                # Process values below median
+                below_median = y < self._original_label_medians[*batch_idx, dim]
+                if below_median.any():
+                    # Find nearest warped values and interpolate
+                    warped_idx = torch.searchsorted(warped_labels, y[below_median])
+
+                    # Handle edge cases and interpolation
+                    for i, (val, idx) in enumerate(zip(y[below_median], warped_idx)):
+                        if idx == 0:
+                            # Extrapolate below minimum
+                            scale = (val - warped_labels[0]) / (
+                                warped_labels[-1] - warped_labels[0]
+                            )
+                            Y_utf[below_median][i] = unique_labels[0] - scale * (
+                                unique_labels[-1] - unique_labels[0]
+                            )
+                        else:
+                            # Interpolate between points
+                            lower_idx = idx - 1
+                            upper_idx = min(idx, len(warped_labels) - 1)
+
+                            original_gap = (
+                                unique_labels[upper_idx] - unique_labels[lower_idx]
+                            )
+                            warped_gap = (
+                                warped_labels[upper_idx] - warped_labels[lower_idx]
+                            )
+
+                            if warped_gap > 0:
+                                scale = (val - warped_labels[lower_idx]) / warped_gap
+                                Y_utf[below_median][i] = (
+                                    unique_labels[lower_idx] + scale * original_gap
+                                )
+                            else:
+                                Y_utf[below_median][i] = unique_labels[lower_idx]
+
+        return Y_utf, Yvar
