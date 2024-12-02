@@ -15,6 +15,7 @@ from typing import Any
 import torch
 from botorch.exceptions.errors import InputDataError, UnsupportedError
 from botorch.utils.containers import BotorchContainer, SliceContainer
+from pyre_extensions import none_throws
 from torch import long, ones, Tensor
 
 
@@ -55,6 +56,7 @@ class SupervisedDataset:
         outcome_names: list[str],
         Yvar: BotorchContainer | Tensor | None = None,
         validate_init: bool = True,
+        group_indices: Tensor | None = None,
     ) -> None:
         r"""Constructs a `SupervisedDataset`.
 
@@ -66,12 +68,17 @@ class SupervisedDataset:
             Yvar: An optional `Tensor` or `BotorchContainer` representing
                 the observation noise.
             validate_init: If `True`, validates the input shapes.
+            group_indices: A `Tensor` representing the which rows of X and Y are
+                grouped together. This is used to support applications in which multiple
+                observations should be considered as a group, e.g., learning-curve-based
+                modeling. If provided, its shape must be compatible with X and Y.
         """
         self._X = X
         self._Y = Y
         self._Yvar = Yvar
         self.feature_names = feature_names
         self.outcome_names = outcome_names
+        self.group_indices = group_indices
         self.validate_init = validate_init
         if validate_init:
             self._validate()
@@ -98,6 +105,7 @@ class SupervisedDataset:
         self,
         validate_feature_names: bool = True,
         validate_outcome_names: bool = True,
+        validate_group_indices: bool = True,
     ) -> None:
         r"""Checks that the shapes of the inputs are compatible with each other.
 
@@ -110,6 +118,8 @@ class SupervisedDataset:
                 `outcomes_names` matches the # of columns of `self.Y`. If a
                 particular dataset, e.g., `RankingDataset`, is known to violate
                 this assumption, this can be set to `False`.
+            validate_group_indices: By default, we validate that the shape of
+                `group_indices` matches the shape of X and Y.
         """
         shape_X = self.X.shape
         if isinstance(self._X, BotorchContainer):
@@ -135,8 +145,20 @@ class SupervisedDataset:
                 "`Y` must have the same number of columns as the number of "
                 "outcomes in `outcome_names`."
             )
+        if validate_group_indices and self.group_indices is not None:
+            if self.group_indices.shape != shape_X:
+                raise ValueError(
+                    f"shape_X ({shape_X}) must have the same shape as "
+                    f"group_indices ({none_throws(self.group_indices).shape})."
+                )
 
     def __eq__(self, other: Any) -> bool:
+        if self.group_indices is None and other.group_indices is None:
+            group_indices_equal = True
+        elif self.group_indices is None or other.group_indices is None:
+            group_indices_equal = False
+        else:
+            group_indices_equal = torch.equal(self.group_indices, other.group_indices)
         return (
             type(other) is type(self)
             and torch.equal(self.X, other.X)
@@ -148,6 +170,7 @@ class SupervisedDataset:
             )
             and self.feature_names == other.feature_names
             and self.outcome_names == other.outcome_names
+            and group_indices_equal
         )
 
     def clone(
@@ -256,7 +279,11 @@ class RankingDataset(SupervisedDataset):
         )
 
     def _validate(self) -> None:
-        super()._validate(validate_feature_names=False, validate_outcome_names=False)
+        super()._validate(
+            validate_feature_names=False,
+            validate_outcome_names=False,
+            validate_group_indices=False,
+        )
         if len(self.feature_names) != self._X.values.shape[-1]:
             raise ValueError(
                 "The `values` field of `X` must have the same number of columns as "
@@ -331,6 +358,7 @@ class MultiTaskDataset(SupervisedDataset):
         self.has_heterogeneous_features = any(
             datasets[0].feature_names != ds.feature_names for ds in datasets[1:]
         )
+        self.group_indices = None
 
     @classmethod
     def from_joint_dataset(
@@ -584,6 +612,7 @@ class ContextualDataset(SupervisedDataset):
             c: [self.feature_names.index(i) for i in parameter_decomposition[c]]
             for c in self.context_buckets
         }
+        self.group_indices = None
 
     @property
     def X(self) -> Tensor:
