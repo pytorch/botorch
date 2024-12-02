@@ -154,7 +154,7 @@ candidate  # tensor([[0.2981, 0.2401]], dtype=torch.float64)`;
     <div
       className="padding--xl"
       id="quickstart"
-      style={{ 'background-color': 'var(--ifm-color-emphasis-100)' }}
+      style={{ 'background-color': 'var(--ifm-color-emphasis-200)' }}
     >
       <h2 className='text--center padding--md'>Get Started</h2>
       <div>
