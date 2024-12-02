@@ -123,6 +123,7 @@ class OptimizeAcqfInputs:
                     "use the given `batch_initial_conditions` by setting "
                     "`raw_samples` to None.",
                     RuntimeWarning,
+                    stacklevel=3,
                 )
                 # Use object.__setattr__ to bypass immutability and set a value
                 object.__setattr__(self, "raw_samples", None)
@@ -140,6 +141,7 @@ class OptimizeAcqfInputs:
                     "given `batch_initial_conditions` by setting `raw_samples` "
                     "to None.",
                     RuntimeWarning,
+                    stacklevel=3,
                 )
                 # Use object.__setattr__ to bypass immutability and set a value
                 object.__setattr__(self, "raw_samples", None)
@@ -1379,7 +1381,7 @@ def optimize_acqf_discrete_local_search(
         ):
             raise ValueError(
                 "batch_initial_conditions must have shape `n x 1 x d` if "
-                f"given (recieved {batch_initial_conditions})."
+                f"given (received shape {batch_initial_conditions.shape})."
             )
 
     candidate_list = []
