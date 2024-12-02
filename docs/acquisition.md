@@ -139,7 +139,7 @@ for a Gaussian posterior, given by
 
 $$
 \text{EI}(x) = \mathbb{E}\bigl[
-\max(y - f^\*, 0) \mid y\sim \mathcal{N}(\mu(x), \sigma^2(x))
+\max(y - f^*, 0) \mid y\sim \mathcal{N}(\mu(x), \sigma^2(x))
 \bigr]
 $$
 
