@@ -160,7 +160,7 @@ class TestHomotopy(BotorchTestCase):
         self.assertEqual(candidate[0, 0], torch.tensor(1, **tkwargs))
 
         # test fixed feature list
-        fixed_features_list = [{0: 1.0}]
+        fixed_features_list = [{0: 1.0}, {1: 3.0}]
         model = GenericDeterministicModel(
             f=lambda x: 5 - (x - p).sum(dim=-1, keepdims=True) ** 2
         )
@@ -173,7 +173,7 @@ class TestHomotopy(BotorchTestCase):
             optimize_acqf_homotopy(
                 q=1,
                 acq_function=acqf,
-                bounds=torch.tensor([[-10, -10], [5, 5]], **tkwargs),
+                bounds=torch.tensor([[-10, -10, -10], [5, 5, 5]], **tkwargs),
                 homotopy=Homotopy(homotopy_parameters=[hp]),
                 num_restarts=2,
                 raw_samples=16,
@@ -183,7 +183,7 @@ class TestHomotopy(BotorchTestCase):
         candidate, acqf_val = optimize_acqf_homotopy(
             q=1,
             acq_function=acqf,
-            bounds=torch.tensor([[-10, -10], [5, 5]], **tkwargs),
+            bounds=torch.tensor([[-10, -10, -10], [5, 5, 5]], **tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
             num_restarts=2,
             raw_samples=16,
