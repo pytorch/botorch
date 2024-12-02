@@ -226,16 +226,15 @@ def optimize_acqf_homotopy(
             ).unsqueeze(1)
 
         # Optimize one more time with the final options
-        if fixed_features_list:
-            candidates, acq_values = optimization_fn(
-                acq_function=acq_function,
-                bounds=bounds,
-                q=1,
-                options=final_options,
-                batch_initial_conditions=candidates,
-                **fixed_features_kwargs,
-                **shared_optimize_acqf_kwargs,
-            )
+        candidates, acq_values = optimization_fn(
+            acq_function=acq_function,
+            bounds=bounds,
+            q=1,
+            options=final_options,
+            batch_initial_conditions=candidates,
+            **fixed_features_kwargs,
+            **shared_optimize_acqf_kwargs,
+        )
 
         # Post-process the candidates and grab the best candidate
         if post_processing_func is not None:

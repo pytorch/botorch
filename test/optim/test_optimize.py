@@ -1467,7 +1467,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             # compute expected output
             best_acq_values = torch.tensor(
                 [torch.max(acq_values) for acq_values in acq_val_rvs]
-            ).to(acq_val_rvs[0])
+            )
             best_batch_idx = torch.argmax(best_acq_values)
 
             if return_best_only:
@@ -1476,12 +1476,13 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 best_idx = torch.argmax(best_batch_acq_values)
                 expected_candidates = best_batch_candidates[best_idx]
                 expected_acq_value = best_batch_acq_values[best_idx]
-                assert expected_candidates.dim() == 2
+                self.assertEqual(expected_candidates.dim(), 2)
+
             else:
                 expected_candidates = candidate_rvs[best_batch_idx]
                 expected_acq_value = acq_val_rvs[best_batch_idx]
-                assert expected_candidates.dim() == 3
-                assert expected_acq_value.dim() == 1
+                self.assertEqual(expected_candidates.dim(), 3)
+                self.assertEqual(expected_acq_value.dim(), 1)
 
             self.assertTrue(torch.equal(candidates, expected_candidates))
             self.assertTrue(torch.equal(acq_value, expected_acq_value))
@@ -1549,7 +1550,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
                 best_acq_values = torch.tensor(
                     [torch.max(acq_values) for acq_values in acq_val_rvs_q]
-                ).to(acq_val_rvs_q[0])
+                )
                 best_batch_idx = torch.argmax(best_acq_values)
 
                 best_batch_candidates = candidate_rvs_q[best_batch_idx]
@@ -1599,11 +1600,11 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             )
 
     def test_optimize_acqf_mixed_return_best_only_q2(self):
+        mock_acq_function = MockAcquisitionFunction()
         with self.assertRaises(
             NotImplementedError,
             msg="`return_best_only=False` is only supported for q=1.",
         ):
-            mock_acq_function = MockAcquisitionFunction()
             optimize_acqf_mixed(
                 acq_function=mock_acq_function,
                 q=2,

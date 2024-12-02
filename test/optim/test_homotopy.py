@@ -117,7 +117,7 @@ class TestHomotopy(BotorchTestCase):
         candidate, acqf_val = optimize_acqf_homotopy(
             q=1,
             acq_function=acqf,
-            bounds=torch.tensor([[-10], [5]]).to(**tkwargs),
+            bounds=torch.tensor([[-10], [5]], **tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
             num_restarts=2,
             raw_samples=16,
@@ -151,7 +151,7 @@ class TestHomotopy(BotorchTestCase):
         candidate, acqf_val = optimize_acqf_homotopy(
             q=1,
             acq_function=acqf,
-            bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+            bounds=torch.tensor([[-10, -10], [5, 5]], **tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
             num_restarts=2,
             raw_samples=16,
@@ -173,7 +173,7 @@ class TestHomotopy(BotorchTestCase):
             optimize_acqf_homotopy(
                 q=1,
                 acq_function=acqf,
-                bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+                bounds=torch.tensor([[-10, -10], [5, 5]], **tkwargs),
                 homotopy=Homotopy(homotopy_parameters=[hp]),
                 num_restarts=2,
                 raw_samples=16,
@@ -183,7 +183,7 @@ class TestHomotopy(BotorchTestCase):
         candidate, acqf_val = optimize_acqf_homotopy(
             q=1,
             acq_function=acqf,
-            bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+            bounds=torch.tensor([[-10, -10], [5, 5]], **tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
             num_restarts=2,
             raw_samples=16,
@@ -196,7 +196,7 @@ class TestHomotopy(BotorchTestCase):
         candidate, acqf_val = optimize_acqf_homotopy(
             q=3,
             acq_function=acqf,
-            bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+            bounds=torch.tensor([[-10, -10], [5, 5]], **tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
             num_restarts=2,
             raw_samples=16,
@@ -218,7 +218,7 @@ class TestHomotopy(BotorchTestCase):
         candidate, acqf_val = optimize_acqf_homotopy(
             q=1,
             acq_function=acqf,
-            bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+            bounds=torch.tensor([[-10, -10], [5, 5]], **tkwargs),
             homotopy=Homotopy(homotopy_parameters=[hp]),
             num_restarts=2,
             raw_samples=16,

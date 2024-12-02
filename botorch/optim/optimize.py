@@ -960,6 +960,7 @@ def optimize_acqf_mixed(
     ic_gen_kwargs = ic_gen_kwargs or {}
 
     if q == 1:
+        timeout_sec = timeout_sec / len(fixed_features_list) if timeout_sec else None
         ff_candidate_list, ff_acq_value_list = [], []
         num_candidate_generation_failures = 0
         for fixed_features in fixed_features_list:
@@ -980,9 +981,7 @@ def optimize_acqf_mixed(
                     ic_generator=ic_generator,
                     return_best_only=False,
                     gen_candidates=gen_candidates,
-                    timeout_sec=timeout_sec / len(fixed_features_list)
-                    if timeout_sec
-                    else None,
+                    timeout_sec=timeout_sec,
                     retry_on_optimization_warning=retry_on_optimization_warning,
                     **ic_gen_kwargs,
                 )
@@ -1024,6 +1023,7 @@ def optimize_acqf_mixed(
     base_X_pending = acq_function.X_pending
     candidates = torch.tensor([], device=bounds.device, dtype=bounds.dtype)
 
+    timeout_sec = timeout_sec / q if timeout_sec else None
     for _ in range(q):
         candidate, acq_value = optimize_acqf_mixed(
             acq_function=acq_function,
@@ -1041,7 +1041,7 @@ def optimize_acqf_mixed(
             gen_candidates=gen_candidates,
             ic_generator=ic_generator,
             ic_gen_kwargs=ic_gen_kwargs,
-            timeout_sec=timeout_sec / q if timeout_sec else None,
+            timeout_sec=timeout_sec,
             retry_on_optimization_warning=retry_on_optimization_warning,
             return_best_only=True,
         )
