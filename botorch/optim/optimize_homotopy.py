@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 from collections.abc import Callable
 
 from typing import Any
@@ -159,6 +161,17 @@ def optimize_acqf_homotopy(
             "Either `fixed_feature` or `fixed_features_list` can be provided, not both."
         )
 
+    if fixed_features:
+        message = (
+            "The `fixed_features` argument is deprecated, "
+            "use `fixed_features_list` instead."
+        )
+        warnings.warn(
+            message,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     shared_optimize_acqf_kwargs = {
         "num_restarts": num_restarts,
         "raw_samples": raw_samples,
@@ -173,12 +186,16 @@ def optimize_acqf_homotopy(
         **ic_gen_kwargs,
     }
 
-    if fixed_features_list:
+    if fixed_features_list and len(fixed_features_list) > 1:
         optimization_fn = optimize_acqf_mixed
         fixed_features_kwargs = {"fixed_features_list": fixed_features_list}
     else:
         optimization_fn = optimize_acqf
-        fixed_features_kwargs = {"fixed_features": fixed_features}
+        fixed_features_kwargs = {
+            "fixed_features": fixed_features_list[0]
+            if fixed_features_list
+            else fixed_features
+        }
 
     candidate_list, acq_value_list = [], []
     if q > 1:

@@ -132,6 +132,22 @@ class TestHomotopy(BotorchTestCase):
             f=lambda x: 5 - (x - p).sum(dim=-1, keepdims=True) ** 2
         )
         acqf = PosteriorMean(model=model)
+        # test raise warning on using `fixed_features` argument
+        message = (
+            "The `fixed_features` argument is deprecated, "
+            "use `fixed_features_list` instead."
+        )
+        with self.assertWarnsRegex(DeprecationWarning, message):
+            optimize_acqf_homotopy(
+                q=1,
+                acq_function=acqf,
+                bounds=torch.tensor([[-10, -10], [5, 5]]).to(**tkwargs),
+                homotopy=Homotopy(homotopy_parameters=[hp]),
+                num_restarts=2,
+                raw_samples=16,
+                fixed_features=fixed_features,
+            )
+
         candidate, acqf_val = optimize_acqf_homotopy(
             q=1,
             acq_function=acqf,
@@ -139,7 +155,7 @@ class TestHomotopy(BotorchTestCase):
             homotopy=Homotopy(homotopy_parameters=[hp]),
             num_restarts=2,
             raw_samples=16,
-            fixed_features=fixed_features,
+            fixed_features_list=[fixed_features],
         )
         self.assertEqual(candidate[0, 0], torch.tensor(1, **tkwargs))
 
@@ -152,7 +168,7 @@ class TestHomotopy(BotorchTestCase):
         # test raise error when fixed_features and fixed_features_list are both provided
         with self.assertRaisesRegex(
             ValueError,
-            "Either `fixed_feature` or `fixed_features_list` can be provided, not both.",
+            "Either `fixed_feature` or `fixed_features_list` can be provided",
         ):
             optimize_acqf_homotopy(
                 q=1,
@@ -184,7 +200,7 @@ class TestHomotopy(BotorchTestCase):
             homotopy=Homotopy(homotopy_parameters=[hp]),
             num_restarts=2,
             raw_samples=16,
-            fixed_features=fixed_features,
+            fixed_features_list=[fixed_features],
         )
         self.assertEqual(candidate.shape, torch.Size([3, 2]))
         self.assertEqual(acqf_val.shape, torch.Size([3]))
