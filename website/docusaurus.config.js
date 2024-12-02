@@ -124,7 +124,7 @@ module.exports={
             },
             {
               label: 'API Reference',
-              to: 'api/', // TODO: add link to API reference
+              to: 'https://botorch-dev.readthedocs.io/',
             },
             {
               label: 'Paper',
