@@ -373,7 +373,9 @@ def gen_batch_initial_conditions(
                         X_rnd_nlzd = torch.rand(
                             n, q, bounds_cpu.shape[-1], dtype=bounds.dtype
                         )
-                    X_rnd = X_rnd_nlzd * (bounds_cpu[1] - bounds_cpu[0]) + bounds_cpu[0]
+                    X_rnd = unnormalize(
+                        X_rnd_nlzd, bounds, update_constant_bounds=False
+                    )
             else:
                 X_rnd = sample_q_batches_from_polytope(
                     n=n,
