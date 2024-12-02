@@ -71,11 +71,9 @@ def optimize_acqf_homotopy(
     post_processing_func: Callable[[Tensor], Tensor] | None = None,
     batch_initial_conditions: Tensor | None = None,
     gen_candidates: TGenCandidates | None = None,
-    sequential: bool = False,
     *,
     ic_generator: TGenInitialConditions | None = None,
     timeout_sec: float | None = None,
-    return_full_tree: bool = False,
     retry_on_optimization_warning: bool = True,
     **ic_gen_kwargs: Any,
 ) -> tuple[Tensor, Tensor]:
@@ -145,16 +143,12 @@ def optimize_acqf_homotopy(
             and a dictionary of options, but refer to the documentation of specific
             generation functions (e.g gen_candidates_scipy and gen_candidates_torch)
             for method-specific inputs. Default: `gen_candidates_scipy`
-        sequential: If False, uses joint optimization, otherwise uses sequential
-            optimization.
         ic_generator: Function for generating initial conditions. Not needed when
             `batch_initial_conditions` are provided. Defaults to
             `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition
             functions and `gen_batch_initial_conditions` otherwise. Must be specified
             for nonlinear inequality constraints.
         timeout_sec: Max amount of time optimization can run for.
-        return_full_tree: Return the full tree of optimizers of the previous
-            iteration.
         retry_on_optimization_warning: Whether to retry candidate generation with a new
             set of initial conditions when it fails with an `OptimizationWarning`.
         ic_gen_kwargs: Additional keyword arguments passed to function specified by
@@ -172,14 +166,19 @@ def optimize_acqf_homotopy(
         "equality_constraints": equality_constraints,
         "nonlinear_inequality_constraints": nonlinear_inequality_constraints,
         "return_best_only": False,  # False to make n_restarts persist through homotopy.
-        # "gen_candidates": gen_candidates,
-        # "sequential": sequential, this is not needed as we are always using q=1 here.
+        "gen_candidates": gen_candidates,
         "ic_generator": ic_generator,
         "timeout_sec": timeout_sec,
-        # "return_full_tree": return_full_tree, is this really needed here
         "retry_on_optimization_warning": retry_on_optimization_warning,
         **ic_gen_kwargs,
     }
+
+    if fixed_features_list:
+        optimization_fn = optimize_acqf_mixed
+        fixed_features_kwargs = {"fixed_features_list": fixed_features_list}
+    else:
+        optimization_fn = optimize_acqf
+        fixed_features_kwargs = {"fixed_features": fixed_features}
 
     candidate_list, acq_value_list = [], []
     if q > 1:
@@ -190,26 +189,16 @@ def optimize_acqf_homotopy(
         homotopy.restart()
 
         while not homotopy.should_stop:
-            if fixed_features_list:
-                candidates, acq_values = optimize_acqf_mixed(
-                    acq_function=acq_function,
-                    bounds=bounds,
-                    q=1,
-                    options=options,
-                    batch_initial_conditions=candidates,
-                    fixed_features_list=fixed_features_list,
-                    **shared_optimize_acqf_kwargs,
-                )
-            else:
-                candidates, acq_values = optimize_acqf(
-                    acq_function=acq_function,
-                    bounds=bounds,
-                    q=1,
-                    options=options,
-                    batch_initial_conditions=candidates,
-                    fixed_features=fixed_features,
-                    **shared_optimize_acqf_kwargs,
-                )
+            candidates, acq_values = optimization_fn(
+                acq_function=acq_function,
+                bounds=bounds,
+                q=1,
+                options=options,
+                batch_initial_conditions=candidates,
+                **fixed_features_kwargs,
+                **shared_optimize_acqf_kwargs,
+            )
+
             homotopy.step()
 
             # Prune candidates
@@ -221,23 +210,13 @@ def optimize_acqf_homotopy(
 
         # Optimize one more time with the final options
         if fixed_features_list:
-            candidates, acq_values = optimize_acqf_mixed(
+            candidates, acq_values = optimization_fn(
                 acq_function=acq_function,
                 bounds=bounds,
                 q=1,
                 options=final_options,
                 batch_initial_conditions=candidates,
-                fixed_features_list=fixed_features_list,
-                **shared_optimize_acqf_kwargs,
-            )
-        else:
-            candidates, acq_values = optimize_acqf(
-                acq_function=acq_function,
-                bounds=bounds,
-                q=1,
-                options=final_options,
-                batch_initial_conditions=candidates,
-                fixed_features=fixed_features,
+                **fixed_features_kwargs,
                 **shared_optimize_acqf_kwargs,
             )
 

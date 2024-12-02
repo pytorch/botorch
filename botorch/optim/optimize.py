@@ -862,6 +862,7 @@ def optimize_acqf_mixed(
     post_processing_func: Callable[[Tensor], Tensor] | None = None,
     batch_initial_conditions: Tensor | None = None,
     return_best_only: bool = True,
+    gen_candidates: TGenCandidates | None = None,
     ic_generator: TGenInitialConditions | None = None,
     timeout_sec: float | None = None,
     retry_on_optimization_warning: bool = True,
@@ -916,6 +917,12 @@ def optimize_acqf_mixed(
         return_best_only: If False, outputs the solutions corresponding to all
             random restart initializations of the optimization. Setting this keyword
             to False is only allowed for `q=1`. Defaults to True.
+        gen_candidates: A callable for generating candidates (and their associated
+            acquisition values) given a tensor of initial conditions and an
+            acquisition function. Other common inputs include lower and upper bounds
+            and a dictionary of options, but refer to the documentation of specific
+            generation functions (e.g gen_candidates_scipy and gen_candidates_torch)
+            for method-specific inputs. Default: `gen_candidates_scipy`
         ic_generator: Function for generating initial conditions. Not needed when
             `batch_initial_conditions` are provided. Defaults to
             `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition
@@ -972,7 +979,10 @@ def optimize_acqf_mixed(
                     batch_initial_conditions=batch_initial_conditions,
                     ic_generator=ic_generator,
                     return_best_only=False,
-                    timeout_sec=timeout_sec,
+                    gen_candidates=gen_candidates,
+                    timeout_sec=timeout_sec / len(fixed_features_list)
+                    if timeout_sec
+                    else None,
                     retry_on_optimization_warning=retry_on_optimization_warning,
                     **ic_gen_kwargs,
                 )
@@ -996,18 +1006,17 @@ def optimize_acqf_mixed(
                 OptimizationWarning,
                 stacklevel=3,
             )
-        best_acq_values = torch.tensor(
-            [torch.max(acq_values) for acq_values in ff_acq_value_list]
-        ).to(ff_acq_value_list[0])
-        best_batch_idx = torch.argmax(best_acq_values)
 
-        if return_best_only:
-            best_batch_candidates = ff_candidate_list[best_batch_idx]
-            best_batch_acq_values = ff_acq_value_list[best_batch_idx]
-            best_idx = torch.argmax(best_batch_acq_values)
-            return best_batch_candidates[best_idx], best_batch_acq_values[best_idx]
+        ff_acq_values = torch.stack(ff_acq_value_list)
+        max_res = torch.max(ff_acq_values, dim=-1)
+        best_batch_idx = torch.argmax(max_res.values)
+        best_batch_candidates = ff_candidate_list[best_batch_idx]
+        best_acq_values = ff_acq_value_list[best_batch_idx]
+        if not return_best_only:
+            return best_batch_candidates, best_acq_values
 
-        return ff_candidate_list[best_batch_idx], ff_acq_value_list[best_batch_idx]
+        best_idx = max_res.indices[best_batch_idx]
+        return best_batch_candidates[best_idx], best_acq_values[best_idx]
 
     # For batch optimization with q > 1 we do not want to enumerate all n_combos^n
     # possible combinations of discrete choices. Instead, we use sequential greedy
@@ -1029,9 +1038,10 @@ def optimize_acqf_mixed(
             nonlinear_inequality_constraints=nonlinear_inequality_constraints,
             post_processing_func=post_processing_func,
             batch_initial_conditions=batch_initial_conditions,
+            gen_candidates=gen_candidates,
             ic_generator=ic_generator,
             ic_gen_kwargs=ic_gen_kwargs,
-            timeout_sec=timeout_sec,
+            timeout_sec=timeout_sec / q if timeout_sec else None,
             retry_on_optimization_warning=retry_on_optimization_warning,
             return_best_only=True,
         )

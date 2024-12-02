@@ -1502,6 +1502,8 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 "return_best_only": False,
                 "sequential": False,
                 "ic_generator": None,
+                "timeout_sec": None,
+                "retry_on_optimization_warning": True,
                 "nonlinear_inequality_constraints": None,
             }
             for i in range(len(call_args_list)):
@@ -1597,7 +1599,8 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
     def test_optimize_acqf_mixed_return_best_only_q2(self):
         with self.assertRaises(
-            ValueError, msg="`return_best_only` is not supported for q>1"
+            NotImplementedError,
+            msg="`return_best_only=False` is only supported for q=1.",
         ):
             mock_acq_function = MockAcquisitionFunction()
             optimize_acqf_mixed(
