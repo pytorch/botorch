@@ -1497,6 +1497,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 "inequality_constraints": None,
                 "equality_constraints": None,
                 "fixed_features": None,
+                "gen_candidates": None,
                 "post_processing_func": rounding_func,
                 "batch_initial_conditions": None,
                 "return_best_only": False,
