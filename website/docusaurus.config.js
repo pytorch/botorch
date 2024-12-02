@@ -133,21 +133,6 @@ module.exports={
           ],
         },
         {
-          title: 'Social',
-          items: [
-            {
-              label: 'GitHub',
-              href: 'https://github.com/pytorch/botorch',
-            },
-            {
-              html: `<iframe
-                src="https://ghbtns.com/github-btn.html?user=pytorch&amp;repo=botorch&amp;type=star&amp;count=true&amp;size=small"
-                title="GitHub Stars"
-              />`,
-            },
-          ],
-        },
-        {
           title: 'Legal',
           // Please do not remove the privacy and terms, it's a legal requirement.
           items: [
@@ -162,6 +147,21 @@ module.exports={
               href: 'https://opensource.facebook.com/legal/terms/',
               target: '_blank',
               rel: 'noreferrer noopener',
+            },
+          ],
+        },
+        {
+          title: 'Social',
+          items: [
+            {
+              label: 'GitHub',
+              href: 'https://github.com/pytorch/botorch',
+            },
+            {
+              html: `<iframe
+                src="https://ghbtns.com/github-btn.html?user=pytorch&amp;repo=botorch&amp;type=star&amp;count=true&amp;size=small"
+                title="GitHub Stars"
+              />`,
             },
           ],
         },
