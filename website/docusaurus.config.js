@@ -106,8 +106,8 @@ module.exports={
               },
               {
                 // TODO: Change this to archived link when available
-                href: 'https://botorch.org/',
-                label: '0.x.x',
+                href: 'https://botorch.org/versions',
+                label: '<= 0.11.3',
               },
             ],
         },
