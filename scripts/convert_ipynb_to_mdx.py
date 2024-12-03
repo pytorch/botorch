@@ -189,8 +189,9 @@ def create_buttons(
         str: MDX formatted buttons.
     """
     version = get_current_git_tag() or "main"
-    github_url = f"https://github.com/{ORGANIZATION}/{PROJECT}/blob/{version}/tutorials/{nb_metadata['id']}/{nb_metadata['id']}.ipynb"
-    colab_url = f"https://colab.research.google.com/github/{ORGANIZATION}/{PROJECT}/blob/{version}/tutorials/{nb_metadata['id']}/{nb_metadata['id']}.ipynb"
+    github_path = f"{ORGANIZATION}/{PROJECT}/blob/{version}/tutorials/{nb_metadata['id']}/{nb_metadata['id']}.ipynb"
+    github_url = f"https://github.com/{github_path}"
+    colab_url = f"https://colab.research.google.com/github/{github_path}"
     return f'<LinkButtons\n  githubUrl="{github_url}"\n  colabUrl="{colab_url}"\n/>\n\n'
 
 
