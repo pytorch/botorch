@@ -893,10 +893,10 @@ class TestInfeasibleTransform(BotorchTestCase):
         """Test initialization of InfeasibleTransform."""
         batch_shape = torch.Size([2, 3])
         transform = InfeasibleTransform(batch_shape=batch_shape)
-        assert transform._batch_shape == batch_shape
-        assert not transform._is_trained
-        assert transform._shift is None
-        assert torch.isnan(transform.warped_bad_value)
+        self.assertEqual(transform._batch_shape, batch_shape)
+        self.assertFalse(transform._is_trained)
+        self.assertIsNone(transform._shift)
+        self.assertTrue(torch.isnan(transform.warped_bad_value))
 
     def test_infeasible_transform_forward(self):
         """Test forward transformation with NaN values."""
@@ -913,19 +913,19 @@ class TestInfeasibleTransform(BotorchTestCase):
         Y_tf, _ = transform.forward(Y, None)
 
         # Check that transform is now trained
-        assert transform._is_trained
-        assert transform._shift is not None
-        assert not torch.isnan(transform.warped_bad_value).all()
+        self.assertTrue(transform._is_trained)
+        self.assertIsNotNone(transform._shift)
+        self.assertFalse(torch.isnan(transform.warped_bad_value).all())
 
         # Check that NaN values are replaced with warped_bad_value
-        assert not torch.isnan(Y_tf).any()
+        self.assertFalse(torch.isnan(Y_tf).any())
 
         # Test forward pass in eval mode
         transform.eval()
         Y_tf_eval, _ = transform.forward(Y_orig, None)
 
         # Check that NaN values are replaced consistently
-        assert not torch.isnan(Y_tf_eval).any()
+        self.assertFalse(torch.isnan(Y_tf_eval).any())
 
     def test_infeasible_transform_untransform(self):
         """Test untransform functionality."""
@@ -948,10 +948,15 @@ class TestInfeasibleTransform(BotorchTestCase):
         Y_untf, _ = transform.untransform(Y_tf, None)
 
         # Check that values are properly untransformed
-        assert torch.allclose(Y_untf[:, 1:], Y[:, 1:], rtol=1e-4)
+        self.assertTrue(torch.allclose(Y_untf[:, 1:], Y[:, 1:], rtol=1e-4))
 
         # test the unwarped_bad_value
-        assert torch.allclose(transform.warped_bad_value[:, 0], Y_untf[..., 0, 0])
+        self.assertTrue(
+            torch.allclose(
+                transform.warped_bad_value[:, 0] - transform._shift[:, 0],
+                Y_untf[..., 0, 0],
+            )
+        )
 
     def test_infeasible_transform_batch_shape_validation(self):
         """Test batch shape validation."""
@@ -1024,19 +1029,19 @@ class TestLogWarperTransform(BotorchTestCase):
         labels_min = transform._labels_min.clone()
         labels_max = transform._labels_max.clone()
 
-        assert transform._is_trained
-        assert torch.isfinite(labels_min).all()
-        assert torch.isfinite(labels_max).all()
-        assert (torch.isnan(Y_tf) == torch.isnan(Y_orig)).all()
+        self.assertTrue(transform._is_trained)
+        self.assertTrue(torch.isfinite(labels_min).all())
+        self.assertTrue(torch.isfinite(labels_max).all())
+        self.assertTrue((torch.isnan(Y_tf) == torch.isnan(Y_orig)).all())
 
         # Test forward pass in eval mode
         transform.eval()
         Y_tf_eval, _ = transform.forward(Y_tf, None)
 
         # Check that NaN values are replaced consistently
-        assert (torch.isnan(Y_tf_eval) == torch.isnan(Y_tf)).all()
-        assert torch.allclose(labels_min, transform._labels_min)
-        assert torch.allclose(labels_max, transform._labels_max)
+        self.assertTrue((torch.isnan(Y_tf_eval) == torch.isnan(Y_tf)).all())
+        self.assertTrue(torch.allclose(labels_min, transform._labels_min))
+        self.assertTrue(torch.allclose(labels_max, transform._labels_max))
 
     def test_log_warper_transform_untransform(self):
         """Test untransform functionality."""
@@ -1058,10 +1063,10 @@ class TestLogWarperTransform(BotorchTestCase):
         Y_untf, _ = transform.untransform(Y_tf, None)
 
         # Check that values are properly untransformed
-        assert torch.allclose(Y_untf[:, 1:], Y[:, 1:], rtol=1e-4)
+        self.assertTrue(torch.allclose(Y_untf[:, 1:], Y[:, 1:], rtol=1e-4))
 
         # test the nan values don't change
-        assert torch.isnan(Y_untf[..., 0, 0]).all()
+        self.assertTrue(torch.isnan(Y_untf[..., 0, 0]).all())
 
     def test_log_warper_transform_batch_shape_validation(self):
         """Test batch shape validation."""
@@ -1084,7 +1089,7 @@ class TestHalfRankTransform(BotorchTestCase):
     def test_init(self):
         # Test initialization
         transform = HalfRankTransform()
-        self.assertIsNone(transform._batch_shape)
+        self.assertEqual(transform._batch_shape, torch.Size([]))
         self.assertFalse(transform._is_trained)
         self.assertEqual(transform._unique_labels, {})
         self.assertEqual(transform._warped_labels, {})

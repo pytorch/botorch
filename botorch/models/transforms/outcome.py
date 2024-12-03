@@ -18,6 +18,11 @@ References
     International Conference on Artificial Intelligence and Statistics. PMLR, 2021,
     http://proceedings.mlr.press/v130/eriksson21a.html
 
+.. [song2024vizier]
+    Song, Xingyou and others. The vizier gaussian process bandit algorithm
+    arXiv preprint arXiv:2408.11527.
+    https://arxiv.org/abs/2408.11527
+
 """
 
 from __future__ import annotations
@@ -833,6 +838,7 @@ class Bilog(OutcomeTransform):
 def _nanmax(
     tensor: Tensor, dim: int | None = None, keepdim: bool = False
 ) -> Tensor | tuple[Tensor, Tensor]:
+    """Compute the maximum of a tensor, ignoring NaNs."""
     min_value = torch.finfo(tensor.dtype).min
     if dim is None:
         return tensor.nan_to_num(min_value).max()
@@ -842,6 +848,7 @@ def _nanmax(
 def _nanmin(
     tensor: Tensor, dim: int | None = None, keepdim: bool = False
 ) -> Tensor | tuple[Tensor, Tensor]:
+    """Compute the minimum of a tensor, ignoring NaNs."""
     max_value = torch.finfo(tensor.dtype).max
     if dim is None:
         return tensor.nan_to_num(max_value).min()
@@ -853,7 +860,7 @@ def _check_batched_output(Y: Tensor, batch_shape: Tensor) -> None:
     if Y.shape[:-2] != batch_shape:
         raise RuntimeError(
             f"Expected Y.shape[:-2] to be {batch_shape}, matching "
-            "the `batch_shape` argument to `Standardize`, but got "
+            "the `batch_shape` argument to the `OutcomeTransform`, but got "
             f"Y.shape[:-2]={Y.shape[:-2]}."
         )
 
@@ -864,19 +871,19 @@ def _check_batched_output(Y: Tensor, batch_shape: Tensor) -> None:
 class InfeasibleTransform(OutcomeTransform):
     """Transforms infeasible (NaN) values to feasible values.
 
-    Inspired by output-space transformations in Vizier: https://arxiv.org/abs/2408.11527
+    Inspired by output-space transformations in Vizier [song2024vizier]_.
     """
 
-    def __init__(self, batch_shape: torch.Size | None = None) -> None:
+    def __init__(self, batch_shape: torch.Size = torch.Size()) -> None:
         """Transforms infeasible (NaN) values to feasible values.
 
         Args:
             batch_shape: The batch shape of the outcomes.
         """
         super().__init__()
-        self._is_trained = False
         self.register_buffer("_shift", None)
         self.register_buffer("warped_bad_value", torch.tensor(float("nan")))
+        self.register_buffer("_is_trained", torch.tensor(False))
 
         self._batch_shape = batch_shape
 
@@ -897,11 +904,6 @@ class InfeasibleTransform(OutcomeTransform):
         """
         _check_batched_output(Y, self._batch_shape)
 
-        if Yvar is not None:
-            raise NotImplementedError(
-                "InfeasibleTransform does not support transforming observation noise"
-            )
-
         if self.training:
             if torch.isnan(Y).all(dim=-2).any():
                 raise RuntimeError("For at least one batch, all outcomes are NaN")
@@ -911,7 +913,7 @@ class InfeasibleTransform(OutcomeTransform):
             num_feasible = Y.shape[-2] - torch.isnan(Y).sum(dim=-2)
 
             # Estimate the relative frequency of feasible points
-            p_feasible = (0.5 + num_feasible) / (1 + Y.numel())
+            p_feasible = (0.5 + num_feasible) / (1 + Y.shape[-2])
 
             self.warped_bad_value = warped_bad_value
             self._shift = -torch.nanmean(Y, dim=-2) * p_feasible - warped_bad_value * (
@@ -921,14 +923,12 @@ class InfeasibleTransform(OutcomeTransform):
             self._is_trained = torch.tensor(True)
 
         # Expand warped_bad_value to match Y's shape
-        expanded_bad_value = self.warped_bad_value.unsqueeze(-2).expand(
-            *Y.shape[:-2], Y.shape[-2], -1
-        )
-        expanded_shift = self._shift.unsqueeze(-2).expand(
-            *Y.shape[:-2], Y.shape[-2], -1
-        )
-        Y = torch.where(torch.isnan(Y), expanded_bad_value, Y)
-        Y = torch.where(~torch.isnan(Y), Y + expanded_shift, Y)
+        expanded_bad_value = self.warped_bad_value.unsqueeze(-2).expand_as(Y)
+        expanded_shift = self._shift.unsqueeze(-2).expand_as(Y)
+        Y = torch.where(torch.isnan(Y), expanded_bad_value, Y + expanded_shift)
+
+        if Yvar is not None:
+            Yvar = torch.where(torch.isnan(Y), torch.tensor(0.0), Yvar)
 
         return Y, Yvar
 
@@ -952,45 +952,60 @@ class InfeasibleTransform(OutcomeTransform):
                 "forward() needs to be called before untransform() is called."
             )
 
-        if Yvar is not None:
-            raise NotImplementedError(
-                "InfeasibleTransform does not support untransforming observation noise"
-            )
-
         # Expand shift to match Y's shape
-        expanded_shift = self._shift.unsqueeze(-2).expand(
-            *Y.shape[:-2], Y.shape[-2], -1
-        )
+        expanded_shift = self._shift.unsqueeze(-2).expand_as(Y)
         Y -= expanded_shift
-        # TODO: Handle Yvar
         return Y, Yvar
 
 
 class LogWarperTransform(OutcomeTransform):
-    """Warps an array of labels to highlight the difference between good values.
+    r"""Warps an array of labels to highlight the difference between good values.
 
-    Note that this warping is performed on finite values of the array and NaNs are
+    NOTE that this warping is performed on finite values of the array and NaNs are
     untouched.
 
-    Inspired by output-space transformations in Vizier: https://arxiv.org/abs/2408.11527
+    Inspired by output-space transformations in Vizier [song2024vizier]_.
+
+    The log warping process consists of two transformations:
+
+    1. Normalization:
+
+    .. math::
+
+        \hat{y} = \frac{y_{\max} - y}{y_{\max} - y_{\min}}
+
+    2. Log Warping:
+
+    .. math::
+
+        \hat{y}_{\text{warped}} = 0.5 - \frac{\log(1 + (s - 1) \cdot \hat{y})}{\log(s)}
+
+    Where:
+    - :math:`y` is the input value
+    - :math:`y_{\min}` is the minimum value in the dataset
+    - :math:`y_{\max}` is the maximum value in the dataset
+    - :math:`s` is a free parameter (default 1.5)
+
     """
 
     def __init__(
-        self, batch_shape: torch.Size | None = None, offset: float = 1.5
+        self, batch_shape: torch.Size = torch.Size(), offset: float = 1.5
     ) -> None:
         """Initialize transform.
 
         Args:
-            offset: Offset parameter for the log transformation. Must be > 0.
+            offset: Offset parameter for the log transformation. Larger values
+                of the offset parameter will lead to greater spreading of good
+                values. Must be > 1.
         """
         super().__init__()
         if offset <= 0:
             raise ValueError("offset must be positive")
-        self._is_trained = False
         self._batch_shape = batch_shape
         self.register_buffer("offset", torch.tensor(offset))
         self.register_buffer("_labels_min", torch.tensor(float("nan")))
         self.register_buffer("_labels_max", torch.tensor(float("nan")))
+        self.register_buffer("_is_trained", torch.tensor(False))
 
     def forward(
         self, Y: Tensor, Yvar: Tensor | None = None
@@ -1022,12 +1037,8 @@ class LogWarperTransform(OutcomeTransform):
             self._labels_max = _nanmax(Y, dim=-2).values
             self._is_trained = torch.tensor(True)
 
-        expanded_labels_min = self._labels_min.unsqueeze(-2).expand(
-            *Y.shape[:-2], Y.shape[-2], -1
-        )
-        expanded_labels_max = self._labels_max.unsqueeze(-2).expand(
-            *Y.shape[:-2], Y.shape[-2], -1
-        )
+        expanded_labels_min = self._labels_min.unsqueeze(-2).expand_as(Y)
+        expanded_labels_max = self._labels_max.unsqueeze(-2).expand_as(Y)
 
         # Calculate normalized difference
         norm_diff = (expanded_labels_max - Y) / (
@@ -1062,12 +1073,8 @@ class LogWarperTransform(OutcomeTransform):
                 "LogWarperTransform does not support untransforming observation noise"
             )
 
-        expanded_labels_min = self._labels_min.unsqueeze(-2).expand(
-            *Y.shape[:-2], Y.shape[-2], -1
-        )
-        expanded_labels_max = self._labels_max.unsqueeze(-2).expand(
-            *Y.shape[:-2], Y.shape[-2], -1
-        )
+        expanded_labels_min = self._labels_min.unsqueeze(-2).expand_as(Y)
+        expanded_labels_max = self._labels_max.unsqueeze(-2).expand_as(Y)
 
         Y_untransformed = expanded_labels_max - (
             (torch.exp(torch.log(self.offset) * (0.5 - Y)) - 1)
@@ -1084,10 +1091,10 @@ class HalfRankTransform(OutcomeTransform):
     This transform warps values below the median to follow a Gaussian distribution while
     leaving values above the median unchanged. NaN values are preserved.
 
-    Inspired by output-space transformations in Vizier: https://arxiv.org/abs/2408.11527
+    Inspired by output-space transformations in Vizier [song2024vizier]_.
     """
 
-    def __init__(self, batch_shape: torch.Size | None = None) -> None:
+    def __init__(self, batch_shape: torch.Size = torch.Size()) -> None:
         """Initialize transform.
 
         Args:
@@ -1095,11 +1102,11 @@ class HalfRankTransform(OutcomeTransform):
                 will be transformed.
         """
         super().__init__()
-        self._batch_shape = batch_shape if batch_shape is not None else torch.Size([])
-        self._is_trained = False
+        self._batch_shape = batch_shape
         self._unique_labels = {}
         self._warped_labels = {}
         self.register_buffer("_original_label_medians", torch.tensor([]))
+        self.register_buffer("_is_trained", torch.tensor(False))
 
     def _get_std_above_median(self, unique_y: Tensor, y_median: Tensor) -> Tensor:
         # Estimate std of good half
@@ -1145,14 +1152,14 @@ class HalfRankTransform(OutcomeTransform):
             # Compute median for each batch
             Y_medians = torch.nanmedian(Y, dim=-2).values
 
-            self._original_label_medians.resize_(
-                torch.Size((*self._batch_shape, Y.shape[-1]))
+            self._original_label_medians = torch.empty(
+                (*self._batch_shape, Y.shape[-1]), device=Y.device
             )
 
             for dim in range(Y.shape[-1]):
                 batch_indices = (
                     product(*([m for m in range(n)] for n in self._batch_shape))
-                    if len(self._batch_shape) > 0
+                    if self._batch_shape is not None and len(self._batch_shape) > 0
                     else [  # this allows it to work with no batch dim
                         (...,),
                     ]
@@ -1170,8 +1177,8 @@ class HalfRankTransform(OutcomeTransform):
                     np_unique_y, np_unique_indices = np.unique(
                         y[is_finite_mask].numpy(), return_index=True
                     )
-                    unique_y = torch.from_numpy(np_unique_y)
-                    unique_indices = torch.from_numpy(np_unique_indices)
+                    unique_y = torch.from_numpy(np_unique_y).to(y.device)
+                    unique_indices = torch.from_numpy(np_unique_indices).to(y.device)
 
                     for i, val in enumerate(unique_y):
                         ranks[y == val] = i + 1
@@ -1207,8 +1214,9 @@ class HalfRankTransform(OutcomeTransform):
                     ][unique_indices]
 
             self._is_trained = torch.tensor(True)
+            return Y_transformed, Yvar
 
-        return Y_transformed, Yvar
+        return Y, Yvar
 
     def untransform(
         self, Y: Tensor, Yvar: Tensor | None = None
@@ -1238,7 +1246,7 @@ class HalfRankTransform(OutcomeTransform):
         for dim in range(Y.shape[-1]):
             batch_indices = (
                 product(*(range(n) for n in self._batch_shape))
-                if len(self._batch_shape) > 0
+                if self._batch_shape is not None and len(self._batch_shape) > 0
                 else [  # this allows it to work with no batch dim
                     (...,),
                 ]
