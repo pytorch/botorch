@@ -174,7 +174,6 @@ def optimize_acqf_homotopy(
 
     shared_optimize_acqf_kwargs = {
         "num_restarts": num_restarts,
-        "raw_samples": raw_samples,
         "inequality_constraints": inequality_constraints,
         "equality_constraints": equality_constraints,
         "nonlinear_inequality_constraints": nonlinear_inequality_constraints,
@@ -203,6 +202,7 @@ def optimize_acqf_homotopy(
 
     for _ in range(q):
         candidates = batch_initial_conditions
+        q_raw_samples = raw_samples
         homotopy.restart()
 
         while not homotopy.should_stop:
@@ -212,11 +212,16 @@ def optimize_acqf_homotopy(
                 q=1,
                 options=options,
                 batch_initial_conditions=candidates,
+                raw_samples=q_raw_samples,
                 **fixed_features_kwargs,
                 **shared_optimize_acqf_kwargs,
             )
 
             homotopy.step()
+
+            # Set raw_samples to None such that pruned restarts are not repopulated
+            # at each step in the homotopy.
+            q_raw_samples = None
 
             # Prune candidates
             candidates = prune_candidates(
@@ -231,6 +236,7 @@ def optimize_acqf_homotopy(
             bounds=bounds,
             q=1,
             options=final_options,
+            raw_samples=q_raw_samples,
             batch_initial_conditions=candidates,
             **fixed_features_kwargs,
             **shared_optimize_acqf_kwargs,
