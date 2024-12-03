@@ -862,7 +862,10 @@ def _check_batched_output(Y: Tensor, batch_shape: Tensor) -> None:
 
 
 class InfeasibleTransform(OutcomeTransform):
-    """Transforms infeasible (NaN) values to feasible values."""
+    """Transforms infeasible (NaN) values to feasible values.
+
+    Inspired by output-space transformations in Vizier: https://arxiv.org/abs/2408.11527
+    """
 
     def __init__(self, batch_shape: torch.Size | None = None) -> None:
         """Transforms infeasible (NaN) values to feasible values.
@@ -968,6 +971,8 @@ class LogWarperTransform(OutcomeTransform):
 
     Note that this warping is performed on finite values of the array and NaNs are
     untouched.
+
+    Inspired by output-space transformations in Vizier: https://arxiv.org/abs/2408.11527
     """
 
     def __init__(
@@ -1078,6 +1083,8 @@ class HalfRankTransform(OutcomeTransform):
 
     This transform warps values below the median to follow a Gaussian distribution while
     leaving values above the median unchanged. NaN values are preserved.
+
+    Inspired by output-space transformations in Vizier: https://arxiv.org/abs/2408.11527
     """
 
     def __init__(self, batch_shape: torch.Size | None = None) -> None:
@@ -1088,7 +1095,7 @@ class HalfRankTransform(OutcomeTransform):
                 will be transformed.
         """
         super().__init__()
-        self._batch_shape = batch_shape
+        self._batch_shape = batch_shape if batch_shape is not None else torch.Size([])
         self._is_trained = False
         self._unique_labels = {}
         self._warped_labels = {}
@@ -1147,7 +1154,7 @@ class HalfRankTransform(OutcomeTransform):
                     product(*([m for m in range(n)] for n in self._batch_shape))
                     if len(self._batch_shape) > 0
                     else [  # this allows it to work with no batch dim
-                        ...,
+                        (...,),
                     ]
                 )
                 for batch_idx in batch_indices:
@@ -1233,7 +1240,7 @@ class HalfRankTransform(OutcomeTransform):
                 product(*(range(n) for n in self._batch_shape))
                 if len(self._batch_shape) > 0
                 else [  # this allows it to work with no batch dim
-                    ...,
+                    (...,),
                 ]
             )
             for batch_idx in batch_indices:

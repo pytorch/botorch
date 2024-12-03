@@ -13,6 +13,7 @@ from botorch.models.transforms.outcome import (
     _nanmin,
     Bilog,
     ChainedOutcomeTransform,
+    HalfRankTransform,
     InfeasibleTransform,
     Log,
     LogWarperTransform,
@@ -1077,3 +1078,138 @@ class TestLogWarperTransform(BotorchTestCase):
         # Empty input should raise error
         with self.assertRaises(ValueError):
             transform.forward(torch.tensor([]).reshape(0, 1), None)
+
+
+class TestHalfRankTransform(BotorchTestCase):
+    def test_init(self):
+        # Test initialization
+        transform = HalfRankTransform()
+        self.assertIsNone(transform._batch_shape)
+        self.assertFalse(transform._is_trained)
+        self.assertEqual(transform._unique_labels, {})
+        self.assertEqual(transform._warped_labels, {})
+
+        # Test with batch shape
+        batch_shape = torch.Size([2, 3])
+        transform = HalfRankTransform(batch_shape=batch_shape)
+        self.assertEqual(transform._batch_shape, batch_shape)
+
+    def test_transform_simple_case(self):
+        # Test with simple 1D tensor
+        transform = HalfRankTransform()
+        Y = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0]).reshape(-1, 1)
+        Y_transformed, _ = transform.forward(Y)
+
+        # Values above median should remain unchanged
+        self.assertTrue(
+            torch.allclose(Y_transformed[Y.squeeze() > 3.0], Y[Y.squeeze() > 3.0])
+        )
+
+        # Check if transform is trained
+        self.assertTrue(transform._is_trained)
+
+        # Test untransform
+        Y_untransformed, _ = transform.untransform(Y_transformed)
+        self.assertTrue(torch.allclose(Y_untransformed, Y, rtol=1e-4))
+
+    def test_transform_with_nans(self):
+        transform = HalfRankTransform()
+        Y = torch.tensor([1.0, float("nan"), 3.0, 4.0, 5.0]).reshape(-1, 1)
+        Y_transformed, _ = transform.forward(Y)
+
+        # NaN values should remain NaN
+        self.assertTrue(torch.isnan(Y_transformed[torch.isnan(Y)]).all())
+
+        # Non-NaN values above median should remain unchanged
+        valid_mask = ~torch.isnan(Y.squeeze())
+        median = torch.nanmedian(Y)
+        self.assertTrue(
+            torch.allclose(
+                Y_transformed[valid_mask & (Y.squeeze() > median)],
+                Y[valid_mask & (Y.squeeze() > median)],
+            )
+        )
+
+    def test_transform_batch(self):
+        batch_shape = torch.Size([2])
+        transform = HalfRankTransform(batch_shape=batch_shape)
+        Y = torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]).reshape(2, 3, 1)
+        Y_transformed, _ = transform.forward(Y)
+
+        # Shape should be preserved
+        self.assertEqual(Y_transformed.shape, Y.shape)
+
+        # Test untransform
+        Y_untransformed, _ = transform.untransform(Y_transformed)
+        self.assertTrue(torch.allclose(Y_untransformed, Y, rtol=1e-4))
+
+    def test_transform_multi_output(self):
+        transform = HalfRankTransform()
+        Y = torch.tensor([[1.0, 10.0], [2.0, 20.0], [3.0, 30.0], [4.0, 40.0]])
+        Y_transformed, _ = transform.forward(Y)
+
+        # Each output dimension should be transformed independently
+        self.assertEqual(Y_transformed.shape, Y.shape)
+
+        # Test untransform
+        Y_untransformed, _ = transform.untransform(Y_transformed)
+        self.assertTrue(torch.allclose(Y_untransformed, Y, rtol=1e-4))
+
+    def test_error_cases(self):
+        transform = HalfRankTransform()
+
+        # Test all NaN case
+        Y = torch.tensor([[float("nan")], [float("nan")]])
+        with self.assertRaisesRegex(
+            RuntimeError, "For at least one batch, all outcomes are NaN"
+        ):
+            transform.forward(Y)
+
+        # Test untransform before training
+        Y = torch.tensor([[1.0], [2.0]])
+        with self.assertRaisesRegex(
+            RuntimeError, "needs to be called before untransform"
+        ):
+            transform.untransform(Y)
+
+        # Test with observation noise
+        Y = torch.tensor([[1.0], [2.0]])
+        Yvar = torch.tensor([[0.1], [0.1]])
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            "HalfRankTransform does not support transforming observation noise",
+        ):
+            transform.forward(Y, Yvar)
+
+    def test_batch_shape_mismatch(self):
+        batch_shape = torch.Size([2])
+        transform = HalfRankTransform(batch_shape=batch_shape)
+        Y = torch.tensor([[1.0], [2.0], [3.0]])  # Wrong batch shape
+        with self.assertRaises(RuntimeError):
+            transform.forward(Y)
+
+    def test_extrapolation(self):
+        transform = HalfRankTransform()
+        Y = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0]).reshape(-1, 1)
+        Y_transformed, _ = transform.forward(Y)
+
+        # Test extrapolation below minimum
+        Y_test = torch.tensor([0.0]).reshape(-1, 1)
+        Y_test_transformed, _ = transform.forward(Y_test)
+        Y_test_untransformed, _ = transform.untransform(Y_test_transformed)
+
+        # The untransformed value should be close to but below the minimum
+        self.assertLess(Y_test_untransformed.item(), Y.min())
+
+    def test_interpolation(self):
+        transform = HalfRankTransform()
+        Y = torch.tensor([1.0, 3.0, 5.0]).reshape(-1, 1)
+        Y_transformed, _ = transform.forward(Y)
+
+        # Test interpolation between values
+        Y_test = torch.tensor([2.0]).reshape(-1, 1)
+        Y_test_transformed, _ = transform.forward(Y_test)
+        Y_test_untransformed, _ = transform.untransform(Y_test_transformed)
+
+        # The untransformed value should be close to the original
+        self.assertTrue(torch.allclose(Y_test_untransformed, Y_test, rtol=1e-4))
