@@ -20,6 +20,7 @@ from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qLowerConfidenceBound,
     qNoisyExpectedImprovement,
+    qPosteriorStandardDeviation,
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
@@ -1009,6 +1010,105 @@ class TestQLowerConfidenceBound(TestQUpperConfidenceBound):
         super().test_beta_prime(negate=True)
 
 
+class TestQPosteriorStandardDeviation(BotorchTestCase):
+    def test_q_pstd(self):
+        for dtype in (torch.float, torch.double):
+            # the event shape is `b x q x t` = 1 x 1 x 1
+            samples = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
+            mm = MockModel(MockPosterior(samples=samples))
+            # X is `q x d` = 1 x 1. X is a dummy and unused b/c of mocking
+            X = torch.zeros(1, 1, device=self.device, dtype=dtype)
+
+            # basic test
+            sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
+            acqf = qPosteriorStandardDeviation(model=mm, sampler=sampler)
+            res = acqf(X)
+            self.assertEqual(res.item(), 0.0)
+
+            # basic test
+            sampler = IIDNormalSampler(sample_shape=torch.Size([2]), seed=12345)
+            acqf = qPosteriorStandardDeviation(model=mm, sampler=sampler)
+            res = acqf(X)
+            self.assertEqual(res.item(), 0.0)
+            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
+            bs = acqf.sampler.base_samples.clone()
+            res = acqf(X)
+            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+
+            # basic test, qmc
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
+            acqf = qPosteriorStandardDeviation(model=mm, sampler=sampler)
+            res = acqf(X)
+            self.assertEqual(res.item(), 0.0)
+            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
+            bs = acqf.sampler.base_samples.clone()
+            acqf(X)
+            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+
+            # basic test for X_pending and warning
+            acqf.set_X_pending()
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(None)
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(X)
+            self.assertEqual(acqf.X_pending, X)
+            mm._posterior._samples = mm._posterior._samples.expand(1, 2, 1)
+            res = acqf(X)
+            X2 = torch.zeros(
+                1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
+            )
+            with warnings.catch_warnings(record=True) as ws:
+                acqf.set_X_pending(X2)
+            self.assertEqual(acqf.X_pending, X2)
+            self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
+
+    def test_q_pstd_batch(self):
+        # the event shape is `b x q x t` = 2 x 2 x 1
+        for dtype in (torch.float, torch.double):
+            samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
+            samples[0, 0, 0] = 1.0
+            mm = MockModel(MockPosterior(samples=samples))
+            # X is a dummy and unused b/c of mocking
+            X = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
+
+            # test batch mode
+            sampler = IIDNormalSampler(sample_shape=torch.Size([8]))
+            acqf = qPosteriorStandardDeviation(model=mm, sampler=sampler)
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 0.0)
+            self.assertEqual(res[1].item(), 0.0)
+
+            # test batch mode
+            sampler = IIDNormalSampler(sample_shape=torch.Size([2]), seed=12345)
+            acqf = qPosteriorStandardDeviation(model=mm, sampler=sampler)
+            res = acqf(X)  # 1-dim batch
+            self.assertEqual(res[0].item(), 0.0)
+            self.assertEqual(res[1].item(), 0.0)
+            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
+            bs = acqf.sampler.base_samples.clone()
+            acqf(X)
+            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+            res = acqf(X.expand(2, -1, 1))  # 2-dim batch
+            self.assertEqual(res[0].item(), 0.0)
+            self.assertEqual(res[1].item(), 0.0)
+            # the base samples should have the batch dim collapsed
+            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
+            bs = acqf.sampler.base_samples.clone()
+            acqf(X.expand(2, -1, 1))
+            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+
+            # test batch mode, qmc
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
+            acqf = qPosteriorStandardDeviation(model=mm, sampler=sampler)
+            res = acqf(X)
+            self.assertEqual(res[0].item(), 0.0)
+            self.assertEqual(res[1].item(), 0.0)
+            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
+            bs = acqf.sampler.base_samples.clone()
+            acqf(X)
+            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+
+
 class TestMCAcquisitionFunctionWithConstraints(BotorchTestCase):
     def test_mc_acquisition_function_with_constraints(self):
         for dtype in (torch.float, torch.double):
@@ -1033,6 +1133,7 @@ class TestMCAcquisitionFunctionWithConstraints(BotorchTestCase):
             # cache_root=True not supported by MockModel, see test_cache_root
             partial(qNoisyExpectedImprovement, cache_root=False, **nei_args),
             partial(qNoisyExpectedImprovement, cache_root=True, **nei_args),
+            partial(qPosteriorStandardDeviation, model=mm),
         ]:
             acqf = acqf_constructor()
             mm._posterior._samples = (
