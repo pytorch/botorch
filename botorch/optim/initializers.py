@@ -271,13 +271,15 @@ def gen_batch_initial_conditions(
         fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
         options: Options for initial condition generation. For valid options see
-            `initialize_q_batch` and `initialize_q_batch_nonneg`. If `options`
-            contains a `nonnegative=True` entry, then `acq_function` is
-            assumed to be non-negative (useful when using custom acquisition
-            functions). In addition, an "init_batch_limit" option can be passed
-            to specify the batch limit for the initialization. This is useful
-            for avoiding memory limits when computing the batch posterior over
-            raw samples.
+            `initialize_q_batch_topn`, `initialize_q_batch_nonneg`, and
+            `initialize_q_batch`. If `options` contains a `topn=True` then
+            `initialize_q_batch_topn` will be used. Else if `options` contains a
+            `nonnegative=True` entry, then `acq_function` is assumed to be
+            non-negative (useful when using custom acquisition functions).
+            `initialize_q_batch` will be used otherwise. In addition, an
+            "init_batch_limit" option can be passed to specify the batch limit
+            for the initialization. This is useful for avoiding memory limits
+            when computing the batch posterior over raw samples.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
