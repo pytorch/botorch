@@ -26,6 +26,8 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from itertools import product
 
+import numpy as np
+
 import torch
 from botorch.models.transforms.utils import (
     norm_to_lognorm_mean,
@@ -1150,13 +1152,19 @@ class HalfRankTransform(OutcomeTransform):
                 )
                 for batch_idx in batch_indices:
                     y_median = Y_medians[*batch_idx, dim]
-                    y = Y[*batch_idx, :, dim]
+                    y = Y_transformed[*batch_idx, :, dim]
 
                     # Get finite values and their ranks for each batch
                     is_finite_mask = ~torch.isnan(y)
                     ranks = torch.zeros_like(y)
 
-                    unique_y = torch.unique(y[is_finite_mask])
+                    # TODO: this is annoying but torch.unique doesn't support
+                    # returning indices
+                    np_unique_y, np_unique_indices = np.unique(
+                        y[is_finite_mask].numpy(), return_index=True
+                    )
+                    unique_y = torch.from_numpy(np_unique_y)
+                    unique_indices = torch.from_numpy(np_unique_indices)
 
                     for i, val in enumerate(unique_y):
                         ranks[y == val] = i + 1
@@ -1187,7 +1195,9 @@ class HalfRankTransform(OutcomeTransform):
                     # save intermediate values for untransform
                     self._original_label_medians[*batch_idx, dim] = y_median
                     self._unique_labels[(*batch_idx, dim)] = unique_y
-                    self._warped_labels[(*batch_idx, dim)] = unique_y
+                    self._warped_labels[(*batch_idx, dim)] = (rank_ppf + y_median)[
+                        is_finite_mask
+                    ][unique_indices]
 
             self._is_trained = torch.tensor(True)
 
@@ -1227,7 +1237,7 @@ class HalfRankTransform(OutcomeTransform):
                 ]
             )
             for batch_idx in batch_indices:
-                y = Y[*batch_idx, :, dim]
+                y = Y_utf[*batch_idx, :, dim].clone()
                 unique_labels = self._unique_labels[(*batch_idx, dim)]
                 warped_labels = self._warped_labels[(*batch_idx, dim)]
 
@@ -1237,34 +1247,97 @@ class HalfRankTransform(OutcomeTransform):
                     # Find nearest warped values and interpolate
                     warped_idx = torch.searchsorted(warped_labels, y[below_median])
 
-                    # Handle edge cases and interpolation
-                    for i, (val, idx) in enumerate(zip(y[below_median], warped_idx)):
-                        if idx == 0:
-                            # Extrapolate below minimum
-                            scale = (val - warped_labels[0]) / (
-                                warped_labels[-1] - warped_labels[0]
-                            )
-                            Y_utf[below_median][i] = unique_labels[0] - scale * (
-                                unique_labels[-1] - unique_labels[0]
-                            )
-                        else:
-                            # Interpolate between points
-                            lower_idx = idx - 1
-                            upper_idx = min(idx, len(warped_labels) - 1)
+                    # Create indices for neighboring values
+                    left_idx = torch.clamp(warped_idx - 1, min=0)
+                    right_idx = torch.clamp(warped_idx + 1, max=len(warped_labels))
 
-                            original_gap = (
-                                unique_labels[upper_idx] - unique_labels[lower_idx]
-                            )
-                            warped_gap = (
-                                warped_labels[upper_idx] - warped_labels[lower_idx]
-                            )
+                    # Gather neighboring values
+                    candidates = torch.stack(
+                        [
+                            warped_labels[left_idx],
+                            warped_labels[warped_idx],
+                            warped_labels[right_idx],
+                        ],
+                        dim=-1,
+                    )
 
-                            if warped_gap > 0:
-                                scale = (val - warped_labels[lower_idx]) / warped_gap
-                                Y_utf[below_median][i] = (
-                                    unique_labels[lower_idx] + scale * original_gap
-                                )
-                            else:
-                                Y_utf[below_median][i] = unique_labels[lower_idx]
+                    best_idx = torch.argmin(
+                        torch.abs(candidates - y[below_median].unsqueeze(-1)), dim=-1
+                    )
+                    lookup_mask = torch.isclose(
+                        candidates[torch.arange(len(best_idx)), best_idx],
+                        y[below_median],
+                    )
+                    full_lookup_mask = torch.full_like(below_median, False)
+                    below_median_indices = torch.where(below_median)[0]
+                    lookup_indices = below_median_indices[lookup_mask]
+                    full_lookup_mask[lookup_indices] = True
+                    full_lookup_values = torch.zeros_like(Y_utf[*batch_idx, :, dim])
+                    full_lookup_values[full_lookup_mask] = unique_labels[
+                        warped_idx[lookup_mask]
+                    ]
+                    Y_utf[*batch_idx, :, dim] = torch.where(
+                        full_lookup_mask, full_lookup_values, Y_utf[*batch_idx, :, dim]
+                    )
+
+                    # if the value is below the warped minimum, we need to
+                    # extrapolate outside the range
+                    extrapolate_mask = y < warped_labels[0]
+                    extrapolated_values = unique_labels[0] - (
+                        y[extrapolate_mask] - warped_labels[0]
+                    ).abs() / (warped_labels[-1] - warped_labels[0]) * (
+                        unique_labels[-1] - unique_labels[0]
+                    )
+                    full_extrapolated_values = torch.zeros_like(
+                        Y_utf[*batch_idx, :, dim]
+                    )
+                    full_extrapolated_values[extrapolate_mask] = extrapolated_values
+                    Y_utf[*batch_idx, :, dim] = torch.where(
+                        extrapolate_mask,
+                        full_extrapolated_values,
+                        Y_utf[*batch_idx, :, dim],
+                    )
+
+                    # otherwise, interpolate
+                    neither_extrapolate_nor_lookup = ~(
+                        (y[below_median] < warped_labels[0]) | lookup_mask
+                    )
+                    y_neither_extrapolate_nor_lookup = y[below_median][
+                        neither_extrapolate_nor_lookup
+                    ]
+                    warped_idx_neither_extrapolate_nor_lookup = warped_idx[
+                        neither_extrapolate_nor_lookup
+                    ]
+
+                    lower_idx = (warped_idx_neither_extrapolate_nor_lookup - 1,)
+                    upper_idx = (warped_idx_neither_extrapolate_nor_lookup,)
+
+                    original_gap = unique_labels[upper_idx] - unique_labels[lower_idx]
+                    warped_gap = warped_labels[upper_idx] - warped_labels[lower_idx]
+
+                    full_interpolated_mask = torch.full_like(below_median, False)
+                    below_median_indices = torch.where(below_median)[0]
+                    interpolated_indices = below_median_indices[
+                        neither_extrapolate_nor_lookup
+                    ]
+                    full_interpolated_mask[interpolated_indices] = True
+
+                    full_interpolated_values = torch.zeros_like(
+                        Y_utf[*batch_idx, :, dim]
+                    )
+                    full_interpolated_values[full_interpolated_mask] = torch.where(
+                        warped_gap > 0,
+                        unique_labels[lower_idx]
+                        + (y_neither_extrapolate_nor_lookup - warped_labels[lower_idx])
+                        / warped_gap
+                        * original_gap,
+                        unique_labels[lower_idx],
+                    )
+
+                    Y_utf[*batch_idx, :, dim] = torch.where(
+                        full_interpolated_mask,
+                        full_interpolated_values,
+                        Y_utf[*batch_idx, :, dim],
+                    )
 
         return Y_utf, Yvar
