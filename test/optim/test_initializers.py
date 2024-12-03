@@ -110,10 +110,8 @@ class TestInitializeQBatch(BotorchTestCase):
             self.assertEqual(ics.dtype, X.dtype)
             # ensure raises correct warning
             acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as w:
+            with self.assertWarns(BadInitialCandidatesWarning):
                 ics, _ = initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=2)
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
             self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
             with self.assertRaises(RuntimeError):
                 initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=10)
@@ -154,10 +152,8 @@ class TestInitializeQBatch(BotorchTestCase):
             self.assertTrue(torch.equal(acq_vals, ics_acq_vals))
             # ensure raises correct warning
             acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as w:
+            with self.assertWarns(BadInitialCandidatesWarning):
                 ics, _ = initialize_q_batch(X=X, acq_vals=acq_vals, n=2)
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
             self.assertEqual(ics.shape, torch.Size([2, *batch_shape, 3, 4]))
             with self.assertRaises(RuntimeError):
                 initialize_q_batch(X=X, acq_vals=acq_vals, n=10)
@@ -186,10 +182,8 @@ class TestInitializeQBatch(BotorchTestCase):
             self.assertEqual(ics.dtype, X.dtype)
             # ensure raises correct warning
             acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as w:
+            with self.assertWarns(BadInitialCandidatesWarning):
                 ics, _ = initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=2)
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
             self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
             with self.assertRaises(RuntimeError):
                 initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=10)
