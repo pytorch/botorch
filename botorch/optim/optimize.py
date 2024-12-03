@@ -979,7 +979,8 @@ def optimize_acqf_mixed(
                     post_processing_func=post_processing_func,
                     batch_initial_conditions=batch_initial_conditions,
                     ic_generator=ic_generator,
-                    return_best_only=False,
+                    return_best_only=False,  # here we always return all candidates
+                    # and filter later
                     gen_candidates=gen_candidates,
                     timeout_sec=timeout_sec,
                     retry_on_optimization_warning=retry_on_optimization_warning,

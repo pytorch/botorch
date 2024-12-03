@@ -1586,8 +1586,8 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             self.assertTrue(torch.equal(acq_value, expected_acq_value))
 
     def test_optimize_acqf_mixed_empty_ff(self):
-        with self.assertRaises(
-            ValueError, msg="fixed_features_list must be non-empty."
+        with self.assertRaisesRegex(
+            ValueError, expected_regex="fixed_features_list must be non-empty."
         ):
             mock_acq_function = MockAcquisitionFunction()
             optimize_acqf_mixed(
@@ -1601,9 +1601,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
     def test_optimize_acqf_mixed_return_best_only_q2(self):
         mock_acq_function = MockAcquisitionFunction()
-        with self.assertRaises(
+        with self.assertRaisesRegex(
             NotImplementedError,
-            msg="`return_best_only=False` is only supported for q=1.",
+            expected_regex="`return_best_only=False` is only supported for q=1.",
         ):
             optimize_acqf_mixed(
                 acq_function=mock_acq_function,
