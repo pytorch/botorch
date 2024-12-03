@@ -10,7 +10,7 @@
 # If you want to do something non-standard, or would like to have full insight into every aspect of the implementation, please see [this tutorial](./closed_loop_botorch_only) for how to write your own full optimization loop in BoTorch.
 # 
 
-# In[ ]:
+# In[1]:
 
 
 import os
@@ -96,6 +96,9 @@ ax_model = BoTorchModel(
                     # mll_class=ExactMarginalLogLikelihood,
                     # Optional, dictionary of keyword arguments to model constructor
                     # model_options={}
+                    # Passing in `None` to disable the default set of input transforms
+                    # constructed in Ax, since the model doesn't support transforms.
+                    input_transform_classes=None,
                 )
             ]
         )
@@ -153,7 +156,9 @@ gs = GenerationStrategy(
             num_trials=-1,  # No limitation on how many trials should be produced from this step
             # For `BOTORCH_MODULAR`, we pass in kwargs to specify what surrogate or acquisition function to use.
             model_kwargs={
-                "surrogate_spec": SurrogateSpec(model_configs=[ModelConfig(botorch_model_class=SimpleCustomGP)]),
+                "surrogate_spec": SurrogateSpec(
+                    model_configs=[ModelConfig(botorch_model_class=SimpleCustomGP, input_transform_classes=None)]
+                ),
             },
         ),
     ]
@@ -385,7 +390,7 @@ for i in range(5):
 
 # Once the initial (quasi-) random stage is completed, we can use our `SimpleCustomGP` with the default acquisition function chosen by `Ax` to run the BO loop.
 
-# In[15]:
+# In[16]:
 
 
 with fast_smoke_test():
@@ -393,7 +398,9 @@ with fast_smoke_test():
         model_bridge = Models.BOTORCH_MODULAR(
             experiment=exp,
             data=exp.fetch_data(),
-            surrogate_spec=SurrogateSpec(model_configs=[ModelConfig(SimpleCustomGP)]),
+            surrogate_spec=SurrogateSpec(
+                model_configs=[ModelConfig(SimpleCustomGP, input_transform_classes=None)]
+            ),
         )
         trial = exp.new_trial(generator_run=model_bridge.gen(1))
         trial.run()
@@ -402,7 +409,7 @@ with fast_smoke_test():
 
 # View the trials attached to the `Experiment`.
 
-# In[16]:
+# In[17]:
 
 
 exp.trials
@@ -410,7 +417,7 @@ exp.trials
 
 # View the evaluation data about these trials.
 
-# In[17]:
+# In[18]:
 
 
 exp.fetch_data().df
@@ -420,7 +427,7 @@ exp.fetch_data().df
 # 
 # We can use convenient Ax utilities for plotting the results.
 
-# In[18]:
+# In[19]:
 
 
 import numpy as np
@@ -435,4 +442,10 @@ best_objective_plot = optimization_trace_single_method(
     optimum=0.397887,  # Known minimum objective for Branin function.
 )
 render(best_objective_plot)
+
+
+# In[ ]:
+
+
+
 

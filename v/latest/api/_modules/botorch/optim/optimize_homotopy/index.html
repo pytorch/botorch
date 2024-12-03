@@ -185,7 +185,6 @@
 <span class="sd">    """</span>
     <span class="n">shared_optimize_acqf_kwargs</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"num_restarts"</span><span class="p">:</span> <span class="n">num_restarts</span><span class="p">,</span>
-        <span class="s2">"raw_samples"</span><span class="p">:</span> <span class="n">raw_samples</span><span class="p">,</span>
         <span class="s2">"inequality_constraints"</span><span class="p">:</span> <span class="n">inequality_constraints</span><span class="p">,</span>
         <span class="s2">"equality_constraints"</span><span class="p">:</span> <span class="n">equality_constraints</span><span class="p">,</span>
         <span class="s2">"nonlinear_inequality_constraints"</span><span class="p">:</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">,</span>
@@ -206,6 +205,7 @@
 
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span>
+        <span class="n">q_raw_samples</span> <span class="o">=</span> <span class="n">raw_samples</span>
         <span class="n">homotopy</span><span class="o">.</span><span class="n">restart</span><span class="p">()</span>
 
         <span class="k">while</span> <span class="ow">not</span> <span class="n">homotopy</span><span class="o">.</span><span class="n">should_stop</span><span class="p">:</span>
@@ -215,9 +215,14 @@
                 <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
                 <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span>
+                <span class="n">raw_samples</span><span class="o">=</span><span class="n">q_raw_samples</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">shared_optimize_acqf_kwargs</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">homotopy</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+            <span class="c1"># Set raw_samples to None such that pruned restarts are not repopulated</span>
+            <span class="c1"># at each step in the homotopy.</span>
+            <span class="n">q_raw_samples</span> <span class="o">=</span> <span class="kc">None</span>
 
             <span class="c1"># Prune candidates</span>
             <span class="n">candidates</span> <span class="o">=</span> <span class="n">prune_candidates</span><span class="p">(</span>
@@ -232,6 +237,7 @@
             <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
             <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">options</span><span class="o">=</span><span class="n">final_options</span><span class="p">,</span>
+            <span class="n">raw_samples</span><span class="o">=</span><span class="n">q_raw_samples</span><span class="p">,</span>
             <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span>
             <span class="o">**</span><span class="n">shared_optimize_acqf_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
