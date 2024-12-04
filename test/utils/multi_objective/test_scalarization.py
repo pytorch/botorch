@@ -15,6 +15,7 @@ from botorch.utils.transforms import normalize
 
 class TestGetChebyshevScalarization(BotorchTestCase):
     def test_get_chebyshev_scalarization(self):
+        torch.manual_seed(1234)
         tkwargs = {"device": self.device}
         Y_train = torch.rand(4, 2, **tkwargs)
         neg_Y_train = -Y_train
