@@ -28,6 +28,8 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span> <span class="nn">warnings</span>
+
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
@@ -38,7 +40,7 @@
 <span class="kn">from</span> <span class="nn">botorch.generation.gen</span> <span class="kn">import</span> <span class="n">TGenCandidates</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.homotopy</span> <span class="kn">import</span> <span class="n">Homotopy</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.initializers</span> <span class="kn">import</span> <span class="n">TGenInitialConditions</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span><span class="p">,</span> <span class="n">optimize_acqf_mixed</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -95,14 +97,13 @@
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">fixed_features</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fixed_features_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">gen_candidates</span><span class="p">:</span> <span class="n">TGenCandidates</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">sequential</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">ic_generator</span><span class="p">:</span> <span class="n">TGenInitialConditions</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">timeout_sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">return_full_tree</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">retry_on_optimization_warning</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="o">**</span><span class="n">ic_gen_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
@@ -157,6 +158,10 @@
 <span class="sd">            `options`.</span>
 <span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
 <span class="sd">            should be fixed to a particular value during generation.</span>
+<span class="sd">        fixed_features_list: A list of maps `{feature_index: value}`. The i-th</span>
+<span class="sd">            item represents the fixed_feature for the i-th optimization. If</span>
+<span class="sd">            `fixed_features_list` is provided, `optimize_acqf_mixed` is invoked.</span>
+<span class="sd">            All indices (`feature_index`) should be non-negative.</span>
 <span class="sd">        post_processing_func: A function that post-processes an optimization</span>
 <span class="sd">            result appropriately (i.e., according to `round-trip`</span>
 <span class="sd">            transformations).</span>
@@ -168,36 +173,56 @@
 <span class="sd">            and a dictionary of options, but refer to the documentation of specific</span>
 <span class="sd">            generation functions (e.g gen_candidates_scipy and gen_candidates_torch)</span>
 <span class="sd">            for method-specific inputs. Default: `gen_candidates_scipy`</span>
-<span class="sd">        sequential: If False, uses joint optimization, otherwise uses sequential</span>
-<span class="sd">            optimization.</span>
 <span class="sd">        ic_generator: Function for generating initial conditions. Not needed when</span>
 <span class="sd">            `batch_initial_conditions` are provided. Defaults to</span>
 <span class="sd">            `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition</span>
 <span class="sd">            functions and `gen_batch_initial_conditions` otherwise. Must be specified</span>
 <span class="sd">            for nonlinear inequality constraints.</span>
 <span class="sd">        timeout_sec: Max amount of time optimization can run for.</span>
-<span class="sd">        return_full_tree: Return the full tree of optimizers of the previous</span>
-<span class="sd">            iteration.</span>
 <span class="sd">        retry_on_optimization_warning: Whether to retry candidate generation with a new</span>
 <span class="sd">            set of initial conditions when it fails with an `OptimizationWarning`.</span>
 <span class="sd">        ic_gen_kwargs: Additional keyword arguments passed to function specified by</span>
 <span class="sd">            `ic_generator`</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">fixed_features</span> <span class="ow">and</span> <span class="n">fixed_features_list</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"Either `fixed_feature` or `fixed_features_list` can be provided, not both."</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fixed_features</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"The `fixed_features` argument is deprecated, "</span>
+            <span class="s2">"use `fixed_features_list` instead."</span>
+        <span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="n">message</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+
     <span class="n">shared_optimize_acqf_kwargs</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"num_restarts"</span><span class="p">:</span> <span class="n">num_restarts</span><span class="p">,</span>
         <span class="s2">"inequality_constraints"</span><span class="p">:</span> <span class="n">inequality_constraints</span><span class="p">,</span>
         <span class="s2">"equality_constraints"</span><span class="p">:</span> <span class="n">equality_constraints</span><span class="p">,</span>
         <span class="s2">"nonlinear_inequality_constraints"</span><span class="p">:</span> <span class="n">nonlinear_inequality_constraints</span><span class="p">,</span>
-        <span class="s2">"fixed_features"</span><span class="p">:</span> <span class="n">fixed_features</span><span class="p">,</span>
         <span class="s2">"return_best_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># False to make n_restarts persist through homotopy.</span>
         <span class="s2">"gen_candidates"</span><span class="p">:</span> <span class="n">gen_candidates</span><span class="p">,</span>
-        <span class="s2">"sequential"</span><span class="p">:</span> <span class="n">sequential</span><span class="p">,</span>
         <span class="s2">"ic_generator"</span><span class="p">:</span> <span class="n">ic_generator</span><span class="p">,</span>
         <span class="s2">"timeout_sec"</span><span class="p">:</span> <span class="n">timeout_sec</span><span class="p">,</span>
-        <span class="s2">"return_full_tree"</span><span class="p">:</span> <span class="n">return_full_tree</span><span class="p">,</span>
         <span class="s2">"retry_on_optimization_warning"</span><span class="p">:</span> <span class="n">retry_on_optimization_warning</span><span class="p">,</span>
         <span class="o">**</span><span class="n">ic_gen_kwargs</span><span class="p">,</span>
     <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">fixed_features_list</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">fixed_features_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">optimization_fn</span> <span class="o">=</span> <span class="n">optimize_acqf_mixed</span>
+        <span class="n">fixed_features_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"fixed_features_list"</span><span class="p">:</span> <span class="n">fixed_features_list</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">optimization_fn</span> <span class="o">=</span> <span class="n">optimize_acqf</span>
+        <span class="n">fixed_features_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"fixed_features"</span><span class="p">:</span> <span class="n">fixed_features_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">fixed_features_list</span>
+            <span class="k">else</span> <span class="n">fixed_features</span>
+        <span class="p">}</span>
 
     <span class="n">candidate_list</span><span class="p">,</span> <span class="n">acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -209,15 +234,17 @@
         <span class="n">homotopy</span><span class="o">.</span><span class="n">restart</span><span class="p">()</span>
 
         <span class="k">while</span> <span class="ow">not</span> <span class="n">homotopy</span><span class="o">.</span><span class="n">should_stop</span><span class="p">:</span>
-            <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_values</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+            <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_values</span> <span class="o">=</span> <span class="n">optimization_fn</span><span class="p">(</span>
                 <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
                 <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
                 <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                 <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
                 <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span>
                 <span class="n">raw_samples</span><span class="o">=</span><span class="n">q_raw_samples</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">fixed_features_kwargs</span><span class="p">,</span>
                 <span class="o">**</span><span class="n">shared_optimize_acqf_kwargs</span><span class="p">,</span>
             <span class="p">)</span>
+
             <span class="n">homotopy</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
 
             <span class="c1"># Set raw_samples to None such that pruned restarts are not repopulated</span>
@@ -232,13 +259,14 @@
             <span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="c1"># Optimize one more time with the final options</span>
-        <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_values</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_values</span> <span class="o">=</span> <span class="n">optimization_fn</span><span class="p">(</span>
             <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
             <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
             <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">options</span><span class="o">=</span><span class="n">final_options</span><span class="p">,</span>
             <span class="n">raw_samples</span><span class="o">=</span><span class="n">q_raw_samples</span><span class="p">,</span>
             <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">fixed_features_kwargs</span><span class="p">,</span>
             <span class="o">**</span><span class="n">shared_optimize_acqf_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 

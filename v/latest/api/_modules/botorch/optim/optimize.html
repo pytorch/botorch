@@ -973,7 +973,11 @@
     <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_best_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">gen_candidates</span><span class="p">:</span> <span class="n">TGenCandidates</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">ic_generator</span><span class="p">:</span> <span class="n">TGenInitialConditions</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">timeout_sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">retry_on_optimization_warning</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">ic_gen_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Optimize over a list of fixed_features and returns the best solution.</span>
@@ -1022,20 +1026,38 @@
 <span class="sd">            transformations).</span>
 <span class="sd">        batch_initial_conditions: A tensor to specify the initial conditions. Set</span>
 <span class="sd">            this if you do not want to use default initialization strategy.</span>
+<span class="sd">        return_best_only: If False, outputs the solutions corresponding to all</span>
+<span class="sd">            random restart initializations of the optimization. Setting this keyword</span>
+<span class="sd">            to False is only allowed for `q=1`. Defaults to True.</span>
+<span class="sd">        gen_candidates: A callable for generating candidates (and their associated</span>
+<span class="sd">            acquisition values) given a tensor of initial conditions and an</span>
+<span class="sd">            acquisition function. Other common inputs include lower and upper bounds</span>
+<span class="sd">            and a dictionary of options, but refer to the documentation of specific</span>
+<span class="sd">            generation functions (e.g gen_candidates_scipy and gen_candidates_torch)</span>
+<span class="sd">            for method-specific inputs. Default: `gen_candidates_scipy`</span>
 <span class="sd">        ic_generator: Function for generating initial conditions. Not needed when</span>
 <span class="sd">            `batch_initial_conditions` are provided. Defaults to</span>
 <span class="sd">            `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition</span>
 <span class="sd">            functions and `gen_batch_initial_conditions` otherwise. Must be specified</span>
 <span class="sd">            for nonlinear inequality constraints.</span>
+<span class="sd">        timeout_sec: Max amount of time optimization can run for.</span>
+<span class="sd">        retry_on_optimization_warning: Whether to retry candidate generation with a new</span>
+<span class="sd">            set of initial conditions when it fails with an `OptimizationWarning`.</span>
 <span class="sd">        ic_gen_kwargs: Additional keyword arguments passed to function specified by</span>
 <span class="sd">            `ic_generator`</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A two-element tuple containing</span>
 
-<span class="sd">        - a `q x d`-dim tensor of generated candidates.</span>
-<span class="sd">        - an associated acquisition value.</span>
+<span class="sd">        - A tensor of generated candidates. The shape is</span>
+<span class="sd">            -- `q x d` if `return_best_only` is True (default)</span>
+<span class="sd">            -- `num_restarts x q x d` if `return_best_only` is False</span>
+<span class="sd">        - a tensor of associated acquisition values of dim `num_restarts`</span>
+<span class="sd">            if `return_best_only=False` else a scalar acquisition value.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">return_best_only</span> <span class="ow">and</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"`return_best_only=False` is only supported for q=1."</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="ow">not</span> <span class="n">fixed_features_list</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"fixed_features_list must be non-empty."</span><span class="p">)</span>
 
@@ -1050,11 +1072,12 @@
     <span class="n">ic_gen_kwargs</span> <span class="o">=</span> <span class="n">ic_gen_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
 
     <span class="k">if</span> <span class="n">q</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">timeout_sec</span> <span class="o">=</span> <span class="n">timeout_sec</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">fixed_features_list</span><span class="p">)</span> <span class="k">if</span> <span class="n">timeout_sec</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="n">ff_candidate_list</span><span class="p">,</span> <span class="n">ff_acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
         <span class="n">num_candidate_generation_failures</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">fixed_features</span> <span class="ow">in</span> <span class="n">fixed_features_list</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+                <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_values</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
                     <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
                     <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
                     <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
@@ -1068,15 +1091,19 @@
                     <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
                     <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">batch_initial_conditions</span><span class="p">,</span>
                     <span class="n">ic_generator</span><span class="o">=</span><span class="n">ic_generator</span><span class="p">,</span>
-                    <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">return_best_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># here we always return all candidates</span>
+                    <span class="c1"># and filter later</span>
+                    <span class="n">gen_candidates</span><span class="o">=</span><span class="n">gen_candidates</span><span class="p">,</span>
+                    <span class="n">timeout_sec</span><span class="o">=</span><span class="n">timeout_sec</span><span class="p">,</span>
+                    <span class="n">retry_on_optimization_warning</span><span class="o">=</span><span class="n">retry_on_optimization_warning</span><span class="p">,</span>
                     <span class="o">**</span><span class="n">ic_gen_kwargs</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="k">except</span> <span class="n">CandidateGenerationError</span><span class="p">:</span>
                 <span class="c1"># if candidate generation fails, we skip this candidate</span>
                 <span class="n">num_candidate_generation_failures</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">continue</span>
-            <span class="n">ff_candidate_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
-            <span class="n">ff_acq_value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_value</span><span class="p">)</span>
+            <span class="n">ff_candidate_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+            <span class="n">ff_acq_value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_values</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ff_candidate_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">CandidateGenerationError</span><span class="p">(</span>
@@ -1091,9 +1118,17 @@
                 <span class="n">OptimizationWarning</span><span class="p">,</span>
                 <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
             <span class="p">)</span>
+
         <span class="n">ff_acq_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">ff_acq_value_list</span><span class="p">)</span>
-        <span class="n">best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ff_acq_values</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">ff_candidate_list</span><span class="p">[</span><span class="n">best</span><span class="p">],</span> <span class="n">ff_acq_values</span><span class="p">[</span><span class="n">best</span><span class="p">]</span>
+        <span class="n">max_res</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">ff_acq_values</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">best_batch_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">max_res</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">best_batch_candidates</span> <span class="o">=</span> <span class="n">ff_candidate_list</span><span class="p">[</span><span class="n">best_batch_idx</span><span class="p">]</span>
+        <span class="n">best_acq_values</span> <span class="o">=</span> <span class="n">ff_acq_value_list</span><span class="p">[</span><span class="n">best_batch_idx</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">return_best_only</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">best_batch_candidates</span><span class="p">,</span> <span class="n">best_acq_values</span>
+
+        <span class="n">best_idx</span> <span class="o">=</span> <span class="n">max_res</span><span class="o">.</span><span class="n">indices</span><span class="p">[</span><span class="n">best_batch_idx</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">best_batch_candidates</span><span class="p">[</span><span class="n">best_idx</span><span class="p">],</span> <span class="n">best_acq_values</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
 
     <span class="c1"># For batch optimization with q &gt; 1 we do not want to enumerate all n_combos^n</span>
     <span class="c1"># possible combinations of discrete choices. Instead, we use sequential greedy</span>
@@ -1101,6 +1136,7 @@
     <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
     <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">device</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 
+    <span class="n">timeout_sec</span> <span class="o">=</span> <span class="n">timeout_sec</span> <span class="o">/</span> <span class="n">q</span> <span class="k">if</span> <span class="n">timeout_sec</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
         <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf_mixed</span><span class="p">(</span>
             <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
@@ -1115,8 +1151,12 @@
             <span class="n">nonlinear_inequality_constraints</span><span class="o">=</span><span class="n">nonlinear_inequality_constraints</span><span class="p">,</span>
             <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
             <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">batch_initial_conditions</span><span class="p">,</span>
+            <span class="n">gen_candidates</span><span class="o">=</span><span class="n">gen_candidates</span><span class="p">,</span>
             <span class="n">ic_generator</span><span class="o">=</span><span class="n">ic_generator</span><span class="p">,</span>
             <span class="n">ic_gen_kwargs</span><span class="o">=</span><span class="n">ic_gen_kwargs</span><span class="p">,</span>
+            <span class="n">timeout_sec</span><span class="o">=</span><span class="n">timeout_sec</span><span class="p">,</span>
+            <span class="n">retry_on_optimization_warning</span><span class="o">=</span><span class="n">retry_on_optimization_warning</span><span class="p">,</span>
+            <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">candidates</span><span class="p">,</span> <span class="n">candidate</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span>
