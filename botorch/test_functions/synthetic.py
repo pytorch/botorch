@@ -160,7 +160,7 @@ class Ackley(SyntheticTestFunction):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         a, b, c = self.a, self.b, self.c
-        part1 = -a * torch.exp(-b / math.sqrt(self.dim) * torch.linalg.norm(X, dim=-1))
+        part1 = -a * torch.exp(-torch.linalg.norm(X, dim=-1) * b / math.sqrt(self.dim))
         part2 = -(torch.exp(torch.mean(torch.cos(c * X), dim=-1)))
         return part1 + part2 + a + math.e
 

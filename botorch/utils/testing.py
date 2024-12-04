@@ -28,7 +28,8 @@ from botorch.posteriors.posterior import Posterior
 from botorch.sampling.base import MCSampler
 from botorch.sampling.get_sampler import GetSampler
 from botorch.sampling.stochastic_samplers import StochasticSampler
-from botorch.test_functions.base import BaseTestProblem
+from botorch.test_functions.base import BaseTestProblem, CorruptedTestProblem
+from botorch.test_functions.synthetic import Rosenbrock
 from botorch.utils.transforms import unnormalize
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from linear_operator.operators import AddedDiagLinearOperator, DiagLinearOperator
@@ -243,6 +244,25 @@ class ConstrainedTestProblemTestCaseMixin:
                         )
                 else:
                     self.assertTrue(is_equal.all().item())
+
+
+class TestCorruptedProblemsMixin(BotorchTestCase):
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
+
+        def outlier_generator(
+            problem: torch.Tensor | BaseTestProblem, X: Any, bounds: Any
+        ) -> torch.Tensor:
+            return torch.ones(X.shape[0])
+
+        self.outlier_generator = outlier_generator
+
+        self.rosenbrock_problem = CorruptedTestProblem(
+            base_test_problem=Rosenbrock(),
+            outlier_fraction=1.0,
+            outlier_generator=outlier_generator,
+            seeds=[1, 2],
+        )
 
 
 class MockPosterior(Posterior):

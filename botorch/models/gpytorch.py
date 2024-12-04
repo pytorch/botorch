@@ -402,6 +402,8 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             mvn = self.likelihood(mvn, X)
         return mvn
 
+    # pyre-ignore[14]: Inconsistent override. Could not find parameter
+    # `Keywords(typing.Any)` in overriding signature.
     def posterior(
         self,
         X: Tensor,
@@ -470,6 +472,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             return posterior_transform(posterior)
         return posterior
 
+    # pyre-ignore[14]: Inconsistent override. Could not find parameter `noise`.
     def condition_on_observations(
         self, X: Tensor, Y: Tensor, **kwargs: Any
     ) -> BatchedMultiOutputGPyTorchModel:
@@ -632,7 +635,7 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
                 raise NotImplementedError(msg + " that are not broadcastble.")
         return next(iter(batch_shapes))
 
-    # pyre-fixme[15]: Inconsistent override in return types
+    # pyre-fixme[14]: Inconsistent override in return types
     def posterior(
         self,
         X: Tensor,
@@ -838,6 +841,8 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             )
         return self.likelihood(mvn, X)
 
+    # pyre-ignore[14]: Inconsistent override. Could not find parameter
+    # `Keywords(typing.Any)` in overriding signature.
     def posterior(
         self,
         X: Tensor,
