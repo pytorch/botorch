@@ -1180,9 +1180,9 @@ class HalfRankTransform(OutcomeTransform):
                     # TODO: this is annoying but torch.unique doesn't support
                     # returning indices
                     np_unique_y, np_unique_indices = np.unique(
-                        y[is_finite_mask].numpy(), return_index=True
+                        y[is_finite_mask].numpy(force=True), return_index=True
                     )
-                    ranks = stats.rankdata(y.numpy(), method="dense")
+                    ranks = stats.rankdata(y.numpy(force=True), method="dense")
 
                     unique_y = torch.from_numpy(np_unique_y).to(y.device)
                     unique_indices = torch.from_numpy(np_unique_indices).to(y.device)
