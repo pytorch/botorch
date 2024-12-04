@@ -32,6 +32,7 @@ from collections import OrderedDict
 from itertools import product
 
 import numpy as np
+import scipy.stats as stats
 
 import torch
 from botorch.models.transforms.utils import (
@@ -855,7 +856,7 @@ def _nanmin(
     return tensor.nan_to_num(max_value).min(dim=dim, keepdim=keepdim)
 
 
-def _check_batched_output(Y: Tensor, batch_shape: Tensor) -> None:
+def _check_batched_output(Y: Tensor, batch_shape: Tensor, m: int) -> None:
     """Utility for common output transform checks."""
     if Y.shape[:-2] != batch_shape:
         raise RuntimeError(
@@ -863,6 +864,9 @@ def _check_batched_output(Y: Tensor, batch_shape: Tensor) -> None:
             "the `batch_shape` argument to the `OutcomeTransform`, but got "
             f"Y.shape[:-2]={Y.shape[:-2]}."
         )
+
+    if Y.shape[-1] != m:
+        raise ValueError(f"Expected Y.shape[-1] to be {m}, but got {Y.shape[-1]}.")
 
     if Y.shape[-2] < 1:
         raise ValueError(f"Can't transform with no observations. {Y.shape=}.")
@@ -874,18 +878,18 @@ class InfeasibleTransform(OutcomeTransform):
     Inspired by output-space transformations in Vizier [song2024vizier]_.
     """
 
-    def __init__(self, batch_shape: torch.Size = torch.Size()) -> None:
+    def __init__(self, m: int, batch_shape: torch.Size = torch.Size()) -> None:
         """Transforms infeasible (NaN) values to feasible values.
 
         Args:
             batch_shape: The batch shape of the outcomes.
         """
         super().__init__()
-        self.register_buffer("_shift", None)
-        self.register_buffer("warped_bad_value", torch.tensor(float("nan")))
-        self.register_buffer("_is_trained", torch.tensor(False))
-
+        self._m = m
         self._batch_shape = batch_shape
+        self.register_buffer("_shift", torch.zeros([*batch_shape, m]))
+        self.register_buffer("warped_bad_value", torch.zeros([*batch_shape, m]))
+        self.register_buffer("_is_trained", torch.tensor(False))
 
     def forward(
         self, Y: Tensor, Yvar: Tensor | None = None
@@ -989,11 +993,13 @@ class LogWarperTransform(OutcomeTransform):
     """
 
     def __init__(
-        self, batch_shape: torch.Size = torch.Size(), offset: float = 1.5
+        self, m: int, batch_shape: torch.Size = torch.Size(), offset: float = 1.5
     ) -> None:
         """Initialize transform.
 
         Args:
+            m: The output dimension.
+            batch_shape: The batch_shape of the training targets.
             offset: Offset parameter for the log transformation. Larger values
                 of the offset parameter will lead to greater spreading of good
                 values. Must be > 1.
@@ -1001,10 +1007,11 @@ class LogWarperTransform(OutcomeTransform):
         super().__init__()
         if offset <= 0:
             raise ValueError("offset must be positive")
+        self._m = m
         self._batch_shape = batch_shape
         self.register_buffer("offset", torch.tensor(offset))
-        self.register_buffer("_labels_min", torch.tensor(float("nan")))
-        self.register_buffer("_labels_max", torch.tensor(float("nan")))
+        self.register_buffer("_labels_min", torch.zeros([*batch_shape, m]))
+        self.register_buffer("_labels_max", torch.zeros([*batch_shape, m]))
         self.register_buffer("_is_trained", torch.tensor(False))
 
     def forward(
@@ -1022,7 +1029,7 @@ class LogWarperTransform(OutcomeTransform):
             - The transformed outcome observations.
             - The transformed observation noise (if applicable).
         """
-        _check_batched_output(Y, self._batch_shape)
+        _check_batched_output(Y, self._batch_shape, self._m)
 
         if Yvar is not None:
             raise NotImplementedError(
@@ -1094,19 +1101,23 @@ class HalfRankTransform(OutcomeTransform):
     Inspired by output-space transformations in Vizier [song2024vizier]_.
     """
 
-    def __init__(self, batch_shape: torch.Size = torch.Size()) -> None:
+    def __init__(self, m: int, batch_shape: torch.Size = torch.Size()) -> None:
         """Initialize transform.
 
         Args:
-            outputs: Which of the outputs to transform. If omitted, all outputs
-                will be transformed.
+            m: The output dimension.
+            batch_shape: The batch_shape of the training targets.
         """
         super().__init__()
+        self._m = m
         self._batch_shape = batch_shape
+        self.register_buffer("_original_label_medians", torch.zeros([*batch_shape, m]))
+        self.register_buffer("_is_trained", torch.tensor(False))
+
+        # TODO these are ragged tensors, we should use a better data structure such
+        # that they are saved to the state_dict
         self._unique_labels = {}
         self._warped_labels = {}
-        self.register_buffer("_original_label_medians", torch.tensor([]))
-        self.register_buffer("_is_trained", torch.tensor(False))
 
     def _get_std_above_median(self, unique_y: Tensor, y_median: Tensor) -> Tensor:
         # Estimate std of good half
@@ -1141,20 +1152,15 @@ class HalfRankTransform(OutcomeTransform):
                 "HalfRankTransform does not support transforming observation noise"
             )
 
-        _check_batched_output(Y, self._batch_shape)
+        _check_batched_output(Y, self._batch_shape, self._m)
+        Y_transformed = Y.clone()
 
         if self.training:
             if torch.isnan(Y).all(dim=-2).any():
                 raise RuntimeError("For at least one batch, all outcomes are NaN")
 
-            Y_transformed = Y.clone()
-
             # Compute median for each batch
             Y_medians = torch.nanmedian(Y, dim=-2).values
-
-            self._original_label_medians = torch.empty(
-                (*self._batch_shape, Y.shape[-1]), device=Y.device
-            )
 
             for dim in range(Y.shape[-1]):
                 batch_indices = (
@@ -1170,27 +1176,24 @@ class HalfRankTransform(OutcomeTransform):
 
                     # Get finite values and their ranks for each batch
                     is_finite_mask = ~torch.isnan(y)
-                    ranks = torch.zeros_like(y)
 
                     # TODO: this is annoying but torch.unique doesn't support
                     # returning indices
                     np_unique_y, np_unique_indices = np.unique(
                         y[is_finite_mask].numpy(), return_index=True
                     )
+                    ranks = stats.rankdata(y.numpy(), method="dense")
+
                     unique_y = torch.from_numpy(np_unique_y).to(y.device)
                     unique_indices = torch.from_numpy(np_unique_indices).to(y.device)
-
-                    for i, val in enumerate(unique_y):
-                        ranks[y == val] = i + 1
-
-                    ranks = torch.where(is_finite_mask, ranks, len(unique_y) + 1)
+                    ranks = torch.from_numpy(ranks).to(y.device)
 
                     # Calculate rank quantiles
                     dedup_median_index = torch.searchsorted(unique_y, y_median)
-                    denominator = dedup_median_index + 0.5 * (
+                    denominator = 2 * dedup_median_index + (
                         unique_y[dedup_median_index] == y_median
                     )
-                    rank_quantile = 0.5 * (ranks - 0.5) / denominator
+                    rank_quantile = (ranks - 0.5) / denominator
 
                     y_above_median_std = self._get_std_above_median(unique_y, y_median)
 
@@ -1209,14 +1212,129 @@ class HalfRankTransform(OutcomeTransform):
                     # save intermediate values for untransform
                     self._original_label_medians[*batch_idx, dim] = y_median
                     self._unique_labels[(*batch_idx, dim)] = unique_y
-                    self._warped_labels[(*batch_idx, dim)] = (rank_ppf + y_median)[
-                        is_finite_mask
-                    ][unique_indices]
+                    self._warped_labels[(*batch_idx, dim)] = Y_transformed[
+                        *batch_idx, :, dim
+                    ][is_finite_mask][unique_indices]
 
             self._is_trained = torch.tensor(True)
             return Y_transformed, Yvar
 
-        return Y, Yvar
+        for dim in range(Y.shape[-1]):
+            batch_indices = (
+                product(*([m for m in range(n)] for n in self._batch_shape))
+                if self._batch_shape is not None and len(self._batch_shape) > 0
+                else [  # this allows it to work with no batch dim
+                    (...,),
+                ]
+            )
+            for batch_idx in batch_indices:
+                y_median = self._original_label_medians[*batch_idx, dim]
+                y = Y[*batch_idx, :, dim]
+                warped_labels: torch.Tensor = self._warped_labels[(*batch_idx, dim)]
+                unique_labels: torch.Tensor = self._unique_labels[(*batch_idx, dim)]
+
+                # Process values below median
+                below_median = y < self._original_label_medians[*batch_idx, dim]
+                if below_median.any():
+                    # Find nearest original values and perform lookup
+                    original_idx = torch.searchsorted(unique_labels, y[below_median])
+
+                    # Create indices for neighboring values
+                    left_idx = torch.clamp(original_idx - 1, min=0)
+                    right_idx = torch.clamp(original_idx + 1, max=len(unique_labels))
+
+                    # Gather neighboring values
+                    candidates = torch.stack(
+                        [
+                            unique_labels[left_idx],
+                            unique_labels[original_idx],
+                            unique_labels[right_idx],
+                        ],
+                        dim=-1,
+                    )
+
+                    # Find nearest original values and perform lookup
+                    best_idx = torch.argmin(
+                        torch.abs(candidates - y[below_median].unsqueeze(-1)), dim=-1
+                    )
+
+                    lookup_mask = torch.isclose(
+                        candidates[torch.arange(len(best_idx)), best_idx],
+                        y[below_median],
+                    )
+                    full_lookup_mask = torch.full_like(below_median, False)
+                    below_median_indices = torch.where(below_median)[0]
+                    lookup_indices = below_median_indices[lookup_mask]
+                    full_lookup_mask[lookup_indices] = True
+                    full_lookup_values = torch.zeros_like(Y[*batch_idx, :, dim])
+                    full_lookup_values[full_lookup_mask] = warped_labels[
+                        original_idx[lookup_mask]
+                    ]
+                    Y_transformed[*batch_idx, :, dim] = torch.where(
+                        full_lookup_mask,
+                        full_lookup_values,
+                        Y_transformed[*batch_idx, :, dim],
+                    )
+
+                    # if the value is below the original minimum, we need to
+                    # extrapolate outside the range
+                    extrapolate_mask = y < unique_labels[0]
+                    extrapolated_values = warped_labels[0] - (
+                        y[extrapolate_mask] - unique_labels[0]
+                    ).abs() / (unique_labels.max() - unique_labels.min()) * (
+                        warped_labels.max() - warped_labels.min()
+                    )
+                    full_extrapolated_values = torch.zeros_like(Y[*batch_idx, :, dim])
+                    full_extrapolated_values[extrapolate_mask] = extrapolated_values
+                    Y_transformed[*batch_idx, :, dim] = torch.where(
+                        extrapolate_mask,
+                        full_extrapolated_values,
+                        Y_transformed[*batch_idx, :, dim],
+                    )
+
+                    # otherwise, interpolate
+                    neither_extrapolate_nor_lookup = ~(
+                        (y[below_median] < unique_labels[0]) | lookup_mask
+                    )
+                    y_neither_extrapolate_nor_lookup = y[below_median][
+                        neither_extrapolate_nor_lookup
+                    ]
+                    warped_idx_neither_extrapolate_nor_lookup = original_idx[
+                        neither_extrapolate_nor_lookup
+                    ]
+
+                    lower_idx = (warped_idx_neither_extrapolate_nor_lookup - 1,)
+                    upper_idx = (warped_idx_neither_extrapolate_nor_lookup,)
+
+                    original_gap = unique_labels[upper_idx] - unique_labels[lower_idx]
+                    warped_gap = warped_labels[upper_idx] - warped_labels[lower_idx]
+
+                    full_interpolated_mask = torch.full_like(below_median, False)
+                    below_median_indices = torch.where(below_median)[0]
+                    interpolated_indices = below_median_indices[
+                        neither_extrapolate_nor_lookup
+                    ]
+                    full_interpolated_mask[interpolated_indices] = True
+
+                    full_interpolated_values = torch.zeros_like(
+                        Y_transformed[*batch_idx, :, dim]
+                    )
+                    full_interpolated_values[full_interpolated_mask] = torch.where(
+                        original_gap > 0,
+                        warped_labels[lower_idx]
+                        + (y_neither_extrapolate_nor_lookup - unique_labels[lower_idx])
+                        / original_gap
+                        * warped_gap,
+                        warped_labels[lower_idx],
+                    )
+
+                    Y_transformed[*batch_idx, :, dim] = torch.where(
+                        full_interpolated_mask,
+                        full_interpolated_values,
+                        Y_transformed[*batch_idx, :, dim],
+                    )
+
+        return Y_transformed, Yvar
 
     def untransform(
         self, Y: Tensor, Yvar: Tensor | None = None
@@ -1259,7 +1377,7 @@ class HalfRankTransform(OutcomeTransform):
                 # Process values below median
                 below_median = y < self._original_label_medians[*batch_idx, dim]
                 if below_median.any():
-                    # Find nearest warped values and interpolate
+                    # Find nearest warped values and perform lookup
                     warped_idx = torch.searchsorted(warped_labels, y[below_median])
 
                     # Create indices for neighboring values
@@ -1300,8 +1418,8 @@ class HalfRankTransform(OutcomeTransform):
                     extrapolate_mask = y < warped_labels[0]
                     extrapolated_values = unique_labels[0] - (
                         y[extrapolate_mask] - warped_labels[0]
-                    ).abs() / (warped_labels[-1] - warped_labels[0]) * (
-                        unique_labels[-1] - unique_labels[0]
+                    ).abs() / (warped_labels.max() - warped_labels.min()) * (
+                        unique_labels.max() - unique_labels.min()
                     )
                     full_extrapolated_values = torch.zeros_like(
                         Y_utf[*batch_idx, :, dim]

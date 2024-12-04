@@ -942,14 +942,15 @@ class TestInfeasibleTransform(BotorchTestCase):
         Y[..., 0, 0] = float("nan")
 
         transform.train()
-        Y_tf, _ = transform.forward(Y, None)
+        Y_tf, Yvar_tf = transform.forward(Y, Y + 2)
+        self.assertTrue(torch.allclose(Yvar_tf[:, 1:], Y[:, 1:] + 2))
 
         # Test untransform
-        Y_untf, _ = transform.untransform(Y_tf, None)
+        Y_untf, Yvar_untf = transform.untransform(Y_tf, Yvar_tf)
 
         # Check that values are properly untransformed
         self.assertTrue(torch.allclose(Y_untf[:, 1:], Y[:, 1:], rtol=1e-4))
-
+        self.assertTrue(torch.allclose(Yvar_untf[:, 1:], Yvar_tf[:, 1:], rtol=1e-4))
         # test the unwarped_bad_value
         self.assertTrue(
             torch.allclose(
