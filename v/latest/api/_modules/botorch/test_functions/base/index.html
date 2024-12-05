@@ -34,9 +34,11 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Protocol</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">InputDataError</span>
+<span class="kn">from</span> <span class="nn">pyre_extensions</span> <span class="kn">import</span> <span class="n">none_throws</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
@@ -251,6 +253,151 @@
     <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Generate `n` pareto optimal points."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SeedingMixin">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.SeedingMixin">[docs]</a>
+<span class="k">class</span> <span class="nc">SeedingMixin</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="n">_seeds</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">_current_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_seeds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_seeds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="SeedingMixin.increment_seed">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.SeedingMixin.increment_seed">[docs]</a>
+    <span class="k">def</span> <span class="nf">increment_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_seed</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">none_throws</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_seeds</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">none_throws</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_seed</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">seed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_seed</span></div>
+
+
+
+<span class="c1"># Outlier problems</span>
+<div class="viewcode-block" id="OutlierGenerator">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.OutlierGenerator">[docs]</a>
+<span class="k">class</span> <span class="nc">OutlierGenerator</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">BaseTestProblem</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Call signature for outlier generators for single-objective problems.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            problem: The test problem.</span>
+<span class="sd">            X: The input tensor.</span>
+<span class="sd">            bounds: The bounds of the test problem.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tensor of outliers with shape X.shape[:-1] (1d if unbatched).</span>
+<span class="sd">        """</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+
+
+
+<div class="viewcode-block" id="constant_outlier_generator">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.constant_outlier_generator">[docs]</a>
+<span class="k">def</span> <span class="nf">constant_outlier_generator</span><span class="p">(</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">constant</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Generates outliers that are all the same constant. To be used in conjunction with</span>
+<span class="sd">    `partial` to fix the constant value and conform to the `OutlierGenerator` protocol.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; generator = partial(constant_outlier_generator, constant=1.0)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        problem: Not used.</span>
+<span class="sd">        X: The `batch_shape x n x d`-dim inputs. Also determines the number, dtype,</span>
+<span class="sd">            and device of the returned tensor.</span>
+<span class="sd">        bounds: Not used.</span>
+<span class="sd">        constant: The constant value of the outliers.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tensor of shape `batch_shape x n` (1d if unbatched).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">constant</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CorruptedTestProblem">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.CorruptedTestProblem">[docs]</a>
+<span class="k">class</span> <span class="nc">CorruptedTestProblem</span><span class="p">(</span><span class="n">BaseTestProblem</span><span class="p">,</span> <span class="n">SeedingMixin</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_test_problem</span><span class="p">:</span> <span class="n">BaseTestProblem</span><span class="p">,</span>
+        <span class="n">outlier_generator</span><span class="p">:</span> <span class="n">OutlierGenerator</span><span class="p">,</span>
+        <span class="n">outlier_fraction</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">seeds</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A problem with outliers.</span>
+
+<span class="sd">        NOTE: Both noise_std and negate will be taken from the base test problem.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            base_test_problem: The base function to be corrupted.</span>
+<span class="sd">            outlier_generator: A function that generates outliers. It will be called</span>
+<span class="sd">                with arguments `f`, `X` and `bounds`, where `f` is the</span>
+<span class="sd">                `base_test_problem`, `X` is the</span>
+<span class="sd">                argument passed to the `forward` method, and `bounds`</span>
+<span class="sd">                are as here, and it returns the values of outliers.</span>
+<span class="sd">            outlier_fraction: The fraction of outliers.</span>
+<span class="sd">            bounds: The bounds of the function.</span>
+<span class="sd">            seeds: The seeds to use for the outlier generator. If seeds are provided,</span>
+<span class="sd">                the problem will iterate through the list of seeds, changing the seed</span>
+<span class="sd">                with a call to `next(seeds)` with every `forward` call. If a list is</span>
+<span class="sd">                provided, it will first be converted to an iterator.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">base_test_problem</span><span class="o">.</span><span class="n">dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">bounds</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">base_test_problem</span><span class="o">.</span><span class="n">_bounds</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">noise_std</span><span class="o">=</span><span class="n">base_test_problem</span><span class="o">.</span><span class="n">noise_std</span><span class="p">,</span>
+            <span class="n">negate</span><span class="o">=</span><span class="n">base_test_problem</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_test_problem</span> <span class="o">=</span> <span class="n">base_test_problem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outlier_generator</span> <span class="o">=</span> <span class="n">outlier_generator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outlier_fraction</span> <span class="o">=</span> <span class="n">outlier_fraction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seeds</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">seeds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">iter</span><span class="p">(</span><span class="n">seeds</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CorruptedTestProblem.evaluate_true">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.CorruptedTestProblem.evaluate_true">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_test_problem</span><span class="o">.</span><span class="n">evaluate_true</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CorruptedTestProblem.forward">
+<a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.CorruptedTestProblem.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Generate data at X and corrupt it, if noise is True.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: The `batch_shape x n x d`-dim inputs.</span>
+<span class="sd">            noise: Whether to corrupt the data.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x n`-dim tensor.</span>
+<span class="sd">        """</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">noise</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_seeds</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">increment_seed</span><span class="p">()</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+            <span class="n">corrupt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">outlier_fraction</span>
+            <span class="n">outliers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outlier_generator</span><span class="p">(</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_test_problem</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span>
+            <span class="p">)</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">corrupt</span><span class="p">,</span> <span class="n">outliers</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
 </div>
 
 </pre></div>

@@ -147,6 +147,8 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.rounding.IdentitySTEFunction.backward">backward() (botorch.utils.rounding.IdentitySTEFunction static method)</a>
 </li>
+<li><a href="models.html#botorch.models.relevance_pursuit.backward_relevance_pursuit">backward_relevance_pursuit() (in module botorch.models.relevance_pursuit)</a>
+</li>
 <li><a href="exceptions.html#botorch.exceptions.warnings.BadInitialCandidatesWarning">BadInitialCandidatesWarning</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape">base_sample_shape (botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
@@ -757,6 +759,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.models.likelihoods.sparse_outlier_noise
+
+      <ul>
+<li><a href="models.html#module-botorch.models.likelihoods.sparse_outlier_noise">module</a>
+</li>
+</ul></li>
+<li>
     botorch.models.model
 
       <ul>
@@ -785,6 +794,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.models.relevance_pursuit
+
+      <ul>
+<li><a href="models.html#module-botorch.models.relevance_pursuit">module</a>
+</li>
+</ul></li>
+<li>
     botorch.models.transforms.factory
 
       <ul>
@@ -798,6 +814,8 @@
 <li><a href="models.html#module-botorch.models.transforms.input">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.transforms.outcome
 
@@ -805,8 +823,6 @@
 <li><a href="models.html#module-botorch.models.transforms.outcome">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.transforms.utils
 
@@ -1638,12 +1654,14 @@
 </ul></li>
 <li><a href="models.html#botorch.models.utils.assorted.consolidate_duplicates">consolidate_duplicates() (in module botorch.models.utils.assorted)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.base.constant_outlier_generator">constant_outlier_generator() (in module botorch.test_functions.base)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.CONSTR">CONSTR (class in botorch.test_functions.multi_objective)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">ConstrainedBaseTestProblem (class in botorch.test_functions.base)</a>
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">ConstrainedBaseTestProblem (class in botorch.test_functions.base)</a>
-</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin">ConstrainedBraninCurrin (class in botorch.test_functions.multi_objective)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement">ConstrainedExpectedImprovement (class in botorch.acquisition.analytic)</a>
@@ -1745,7 +1763,13 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize_mixed.continuous_step">continuous_step() (in module botorch.optim.optimize_mixed)</a>
 </li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.contract_support">contract_support() (botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
+</li>
 <li><a href="utils.html#botorch.utils.transforms.convert_to_target_pre_hook">convert_to_target_pre_hook() (in module botorch.utils.transforms)</a>
+</li>
+<li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.convex_parameterization">convex_parameterization (botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise property)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.base.CorruptedTestProblem">CorruptedTestProblem (class in botorch.test_functions.base)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Cosine8">Cosine8 (class in botorch.test_functions.synthetic)</a>
 </li>
@@ -1840,8 +1864,10 @@
 </li>
 <li><a href="utils.html#botorch.utils.probability.linalg.PivotedCholesky.diag">diag (botorch.utils.probability.linalg.PivotedCholesky attribute)</a>
 </li>
-<li><a href="test_functions.html#botorch.test_functions.base.BaseTestProblem.dim">dim (botorch.test_functions.base.BaseTestProblem attribute)</a>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.dim">dim (botorch.models.relevance_pursuit.RelevancePursuitMixin attribute)</a>
 <ul>
+<li><a href="test_functions.html#botorch.test_functions.base.BaseTestProblem.dim">(botorch.test_functions.base.BaseTestProblem attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_fidelity.AugmentedBranin.dim">(botorch.test_functions.multi_fidelity.AugmentedBranin attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_fidelity.AugmentedHartmann.dim">(botorch.test_functions.multi_fidelity.AugmentedHartmann attribute)</a>
@@ -2098,6 +2124,8 @@
 </ul></li>
 <li><a href="test_functions.html#botorch.test_functions.base.BaseTestProblem.evaluate_true">evaluate_true() (botorch.test_functions.base.BaseTestProblem method)</a>
 <ul>
+<li><a href="test_functions.html#botorch.test_functions.base.CorruptedTestProblem.evaluate_true">(botorch.test_functions.base.CorruptedTestProblem method)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_fidelity.AugmentedBranin.evaluate_true">(botorch.test_functions.multi_fidelity.AugmentedBranin method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_fidelity.AugmentedHartmann.evaluate_true">(botorch.test_functions.multi_fidelity.AugmentedHartmann method)</a>
@@ -2233,11 +2261,20 @@
 </ul></li>
 <li><a href="models.html#botorch.models.transforms.utils.expand_and_copy_tensor">expand_and_copy_tensor() (in module botorch.models.transforms.utils)</a>
 </li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.expand_support">expand_support() (botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.utils.expand_trace_observations">expand_trace_observations() (in module botorch.acquisition.utils)</a>
 </li>
+<li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.expansion_objective">expansion_objective() (botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise method)</a>
+<ul>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.expansion_objective">(botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
+</li>
+</ul></li>
 <li><a href="acquisition.html#botorch.acquisition.risk_measures.Expectation">Expectation (class in botorch.acquisition.risk_measures)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ExpectationPosteriorTransform">ExpectationPosteriorTransform (class in botorch.acquisition.objective)</a>
+</li>
+<li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood.expected_log_prob">expected_log_prob() (botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement">ExpectedHypervolumeImprovement (class in botorch.acquisition.multi_objective.analytic)</a>
 </li>
@@ -2545,6 +2582,8 @@
 </li>
 <li><a href="models.html#botorch.models.likelihoods.pairwise.PairwiseLikelihood.forward">(botorch.models.likelihoods.pairwise.PairwiseLikelihood method)</a>
 </li>
+<li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.forward">(botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise method)</a>
+</li>
 <li><a href="models.html#botorch.models.multitask.KroneckerMultiTaskGP.forward">(botorch.models.multitask.KroneckerMultiTaskGP method)</a>
 </li>
 <li><a href="models.html#botorch.models.multitask.MultiTaskGP.forward">(botorch.models.multitask.MultiTaskGP method)</a>
@@ -2607,6 +2646,8 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.base.BaseTestProblem.forward">(botorch.test_functions.base.BaseTestProblem method)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.base.CorruptedTestProblem.forward">(botorch.test_functions.base.CorruptedTestProblem method)</a>
+</li>
 <li><a href="utils.html#botorch.utils.gp_sampling.GPDraw.forward">(botorch.utils.gp_sampling.GPDraw method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.RandomFourierFeatures.forward">(botorch.utils.gp_sampling.RandomFourierFeatures method)</a>
@@ -2622,9 +2663,13 @@
 </ul></li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.relevance_pursuit.forward_relevance_pursuit">forward_relevance_pursuit() (in module botorch.models.relevance_pursuit)</a>
+</li>
 <li><a href="optim.html#botorch.optim.closures.core.ForwardBackwardClosure">ForwardBackwardClosure (class in botorch.optim.closures.core)</a>
 </li>
 <li><a href="utils.html#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">from_joint_dataset() (botorch.utils.datasets.MultiTaskDataset class method)</a>
+</li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.full_support">full_support() (botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.full_tree">full_tree (botorch.optim.optimize.OptimizeAcqfInputs property)</a>
 </li>
@@ -2764,10 +2809,10 @@
 </li>
 <li><a href="utils.html#botorch.utils.test_helpers.get_fully_bayesian_model">get_fully_bayesian_model() (in module botorch.utils.test_helpers)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.test_helpers.get_fully_bayesian_model_list">get_fully_bayesian_model_list() (in module botorch.utils.test_helpers)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">get_gaussian_likelihood_with_gamma_prior() (in module botorch.models.utils.gpytorch_modules)</a>
 </li>
 <li><a href="models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_lognormal_prior">get_gaussian_likelihood_with_lognormal_prior() (in module botorch.models.utils.gpytorch_modules)</a>
@@ -2838,6 +2883,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.sampling.get_polytope_samples">get_polytope_samples() (in module botorch.utils.sampling)</a>
 </li>
+<li><a href="models.html#botorch.models.relevance_pursuit.get_posterior_over_support">get_posterior_over_support() (in module botorch.models.relevance_pursuit)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.acquisition.MCSamplerMixin.get_posterior_samples">get_posterior_samples() (botorch.acquisition.acquisition.MCSamplerMixin method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.test_helpers.get_pvar_expected">get_pvar_expected() (in module botorch.utils.test_helpers)</a>
@@ -2893,6 +2940,8 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Hartmann">Hartmann (class in botorch.test_functions.synthetic)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.base.SeedingMixin.has_seeds">has_seeds (botorch.test_functions.base.SeedingMixin property)</a>
+</li>
 <li><a href="utils.html#botorch.utils.dispatcher.Dispatcher.help">help() (botorch.utils.dispatcher.Dispatcher method)</a>
 </li>
 <li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP">HigherOrderGP (class in botorch.models.higher_order_gp)</a>
@@ -2928,6 +2977,10 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.normal.IIDNormalSampler">IIDNormalSampler (class in botorch.sampling.normal)</a>
 </li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.inactive_indices">inactive_indices (botorch.models.relevance_pursuit.RelevancePursuitMixin property)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.base.SeedingMixin.increment_seed">increment_seed() (botorch.test_functions.base.SeedingMixin method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR">IndependentCVaR (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR">IndependentVaR (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
@@ -2945,6 +2998,8 @@
 <li><a href="models.html#botorch.models.kernels.infinite_width_bnn.InfiniteWidthBNNKernel">InfiniteWidthBNNKernel (class in botorch.models.kernels.infinite_width_bnn)</a>
 </li>
 <li><a href="models.html#botorch.models.approximate_gp.SingleTaskVariationalGP.init_inducing_points">init_inducing_points() (botorch.models.approximate_gp.SingleTaskVariationalGP method)</a>
+</li>
+<li><a href="models.html#botorch.models.relevance_pursuit.initialize_dense_parameters">initialize_dense_parameters() (in module botorch.models.relevance_pursuit)</a>
 </li>
 <li><a href="optim.html#botorch.optim.initializers.initialize_q_batch">initialize_q_batch() (in module botorch.optim.initializers)</a>
 </li>
@@ -2971,9 +3026,13 @@
 </li>
 <li><a href="models.html#botorch.models.transforms.input.InteractionFeatures">InteractionFeatures (class in botorch.models.transforms.input)</a>
 </li>
+<li><a href="utils.html#botorch.utils.constraints.NonTransformedInterval.inverse_transform">inverse_transform() (botorch.utils.constraints.NonTransformedInterval method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility">InverseCostWeightedUtility (class in botorch.acquisition.cost_aware)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.utils.InverseLengthscaleTransform">InverseLengthscaleTransform (class in botorch.sampling.pathwise.utils)</a>
+</li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.is_active">is_active (botorch.models.relevance_pursuit.RelevancePursuitMixin property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.transforms.is_ensemble">is_ensemble() (in module botorch.utils.transforms)</a>
 </li>
@@ -2992,6 +3051,8 @@
 <li><a href="models.html#botorch.models.transforms.input.InputTransform.is_one_to_many">(botorch.models.transforms.input.InputTransform attribute)</a>
 </li>
 </ul></li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.is_sparse">is_sparse (botorch.models.relevance_pursuit.RelevancePursuitMixin property)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.sensitivity_analysis.Ishigami">Ishigami (class in botorch.test_functions.sensitivity_analysis)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.paths.PathDict.items">items() (botorch.sampling.pathwise.paths.PathDict method)</a>
@@ -3210,6 +3271,8 @@
 <li><a href="optim.html#botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints">make_scipy_nonlinear_inequality_constraints() (in module botorch.optim.parameter_constraints)</a>
 </li>
 <li><a href="utils.html#botorch.utils.sampling.manual_seed">manual_seed() (in module botorch.utils.sampling)</a>
+</li>
+<li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood.marginal">marginal() (botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MARS">MARS (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
 </li>
@@ -3449,6 +3512,8 @@
 </li>
 <li><a href="models.html#module-botorch.models.likelihoods.pairwise">botorch.models.likelihoods.pairwise</a>
 </li>
+<li><a href="models.html#module-botorch.models.likelihoods.sparse_outlier_noise">botorch.models.likelihoods.sparse_outlier_noise</a>
+</li>
 <li><a href="models.html#module-botorch.models.model">botorch.models.model</a>
 </li>
 <li><a href="models.html#module-botorch.models.model_list_gp_regression">botorch.models.model_list_gp_regression</a>
@@ -3456,6 +3521,8 @@
 <li><a href="models.html#module-botorch.models.multitask">botorch.models.multitask</a>
 </li>
 <li><a href="models.html#module-botorch.models.pairwise_gp">botorch.models.pairwise_gp</a>
+</li>
+<li><a href="models.html#module-botorch.models.relevance_pursuit">botorch.models.relevance_pursuit</a>
 </li>
 <li><a href="models.html#module-botorch.models.transforms.factory">botorch.models.transforms.factory</a>
 </li>
@@ -3753,6 +3820,8 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.nonlinear_inequality_constraints">nonlinear_inequality_constraints (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
 </li>
+<li><a href="utils.html#botorch.utils.constraints.NonTransformedInterval">NonTransformedInterval (class in botorch.utils.constraints)</a>
+</li>
 <li><a href="models.html#botorch.models.transforms.utils.norm_to_lognorm">norm_to_lognorm() (in module botorch.models.transforms.utils)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.utils.norm_to_lognorm_mean">norm_to_lognorm_mean() (in module botorch.models.transforms.utils)</a>
@@ -3922,15 +3991,17 @@
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_discrete_local_search">optimize_acqf_discrete_local_search() (in module botorch.optim.optimize)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize_homotopy.optimize_acqf_homotopy">optimize_acqf_homotopy() (in module botorch.optim.optimize_homotopy)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_list">optimize_acqf_list() (in module botorch.optim.optimize)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_mixed">optimize_acqf_mixed() (in module botorch.optim.optimize)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize_mixed.optimize_acqf_mixed_alternating">optimize_acqf_mixed_alternating() (in module botorch.optim.optimize_mixed)</a>
+</li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.optimize_mll">optimize_mll() (botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.input_constructors.optimize_objective">optimize_objective() (in module botorch.acquisition.input_constructors)</a>
 </li>
@@ -3952,6 +4023,8 @@
 <li><a href="models.html#botorch.models.transforms.outcome.OutcomeTransform">OutcomeTransform (class in botorch.models.transforms.outcome)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.utils.OutcomeUntransformer">OutcomeUntransformer (class in botorch.sampling.pathwise.utils)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.base.OutlierGenerator">OutlierGenerator (class in botorch.test_functions.base)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.features.maps.FeatureMap.output_transform">output_transform (botorch.sampling.pathwise.features.maps.FeatureMap attribute)</a>
 <ul>
@@ -4251,7 +4324,11 @@
 </ul></li>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.MultiList.reinsert">reinsert() (botorch.utils.multi_objective.hypervolume.MultiList method)</a>
 </li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin">RelevancePursuitMixin (class in botorch.models.relevance_pursuit)</a>
+</li>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.MultiList.remove">remove() (botorch.utils.multi_objective.hypervolume.MultiList method)</a>
+</li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.remove_support">remove_support() (botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.utils.repeat_to_match_aug_dim">repeat_to_match_aug_dim() (in module botorch.acquisition.utils)</a>
 </li>
@@ -4279,6 +4356,8 @@
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.rho">rho (botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise property)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.risk_measures.RiskMeasureMCObjective">RiskMeasureMCObjective (class in botorch.acquisition.risk_measures)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock">Rosenbrock (class in botorch.test_functions.synthetic)</a>
@@ -4425,6 +4504,10 @@
 </li>
 <li><a href="optim.html#botorch.optim.core.scipy_minimize">scipy_minimize() (in module botorch.optim.core)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.base.SeedingMixin.seed">seed (botorch.test_functions.base.SeedingMixin property)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.base.SeedingMixin">SeedingMixin (class in botorch.test_functions.base)</a>
+</li>
 <li><a href="utils.html#botorch.utils.probability.mvnxpb.MVNXPB.select_pivot">select_pivot() (botorch.utils.probability.mvnxpb.MVNXPB method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.multitask.separate_mtmvn">separate_mtmvn() (in module botorch.utils.multitask)</a>
@@ -4440,6 +4523,11 @@
 <li><a href="models.html#botorch.models.fully_bayesian.SaasPyroModel.set_inputs">(botorch.models.fully_bayesian.SaasPyroModel method)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel.set_inputs">(botorch.models.fully_bayesian_multitask.MultitaskSaasPyroModel method)</a>
+</li>
+</ul></li>
+<li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.set_sparse_parameter">set_sparse_parameter() (botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise method)</a>
+<ul>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.set_sparse_parameter">(botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
 </li>
 </ul></li>
 <li><a href="optim.html#botorch.optim.utils.numpy_utils.set_tensors_from_ndarray_1d">set_tensors_from_ndarray_1d() (in module botorch.optim.utils.numpy_utils)</a>
@@ -4468,9 +4556,10 @@
 </li>
 </ul></li>
 <li><a href="utils.html#botorch.utils.testing.BotorchTestCase.setUp">setUp() (botorch.utils.testing.BotorchTestCase method)</a>
+<ul>
+<li><a href="utils.html#botorch.utils.testing.TestCorruptedProblemsMixin.setUp">(botorch.utils.testing.TestCorruptedProblemsMixin method)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
+</ul></li>
 <li><a href="optim.html#botorch.optim.utils.model_utils.TorchAttr.shape">shape (botorch.optim.utils.model_utils.TorchAttr attribute)</a>
 <ul>
 <li><a href="utils.html#botorch.utils.containers.BotorchContainer.shape">(botorch.utils.containers.BotorchContainer property)</a>
@@ -4480,6 +4569,8 @@
 <li><a href="utils.html#botorch.utils.containers.SliceContainer.shape">(botorch.utils.containers.SliceContainer property)</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="logging.html#botorch.logging.shape_to_str">shape_to_str() (in module botorch.logging)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Shekel">Shekel (class in botorch.test_functions.synthetic)</a>
@@ -4519,7 +4610,16 @@
 </li>
 <li><a href="utils.html#botorch.utils.dispatcher.Dispatcher.source">source() (botorch.utils.dispatcher.Dispatcher method)</a>
 </li>
+<li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.sparse_parameter">sparse_parameter (botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise property)</a>
+<ul>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.sparse_parameter">(botorch.models.relevance_pursuit.RelevancePursuitMixin property)</a>
+</li>
+</ul></li>
 <li><a href="utils.html#botorch.utils.sampling.sparse_to_dense_constraints">sparse_to_dense_constraints() (in module botorch.utils.sampling)</a>
+</li>
+<li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood">SparseOutlierGaussianLikelihood (class in botorch.models.likelihoods.sparse_outlier_noise)</a>
+</li>
+<li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise">SparseOutlierNoise (class in botorch.models.likelihoods.sparse_outlier_noise)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SpeedReducer">SpeedReducer (class in botorch.test_functions.synthetic)</a>
 </li>
@@ -4598,6 +4698,12 @@
 </li>
 <li><a href="utils.html#botorch.utils.datasets.SupervisedDataset">SupervisedDataset (class in botorch.utils.datasets)</a>
 </li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.support">support (botorch.models.relevance_pursuit.RelevancePursuitMixin property)</a>
+</li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.support_contraction">support_contraction() (botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
+</li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.support_expansion">support_expansion() (botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.cached_cholesky.supports_cache_root">supports_cache_root() (in module botorch.acquisition.cached_cholesky)</a>
 </li>
 <li><a href="utils.html#botorch.utils.probability.utils.swap_along_dim_">swap_along_dim_() (in module botorch.utils.probability.utils)</a>
@@ -4647,9 +4753,15 @@
 </li>
 <li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_Yvar">test_Yvar (botorch.cross_validation.CVFolds attribute)</a>
 </li>
+<li><a href="utils.html#botorch.utils.testing.TestCorruptedProblemsMixin">TestCorruptedProblemsMixin (class in botorch.utils.testing)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel">ThreeHumpCamel (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.OptimizeAcqfInputs.timeout_sec">timeout_sec (botorch.optim.optimize.OptimizeAcqfInputs attribute)</a>
+</li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.to_dense">to_dense() (botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
+</li>
+<li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.to_sparse">to_sparse() (botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
 </li>
 <li><a href="optim.html#botorch.optim.core.torch_minimize">torch_minimize() (in module botorch.optim.core)</a>
 </li>
@@ -4697,6 +4809,8 @@
 <li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform.transform">(botorch.models.transforms.input.ReversibleInputTransform method)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.Round.transform">(botorch.models.transforms.input.Round method)</a>
+</li>
+<li><a href="utils.html#botorch.utils.constraints.NonTransformedInterval.transform">(botorch.utils.constraints.NonTransformedInterval method)</a>
 </li>
 </ul></li>
 <li><a href="optim.html#botorch.optim.initializers.transform_constraints">transform_constraints() (in module botorch.optim.initializers)</a>

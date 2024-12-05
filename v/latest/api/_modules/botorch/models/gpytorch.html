@@ -439,6 +439,8 @@
             <span class="n">mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mvn</span>
 
+    <span class="c1"># pyre-ignore[14]: Inconsistent override. Could not find parameter</span>
+    <span class="c1"># `Keywords(typing.Any)` in overriding signature.</span>
 <div class="viewcode-block" id="BatchedMultiOutputGPyTorchModel.posterior">
 <a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.posterior">[docs]</a>
     <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
@@ -510,6 +512,7 @@
         <span class="k">return</span> <span class="n">posterior</span></div>
 
 
+    <span class="c1"># pyre-ignore[14]: Inconsistent override. Could not find parameter `noise`.</span>
 <div class="viewcode-block" id="BatchedMultiOutputGPyTorchModel.condition_on_observations">
 <a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.condition_on_observations">[docs]</a>
     <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
@@ -681,7 +684,7 @@
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span> <span class="o">+</span> <span class="s2">" that are not broadcastble."</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">batch_shapes</span><span class="p">))</span>
 
-    <span class="c1"># pyre-fixme[15]: Inconsistent override in return types</span>
+    <span class="c1"># pyre-fixme[14]: Inconsistent override in return types</span>
 <div class="viewcode-block" id="ModelListGPyTorchModel.posterior">
 <a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel.posterior">[docs]</a>
     <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
@@ -896,6 +899,8 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
 
+    <span class="c1"># pyre-ignore[14]: Inconsistent override. Could not find parameter</span>
+    <span class="c1"># `Keywords(typing.Any)` in overriding signature.</span>
 <div class="viewcode-block" id="MultiTaskGPyTorchModel.posterior">
 <a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.MultiTaskGPyTorchModel.posterior">[docs]</a>
     <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>

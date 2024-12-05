@@ -51,7 +51,8 @@
 <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.get_sampler</span> <span class="kn">import</span> <span class="n">GetSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.stochastic_samplers</span> <span class="kn">import</span> <span class="n">StochasticSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.test_functions.base</span> <span class="kn">import</span> <span class="n">BaseTestProblem</span>
+<span class="kn">from</span> <span class="nn">botorch.test_functions.base</span> <span class="kn">import</span> <span class="n">BaseTestProblem</span><span class="p">,</span> <span class="n">CorruptedTestProblem</span>
+<span class="kn">from</span> <span class="nn">botorch.test_functions.synthetic</span> <span class="kn">import</span> <span class="n">Rosenbrock</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">AddedDiagLinearOperator</span><span class="p">,</span> <span class="n">DiagLinearOperator</span>
@@ -309,6 +310,31 @@
                         <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">is_equal</span><span class="o">.</span><span class="n">all</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TestCorruptedProblemsMixin">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.TestCorruptedProblemsMixin">[docs]</a>
+<span class="k">class</span> <span class="nc">TestCorruptedProblemsMixin</span><span class="p">(</span><span class="n">BotorchTestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TestCorruptedProblemsMixin.setUp">
+<a class="viewcode-back" href="../../../utils.html#botorch.utils.testing.TestCorruptedProblemsMixin.setUp">[docs]</a>
+    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suppress_input_warnings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">setUp</span><span class="p">(</span><span class="n">suppress_input_warnings</span><span class="o">=</span><span class="n">suppress_input_warnings</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">outlier_generator</span><span class="p">(</span>
+            <span class="n">problem</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="n">BaseTestProblem</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Any</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">outlier_generator</span> <span class="o">=</span> <span class="n">outlier_generator</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rosenbrock_problem</span> <span class="o">=</span> <span class="n">CorruptedTestProblem</span><span class="p">(</span>
+            <span class="n">base_test_problem</span><span class="o">=</span><span class="n">Rosenbrock</span><span class="p">(),</span>
+            <span class="n">outlier_fraction</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">outlier_generator</span><span class="o">=</span><span class="n">outlier_generator</span><span class="p">,</span>
+            <span class="n">seeds</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+        <span class="p">)</span></div>
 </div>
 
 

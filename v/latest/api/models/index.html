@@ -2837,7 +2837,7 @@ for each categorical variable.</p></li>
 <div class="citation-list" role="list">
 <div class="citation" id="burt2020svgp" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>burt2020svgp<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id15" role="doc-backlink">1</a>,<a href="#id29" role="doc-backlink">2</a>,<a href="#id31" role="doc-backlink">3</a>,<a href="#id33" role="doc-backlink">4</a>)</span>
+<span class="backrefs">(<a href="#id15" role="doc-backlink">1</a>,<a href="#id37" role="doc-backlink">2</a>,<a href="#id39" role="doc-backlink">3</a>,<a href="#id41" role="doc-backlink">4</a>)</span>
 <p>David R. Burt and Carl Edward Rasmussen and Mark van der Wilk,
 Convergence of Sparse Variational Inference in Gaussian Process Regression,
 Journal of Machine Learning Research, 2020,
@@ -2851,7 +2851,7 @@ Artificial Intelligence, 2013, <a class="reference external" href="https://arxiv
 </div>
 <div class="citation" id="moss2023ipa" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>moss2023ipa<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id16" role="doc-backlink">1</a>,<a href="#id30" role="doc-backlink">2</a>,<a href="#id32" role="doc-backlink">3</a>,<a href="#id36" role="doc-backlink">4</a>)</span>
+<span class="backrefs">(<a href="#id16" role="doc-backlink">1</a>,<a href="#id38" role="doc-backlink">2</a>,<a href="#id40" role="doc-backlink">3</a>,<a href="#id44" role="doc-backlink">4</a>)</span>
 <p>Henry B. Moss and Sebastian W. Ober and Victor Picheny,
 Inducing Point Allocation for Sparse Gaussian Processes
 in High-Throughput Bayesian Optimization,Proceedings of
@@ -3808,6 +3808,437 @@ simplify this method and eliminate some others.</p>
 </dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.models.relevance_pursuit">
+<span id="relevance-pursuit-models"></span><h3>Relevance Pursuit Models<a class="headerlink" href="#module-botorch.models.relevance_pursuit" title="Link to this heading">¶</a></h3>
+<p>Relevance Pursuit model structure and optimization routines for the sparse optimization
+of Gaussian process hyper-parameters, see <a class="reference internal" href="#ament2024pursuit" id="id20"><span>[Ament2024pursuit]</span></a> for details.</p>
+<p>References</p>
+<div class="citation-list" role="list">
+<div class="citation" id="ament2024pursuit" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Ament2024pursuit<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a href="#id20" role="doc-backlink">1</a>,<a href="#id21" role="doc-backlink">2</a>,<a href="#id22" role="doc-backlink">3</a>,<a href="#id23" role="doc-backlink">4</a>,<a href="#id24" role="doc-backlink">5</a>,<a href="#id25" role="doc-backlink">6</a>,<a href="#id29" role="doc-backlink">7</a>,<a href="#id30" role="doc-backlink">8</a>)</span>
+<p>S. Ament, E. Santorella, D. Eriksson, B. Letham, M. Balandat, and E. Bakshy.
+Robust Gaussian Processes via Relevance Pursuit. Advances in Neural Information
+Processing Systems 37, 2024. Arxiv: <a class="reference external" href="https://arxiv.org/abs/2410.24222">https://arxiv.org/abs/2410.24222</a>.</p>
+</div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.relevance_pursuit.</span></span><span class="sig-name descname"><span class="pre">RelevancePursuitMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Mixin class to convert between the sparse and dense representations of the
+relevance pursuit models’ sparse parameters, as well as to compute the generalized
+support acquisition and support deletion criteria.</p>
+<p>Constructor for the RelevancePursuitMixin class.</p>
+<p>For details, see <a class="reference internal" href="#ament2024pursuit" id="id21"><span>[Ament2024pursuit]</span></a> or <a class="reference external" href="https://arxiv.org/abs/2410.24222">https://arxiv.org/abs/2410.24222</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> (<em>int</em>) – The total number of features.</p></li>
+<li><p><strong>support</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The indices of the features in the support, subset of range(dim).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.dim" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.sparse_parameter">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sparse_parameter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.sparse_parameter" title="Link to this definition">¶</a></dt>
+<dd><p>The sparse parameter, required to have a single indexing dimension.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.set_sparse_parameter">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">set_sparse_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.set_sparse_parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.set_sparse_parameter" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the sparse parameter.</p>
+<p>NOTE: We can’t use the property setter @sparse_parameter.setter because of
+the special way PyTorch treats Parameter types, including custom setters that
+bypass the @property setters before the latter are called.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Parameter</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.is_sparse">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_sparse</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.is_sparse" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.support">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">support</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.support" title="Link to this definition">¶</a></dt>
+<dd><p>The indices of the active parameters.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.is_active">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_active</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.is_active" title="Link to this definition">¶</a></dt>
+<dd><p>A Boolean Tensor of length <cite>dim</cite>, indicating which of the <cite>dim</cite> indices of
+<cite>self.sparse_parameter</cite> are in the support, i.e. active.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.inactive_indices">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inactive_indices</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.inactive_indices" title="Link to this definition">¶</a></dt>
+<dd><p>An integral Tensor of length <cite>dim - len(support)</cite>, indicating which of the
+indices of <cite>self.sparse_parameter</cite> are not in the support, i.e. inactive.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.to_sparse">
+<span class="sig-name descname"><span class="pre">to_sparse</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.to_sparse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.to_sparse" title="Link to this definition">¶</a></dt>
+<dd><p>Converts the sparse parameter to its sparse (&lt; dim) representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The current object in its sparse representation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.to_dense">
+<span class="sig-name descname"><span class="pre">to_dense</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.to_dense"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.to_dense" title="Link to this definition">¶</a></dt>
+<dd><p>Converts the sparse parameter to its dense, length-<cite>dim</cite> representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The current object in its dense representation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.expand_support">
+<span class="sig-name descname"><span class="pre">expand_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.expand_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.expand_support" title="Link to this definition">¶</a></dt>
+<dd><p>Expands the support by a number of indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – A list of indices of <cite>self.sparse_parameter</cite> to add to the support.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The current object, updated with the expanded support.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.contract_support">
+<span class="sig-name descname"><span class="pre">contract_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.contract_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.contract_support" title="Link to this definition">¶</a></dt>
+<dd><p>Contracts the support by a number of indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>indices</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – A list of indices of <cite>self.sparse_parameter</cite> to remove from
+the support.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The current object, updated with the contracted support.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.full_support">
+<span class="sig-name descname"><span class="pre">full_support</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.full_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.full_support" title="Link to this definition">¶</a></dt>
+<dd><p>Initializes the RelevancePursuitMixin with a full, size-<cite>dim</cite> support.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The current object with full support in the dense representation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.remove_support">
+<span class="sig-name descname"><span class="pre">remove_support</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.remove_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.remove_support" title="Link to this definition">¶</a></dt>
+<dd><p>Initializes the RelevancePursuitMixin with an empty, size-zero support.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The current object with empty support, representation unchanged.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.support_expansion">
+<span class="sig-name descname"><span class="pre">support_expansion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.support_expansion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.support_expansion" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the indices of the features that maximize the gradient of the sparse
+parameter and that are not already in the support, and subsequently expands the
+support to include the features if their gradient is positive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>ExactMarginalLogLikelihood</em>) – The marginal likelihood, containing the model to optimize.
+NOTE: Virtually all of the rest of the code is not specific to the
+marginal likelihood optimization, so we could generalize this to work
+with any objective.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of features to select.</p></li>
+<li><p><strong>modifier</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that modifies the gradient of the inactive parameters
+before computing the support expansion criterion. This can be used
+to select the maximum gradient magnitude for real-valued parameters
+whose gradients are not non-negative, using modifier = torch.abs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the support was expanded, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.expansion_objective">
+<span class="sig-name descname"><span class="pre">expansion_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.expansion_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.expansion_objective" title="Link to this definition">¶</a></dt>
+<dd><p>Computes an objective value for all the inactive parameters, i.e.
+self.sparse_parameter[~self.is_active] since we can’t add already active
+parameters to the support. This value will be used to select the parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mll</strong> (<em>ExactMarginalLogLikelihood</em>) – The marginal likelihood, containing the model to optimize.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The expansion objective value for all the inactive parameters.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.support_contraction">
+<span class="sig-name descname"><span class="pre">support_contraction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.support_contraction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.support_contraction" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the indices of the features that have the smallest coefficients,
+and subsequently contracts the exlude the features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>ExactMarginalLogLikelihood</em>) – The marginal likelihood, containing the model to optimize.
+NOTE: Virtually all of the rest of the code is not specific to the
+marginal likelihood optimization, so we could generalize this to work
+with any objective.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of features to select for removal.</p></li>
+<li><p><strong>modifier</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – A function that modifies the parameter values before computing
+the support contraction criterion.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the support was expanded, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.RelevancePursuitMixin.optimize_mll">
+<span class="sig-name descname"><span class="pre">optimize_mll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_trace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_dense_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#RelevancePursuitMixin.optimize_mll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin.optimize_mll" title="Link to this definition">¶</a></dt>
+<dd><p>Optimizes the marginal likelihood.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mll</strong> (<em>ExactMarginalLogLikelihood</em>) – The marginal likelihood, containing the model to optimize.</p></li>
+<li><p><strong>model_trace</strong> (<em>list</em><em>[</em><a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a><em>] </em><em>| </em><em>None</em>) – If not None, a list to which a deepcopy of the model state is
+appended. NOTE This operation is <em>in place</em>.</p></li>
+<li><p><strong>reset_parameters</strong> (<em>bool</em>) – If True, initializes the sparse parameter to the all-zeros
+vector before every marginal likelihood optimization step. If False, the
+optimization is warm-started with the previous iteration’s parameters.</p></li>
+<li><p><strong>reset_dense_parameters</strong> (<em>bool</em>) – If True, re-initializes the dense parameters, e.g.
+other GP hyper-parameters that are <em>not</em> part of the Relevance Pursuit
+module, to the initial values provided by their associated constraints.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – A dictionary of keyword arguments for the optimizer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The marginal likelihood after optimization.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.forward_relevance_pursuit">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.relevance_pursuit.</span></span><span class="sig-name descname"><span class="pre">forward_relevance_pursuit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparse_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparsity_levels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_dense_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">record_model_trace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_support</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#forward_relevance_pursuit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.forward_relevance_pursuit" title="Link to this definition">¶</a></dt>
+<dd><p>Forward Relevance Pursuit.</p>
+<p>NOTE: For the robust <cite>SparseOutlierNoise</cite> model of <a class="reference internal" href="#ament2024pursuit" id="id22"><span>[Ament2024pursuit]</span></a>, the forward
+algorithm is generally faster than the backward algorithm, particularly when the
+maximum sparsity level is small, but it leads to less robust results when the number
+of outliers is large.</p>
+<p>For details, see <a class="reference internal" href="#ament2024pursuit" id="id23"><span>[Ament2024pursuit]</span></a> or <a class="reference external" href="https://arxiv.org/abs/2410.24222">https://arxiv.org/abs/2410.24222</a>.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">base_noise</span> <span class="o">=</span> <span class="n">HomoskedasticNoise</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">noise_constraint</span><span class="o">=</span><span class="n">NonTransformedInterval</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="mf">1e-5</span><span class="p">,</span> <span class="mf">1e-1</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="mf">1e-3</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">SparseOutlierGaussianLikelihood</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">base_noise</span><span class="o">=</span><span class="n">base_noise</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">dim</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># NOTE: `likelihood.noise_covar` is the `RelevancePursuitMixin`</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sparse_module</span> <span class="o">=</span> <span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sparse_module</span><span class="p">,</span> <span class="n">model_trace</span> <span class="o">=</span> <span class="n">forward_relevance_pursuit</span><span class="p">(</span><span class="n">sparse_module</span><span class="p">,</span> <span class="n">mll</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sparse_module</strong> (<a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a>) – The relevance pursuit module.</p></li>
+<li><p><strong>mll</strong> (<em>ExactMarginalLogLikelihood</em>) – The marginal likelihood, containing the model to optimize.</p></li>
+<li><p><strong>sparsity_levels</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The sparsity levels to expand the support to.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – A dictionary of keyword arguments to pass to the optimizer.
+By default, initializes the “options” sub-dictionary with <cite>maxiter</cite> and
+<cite>ftol</cite>, <cite>gtol</cite> values, unless specified.</p></li>
+<li><p><strong>reset_parameters</strong> (<em>bool</em>) – If true, initializes the sparse parameter to the all zeros
+after each iteration.</p></li>
+<li><p><strong>reset_dense_parameters</strong> (<em>bool</em>) – If true, re-initializes the dense parameters, e.g.
+other GP hyper-parameters that are <em>not</em> part of the Relevance Pursuit
+module, to the initial values provided by their associated constraints.</p></li>
+<li><p><strong>record_model_trace</strong> (<em>bool</em>) – If true, records the model state after every iteration.</p></li>
+<li><p><strong>initial_support</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The support with which to initialize the sparse module. By
+default, the support is initialized to the empty set.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The relevance pursuit module after forward relevance pursuit optimization, and
+a list of models with different supports that were optimized.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a>, list[<a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>] | None]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.backward_relevance_pursuit">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.relevance_pursuit.</span></span><span class="sig-name descname"><span class="pre">backward_relevance_pursuit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparse_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mll</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparsity_levels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_dense_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">record_model_trace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_support</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#backward_relevance_pursuit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.backward_relevance_pursuit" title="Link to this definition">¶</a></dt>
+<dd><p>Backward Relevance Pursuit.</p>
+<p>NOTE: For the robust <cite>SparseOutlierNoise</cite> model of <a class="reference internal" href="#ament2024pursuit" id="id24"><span>[Ament2024pursuit]</span></a>, the backward
+algorithm generally leads to more robust results than the forward algorithm,
+especially when the number of outliers is large, but is more expensive unless the
+support is contracted by more than one in each iteration.</p>
+<p>For details, see <a class="reference internal" href="#ament2024pursuit" id="id25"><span>[Ament2024pursuit]</span></a> or <a class="reference external" href="https://arxiv.org/abs/2410.24222">https://arxiv.org/abs/2410.24222</a>.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">base_noise</span> <span class="o">=</span> <span class="n">HomoskedasticNoise</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">noise_constraint</span><span class="o">=</span><span class="n">NonTransformedInterval</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="mf">1e-5</span><span class="p">,</span> <span class="mf">1e-1</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="mf">1e-3</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">SparseOutlierGaussianLikelihood</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">base_noise</span><span class="o">=</span><span class="n">base_noise</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">dim</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># NOTE: `likelihood.noise_covar` is the `RelevancePursuitMixin`</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sparse_module</span> <span class="o">=</span> <span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sparse_module</span><span class="p">,</span> <span class="n">model_trace</span> <span class="o">=</span> <span class="n">backward_relevance_pursuit</span><span class="p">(</span><span class="n">sparse_module</span><span class="p">,</span> <span class="n">mll</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sparse_module</strong> (<a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a>) – The relevance pursuit module.</p></li>
+<li><p><strong>mll</strong> (<em>ExactMarginalLogLikelihood</em>) – The marginal likelihood, containing the model to optimize.</p></li>
+<li><p><strong>sparsity_levels</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The sparsity levels to expand the support to.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – A dictionary of keyword arguments to pass to the optimizer.
+By default, initializes the “options” sub-dictionary with <cite>maxiter</cite> and
+<cite>ftol</cite>, <cite>gtol</cite> values, unless specified.</p></li>
+<li><p><strong>reset_parameters</strong> (<em>bool</em>) – If true, initializes the sparse parameter to the all zeros
+after each iteration.</p></li>
+<li><p><strong>reset_dense_parameters</strong> (<em>bool</em>) – If true, re-initializes the dense parameters, e.g.
+other GP hyper-parameters that are <em>not</em> part of the Relevance Pursuit
+module, to the initial values provided by their associated constraints.</p></li>
+<li><p><strong>record_model_trace</strong> (<em>bool</em>) – If true, records the model state after every iteration.</p></li>
+<li><p><strong>initial_support</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The support with which to initialize the sparse module. By
+default, the support is initialized to the full set.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The relevance pursuit module after forward relevance pursuit optimization, and
+a list of models with different supports that were optimized.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a>, list[<a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>] | None]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.get_posterior_over_support">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.relevance_pursuit.</span></span><span class="sig-name descname"><span class="pre">get_posterior_over_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rp_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_trace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_support_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_mean_of_support</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#get_posterior_over_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.get_posterior_over_support" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the posterior distribution over a list of models.
+Assumes we are storing both likelihood and GP model in the model_trace.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">SparseOutlierGaussianLikelihood</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">base_noise</span><span class="o">=</span><span class="n">base_noise</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">dim</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># NOTE: `likelihood.noise_covar` is the `RelevancePursuitMixin`</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sparse_module</span> <span class="o">=</span> <span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sparse_module</span><span class="p">,</span> <span class="n">model_trace</span> <span class="o">=</span> <span class="n">backward_relevance_pursuit</span><span class="p">(</span><span class="n">sparse_module</span><span class="p">,</span> <span class="n">mll</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># NOTE: SparseOutlierNoise is the type of `sparse_module`</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">support_size</span><span class="p">,</span> <span class="n">bmc_probabilities</span> <span class="o">=</span> <span class="n">get_posterior_over_support</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">SparseOutlierNoise</span><span class="p">,</span> <span class="n">model_trace</span><span class="p">,</span> <span class="n">prior_mean_of_support</span><span class="o">=</span><span class="mf">2.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rp_class</strong> (<em>type</em><em>[</em><a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><em>RelevancePursuitMixin</em></a><em>]</em>) – The relevance pursuit class to use for computing the support size.
+This is used to get the RelevancePursuitMixin from the Model via the static
+method <cite>_from_model</cite>. We could generalize this and let the user pass this
+getter instead.</p></li>
+<li><p><strong>model_trace</strong> (<em>list</em><em>[</em><a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a><em>]</em>) – A list of models with different support sizes, usually generated
+with relevance_pursuit.</p></li>
+<li><p><strong>log_support_prior</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – Callable that computes the log prior probability of a
+support size. If None, uses a default exponential prior with a mean
+specified by <cite>prior_mean_of_support</cite>.</p></li>
+<li><p><strong>prior_mean_of_support</strong> (<em>float</em><em> | </em><em>None</em>) – A mean value for the default exponential prior
+distribution over the support size. Ignored if <cite>log_support_prior</cite>
+is passed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor of posterior marginal likelihoods, one for each model in the trace.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<em>Tensor</em>, <em>Tensor</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.relevance_pursuit.initialize_dense_parameters">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.relevance_pursuit.</span></span><span class="sig-name descname"><span class="pre">initialize_dense_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/relevance_pursuit.html#initialize_dense_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.relevance_pursuit.initialize_dense_parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the dense parameters of a model to their initial values. Infers initial
+values from the constraints, if no initial values are provided. If a parameter
+does not have a constraint, it is initialized to zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The model to initialize.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The re-initialized model, and a dictionary of initial values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>, dict[str, <em>Any</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
 </section>
 <section id="model-components">
 <h2>Model Components<a class="headerlink" href="#model-components" title="Link to this heading">¶</a></h2>
@@ -3904,15 +4335,15 @@ should equal <cite>num_dimensions</cite>.</p></li>
 <p>Defines the GP kernel which is equivalent to performing exact Bayesian
 inference on a fully-connected deep neural network with ReLU activations
 and i.i.d. priors in the infinite-width limit.
-See <a class="reference internal" href="#cho2009kernel" id="id20"><span>[Cho2009kernel]</span></a> and <a class="reference internal" href="#lee2018deep" id="id21"><span>[Lee2018deep]</span></a> for details.</p>
+See <a class="reference internal" href="#cho2009kernel" id="id26"><span>[Cho2009kernel]</span></a> and <a class="reference internal" href="#lee2018deep" id="id27"><span>[Lee2018deep]</span></a> for details.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="cho2009kernel" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id20" role="doc-backlink">Cho2009kernel</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id26" role="doc-backlink">Cho2009kernel</a><span class="fn-bracket">]</span></span>
 <p>Y. Cho, and L. Saul. Kernel methods for deep learning.
 Advances in Neural Information Processing Systems 22. 2009.</p>
 </div>
 <div class="citation" id="lee2018deep" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id21" role="doc-backlink">Lee2018deep</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id27" role="doc-backlink">Lee2018deep</a><span class="fn-bracket">]</span></span>
 <p>J. Lee, Y. Bahri, R. Novak, S. Schoenholz, J. Pennington, and J. Dickstein.
 Deep Neural Networks as Gaussian Processes.
 International Conference on Learning Representations. 2018.</p>
@@ -4088,14 +4519,14 @@ across contexts.</p></li>
 <dt class="sig sig-object py" id="botorch.models.kernels.orthogonal_additive_kernel.OrthogonalAdditiveKernel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.kernels.orthogonal_additive_kernel.</span></span><span class="sig-name descname"><span class="pre">OrthogonalAdditiveKernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quad_deg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coeff_constraint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Positive()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coeffs_1_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coeffs_2_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/kernels/orthogonal_additive_kernel.html#OrthogonalAdditiveKernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.kernels.orthogonal_additive_kernel.OrthogonalAdditiveKernel" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code></p>
-<p>Orthogonal Additive Kernels (OAKs) were introduced in <a class="reference internal" href="#lu2022additive" id="id22"><span>[Lu2022additive]</span></a>, though
+<p>Orthogonal Additive Kernels (OAKs) were introduced in <a class="reference internal" href="#lu2022additive" id="id28"><span>[Lu2022additive]</span></a>, though
 only for the case of Gaussian base kernels with a Gaussian input data distribution.</p>
 <p>The implementation here generalizes OAKs to arbitrary base kernels by using a
 Gauss-Legendre quadrature approximation to the required one-dimensional integrals
 involving the base kernels.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="lu2022additive" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id22" role="doc-backlink">Lu2022additive</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id28" role="doc-backlink">Lu2022additive</a><span class="fn-bracket">]</span></span>
 <p>X. Lu, A. Boukouvalas, and J. Hensman. Additive Gaussian processes revisited.
 Proceedings of the 39th International Conference on Machine Learning. Jul 2022.</p>
 </div>
@@ -4436,6 +4867,244 @@ respect to each item.</p>
 </dl>
 </dd></dl>
 </dd></dl>
+<dl class="py class" id="module-botorch.models.likelihoods.sparse_outlier_noise">
+<dt class="sig sig-object py" id="botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.likelihoods.sparse_outlier_noise.</span></span><span class="sig-name descname"><span class="pre">SparseOutlierGaussianLikelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_noise</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlier_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_constraint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convex_parameterization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/likelihoods/sparse_outlier_noise.html#SparseOutlierGaussianLikelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_GaussianLikelihoodBase</span></code></p>
+<p>A likelihood that models the noise of a GP with SparseOutlierNoise, a noise
+model in the Relevance Pursuit family of models, permitting additional “robust”
+variance for a small set of outlier data points. Notably, the indices of the
+outlier data points are inferred during the optimization of the associated log
+marginal likelihood via the Relevance Pursuit algorithm.</p>
+<p>For details, see <a class="reference internal" href="#ament2024pursuit" id="id29"><span>[Ament2024pursuit]</span></a> or <a class="reference external" href="https://arxiv.org/abs/2410.24222">https://arxiv.org/abs/2410.24222</a>.</p>
+<p>NOTE: Letting base_noise also use the non-transformed constraints, will lead
+to more stable optimization, but is orthogonal implementation-wise. If the base
+noise is a HomoskedasticNoise, one can pass the non-transformed constraint as
+the <cite>noise_constraint</cite>.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">base_noise</span> <span class="o">=</span> <span class="n">HomoskedasticNoise</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">noise_constraint</span><span class="o">=</span><span class="n">NonTransformedInterval</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="mf">1e-5</span><span class="p">,</span> <span class="mf">1e-1</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="mf">1e-3</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">SparseOutlierGaussianLikelihood</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">base_noise</span><span class="o">=</span><span class="n">base_noise</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">dim</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># NOTE: `likelihood.noise_covar` is the `RelevancePursuitMixin`</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sparse_module</span> <span class="o">=</span> <span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">backward_relevance_pursuit</span><span class="p">(</span><span class="n">sparse_module</span><span class="p">,</span> <span class="n">mll</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_noise</strong> (<em>Noise</em><em> | </em><em>FixedGaussianNoise</em>) – The base noise model.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – The number of training observations, which determines the maximum
+number of data-point-specific noise variances of the noise model.</p></li>
+<li><p><strong>outlier_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The indices of the outliers.</p></li>
+<li><p><strong>rho_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – Prior for <cite>self.noise_covar</cite>’s rho parameter.</p></li>
+<li><p><strong>rho_constraint</strong> (<a class="reference internal" href="utils.html#botorch.utils.constraints.NonTransformedInterval" title="botorch.utils.constraints.NonTransformedInterval"><em>NonTransformedInterval</em></a><em> | </em><em>None</em>) – Constraint for <cite>self.noise_covar</cite>’s rho parameter. Needs to
+be a NonTransformedInterval because exact sparsity cannot be represented
+using smooth transforms like a softplus or sigmoid.</p></li>
+<li><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – The batch shape of the learned noise parameter (default: []).</p></li>
+<li><p><strong>convex_parameterization</strong> (<em>bool</em>) – Whether to use the convex parameterization of rho,
+which generally improves optimization results and is thus recommended.</p></li>
+<li><p><strong>loo</strong> (<em>bool</em>) – Whether to use leave-one-out (LOO) update equations that can compute
+the optimal values of each individual rho, keeping all else equal.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood.marginal">
+<span class="sig-name descname"><span class="pre">marginal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function_dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/likelihoods/sparse_outlier_noise.html#SparseOutlierGaussianLikelihood.marginal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood.marginal" title="Link to this definition">¶</a></dt>
+<dd><p>Computes a predictive distribution <span class="math notranslate nohighlight">\(p(y^* | \mathbf x^*)\)</span> given either a posterior
+distribution <span class="math notranslate nohighlight">\(p(\mathbf f | \mathcal D, \mathbf x)\)</span> or a
+prior distribution <span class="math notranslate nohighlight">\(p(\mathbf f|\mathbf x)\)</span> as input.</p>
+<p>With both exact inference and variational inference, the form of
+<span class="math notranslate nohighlight">\(p(\mathbf f|\mathcal D, \mathbf x)\)</span> or <span class="math notranslate nohighlight">\(p(\mathbf f|
+\mathbf x)\)</span> should usually be Gaussian. As a result, function_dist
+should usually be a <code class="xref py py-obj docutils literal notranslate"><span class="pre">MultivariateNormal</span></code> specified by the mean and
+(co)variance of <span class="math notranslate nohighlight">\(p(\mathbf f|...)\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>function_dist</strong> (<em>MultivariateNormal</em>) – Distribution for <span class="math notranslate nohighlight">\(f(x)\)</span>.</p></li>
+<li><p><strong>args</strong> – Additional args (passed to the foward function).</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Additional kwargs (passed to the foward function).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>list</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The marginal distribution, or samples from it.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>MultivariateNormal</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood.expected_log_prob">
+<span class="sig-name descname"><span class="pre">expected_log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/likelihoods/sparse_outlier_noise.html#SparseOutlierGaussianLikelihood.expected_log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood.expected_log_prob" title="Link to this definition">¶</a></dt>
+<dd><p>(Used by <code class="xref py py-obj docutils literal notranslate"><span class="pre">VariationalELBO</span></code> for variational inference.)</p>
+<p>Computes the expected log likelihood, where the expectation is over the GP variational distribution.</p>
+<div class="math notranslate nohighlight">
+\[\sum_{\mathbf x, y} \mathbb{E}_{q\left( f(\mathbf x) \right)}
+\left[ \log p \left( y \mid f(\mathbf x) \right) \right]\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>observations</strong> – Values of <span class="math notranslate nohighlight">\(y\)</span>.</p></li>
+<li><p><strong>function_dist</strong> – Distribution for <span class="math notranslate nohighlight">\(f(x)\)</span>.</p></li>
+<li><p><strong>args</strong> – Additional args (passed to the foward function).</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Additional kwargs (passed to the foward function).</p></li>
+<li><p><strong>target</strong> (<em>Tensor</em>)</p></li>
+<li><p><strong>input</strong> (<em>MultivariateNormal</em>)</p></li>
+<li><p><strong>params</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.likelihoods.sparse_outlier_noise.</span></span><span class="sig-name descname"><span class="pre">SparseOutlierNoise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_noise</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlier_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_constraint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convex_parameterization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/likelihoods/sparse_outlier_noise.html#SparseOutlierNoise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Noise</span></code>, <a class="reference internal" href="#botorch.models.relevance_pursuit.RelevancePursuitMixin" title="botorch.models.relevance_pursuit.RelevancePursuitMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">RelevancePursuitMixin</span></code></a></p>
+<p>A noise model in the Relevance Pursuit family of models, permitting
+additional “robust” variance for a small set of outlier data points.
+See also <cite>SparseOutlierGaussianLikelihood</cite>, which leverages this noise model.</p>
+<p>For details, see <a class="reference internal" href="#ament2024pursuit" id="id30"><span>[Ament2024pursuit]</span></a> or <a class="reference external" href="https://arxiv.org/abs/2410.24222">https://arxiv.org/abs/2410.24222</a>.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">base_noise</span> <span class="o">=</span> <span class="n">HomoskedasticNoise</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">noise_constraint</span><span class="o">=</span><span class="n">NonTransformedInterval</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="mf">1e-5</span><span class="p">,</span> <span class="mf">1e-1</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="mf">1e-3</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">SparseOutlierGaussianLikelihood</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">base_noise</span><span class="o">=</span><span class="n">base_noise</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">dim</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># NOTE: `likelihood.noise_covar` is the `SparseOutlierNoise`</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sparse_module</span> <span class="o">=</span> <span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">backward_relevance_pursuit</span><span class="p">(</span><span class="n">sparse_module</span><span class="p">,</span> <span class="n">mll</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_noise</strong> (<em>Noise</em><em> | </em><em>FixedGaussianNoise</em>) – The base noise model.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – The number of training observations, which determines the maximum
+number of data-point-specific noise variances of the noise model.</p></li>
+<li><p><strong>outlier_indices</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The indices of the outliers.</p></li>
+<li><p><strong>rho_prior</strong> (<em>Prior</em><em> | </em><em>None</em>) – Prior for the rho parameter.</p></li>
+<li><p><strong>rho_constraint</strong> (<a class="reference internal" href="utils.html#botorch.utils.constraints.NonTransformedInterval" title="botorch.utils.constraints.NonTransformedInterval"><em>NonTransformedInterval</em></a><em> | </em><em>None</em>) – Constraint for the rho parameter. Needs to be a
+NonTransformedInterval because exact sparsity cannot be represented
+using smooth transforms like a softplus or sigmoid.</p></li>
+<li><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – The batch shape of the learned noise parameter (default: []).</p></li>
+<li><p><strong>convex_parameterization</strong> (<em>bool</em>) – Whether to use the convex parameterization of rho,
+which generally improves optimization results and is thus recommended.</p></li>
+<li><p><strong>loo</strong> (<em>bool</em>) – Whether to use leave-one-out (LOO) update equations that can compute
+the optimal values of each individual rho, keeping all else equal.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.sparse_parameter">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sparse_parameter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Parameter</span></em><a class="headerlink" href="#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.sparse_parameter" title="Link to this definition">¶</a></dt>
+<dd><p>The sparse parameter, required to have a single indexing dimension.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.set_sparse_parameter">
+<span class="sig-name descname"><span class="pre">set_sparse_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/likelihoods/sparse_outlier_noise.html#SparseOutlierNoise.set_sparse_parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.set_sparse_parameter" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the sparse parameter.</p>
+<p>NOTE: We can’t use the property setter @sparse_parameter.setter because of
+the special way PyTorch treats Parameter types, including custom setters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Parameter</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.convex_parameterization">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">convex_parameterization</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.convex_parameterization" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.rho">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rho</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tensor</span></em><a class="headerlink" href="#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.rho" title="Link to this definition">¶</a></dt>
+<dd><p>Dense representation of the data-point-specific variances, corresponding to
+the latent <cite>self.raw_rho</cite> values, which might be represented sparsely or in the
+convex parameterization. The last dimension is equal to the number of training
+points <cite>self.dim</cite>.</p>
+<p>NOTE: <cite>rho</cite> differs from <cite>self.sparse_parameter</cite> in that the latter returns the
+the parameter in its sparse representation when <cite>self.is_sparse</cite> is true, and in
+its latent convex paramzeterization when <cite>self.convex_parameterization</cite> is true,
+while <cite>rho</cite> always returns the data-point-specific variances, embedded in a
+dense tensor. The dense representation is used to propagate gradients to the
+sparse rhos in the support.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <cite>batch_shape x self.dim</cite>-dim Tensor of robustness variances.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/likelihoods/sparse_outlier_noise.html#SparseOutlierNoise.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.forward" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the covariance matrix of the sparse outlier noise model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>list</em><em>[</em><em>Tensor</em><em>] </em><em>| </em><em>None</em>) – The training inputs, used to determine if the model is applied to the
+training data, in which case the outlier variances are applied, or not.
+NOTE: By default, BoTorch passes the transformed training inputs to
+the likelihood during both training and inference.</p></li>
+<li><p><strong>shape</strong> (<em>Size</em><em> | </em><em>None</em>) – The shape of the covariance matrix, which is used to broadcast the
+rho values to the correct shape.</p></li>
+<li><p><strong>diag_K</strong> (<em>Tensor</em><em> | </em><em>None</em>) – The diagonal of the covariance matrix, which is used to scale the
+rho values in the convex parameterization.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Any additional parameters of the base noise model, same as for
+GPyTorch’s noise model. Note that this implementation does not support
+non-kwarg <cite>params</cite> arguments, which are used in GPyTorch’s noise models.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape x self.dim</cite>-dim Tensor of robustness variances.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>LinearOperator</em> | <em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.expansion_objective">
+<span class="sig-name descname"><span class="pre">expansion_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mll</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/likelihoods/sparse_outlier_noise.html#SparseOutlierNoise.expansion_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.expansion_objective" title="Link to this definition">¶</a></dt>
+<dd><p>Computes an objective value for all the inactive parameters, i.e.
+self.sparse_parameter[~self.is_active] since we can’t add already active
+parameters to the support. This value will be used to select the parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mll</strong> (<em>ExactMarginalLogLikelihood</em>) – The marginal likelihood, containing the model to optimize.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The expansion objective value for all the inactive parameters.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </section>
 </section>
 <section id="transforms">
@@ -4450,7 +5119,7 @@ the model posterior back to the original space.</p>
 <p>References</p>
 <div class="citation-list" role="list">
 <div class="citation" id="eriksson2021scalable" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a href="#id23" role="doc-backlink">eriksson2021scalable</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a href="#id31" role="doc-backlink">eriksson2021scalable</a><span class="fn-bracket">]</span></span>
 <p>D. Eriksson, M. Poloczek. Scalable Constrained Bayesian Optimization.
 International Conference on Artificial Intelligence and Statistics. PMLR, 2021,
 <a class="reference external" href="http://proceedings.mlr.press/v130/eriksson21a.html">http://proceedings.mlr.press/v130/eriksson21a.html</a></p>
@@ -4955,7 +5624,7 @@ observation noises associated with the training targets
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.outcome.</span></span><span class="sig-name descname"><span class="pre">Bilog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Bilog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutcomeTransform</span></code></a></p>
 <p>Bilog-transform outcomes.</p>
-<p>The Bilog transform <a class="reference internal" href="#eriksson2021scalable" id="id23"><span>[eriksson2021scalable]</span></a> is useful for modeling outcome
+<p>The Bilog transform <a class="reference internal" href="#eriksson2021scalable" id="id31"><span>[eriksson2021scalable]</span></a> is useful for modeling outcome
 constraints as it magnifies values near zero and flattens extreme values.</p>
 <p>Bilog-transform outcomes.</p>
 <dl class="field-list simple">
@@ -5653,7 +6322,7 @@ are unnormalized before rounding. In the case of (b) transform_on_train
 should be set to False, so that the raw inputs are rounded and then
 normalized to the unit cube.</p>
 <p>By default, the straight through estimators are used for the gradients as
-proposed in <a class="reference internal" href="utils.html#daulton2022bopr" id="id24"><span>[Daulton2022bopr]</span></a>. This transformation supports differentiable
+proposed in <a class="reference internal" href="utils.html#daulton2022bopr" id="id32"><span>[Daulton2022bopr]</span></a>. This transformation supports differentiable
 approximate rounding (currently only for integers). The rounding function
 is approximated with a piece-wise function where each piece is a hyperbolic
 tangent function.</p>
@@ -5808,8 +6477,8 @@ NOTE: This is only supported for single-output models.</p></li>
 provided beforehand or generated on the fly via a callable.</p>
 <p>As an example, the predefined set of features can be used with
 <cite>RiskMeasureMCObjective</cite> to optimize risk measures as described in
-<a class="reference internal" href="acquisition.html#cakmak2020risk" id="id25"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the rhoKG acqusition
-function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id26"><span>[Cakmak2020risk]</span></a> can be found at
+<a class="reference internal" href="acquisition.html#cakmak2020risk" id="id33"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the rhoKG acqusition
+function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id34"><span>[Cakmak2020risk]</span></a> can be found at
 <a class="reference external" href="https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables">https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables</a>.</p>
 <p>The steps for using this to obtain samples of a risk measure are as follows:</p>
 <ul class="simple">
@@ -6346,7 +7015,7 @@ a dimension-agnostic RBF kernel without outputscale.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="hvarfner2024vanilla" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>Hvarfner2024vanilla<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id2" role="doc-backlink">1</a>,<a href="#id27" role="doc-backlink">2</a>,<a href="#id28" role="doc-backlink">3</a>)</span>
+<span class="backrefs">(<a href="#id2" role="doc-backlink">1</a>,<a href="#id35" role="doc-backlink">2</a>,<a href="#id36" role="doc-backlink">3</a>)</span>
 <p>C. Hvarfner, E. O. Hellsten, L. Nardi,
 Vanilla Bayesian Optimization Performs Great in High Dimensions.
 In International Conference on Machine Learning, 2024.</p>
@@ -6389,7 +7058,7 @@ noise level to be greater than MIN_INFERRED_NOISE_LEVEL (=1e-4).</p>
 <dt class="sig sig-object py" id="botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_lognormal_prior">
 <span class="sig-prename descclassname"><span class="pre">botorch.models.utils.gpytorch_modules.</span></span><span class="sig-name descname"><span class="pre">get_gaussian_likelihood_with_lognormal_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/gpytorch_modules.html#get_gaussian_likelihood_with_lognormal_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_lognormal_prior" title="Link to this definition">¶</a></dt>
 <dd><p>Return Gaussian likelihood with a LogNormal(-4.0, 1.0) prior.
-This prior is based on <a class="reference internal" href="#hvarfner2024vanilla" id="id27"><span>[Hvarfner2024vanilla]</span></a>.</p>
+This prior is based on <a class="reference internal" href="#hvarfner2024vanilla" id="id35"><span>[Hvarfner2024vanilla]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>batch_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – Batch shape for the likelihood.</p>
@@ -6407,7 +7076,7 @@ noise level to be greater than MIN_INFERRED_NOISE_LEVEL (=1e-4).</p>
 <dt class="sig sig-object py" id="botorch.models.utils.gpytorch_modules.get_covar_module_with_dim_scaled_prior">
 <span class="sig-prename descclassname"><span class="pre">botorch.models.utils.gpytorch_modules.</span></span><span class="sig-name descname"><span class="pre">get_covar_module_with_dim_scaled_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ard_num_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_rbf_kernel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/gpytorch_modules.html#get_covar_module_with_dim_scaled_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.gpytorch_modules.get_covar_module_with_dim_scaled_prior" title="Link to this definition">¶</a></dt>
 <dd><p>Returns an RBF or Matern kernel with priors
-from  <a class="reference internal" href="#hvarfner2024vanilla" id="id28"><span>[Hvarfner2024vanilla]</span></a>.</p>
+from  <a class="reference internal" href="#hvarfner2024vanilla" id="id36"><span>[Hvarfner2024vanilla]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -6553,7 +7222,7 @@ process models.</p>
 <div class="citation-list" role="list">
 <div class="citation" id="chen2018dpp" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>chen2018dpp<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a href="#id34" role="doc-backlink">1</a>,<a href="#id35" role="doc-backlink">2</a>)</span>
+<span class="backrefs">(<a href="#id42" role="doc-backlink">1</a>,<a href="#id43" role="doc-backlink">2</a>)</span>
 <p>Laming Chen and Guoxin Zhang and Hanning Zhou, Fast greedy MAP inference
 for determinantal point process to improve recommendation diversity,
 Proceedings of the 32nd International Conference on Neural Information
@@ -6603,7 +7272,7 @@ to a specific criterion.</p>
 <p>A function returning ones for each element. Using this quality function
 for inducing point allocation corresponds to allocating inducing points
 with the sole aim of minimizing predictive variance, i.e. the approach
-of <a class="reference internal" href="#burt2020svgp" id="id29"><span>[burt2020svgp]</span></a>.</p>
+of <a class="reference internal" href="#burt2020svgp" id="id37"><span>[burt2020svgp]</span></a>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.utils.inducing_point_allocators.ExpectedImprovementQualityFunction">
@@ -6611,7 +7280,7 @@ of <a class="reference internal" href="#burt2020svgp" id="id29"><span>[burt2020s
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.QualityFunction" title="botorch.models.utils.inducing_point_allocators.QualityFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">QualityFunction</span></code></a></p>
 <p>A function measuring the quality of input points as their expected
 improvement with respect to a conservative baseline. Expectations
-are according to the model from the previous BO step. See <a class="reference internal" href="#moss2023ipa" id="id30"><span>[moss2023ipa]</span></a>
+are according to the model from the previous BO step. See <a class="reference internal" href="#moss2023ipa" id="id38"><span>[moss2023ipa]</span></a>
 for details and justification.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -6628,7 +7297,7 @@ set False.</p></li>
 <dt class="sig sig-object py" id="botorch.models.utils.inducing_point_allocators.GreedyVarianceReduction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.utils.inducing_point_allocators.</span></span><span class="sig-name descname"><span class="pre">GreedyVarianceReduction</span></span><a class="reference internal" href="_modules/botorch/models/utils/inducing_point_allocators.html#GreedyVarianceReduction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.inducing_point_allocators.GreedyVarianceReduction" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.InducingPointAllocator" title="botorch.models.utils.inducing_point_allocators.InducingPointAllocator"><code class="xref py py-class docutils literal notranslate"><span class="pre">InducingPointAllocator</span></code></a></p>
-<p>The inducing point allocator proposed by <a class="reference internal" href="#burt2020svgp" id="id31"><span>[burt2020svgp]</span></a>, that
+<p>The inducing point allocator proposed by <a class="reference internal" href="#burt2020svgp" id="id39"><span>[burt2020svgp]</span></a>, that
 greedily chooses inducing point locations with maximal (conditional)
 predictive variance.</p>
 </dd></dl>
@@ -6638,7 +7307,7 @@ predictive variance.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.utils.inducing_point_allocators.InducingPointAllocator" title="botorch.models.utils.inducing_point_allocators.InducingPointAllocator"><code class="xref py py-class docutils literal notranslate"><span class="pre">InducingPointAllocator</span></code></a></p>
 <p>An inducing point allocator that greedily chooses inducing points with large
 predictive variance and that are in promising regions of the search
-space (according to the model form the previous BO step), see <a class="reference internal" href="#moss2023ipa" id="id32"><span>[moss2023ipa]</span></a>.</p>
+space (according to the model form the previous BO step), see <a class="reference internal" href="#moss2023ipa" id="id40"><span>[moss2023ipa]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -6653,11 +7322,11 @@ set False.</p></li>
 <dt class="sig sig-object py" id="botorch.models.utils.inducing_point_allocators._pivoted_cholesky_init">
 <span class="sig-prename descclassname"><span class="pre">botorch.models.utils.inducing_point_allocators.</span></span><span class="sig-name descname"><span class="pre">_pivoted_cholesky_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality_scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/inducing_point_allocators.html#_pivoted_cholesky_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.inducing_point_allocators._pivoted_cholesky_init" title="Link to this definition">¶</a></dt>
 <dd><p>A pivoted Cholesky initialization method for the inducing points,
-originally proposed in <a class="reference internal" href="#burt2020svgp" id="id33"><span>[burt2020svgp]</span></a> with the algorithm itself coming from
-<a class="reference internal" href="#chen2018dpp" id="id34"><span>[chen2018dpp]</span></a>. Code is a PyTorch version from <a class="reference internal" href="#chen2018dpp" id="id35"><span>[chen2018dpp]</span></a>, based on
+originally proposed in <a class="reference internal" href="#burt2020svgp" id="id41"><span>[burt2020svgp]</span></a> with the algorithm itself coming from
+<a class="reference internal" href="#chen2018dpp" id="id42"><span>[chen2018dpp]</span></a>. Code is a PyTorch version from <a class="reference internal" href="#chen2018dpp" id="id43"><span>[chen2018dpp]</span></a>, based on
 <a class="reference external" href="https://github.com/laming-chen/fast-map-dpp/blob/master/dpp.py">https://github.com/laming-chen/fast-map-dpp/blob/master/dpp.py</a> but with a small
 modification to allow the underlying DPP to be defined through its diversity-quality
-decomposition,as discussed by <a class="reference internal" href="#moss2023ipa" id="id36"><span>[moss2023ipa]</span></a>. This method returns a greedy
+decomposition,as discussed by <a class="reference internal" href="#moss2023ipa" id="id44"><span>[moss2023ipa]</span></a>. This method returns a greedy
 approximation of the MAP estimate of the specified DPP, i.e. its returns a
 set of points that are highly diverse (according to the provided kernel_matrix)
 and have high quality (according to the provided quality_scores).</p>

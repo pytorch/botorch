@@ -1,0 +1,979 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/latest/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/latest/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/latest/img/botorch.png"/><link rel="shortcut icon" href="/v/latest/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/latest/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/latest/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/latest/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.models.relevance_pursuit</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Relevance Pursuit model structure and optimization routines for the sparse optimization</span>
+<span class="sd">of Gaussian process hyper-parameters, see [Ament2024pursuit]_ for details.</span>
+
+<span class="sd">References</span>
+
+<span class="sd">.. [Ament2024pursuit]</span>
+<span class="sd">    S. Ament, E. Santorella, D. Eriksson, B. Letham, M. Balandat, and E. Bakshy.</span>
+<span class="sd">    Robust Gaussian Processes via Relevance Pursuit. Advances in Neural Information</span>
+<span class="sd">    Processing Systems 37, 2024. Arxiv: https://arxiv.org/abs/2410.24222.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span><span class="p">,</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span>
+
+<span class="n">MLL_ITER</span> <span class="o">=</span> <span class="mi">10_000</span>  <span class="c1"># let's take convergence seriously</span>
+<span class="n">MLL_TOL</span> <span class="o">=</span> <span class="mf">1e-8</span>
+<span class="n">RESET_PARAMETERS</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="RelevancePursuitMixin">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin">[docs]</a>
+<span class="k">class</span> <span class="nc">RelevancePursuitMixin</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mixin class to convert between the sparse and dense representations of the</span>
+<span class="sd">    relevance pursuit models' sparse parameters, as well as to compute the generalized</span>
+<span class="sd">    support acquisition and support deletion criteria.</span>
+<span class="sd">    """</span>
+
+    <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># the total number of features</span>
+    <span class="n">_support</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>  <span class="c1"># indices of the features in the support, subset of range(dim)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">support</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Constructor for the RelevancePursuitMixin class.</span>
+
+<span class="sd">        For details, see [Ament2024pursuit]_ or https://arxiv.org/abs/2410.24222.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dim: The total number of features.</span>
+<span class="sd">            support: The indices of the features in the support, subset of range(dim).</span>
+<span class="sd">        """</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_support</span> <span class="o">=</span> <span class="n">support</span> <span class="k">if</span> <span class="n">support</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="c1"># Assumption: sparse_parameter is initialized in sparse representation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_sparse</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_expansion_modifier</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contraction_modifier</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">sparse_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameter</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The sparse parameter, required to have a single indexing dimension."""</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="RelevancePursuitMixin.set_sparse_parameter">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.set_sparse_parameter">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_sparse_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Sets the sparse parameter.</span>
+
+<span class="sd">        NOTE: We can't use the property setter @sparse_parameter.setter because of</span>
+<span class="sd">        the special way PyTorch treats Parameter types, including custom setters that</span>
+<span class="sd">        bypass the @property setters before the latter are called.</span>
+<span class="sd">        """</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_from_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RelevancePursuitMixin</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Retrieves a RelevancePursuitMixin from a model."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_sparse</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="c1"># Do we need to differentiate between a full support sparse representation and</span>
+        <span class="c1"># a full support dense representation? The order the of the indices could be</span>
+        <span class="c1"># different, unless we keep them sorted.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_sparse</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The indices of the active parameters."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_support</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_active</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A Boolean Tensor of length `dim`, indicating which of the `dim` indices of</span>
+<span class="sd">        `self.sparse_parameter` are in the support, i.e. active."""</span>
+        <span class="n">is_active</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="n">is_active</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inactive_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""An integral Tensor of length `dim - len(support)`, indicating which of the</span>
+<span class="sd">        indices of `self.sparse_parameter` are not in the support, i.e. inactive."""</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">device</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)[</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">is_active</span><span class="p">]</span>
+
+<div class="viewcode-block" id="RelevancePursuitMixin.to_sparse">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.to_sparse">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_sparse</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RelevancePursuitMixin</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Converts the sparse parameter to its sparse (&lt; dim) representation.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current object in its sparse representation.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sparse</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_sparse_parameter</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">])</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_is_sparse</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="RelevancePursuitMixin.to_dense">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.to_dense">[docs]</a>
+    <span class="k">def</span> <span class="nf">to_dense</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RelevancePursuitMixin</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Converts the sparse parameter to its dense, length-`dim` representation.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current object in its dense representation.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sparse</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">dtype</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">device</span>
+            <span class="n">zero</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">dense_parameter</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">support</span>
+                    <span class="k">else</span> <span class="n">zero</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">dense_parameter</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">dense_parameter</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_sparse_parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">dense_parameter</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_is_sparse</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="RelevancePursuitMixin.expand_support">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.expand_support">[docs]</a>
+    <span class="k">def</span> <span class="nf">expand_support</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">RelevancePursuitMixin</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Expands the support by a number of indices.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            indices: A list of indices of `self.sparse_parameter` to add to the support.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current object, updated with the expanded support.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Feature </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> already in the support."</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+        <span class="c1"># we need to add the parameter in the sparse representation</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sparse</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_sparse_parameter</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                        <span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="p">,</span>
+                            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="p">),</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="RelevancePursuitMixin.contract_support">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.contract_support">[docs]</a>
+    <span class="k">def</span> <span class="nf">contract_support</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">RelevancePursuitMixin</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Contracts the support by a number of indices.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            indices: A list of indices of `self.sparse_parameter` to remove from</span>
+<span class="sd">                the support.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current object, updated with the contracted support.</span>
+<span class="sd">        """</span>
+        <span class="c1"># indices into the sparse representation of features to *keep*</span>
+        <span class="n">sparse_indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">)))</span>
+        <span class="n">original_support</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Feature </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> is not in support."</span><span class="p">)</span>
+            <span class="n">sparse_indices</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">original_support</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="c1"># we need to remove the parameter in the sparse representation</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sparse</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_sparse_parameter</span><span class="p">(</span><span class="n">Parameter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="p">[</span><span class="n">sparse_indices</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">requires_grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">requires_grad</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="n">requires_grad</span><span class="p">)</span>  <span class="c1"># restore</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="c1"># support initialization helpers</span>
+<div class="viewcode-block" id="RelevancePursuitMixin.full_support">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.full_support">[docs]</a>
+    <span class="k">def</span> <span class="nf">full_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RelevancePursuitMixin</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initializes the RelevancePursuitMixin with a full, size-`dim` support.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current object with full support in the dense representation.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expand_support</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>  <span class="c1"># no reason to be sparse with full support</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="RelevancePursuitMixin.remove_support">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.remove_support">[docs]</a>
+    <span class="k">def</span> <span class="nf">remove_support</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RelevancePursuitMixin</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initializes the RelevancePursuitMixin with an empty, size-zero support.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current object with empty support, representation unchanged.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_support</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">requires_grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">requires_grad</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sparse</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_sparse_parameter</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="n">requires_grad</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="c1"># the following two methods are the only ones that are specific to the marginal</span>
+    <span class="c1"># likelihood optimization problem</span>
+<div class="viewcode-block" id="RelevancePursuitMixin.support_expansion">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.support_expansion">[docs]</a>
+    <span class="k">def</span> <span class="nf">support_expansion</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">,</span>
+        <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">modifier</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Computes the indices of the features that maximize the gradient of the sparse</span>
+<span class="sd">        parameter and that are not already in the support, and subsequently expands the</span>
+<span class="sd">        support to include the features if their gradient is positive.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mll: The marginal likelihood, containing the model to optimize.</span>
+<span class="sd">                NOTE: Virtually all of the rest of the code is not specific to the</span>
+<span class="sd">                marginal likelihood optimization, so we could generalize this to work</span>
+<span class="sd">                with any objective.</span>
+<span class="sd">            n: The number of features to select.</span>
+<span class="sd">            modifier: A function that modifies the gradient of the inactive parameters</span>
+<span class="sd">                before computing the support expansion criterion. This can be used</span>
+<span class="sd">                to select the maximum gradient magnitude for real-valued parameters</span>
+<span class="sd">                whose gradients are not non-negative, using modifier = torch.abs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if the support was expanded, False otherwise.</span>
+<span class="sd">        """</span>
+        <span class="c1"># can't expand if the support is already full, or if n is non-positive</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expansion_objective</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+
+        <span class="n">modifier</span> <span class="o">=</span> <span class="n">modifier</span> <span class="k">if</span> <span class="n">modifier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expansion_modifier</span>
+        <span class="k">if</span> <span class="n">modifier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">modifier</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+
+        <span class="c1"># support is already removed from consideration</span>
+        <span class="c1"># gradient of the support parameters is not necessarily zero,</span>
+        <span class="c1"># even for a converged solution in the presence of constraints.</span>
+        <span class="c1"># NOTE: these indices are relative to self.inactive_indices.</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">g</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">indices</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># no indices with positive gradient</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expand_support</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inactive_indices</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="RelevancePursuitMixin.expansion_objective">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.expansion_objective">[docs]</a>
+    <span class="k">def</span> <span class="nf">expansion_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Computes an objective value for all the inactive parameters, i.e.</span>
+<span class="sd">        self.sparse_parameter[~self.is_active] since we can't add already active</span>
+<span class="sd">        parameters to the support. This value will be used to select the parameters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mll: The marginal likelihood, containing the model to optimize.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The expansion objective value for all the inactive parameters.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparse_parameter_gradient</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_sparse_parameter_gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Computes the gradient of the marginal likelihood with respect to the</span>
+<span class="sd">        sparse parameter.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mll: The marginal likelihood, containing the model to optimize.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The gradient of the marginal likelihood with respect to the inactive</span>
+<span class="sd">            sparse parameters.</span>
+<span class="sd">        """</span>
+        <span class="c1"># evaluate gradient of the sparse parameter</span>
+        <span class="n">is_sparse</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sparse</span>  <span class="c1"># in order to restore the original representation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>  <span class="c1"># need the parameter in its dense parameterization</span>
+
+        <span class="n">requires_grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">requires_grad</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+        <span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>  <span class="c1"># NOTE: this changes model.train_inputs</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">model</span><span class="o">.</span><span class="n">train_targets</span>
+        <span class="n">cast</span><span class="p">(</span>
+            <span class="n">Tensor</span><span class="p">,</span>
+            <span class="n">mll</span><span class="p">(</span>
+                <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span>
+                <span class="n">Y</span><span class="p">,</span>
+                <span class="o">*</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">t_in</span><span class="p">)</span> <span class="k">for</span> <span class="n">t_in</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>  <span class="c1"># evaluation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="n">requires_grad</span><span class="p">)</span>
+
+        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">grad</span>
+        <span class="k">if</span> <span class="n">g</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"The gradient of the sparse_parameter is None, most likely "</span>
+                <span class="s2">"because the passed marginal likelihood is not a function of the "</span>
+                <span class="s2">"sparse_parameter."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_sparse</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">to_sparse</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">g</span><span class="p">[</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">is_active</span><span class="p">]</span>  <span class="c1"># only need the inactive parameters</span>
+
+<div class="viewcode-block" id="RelevancePursuitMixin.support_contraction">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.support_contraction">[docs]</a>
+    <span class="k">def</span> <span class="nf">support_contraction</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">,</span>
+        <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">modifier</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Computes the indices of the features that have the smallest coefficients,</span>
+<span class="sd">        and subsequently contracts the exlude the features.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mll: The marginal likelihood, containing the model to optimize.</span>
+<span class="sd">                NOTE: Virtually all of the rest of the code is not specific to the</span>
+<span class="sd">                marginal likelihood optimization, so we could generalize this to work</span>
+<span class="sd">                with any objective.</span>
+<span class="sd">            n: The number of features to select for removal.</span>
+<span class="sd">            modifier: A function that modifies the parameter values before computing</span>
+<span class="sd">                the support contraction criterion.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if the support was expanded, False otherwise.</span>
+<span class="sd">        """</span>
+        <span class="c1"># can't expand if the support is already empty, or if n is non-positive</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">is_sparse</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sparse</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_sparse</span><span class="p">()</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span>
+
+        <span class="n">modifier</span> <span class="o">=</span> <span class="n">modifier</span> <span class="k">if</span> <span class="n">modifier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contraction_modifier</span>
+        <span class="k">if</span> <span class="n">modifier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">modifier</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># for non-negative parameters, could break ties at zero</span>
+        <span class="c1"># based on derivative</span>
+        <span class="n">sparse_indices</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">descending</span><span class="o">=</span><span class="kc">False</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sparse_indices</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contract_support</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_sparse</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="RelevancePursuitMixin.optimize_mll">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.optimize_mll">[docs]</a>
+    <span class="k">def</span> <span class="nf">optimize_mll</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">,</span>
+        <span class="n">model_trace</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">reset_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
+        <span class="n">reset_dense_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
+        <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Optimizes the marginal likelihood.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mll: The marginal likelihood, containing the model to optimize.</span>
+<span class="sd">            model_trace: If not None, a list to which a deepcopy of the model state is</span>
+<span class="sd">                appended. NOTE This operation is *in place*.</span>
+<span class="sd">            reset_parameters: If True, initializes the sparse parameter to the all-zeros</span>
+<span class="sd">                vector before every marginal likelihood optimization step. If False, the</span>
+<span class="sd">                optimization is warm-started with the previous iteration's parameters.</span>
+<span class="sd">            reset_dense_parameters: If True, re-initializes the dense parameters, e.g.</span>
+<span class="sd">                other GP hyper-parameters that are *not* part of the Relevance Pursuit</span>
+<span class="sd">                module, to the initial values provided by their associated constraints.</span>
+<span class="sd">            optimizer_kwargs: A dictionary of keyword arguments for the optimizer.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The marginal likelihood after optimization.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">reset_parameters</span><span class="p">:</span>
+            <span class="c1"># this might be beneficial because the parameters can</span>
+            <span class="c1"># end up at a constraint boundary, which can anecdotally make</span>
+            <span class="c1"># it more difficult to move the newly added parameters.</span>
+            <span class="c1"># should we only do this after expansion?</span>
+            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">reset_dense_parameters</span><span class="p">:</span>
+            <span class="n">initialize_dense_parameters</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="c1"># move to sparse representation for optimization</span>
+        <span class="c1"># NOTE: this function should never force the dense representation, because some</span>
+        <span class="c1"># models might never need it, and it would be inefficient.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_sparse</span><span class="p">()</span>
+        <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">model_trace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># need to record the full model here, rather than just the sparse parameter</span>
+            <span class="c1"># since other hyper-parameters are co-adapted to the sparse parameter.</span>
+            <span class="n">model_trace</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">mll</span></div>
+</div>
+
+
+
+<span class="c1"># Optimization Algorithms</span>
+<div class="viewcode-block" id="forward_relevance_pursuit">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.forward_relevance_pursuit">[docs]</a>
+<span class="k">def</span> <span class="nf">forward_relevance_pursuit</span><span class="p">(</span>
+    <span class="n">sparse_module</span><span class="p">:</span> <span class="n">RelevancePursuitMixin</span><span class="p">,</span>
+    <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">,</span>
+    <span class="n">sparsity_levels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">reset_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
+    <span class="n">reset_dense_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
+    <span class="n">record_model_trace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">initial_support</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RelevancePursuitMixin</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Model</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""Forward Relevance Pursuit.</span>
+
+<span class="sd">    NOTE: For the robust `SparseOutlierNoise` model of [Ament2024pursuit]_, the forward</span>
+<span class="sd">    algorithm is generally faster than the backward algorithm, particularly when the</span>
+<span class="sd">    maximum sparsity level is small, but it leads to less robust results when the number</span>
+<span class="sd">    of outliers is large.</span>
+
+<span class="sd">    For details, see [Ament2024pursuit]_ or https://arxiv.org/abs/2410.24222.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; base_noise = HomoskedasticNoise(</span>
+<span class="sd">        &gt;&gt;&gt;    noise_constraint=NonTransformedInterval(</span>
+<span class="sd">        &gt;&gt;&gt;        1e-5, 1e-1, initial_value=1e-3</span>
+<span class="sd">        &gt;&gt;&gt;    )</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">        &gt;&gt;&gt; likelihood = SparseOutlierGaussianLikelihood(</span>
+<span class="sd">        &gt;&gt;&gt;    base_noise=base_noise,</span>
+<span class="sd">        &gt;&gt;&gt;    dim=X.shape[0],</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X=X, train_Y=Y, likelihood=likelihood)</span>
+<span class="sd">        &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(model.likelihood, model)</span>
+<span class="sd">        &gt;&gt;&gt; # NOTE: `likelihood.noise_covar` is the `RelevancePursuitMixin`</span>
+<span class="sd">        &gt;&gt;&gt; sparse_module = likelihood.noise_covar</span>
+<span class="sd">        &gt;&gt;&gt; sparse_module, model_trace = forward_relevance_pursuit(sparse_module, mll)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        sparse_module: The relevance pursuit module.</span>
+<span class="sd">        mll: The marginal likelihood, containing the model to optimize.</span>
+<span class="sd">        sparsity_levels: The sparsity levels to expand the support to.</span>
+<span class="sd">        optimizer_kwargs: A dictionary of keyword arguments to pass to the optimizer.</span>
+<span class="sd">            By default, initializes the "options" sub-dictionary with `maxiter` and</span>
+<span class="sd">            `ftol`, `gtol` values, unless specified.</span>
+<span class="sd">        reset_parameters: If true, initializes the sparse parameter to the all zeros</span>
+<span class="sd">            after each iteration.</span>
+<span class="sd">        reset_dense_parameters: If true, re-initializes the dense parameters, e.g.</span>
+<span class="sd">            other GP hyper-parameters that are *not* part of the Relevance Pursuit</span>
+<span class="sd">            module, to the initial values provided by their associated constraints.</span>
+<span class="sd">        record_model_trace: If true, records the model state after every iteration.</span>
+<span class="sd">        initial_support: The support with which to initialize the sparse module. By</span>
+<span class="sd">            default, the support is initialized to the empty set.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The relevance pursuit module after forward relevance pursuit optimization, and</span>
+<span class="sd">        a list of models with different supports that were optimized.</span>
+<span class="sd">    """</span>
+    <span class="n">sparse_module</span><span class="o">.</span><span class="n">remove_support</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">initial_support</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sparse_module</span><span class="o">.</span><span class="n">expand_support</span><span class="p">(</span><span class="n">initial_support</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">sparsity_levels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sparsity_levels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sparse_module</span><span class="o">.</span><span class="n">support</span><span class="p">),</span> <span class="n">sparse_module</span><span class="o">.</span><span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># since this is the forward algorithm, potential sparsity levels</span>
+    <span class="c1"># must be in increasing order and unique.</span>
+    <span class="n">sparsity_levels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">sparsity_levels</span><span class="p">))</span>
+    <span class="n">sparsity_levels</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">optimizer_kwargs</span> <span class="o">=</span> <span class="n">_initialize_optimizer_kwargs</span><span class="p">(</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
+
+    <span class="n">model_trace</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">record_model_trace</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">optimize_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sparse_module</span><span class="o">.</span><span class="n">optimize_mll</span><span class="p">(</span>
+            <span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span>
+            <span class="n">model_trace</span><span class="o">=</span><span class="n">model_trace</span><span class="p">,</span>
+            <span class="n">reset_parameters</span><span class="o">=</span><span class="n">reset_parameters</span><span class="p">,</span>
+            <span class="n">reset_dense_parameters</span><span class="o">=</span><span class="n">reset_dense_parameters</span><span class="p">,</span>
+            <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># if sparsity levels contains the initial support, remove it</span>
+    <span class="k">if</span> <span class="n">sparsity_levels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparse_module</span><span class="o">.</span><span class="n">support</span><span class="p">):</span>
+        <span class="n">sparsity_levels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">optimize_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>  <span class="c1"># initial optimization</span>
+
+    <span class="k">for</span> <span class="n">sparsity</span> <span class="ow">in</span> <span class="n">sparsity_levels</span><span class="p">:</span>
+        <span class="n">support_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparse_module</span><span class="o">.</span><span class="n">support</span><span class="p">)</span>
+        <span class="n">num_expand</span> <span class="o">=</span> <span class="n">sparsity</span> <span class="o">-</span> <span class="n">support_size</span>
+        <span class="n">expanded</span> <span class="o">=</span> <span class="n">sparse_module</span><span class="o">.</span><span class="n">support_expansion</span><span class="p">(</span><span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">num_expand</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">expanded</span><span class="p">:</span>  <span class="c1"># stationary support</span>
+            <span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"Terminating optimization because the expansion from sparsity "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">support_size</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">sparsity</span><span class="si">}</span><span class="s2"> was unsuccessful, usually due to "</span>
+                <span class="s2">"reaching a stationary point of the marginal likelihood."</span><span class="p">,</span>
+                <span class="ne">Warning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">break</span>
+
+        <span class="n">optimize_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>  <span class="c1"># re-optimize support</span>
+
+    <span class="k">return</span> <span class="n">sparse_module</span><span class="p">,</span> <span class="n">model_trace</span></div>
+
+
+
+<div class="viewcode-block" id="backward_relevance_pursuit">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.backward_relevance_pursuit">[docs]</a>
+<span class="k">def</span> <span class="nf">backward_relevance_pursuit</span><span class="p">(</span>
+    <span class="n">sparse_module</span><span class="p">:</span> <span class="n">RelevancePursuitMixin</span><span class="p">,</span>
+    <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">,</span>
+    <span class="n">sparsity_levels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">reset_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
+    <span class="n">reset_dense_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
+    <span class="n">record_model_trace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">initial_support</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RelevancePursuitMixin</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Model</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""Backward Relevance Pursuit.</span>
+
+<span class="sd">    NOTE: For the robust `SparseOutlierNoise` model of [Ament2024pursuit]_, the backward</span>
+<span class="sd">    algorithm generally leads to more robust results than the forward algorithm,</span>
+<span class="sd">    especially when the number of outliers is large, but is more expensive unless the</span>
+<span class="sd">    support is contracted by more than one in each iteration.</span>
+
+<span class="sd">    For details, see [Ament2024pursuit]_ or https://arxiv.org/abs/2410.24222.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; base_noise = HomoskedasticNoise(</span>
+<span class="sd">        &gt;&gt;&gt;    noise_constraint=NonTransformedInterval(</span>
+<span class="sd">        &gt;&gt;&gt;        1e-5, 1e-1, initial_value=1e-3</span>
+<span class="sd">        &gt;&gt;&gt;    )</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">        &gt;&gt;&gt; likelihood = SparseOutlierGaussianLikelihood(</span>
+<span class="sd">        &gt;&gt;&gt;    base_noise=base_noise,</span>
+<span class="sd">        &gt;&gt;&gt;    dim=X.shape[0],</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X=X, train_Y=Y, likelihood=likelihood)</span>
+<span class="sd">        &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(model.likelihood, model)</span>
+<span class="sd">        &gt;&gt;&gt; # NOTE: `likelihood.noise_covar` is the `RelevancePursuitMixin`</span>
+<span class="sd">        &gt;&gt;&gt; sparse_module = likelihood.noise_covar</span>
+<span class="sd">        &gt;&gt;&gt; sparse_module, model_trace = backward_relevance_pursuit(sparse_module, mll)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        sparse_module: The relevance pursuit module.</span>
+<span class="sd">        mll: The marginal likelihood, containing the model to optimize.</span>
+<span class="sd">        sparsity_levels: The sparsity levels to expand the support to.</span>
+<span class="sd">        optimizer_kwargs: A dictionary of keyword arguments to pass to the optimizer.</span>
+<span class="sd">            By default, initializes the "options" sub-dictionary with `maxiter` and</span>
+<span class="sd">            `ftol`, `gtol` values, unless specified.</span>
+<span class="sd">        reset_parameters: If true, initializes the sparse parameter to the all zeros</span>
+<span class="sd">            after each iteration.</span>
+<span class="sd">        reset_dense_parameters: If true, re-initializes the dense parameters, e.g.</span>
+<span class="sd">            other GP hyper-parameters that are *not* part of the Relevance Pursuit</span>
+<span class="sd">            module, to the initial values provided by their associated constraints.</span>
+<span class="sd">        record_model_trace: If true, records the model state after every iteration.</span>
+<span class="sd">        initial_support: The support with which to initialize the sparse module. By</span>
+<span class="sd">            default, the support is initialized to the full set.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The relevance pursuit module after forward relevance pursuit optimization, and</span>
+<span class="sd">        a list of models with different supports that were optimized.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">initial_support</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sparse_module</span><span class="o">.</span><span class="n">remove_support</span><span class="p">()</span>
+        <span class="n">sparse_module</span><span class="o">.</span><span class="n">expand_support</span><span class="p">(</span><span class="n">initial_support</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sparse_module</span><span class="o">.</span><span class="n">full_support</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">sparsity_levels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sparsity_levels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sparse_module</span><span class="o">.</span><span class="n">support</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># since this is the backward algorithm, potential sparsity levels</span>
+    <span class="c1"># must be in decreasing order, unique, and less than the initial support.</span>
+    <span class="n">sparsity_levels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">sparsity_levels</span><span class="p">))</span>
+    <span class="n">sparsity_levels</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">optimizer_kwargs</span> <span class="o">=</span> <span class="n">_initialize_optimizer_kwargs</span><span class="p">(</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
+
+    <span class="n">model_trace</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">record_model_trace</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">optimize_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sparse_module</span><span class="o">.</span><span class="n">optimize_mll</span><span class="p">(</span>
+            <span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span>
+            <span class="n">model_trace</span><span class="o">=</span><span class="n">model_trace</span><span class="p">,</span>
+            <span class="n">reset_parameters</span><span class="o">=</span><span class="n">reset_parameters</span><span class="p">,</span>
+            <span class="n">reset_dense_parameters</span><span class="o">=</span><span class="n">reset_dense_parameters</span><span class="p">,</span>
+            <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># if sparsity levels contains the initial support, remove it</span>
+    <span class="k">if</span> <span class="n">sparsity_levels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparse_module</span><span class="o">.</span><span class="n">support</span><span class="p">):</span>
+        <span class="n">sparsity_levels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">optimize_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>  <span class="c1"># initial optimization</span>
+
+    <span class="k">for</span> <span class="n">sparsity</span> <span class="ow">in</span> <span class="n">sparsity_levels</span><span class="p">:</span>
+        <span class="n">support_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparse_module</span><span class="o">.</span><span class="n">support</span><span class="p">)</span>
+        <span class="n">num_contract</span> <span class="o">=</span> <span class="n">support_size</span> <span class="o">-</span> <span class="n">sparsity</span>
+        <span class="n">contracted</span> <span class="o">=</span> <span class="n">sparse_module</span><span class="o">.</span><span class="n">support_contraction</span><span class="p">(</span><span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">num_contract</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">contracted</span><span class="p">:</span>  <span class="c1"># stationary support</span>
+            <span class="n">warn</span><span class="p">(</span>
+                <span class="s2">"Terminating optimization because the contraction from sparsity "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">support_size</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">sparsity</span><span class="si">}</span><span class="s2"> was unsuccessful."</span><span class="p">,</span>
+                <span class="ne">Warning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">break</span>
+
+        <span class="n">optimize_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>  <span class="c1"># re-optimize support</span>
+
+    <span class="k">return</span> <span class="n">sparse_module</span><span class="p">,</span> <span class="n">model_trace</span></div>
+
+
+
+<span class="c1"># Bayesian Model Comparison</span>
+<div class="viewcode-block" id="get_posterior_over_support">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.get_posterior_over_support">[docs]</a>
+<span class="k">def</span> <span class="nf">get_posterior_over_support</span><span class="p">(</span>
+    <span class="n">rp_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">RelevancePursuitMixin</span><span class="p">],</span>
+    <span class="n">model_trace</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Model</span><span class="p">],</span>
+    <span class="n">log_support_prior</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">prior_mean_of_support</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Computes the posterior distribution over a list of models.</span>
+<span class="sd">    Assumes we are storing both likelihood and GP model in the model_trace.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; likelihood = SparseOutlierGaussianLikelihood(</span>
+<span class="sd">        &gt;&gt;&gt;    base_noise=base_noise,</span>
+<span class="sd">        &gt;&gt;&gt;    dim=X.shape[0],</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X=X, train_Y=Y, likelihood=likelihood)</span>
+<span class="sd">        &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(model.likelihood, model)</span>
+<span class="sd">        &gt;&gt;&gt; # NOTE: `likelihood.noise_covar` is the `RelevancePursuitMixin`</span>
+<span class="sd">        &gt;&gt;&gt; sparse_module = likelihood.noise_covar</span>
+<span class="sd">        &gt;&gt;&gt; sparse_module, model_trace = backward_relevance_pursuit(sparse_module, mll)</span>
+<span class="sd">        &gt;&gt;&gt; # NOTE: SparseOutlierNoise is the type of `sparse_module`</span>
+<span class="sd">        &gt;&gt;&gt; support_size, bmc_probabilities = get_posterior_over_support(</span>
+<span class="sd">        &gt;&gt;&gt;    SparseOutlierNoise, model_trace, prior_mean_of_support=2.0</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        rp_class: The relevance pursuit class to use for computing the support size.</span>
+<span class="sd">            This is used to get the RelevancePursuitMixin from the Model via the static</span>
+<span class="sd">            method `_from_model`. We could generalize this and let the user pass this</span>
+<span class="sd">            getter instead.</span>
+<span class="sd">        model_trace: A list of models with different support sizes, usually generated</span>
+<span class="sd">            with relevance_pursuit.</span>
+<span class="sd">        log_support_prior: Callable that computes the log prior probability of a</span>
+<span class="sd">            support size. If None, uses a default exponential prior with a mean</span>
+<span class="sd">            specified by `prior_mean_of_support`.</span>
+<span class="sd">        prior_mean_of_support: A mean value for the default exponential prior</span>
+<span class="sd">            distribution over the support size. Ignored if `log_support_prior`</span>
+<span class="sd">            is passed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of posterior marginal likelihoods, one for each model in the trace.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">log_support_prior</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">prior_mean_of_support</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"`log_support_prior` and `prior_mean_of_support` cannot both be None."</span>
+            <span class="p">)</span>
+        <span class="n">log_support_prior</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_exp_log_pdf</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">prior_mean_of_support</span><span class="p">)</span>
+
+    <span class="n">log_support_prior</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">log_support_prior</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">log_prior</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">sparse_module</span> <span class="o">=</span> <span class="n">rp_class</span><span class="o">.</span><span class="n">_from_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">num_support</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">sparse_module</span><span class="o">.</span><span class="n">support</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">num_support</span><span class="p">,</span> <span class="n">log_support_prior</span><span class="p">(</span><span class="n">num_support</span><span class="p">)</span>  <span class="c1"># pyre-ignore[29]</span>
+
+    <span class="n">log_mll_trace</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">log_prior_trace</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">support_size_trace</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">model_trace</span><span class="p">:</span>
+        <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">likelihood</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">mll_i</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mll</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">))</span>
+        <span class="n">log_mll_trace</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mll_i</span><span class="p">)</span>
+        <span class="n">support_size</span><span class="p">,</span> <span class="n">log_prior_i</span> <span class="o">=</span> <span class="n">log_prior</span><span class="p">(</span>
+            <span class="n">model</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">mll_i</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">mll_i</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">support_size_trace</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">support_size</span><span class="p">)</span>
+        <span class="n">log_prior_trace</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">log_prior_i</span><span class="p">)</span>
+
+    <span class="n">log_mll_trace</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">log_mll_trace</span><span class="p">)</span>
+    <span class="n">log_prior_trace</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">log_prior_trace</span><span class="p">)</span>
+    <span class="n">support_size_trace</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">support_size_trace</span><span class="p">)</span>
+
+    <span class="n">unnormalized_posterior_trace</span> <span class="o">=</span> <span class="n">log_mll_trace</span> <span class="o">+</span> <span class="n">log_prior_trace</span>
+    <span class="n">evidence</span> <span class="o">=</span> <span class="n">unnormalized_posterior_trace</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">posterior_probabilities</span> <span class="o">=</span> <span class="p">(</span><span class="n">unnormalized_posterior_trace</span> <span class="o">-</span> <span class="n">evidence</span><span class="p">)</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">support_size_trace</span><span class="p">,</span> <span class="n">posterior_probabilities</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_exp_log_pdf</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute the exponential log probability density.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x: A tensor of values.</span>
+<span class="sd">        mean: A tensor of means.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of log probabilities.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">x</span> <span class="o">/</span> <span class="n">mean</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="initialize_dense_parameters">
+<a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.initialize_dense_parameters">[docs]</a>
+<span class="k">def</span> <span class="nf">initialize_dense_parameters</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Model</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Sets the dense parameters of a model to their initial values. Infers initial</span>
+<span class="sd">    values from the constraints, if no initial values are provided. If a parameter</span>
+<span class="sd">    does not have a constraint, it is initialized to zero.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: The model to initialize.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The re-initialized model, and a dictionary of initial values.</span>
+<span class="sd">    """</span>
+    <span class="n">constraints</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">named_constraints</span><span class="p">())</span>
+    <span class="n">parameters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">())</span>
+    <span class="n">initial_values</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">n</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="s2">"_constraint"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">"_initial_value"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">parameters</span>
+    <span class="p">}</span>
+    <span class="n">lower_bounds</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">n</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="s2">"_constraint"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s2">"lower_bound"</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">parameters</span>
+    <span class="p">}</span>
+    <span class="n">upper_bounds</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">n</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="s2">"_constraint"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s2">"upper_bound"</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">parameters</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">initial_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">initial_values</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_get_initial_value</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">lower</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+            <span class="n">upper</span><span class="o">=</span><span class="n">upper_bounds</span><span class="p">[</span><span class="n">name</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="c1"># the initial values need to be converted to the transformed space</span>
+    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">initial_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="s2">"_constraint"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># convert the constraint into the latent space</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">initial_values</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="o">**</span><span class="n">initial_values</span><span class="p">)</span>
+    <span class="n">parameters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">initial_values</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_get_initial_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="c1"># if no initial value is provided, or the initial value is outside the bounds,</span>
+    <span class="c1"># use a rule-based initialization.</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">((</span><span class="n">lower</span> <span class="o">&lt;=</span> <span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="n">upper</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">upper</span><span class="o">.</span><span class="n">isinf</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">lower</span><span class="o">.</span><span class="n">isinf</span><span class="p">()</span> <span class="k">else</span> <span class="n">lower</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">lower</span><span class="o">.</span><span class="n">isinf</span><span class="p">():</span>  <span class="c1"># implies u[n] is finite</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># both are finite</span>
+            <span class="c1"># generally keep the value close to the lower bound in this case,</span>
+            <span class="c1"># since many parameters (e.g. lengthscales) exhibit vanishing gradients</span>
+            <span class="c1"># for large values.</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">lower</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">lower</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">lower</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">lower</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_initialize_optimizer_kwargs</span><span class="p">(</span>
+    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Initializes the optimizer kwargs with default values if they are not provided.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        optimizer_kwargs: The optimizer kwargs to initialize.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The initialized optimizer kwargs.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">optimizer_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">optimizer_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="n">optimizer_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"options"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">optimizer_kwargs</span><span class="p">[</span><span class="s2">"options"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">options</span> <span class="o">=</span> <span class="n">optimizer_kwargs</span><span class="p">[</span><span class="s2">"options"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s2">"maxiter"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="n">MLL_ITER</span><span class="p">})</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="s2">"ftol"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">options</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">"gtol"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">options</span><span class="p">):</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"ftol"</span><span class="p">:</span> <span class="n">MLL_TOL</span><span class="p">})</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"gtol"</span><span class="p">:</span> <span class="n">MLL_TOL</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">optimizer_kwargs</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_utils.html">botorch.test_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/latest/" class="nav-home"><img src="/v/latest/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/latest/docs/introduction">Introduction</a><a href="/v/latest/docs/getting_started">Getting Started</a><a href="/v/latest/tutorials/">Tutorials</a><a href="/v/latest/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/latest/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/latest/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

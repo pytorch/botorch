@@ -227,6 +227,121 @@ objective.</p></li>
 </dl>
 </dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.base.SeedingMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.base.</span></span><span class="sig-name descname"><span class="pre">SeedingMixin</span></span><a class="reference internal" href="_modules/botorch/test_functions/base.html#SeedingMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.SeedingMixin" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.test_functions.base.SeedingMixin.has_seeds">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">has_seeds</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.base.SeedingMixin.has_seeds" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.base.SeedingMixin.increment_seed">
+<span class="sig-name descname"><span class="pre">increment_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#SeedingMixin.increment_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.SeedingMixin.increment_seed" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.test_functions.base.SeedingMixin.seed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">seed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#botorch.test_functions.base.SeedingMixin.seed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.base.OutlierGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.base.</span></span><span class="sig-name descname"><span class="pre">OutlierGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#OutlierGenerator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.OutlierGenerator" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.test_functions.base.constant_outlier_generator">
+<span class="sig-prename descclassname"><span class="pre">botorch.test_functions.base.</span></span><span class="sig-name descname"><span class="pre">constant_outlier_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#constant_outlier_generator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.constant_outlier_generator" title="Link to this definition">¶</a></dt>
+<dd><p>Generates outliers that are all the same constant. To be used in conjunction with
+<cite>partial</cite> to fix the constant value and conform to the <cite>OutlierGenerator</cite> protocol.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">generator</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">constant_outlier_generator</span><span class="p">,</span> <span class="n">constant</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>problem</strong> (<em>Any</em>) – Not used.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>) – The <cite>batch_shape x n x d</cite>-dim inputs. Also determines the number, dtype,
+and device of the returned tensor.</p></li>
+<li><p><strong>bounds</strong> (<em>Any</em>) – Not used.</p></li>
+<li><p><strong>constant</strong> (<em>float</em>) – The constant value of the outliers.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor of shape <cite>batch_shape x n</cite> (1d if unbatched).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.base.CorruptedTestProblem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.base.</span></span><span class="sig-name descname"><span class="pre">CorruptedTestProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_test_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlier_generator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlier_fraction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seeds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#CorruptedTestProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.CorruptedTestProblem" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.SeedingMixin" title="botorch.test_functions.base.SeedingMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">SeedingMixin</span></code></a></p>
+<p>A problem with outliers.</p>
+<p>NOTE: Both noise_std and negate will be taken from the base test problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_test_problem</strong> (<a class="reference internal" href="#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><em>BaseTestProblem</em></a>) – The base function to be corrupted.</p></li>
+<li><p><strong>outlier_generator</strong> (<a class="reference internal" href="#botorch.test_functions.base.OutlierGenerator" title="botorch.test_functions.base.OutlierGenerator"><em>OutlierGenerator</em></a>) – A function that generates outliers. It will be called
+with arguments <cite>f</cite>, <cite>X</cite> and <cite>bounds</cite>, where <cite>f</cite> is the
+<cite>base_test_problem</cite>, <cite>X</cite> is the
+argument passed to the <cite>forward</cite> method, and <cite>bounds</cite>
+are as here, and it returns the values of outliers.</p></li>
+<li><p><strong>outlier_fraction</strong> (<em>float</em>) – The fraction of outliers.</p></li>
+<li><p><strong>bounds</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – The bounds of the function.</p></li>
+<li><p><strong>seeds</strong> (<em>Iterable</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – The seeds to use for the outlier generator. If seeds are provided,
+the problem will iterate through the list of seeds, changing the seed
+with a call to <cite>next(seeds)</cite> with every <cite>forward</cite> call. If a list is
+provided, it will first be converted to an iterator.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.base.CorruptedTestProblem.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#CorruptedTestProblem.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.CorruptedTestProblem.evaluate_true" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x d</cite>-dim tensor of point(s) at which to
+evaluate.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.base.CorruptedTestProblem.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#CorruptedTestProblem.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.CorruptedTestProblem.forward" title="Link to this definition">¶</a></dt>
+<dd><p>Generate data at X and corrupt it, if noise is True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – The <cite>batch_shape x n x d</cite>-dim inputs.</p></li>
+<li><p><strong>noise</strong> (<em>bool</em>) – Whether to corrupt the data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <cite>batch_shape x n</cite>-dim tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.test_functions.synthetic">
 <span id="synthetic-test-functions"></span><h2>Synthetic Test Functions<a class="headerlink" href="#module-botorch.test_functions.synthetic" title="Link to this heading">¶</a></h2>

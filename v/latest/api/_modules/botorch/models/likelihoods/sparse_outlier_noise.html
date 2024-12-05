@@ -1,0 +1,581 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/latest/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/latest/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/latest/img/botorch.png"/><link rel="shortcut icon" href="/v/latest/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/latest/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/latest/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/latest/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.models.likelihoods.sparse_outlier_noise</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">InputDataWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.models.relevance_pursuit</span> <span class="kn">import</span> <span class="n">RelevancePursuitMixin</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.constraints</span> <span class="kn">import</span> <span class="n">NonTransformedInterval</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">_GaussianLikelihoodBase</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.noise_models</span> <span class="kn">import</span> <span class="n">FixedGaussianNoise</span><span class="p">,</span> <span class="n">Noise</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">Prior</span>
+<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">DiagLinearOperator</span><span class="p">,</span> <span class="n">LinearOperator</span>
+<span class="kn">from</span> <span class="nn">linear_operator.utils.cholesky</span> <span class="kn">import</span> <span class="n">psd_safe_cholesky</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span>
+
+
+<div class="viewcode-block" id="SparseOutlierGaussianLikelihood">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood">[docs]</a>
+<span class="k">class</span> <span class="nc">SparseOutlierGaussianLikelihood</span><span class="p">(</span><span class="n">_GaussianLikelihoodBase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_noise</span><span class="p">:</span> <span class="n">Noise</span> <span class="o">|</span> <span class="n">FixedGaussianNoise</span><span class="p">,</span>
+        <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">outlier_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">rho_prior</span><span class="p">:</span> <span class="n">Prior</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">rho_constraint</span><span class="p">:</span> <span class="n">NonTransformedInterval</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">convex_parameterization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">loo</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A likelihood that models the noise of a GP with SparseOutlierNoise, a noise</span>
+<span class="sd">        model in the Relevance Pursuit family of models, permitting additional "robust"</span>
+<span class="sd">        variance for a small set of outlier data points. Notably, the indices of the</span>
+<span class="sd">        outlier data points are inferred during the optimization of the associated log</span>
+<span class="sd">        marginal likelihood via the Relevance Pursuit algorithm.</span>
+
+<span class="sd">        For details, see [Ament2024pursuit]_ or https://arxiv.org/abs/2410.24222.</span>
+
+<span class="sd">        NOTE: Letting base_noise also use the non-transformed constraints, will lead</span>
+<span class="sd">        to more stable optimization, but is orthogonal implementation-wise. If the base</span>
+<span class="sd">        noise is a HomoskedasticNoise, one can pass the non-transformed constraint as</span>
+<span class="sd">        the `noise_constraint`.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; base_noise = HomoskedasticNoise(</span>
+<span class="sd">            &gt;&gt;&gt;    noise_constraint=NonTransformedInterval(</span>
+<span class="sd">            &gt;&gt;&gt;        1e-5, 1e-1, initial_value=1e-3</span>
+<span class="sd">            &gt;&gt;&gt;    )</span>
+<span class="sd">            &gt;&gt;&gt; )</span>
+<span class="sd">            &gt;&gt;&gt; likelihood = SparseOutlierGaussianLikelihood(</span>
+<span class="sd">            &gt;&gt;&gt;    base_noise=base_noise,</span>
+<span class="sd">            &gt;&gt;&gt;    dim=X.shape[0],</span>
+<span class="sd">            &gt;&gt;&gt; )</span>
+<span class="sd">            &gt;&gt;&gt; model = SingleTaskGP(train_X=X, train_Y=Y, likelihood=likelihood)</span>
+<span class="sd">            &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(model.likelihood, model)</span>
+<span class="sd">            &gt;&gt;&gt; # NOTE: `likelihood.noise_covar` is the `RelevancePursuitMixin`</span>
+<span class="sd">            &gt;&gt;&gt; sparse_module = likelihood.noise_covar</span>
+<span class="sd">            &gt;&gt;&gt; backward_relevance_pursuit(sparse_module, mll)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            base_noise: The base noise model.</span>
+<span class="sd">            dim: The number of training observations, which determines the maximum</span>
+<span class="sd">                number of data-point-specific noise variances of the noise model.</span>
+<span class="sd">            outlier_indices: The indices of the outliers.</span>
+<span class="sd">            rho_prior: Prior for `self.noise_covar`'s rho parameter.</span>
+<span class="sd">            rho_constraint: Constraint for `self.noise_covar`'s rho parameter. Needs to</span>
+<span class="sd">                be a NonTransformedInterval because exact sparsity cannot be represented</span>
+<span class="sd">                using smooth transforms like a softplus or sigmoid.</span>
+<span class="sd">            batch_shape: The batch shape of the learned noise parameter (default: []).</span>
+<span class="sd">            convex_parameterization: Whether to use the convex parameterization of rho,</span>
+<span class="sd">                which generally improves optimization results and is thus recommended.</span>
+<span class="sd">            loo: Whether to use leave-one-out (LOO) update equations that can compute</span>
+<span class="sd">                the optimal values of each individual rho, keeping all else equal.</span>
+<span class="sd">        """</span>
+        <span class="n">noise_covar</span> <span class="o">=</span> <span class="n">SparseOutlierNoise</span><span class="p">(</span>
+            <span class="n">base_noise</span><span class="o">=</span><span class="n">base_noise</span><span class="p">,</span>
+            <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span>
+            <span class="n">outlier_indices</span><span class="o">=</span><span class="n">outlier_indices</span><span class="p">,</span>
+            <span class="n">rho_prior</span><span class="o">=</span><span class="n">rho_prior</span><span class="p">,</span>
+            <span class="n">rho_constraint</span><span class="o">=</span><span class="n">rho_constraint</span><span class="p">,</span>
+            <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+            <span class="n">convex_parameterization</span><span class="o">=</span><span class="n">convex_parameterization</span><span class="p">,</span>
+            <span class="n">loo</span><span class="o">=</span><span class="n">loo</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_covar</span><span class="o">=</span><span class="n">noise_covar</span><span class="p">)</span>
+
+    <span class="c1"># pyre-ignore[14]: Inconsistent override because the super class accepts `*params`</span>
+<div class="viewcode-block" id="SparseOutlierGaussianLikelihood.marginal">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood.marginal">[docs]</a>
+    <span class="k">def</span> <span class="nf">marginal</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">function_dist</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">,</span> <span class="n">covar</span> <span class="o">=</span> <span class="n">function_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">function_dist</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
+        <span class="c1"># this scales the rhos by the diagonal of the "non-robust" covariance matrix</span>
+        <span class="n">diag_K</span> <span class="o">=</span> <span class="n">covar</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">convex_parameterization</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">noise_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">diag_K</span><span class="o">=</span><span class="n">diag_K</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="n">full_covar</span> <span class="o">=</span> <span class="n">covar</span> <span class="o">+</span> <span class="n">noise_covar</span>
+        <span class="k">return</span> <span class="n">function_dist</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">full_covar</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SparseOutlierGaussianLikelihood.expected_log_prob">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierGaussianLikelihood.expected_log_prob">[docs]</a>
+    <span class="k">def</span> <span class="nf">expected_log_prob</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"SparseOutlierGaussianLikelihood does not yet support variational inference"</span>
+            <span class="s2">", but this is not a fundamental limitation. It will require an adding "</span>
+            <span class="s2">"the `expected_log_prob` method to SparseOutlierGaussianLikelihood."</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SparseOutlierNoise">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise">[docs]</a>
+<span class="k">class</span> <span class="nc">SparseOutlierNoise</span><span class="p">(</span><span class="n">Noise</span><span class="p">,</span> <span class="n">RelevancePursuitMixin</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_noise</span><span class="p">:</span> <span class="n">Noise</span> <span class="o">|</span> <span class="n">FixedGaussianNoise</span><span class="p">,</span>
+        <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">outlier_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">rho_prior</span><span class="p">:</span> <span class="n">Prior</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">rho_constraint</span><span class="p">:</span> <span class="n">NonTransformedInterval</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">convex_parameterization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">loo</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""A noise model in the Relevance Pursuit family of models, permitting</span>
+<span class="sd">        additional "robust" variance for a small set of outlier data points.</span>
+<span class="sd">        See also `SparseOutlierGaussianLikelihood`, which leverages this noise model.</span>
+
+<span class="sd">        For details, see [Ament2024pursuit]_ or https://arxiv.org/abs/2410.24222.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; base_noise = HomoskedasticNoise(</span>
+<span class="sd">            &gt;&gt;&gt;    noise_constraint=NonTransformedInterval(</span>
+<span class="sd">            &gt;&gt;&gt;        1e-5, 1e-1, initial_value=1e-3</span>
+<span class="sd">            &gt;&gt;&gt;    )</span>
+<span class="sd">            &gt;&gt;&gt; )</span>
+<span class="sd">            &gt;&gt;&gt; likelihood = SparseOutlierGaussianLikelihood(</span>
+<span class="sd">            &gt;&gt;&gt;    base_noise=base_noise,</span>
+<span class="sd">            &gt;&gt;&gt;    dim=X.shape[0],</span>
+<span class="sd">            &gt;&gt;&gt; )</span>
+<span class="sd">            &gt;&gt;&gt; model = SingleTaskGP(train_X=X, train_Y=Y, likelihood=likelihood)</span>
+<span class="sd">            &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(model.likelihood, model)</span>
+<span class="sd">            &gt;&gt;&gt; # NOTE: `likelihood.noise_covar` is the `SparseOutlierNoise`</span>
+<span class="sd">            &gt;&gt;&gt; sparse_module = likelihood.noise_covar</span>
+<span class="sd">            &gt;&gt;&gt; backward_relevance_pursuit(sparse_module, mll)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            base_noise: The base noise model.</span>
+<span class="sd">            dim: The number of training observations, which determines the maximum</span>
+<span class="sd">                number of data-point-specific noise variances of the noise model.</span>
+<span class="sd">            outlier_indices: The indices of the outliers.</span>
+<span class="sd">            rho_prior: Prior for the rho parameter.</span>
+<span class="sd">            rho_constraint: Constraint for the rho parameter. Needs to be a</span>
+<span class="sd">                NonTransformedInterval because exact sparsity cannot be represented</span>
+<span class="sd">                using smooth transforms like a softplus or sigmoid.</span>
+<span class="sd">            batch_shape: The batch shape of the learned noise parameter (default: []).</span>
+<span class="sd">            convex_parameterization: Whether to use the convex parameterization of rho,</span>
+<span class="sd">                which generally improves optimization results and is thus recommended.</span>
+<span class="sd">            loo: Whether to use leave-one-out (LOO) update equations that can compute</span>
+<span class="sd">                the optimal values of each individual rho, keeping all else equal.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="n">RelevancePursuitMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">support</span><span class="o">=</span><span class="n">outlier_indices</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">batch_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">base_noise</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_noise</span> <span class="o">=</span> <span class="n">base_noise</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">base_noise</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">device</span>
+        <span class="k">if</span> <span class="n">rho_constraint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cvx_upper_bound</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mf">1e-3</span>  <span class="c1"># &lt; 1 to avoid singularities</span>
+            <span class="n">rho_constraint</span> <span class="o">=</span> <span class="n">NonTransformedInterval</span><span class="p">(</span>
+                <span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">upper_bound</span><span class="o">=</span><span class="n">cvx_upper_bound</span> <span class="k">if</span> <span class="n">convex_parameterization</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+                <span class="n">initial_value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rho_constraint</span><span class="p">,</span> <span class="n">NonTransformedInterval</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"`rho_constraint` must be a `NonTransformedInterval` if it "</span>
+                    <span class="s2">"is not None."</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">rho_constraint</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"SparseOutlierNoise requires rho_constraint.lower_bound &gt;= 0."</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">convex_parameterization</span> <span class="ow">and</span> <span class="n">rho_constraint</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"Convex parameterization requires rho_constraint.upper_bound &lt;= 1."</span>
+                <span class="p">)</span>
+
+        <span class="c1"># NOTE: Prefer to keep the initialization of the sparse_parameter in the</span>
+        <span class="c1"># derived classes of the Mixin, because it might require additional logic</span>
+        <span class="c1"># that we don't want to put into RelevancePursuitMixin.</span>
+        <span class="n">num_outliers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_parameter</span><span class="p">(</span>
+            <span class="s2">"raw_rho"</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="n">Parameter</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                    <span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span>
+                    <span class="n">num_outliers</span><span class="p">,</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">base_noise</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">rho_prior</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">_rho_param</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">rho</span>
+
+            <span class="c1"># this closure is only needed for some features, e.g. sampling from the</span>
+            <span class="c1"># prior, and requires additional thought in this case, as it will also has</span>
+            <span class="c1"># to modify the support of the RelevancePursuitMixin</span>
+            <span class="n">_set_rho_closure</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_prior</span><span class="p">(</span><span class="s2">"rho_prior"</span><span class="p">,</span> <span class="n">rho_prior</span><span class="p">,</span> <span class="n">_rho_param</span><span class="p">,</span> <span class="n">_set_rho_closure</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_constraint</span><span class="p">(</span><span class="s2">"raw_rho"</span><span class="p">,</span> <span class="n">rho_constraint</span><span class="p">)</span>
+        <span class="c1"># only publicly exposing getter of convex parameterization</span>
+        <span class="c1"># since post-hoc modification can lead to inconsistencies</span>
+        <span class="c1"># with the rho constraints.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_convex_parameterization</span> <span class="o">=</span> <span class="n">convex_parameterization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loo</span> <span class="o">=</span> <span class="n">loo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_train_inputs</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sparse_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameter</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_rho</span>
+
+<div class="viewcode-block" id="SparseOutlierNoise.set_sparse_parameter">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.set_sparse_parameter">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_sparse_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Sets the sparse parameter.</span>
+
+<span class="sd">        NOTE: We can't use the property setter @sparse_parameter.setter because of</span>
+<span class="sd">        the special way PyTorch treats Parameter types, including custom setters.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_rho</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_rho</span><span class="p">))</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">convex_parameterization</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convex_parameterization</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_from_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RelevancePursuitMixin</span><span class="p">:</span>
+        <span class="n">sparse_module</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sparse_module</span><span class="p">,</span> <span class="n">SparseOutlierNoise</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"The model's likelihood does not have a SparseOutlierNoise noise "</span>
+                <span class="sa">f</span><span class="s2">"as its noise_covar module, but instead a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">sparse_module</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sparse_module</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_convex_rho</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Transforms the raw_rho parameter such that `rho ~= 1 / (1 - raw_rho) - 1`,</span>
+<span class="sd">        which is a diffeomorphism from [0, 1] to [0, inf] whose derivative is nowhere</span>
+<span class="sd">        zero. This transforms the marginal log likelihood to be a convex function of</span>
+<span class="sd">        the `self.raw_rho` Parameter, when the covariance matrix is well conditioned.</span>
+
+<span class="sd">        NOTE: The convex parameterization also includes a scaling of the rho values by</span>
+<span class="sd">        the diagonal of the covariance matrix, which is carried out in the `marginal`</span>
+<span class="sd">        call in the SparseOutlierGaussianLikelihood.</span>
+<span class="sd">        """</span>
+        <span class="c1"># pyre-ignore[7]: It is not have an incompatible return type, pyre just doesn't</span>
+        <span class="c1"># recognize that the result gets promoted to a Tensor.</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_rho</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rho</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Dense representation of the data-point-specific variances, corresponding to</span>
+<span class="sd">        the latent `self.raw_rho` values, which might be represented sparsely or in the</span>
+<span class="sd">        convex parameterization. The last dimension is equal to the number of training</span>
+<span class="sd">        points `self.dim`.</span>
+
+<span class="sd">        NOTE: `rho` differs from `self.sparse_parameter` in that the latter returns the</span>
+<span class="sd">        the parameter in its sparse representation when `self.is_sparse` is true, and in</span>
+<span class="sd">        its latent convex paramzeterization when `self.convex_parameterization` is true,</span>
+<span class="sd">        while `rho` always returns the data-point-specific variances, embedded in a</span>
+<span class="sd">        dense tensor. The dense representation is used to propagate gradients to the</span>
+<span class="sd">        sparse rhos in the support.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x self.dim`-dim Tensor of robustness variances.</span>
+<span class="sd">        """</span>
+        <span class="c1"># NOTE: don't need to do transform / untransform since we are</span>
+        <span class="c1"># enforcing NonTransformedIntervals.</span>
+        <span class="n">rho_outlier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convex_rho</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">convex_parameterization</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_rho</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sparse</span><span class="p">:</span>  <span class="c1"># in the dense representation, we're done.</span>
+            <span class="k">return</span> <span class="n">rho_outlier</span>
+
+        <span class="c1"># If rho_outlier is in the sparse representation, we need to pad the</span>
+        <span class="c1"># rho values with zeros at the correct positions. The difference</span>
+        <span class="c1"># between this and calling RelevancePursuit's `to_dense` is that</span>
+        <span class="c1"># the latter will propagate gradients through all rhos, whereas</span>
+        <span class="c1"># the path here only propagates gradients to the sparse set of</span>
+        <span class="c1"># outliers, which is important for the optimization of the support.</span>
+        <span class="n">rho_inlier</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">rho_outlier</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">rho_outlier</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">rho_outlier</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">rho_outlier</span><span class="p">,</span> <span class="n">rho_inlier</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+        <span class="p">)</span>  <span class="c1"># batch_shape x (num_outliers + 1)</span>
+
+        <span class="k">return</span> <span class="n">rho</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rho_selection_indices</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_rho_selection_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># num_train is cached in the forward pass in training mode</span>
+        <span class="c1"># if an index is not in the outlier indices, we get the zeros from the</span>
+        <span class="c1"># last index of "rho"</span>
+        <span class="c1"># is this related to a sparse to dense mapping used in RP?</span>
+        <span class="n">rho_selection_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_rho</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,),</span>
+            <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_rho</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">):</span>
+            <span class="n">rho_selection_indices</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+
+        <span class="k">return</span> <span class="n">rho_selection_indices</span>
+
+    <span class="c1"># pyre-ignore[14]: Inconsistent override because the super class accepts `*params`</span>
+<div class="viewcode-block" id="SparseOutlierNoise.forward">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">diag_K</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearOperator</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Computes the covariance matrix of the sparse outlier noise model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: The training inputs, used to determine if the model is applied to the</span>
+<span class="sd">                training data, in which case the outlier variances are applied, or not.</span>
+<span class="sd">                NOTE: By default, BoTorch passes the transformed training inputs to</span>
+<span class="sd">                the likelihood during both training and inference.</span>
+<span class="sd">            shape: The shape of the covariance matrix, which is used to broadcast the</span>
+<span class="sd">                rho values to the correct shape.</span>
+<span class="sd">            diag_K: The diagonal of the covariance matrix, which is used to scale the</span>
+<span class="sd">                rho values in the convex parameterization.</span>
+<span class="sd">            kwargs: Any additional parameters of the base noise model, same as for</span>
+<span class="sd">                GPyTorch's noise model. Note that this implementation does not support</span>
+<span class="sd">                non-kwarg `params` arguments, which are used in GPyTorch's noise models.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x self.dim`-dim Tensor of robustness variances.</span>
+<span class="sd">        """</span>
+        <span class="n">noise_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_noise</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># rho should always be applied to the training set, irrespective of whether or</span>
+        <span class="c1"># not we are in training mode, so we will check if we should apply the rhos,</span>
+        <span class="c1"># based on cached training inputs.</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span>
+        <span class="c1"># NOTE: Even though it is not strictly required for many likelihoods, BoTorch</span>
+        <span class="c1"># and GPyTorch generally pass the training inputs to the likelihood, e.g.:</span>
+        <span class="c1"># 1) in fit_gpytorch_mll:</span>
+        <span class="c1"># (</span>
+        <span class="c1">#   github.com/pytorch/botorch/blob/3ca48d0ac5865a017ac6b2294807b432d6472bcf/</span>
+        <span class="c1">#   botorch/optim/closures/model_closures.py#L185</span>
+        <span class="c1"># )</span>
+        <span class="c1"># 2) in the exact prediction strategy:</span>
+        <span class="c1"># (</span>
+        <span class="c1">#   github.com/cornellius-gp/gpytorch/blob/</span>
+        <span class="c1">#   d501c284d05a1186868dc3fb20e0fa6ad32d32ac/</span>
+        <span class="c1">#   gpytorch/models/exact_prediction_strategies.py#L387</span>
+        <span class="c1"># )</span>
+        <span class="c1"># 3) In the model's `posterior` method, if `observation_noise` is True, in which</span>
+        <span class="c1"># case the test inputs will be passed to the likelihood:</span>
+        <span class="c1"># (</span>
+        <span class="c1">#    https://github.com/pytorch/botorch/blob/</span>
+        <span class="c1">#    4190f74363757ad97bfb0b437402b749ae50ba4c/</span>
+        <span class="c1">#    botorch/models/gpytorch.py#L198</span>
+        <span class="c1"># )</span>
+        <span class="c1"># Note that this module will raise a warning in this case to inform the user</span>
+        <span class="c1"># that the robust rhos are not applied to the test data.</span>
+        <span class="k">if</span> <span class="n">X</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                        <span class="s2">"SparseOutlierNoise only supports a single training input "</span>
+                        <span class="sa">f</span><span class="s2">"Tensor, but got a list of length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+                    <span class="p">)</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">noise_covar</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">rho</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">apply_robust_variances</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">warning_reason</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">"the last dimension of the base noise covariance "</span>
+                    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">) "</span>
+                    <span class="s2">"is not compatible with the last dimension of rho "</span>
+                    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">rho</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">)."</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_train_inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">apply_robust_variances</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cached_train_inputs</span> <span class="o">=</span> <span class="n">X</span>
+                <span class="n">warning_reason</span> <span class="o">=</span> <span class="s2">""</span>  <span class="c1"># will not warn when applying robust variances</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">apply_robust_variances</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_train_inputs</span><span class="p">)</span>
+                <span class="n">warning_reason</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">"the passed train_inputs are not equal to the cached ones."</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">apply_robust_variances</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">warning_reason</span> <span class="o">=</span> <span class="s2">"the training inputs were not passed to the likelihood."</span>
+
+        <span class="k">if</span> <span class="n">apply_robust_variances</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">diag_K</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">rho</span> <span class="o">=</span> <span class="p">(</span><span class="n">diag_K</span> <span class="o">+</span> <span class="n">noise_covar</span><span class="o">.</span><span class="n">diagonal</span><span class="p">())</span> <span class="o">*</span> <span class="n">rho</span>  <span class="c1"># convex parameterization</span>
+            <span class="n">noise_covar</span> <span class="o">=</span> <span class="n">noise_covar</span> <span class="o">+</span> <span class="n">DiagLinearOperator</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"SparseOutlierNoise: Robust rho not applied because </span><span class="si">{</span><span class="n">warning_reason</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="o">+</span> <span class="s2">"This can happen when the model posterior is evaluated on test data."</span><span class="p">,</span>
+                <span class="n">InputDataWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">noise_covar</span></div>
+
+
+    <span class="c1"># relevance pursuit method expansion and contraction related methods</span>
+<div class="viewcode-block" id="SparseOutlierNoise.expansion_objective">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.expansion_objective">[docs]</a>
+    <span class="k">def</span> <span class="nf">expansion_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Computes an objective value for all the inactive parameters, i.e.</span>
+<span class="sd">        self.sparse_parameter[~self.is_active] since we can't add already active</span>
+<span class="sd">        parameters to the support. This value will be used to select the parameters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mll: The marginal likelihood, containing the model to optimize.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The expansion objective value for all the inactive parameters.</span>
+<span class="sd">        """</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimal_rhos</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loo</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparse_parameter_gradient</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_optimal_rhos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Computes the optimal rho deltas for the given model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mll: The marginal likelihood, containing the model to optimize.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x self.dim`-dim Tensor of optimal rho deltas.</span>
+<span class="sd">        """</span>
+        <span class="c1"># train() is important, since we want to evaluate the prior with mll.model(X),</span>
+        <span class="c1"># but in eval(), __call__ gives the posterior.</span>
+        <span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>  <span class="c1"># NOTE: this changes model.train_inputs to be unnormalized.</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">L</span><span class="o">.</span><span class="n">covariance_matrix</span>  <span class="c1"># (Kernel Matrix + Noise Matrix)</span>
+
+        <span class="c1"># NOTE: The following computation is mathematically equivalent to the formula</span>
+        <span class="c1"># in this comment, but leverages the positive-definiteness of S via its</span>
+        <span class="c1"># Cholesky factorization.</span>
+        <span class="c1"># S_inv = S.inverse()</span>
+        <span class="c1"># diag_S_inv = S_inv.diagonal(dim1=-1, dim2=-2)</span>
+        <span class="c1"># loo_var = 1 / S_inv.diagonal(dim1=-1, dim2=-2)</span>
+        <span class="c1"># loo_mean = Y - (S_inv @ Y) / diag_S_inv</span>
+
+        <span class="n">chol</span> <span class="o">=</span> <span class="n">psd_safe_cholesky</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">chol</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">chol</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">chol</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">inv_root</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="n">chol</span><span class="p">,</span> <span class="n">eye</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># test: inv_root.square().sum(dim=-1) - S.inverse().diag()</span>
+        <span class="n">diag_S_inv</span> <span class="o">=</span> <span class="n">inv_root</span><span class="o">.</span><span class="n">square</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">loo_var</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">diag_S_inv</span>
+        <span class="n">S_inv_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky_solve</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">chol</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">loo_mean</span> <span class="o">=</span> <span class="n">Y</span> <span class="o">-</span> <span class="n">S_inv_Y</span> <span class="o">/</span> <span class="n">diag_S_inv</span>
+
+        <span class="n">loo_error</span> <span class="o">=</span> <span class="n">loo_mean</span> <span class="o">-</span> <span class="n">Y</span>
+        <span class="n">optimal_rho_deltas</span> <span class="o">=</span> <span class="n">loo_error</span><span class="o">.</span><span class="n">square</span><span class="p">()</span> <span class="o">-</span> <span class="n">loo_var</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">optimal_rho_deltas</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">is_active</span><span class="p">]</span></div>
+
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">BoTorch</a></h1>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../test_utils.html">botorch.test_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../../index.html">Documentation overview</a><ul>
+<li><a href="../../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/latest/" class="nav-home"><img src="/v/latest/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/latest/docs/introduction">Introduction</a><a href="/v/latest/docs/getting_started">Getting Started</a><a href="/v/latest/tutorials/">Tutorials</a><a href="/v/latest/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/latest/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2024 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/latest/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>
