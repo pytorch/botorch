@@ -60,7 +60,7 @@ def get_default_partitioning_alpha(num_objectives: int) -> float:
             BotorchWarning,
             stacklevel=3,
         )
-    return 10 ** (-8 + num_objectives)
+    return 10 ** (-2 if num_objectives >= 6 else -3)
 
 
 def prune_inferior_points_multi_objective(

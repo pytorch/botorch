@@ -32,8 +32,8 @@ from torch import Tensor
 
 class TestUtils(BotorchTestCase):
     def test_get_default_partitioning_alpha(self):
-        for m in range(2, 7):
-            expected_val = 0.0 if m < 5 else 10 ** (-8 + m)
+        for m in range(2, 9):
+            expected_val = 0.0 if m < 5 else 10 ** (-2 if m >= 6 else -3)
             self.assertEqual(
                 expected_val, get_default_partitioning_alpha(num_objectives=m)
             )
@@ -41,7 +41,7 @@ class TestUtils(BotorchTestCase):
         # remove the filter to ensure a warning is issued as expected.
         warnings.resetwarnings()
         with warnings.catch_warnings(record=True) as ws:
-            self.assertEqual(0.1, get_default_partitioning_alpha(num_objectives=7))
+            self.assertEqual(0.01, get_default_partitioning_alpha(num_objectives=7))
         self.assertEqual(len(ws), 1)
 
 
