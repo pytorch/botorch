@@ -376,7 +376,7 @@ def gen_batch_initial_conditions(
                             n, q, bounds_cpu.shape[-1], dtype=bounds.dtype
                         )
                     X_rnd = unnormalize(
-                        X_rnd_nlzd, bounds, update_constant_bounds=False
+                        X_rnd_nlzd, bounds_cpu, update_constant_bounds=False
                     )
             else:
                 X_rnd = sample_q_batches_from_polytope(
