@@ -271,13 +271,15 @@ def gen_batch_initial_conditions(
         fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
         options: Options for initial condition generation. For valid options see
-            `initialize_q_batch` and `initialize_q_batch_nonneg`. If `options`
-            contains a `nonnegative=True` entry, then `acq_function` is
-            assumed to be non-negative (useful when using custom acquisition
-            functions). In addition, an "init_batch_limit" option can be passed
-            to specify the batch limit for the initialization. This is useful
-            for avoiding memory limits when computing the batch posterior over
-            raw samples.
+            `initialize_q_batch_topn`, `initialize_q_batch_nonneg`, and
+            `initialize_q_batch`. If `options` contains a `topn=True` then
+            `initialize_q_batch_topn` will be used. Else if `options` contains a
+            `nonnegative=True` entry, then `acq_function` is assumed to be
+            non-negative (useful when using custom acquisition functions).
+            `initialize_q_batch` will be used otherwise. In addition, an
+            "init_batch_limit" option can be passed to specify the batch limit
+            for the initialization. This is useful for avoiding memory limits
+            when computing the batch posterior over raw samples.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
@@ -328,14 +330,24 @@ def gen_batch_initial_conditions(
     init_kwargs = {}
     device = bounds.device
     bounds_cpu = bounds.cpu()
-    if "eta" in options:
-        init_kwargs["eta"] = options.get("eta")
-    if options.get("nonnegative") or is_nonnegative(acq_function):
+
+    if options.get("topn"):
+        init_func = initialize_q_batch_topn
+        init_func_opts = ["sorted", "largest"]
+    elif options.get("nonnegative") or is_nonnegative(acq_function):
         init_func = initialize_q_batch_nonneg
-        if "alpha" in options:
-            init_kwargs["alpha"] = options.get("alpha")
+        init_func_opts = ["alpha", "eta"]
     else:
         init_func = initialize_q_batch
+        init_func_opts = ["eta"]
+
+    for opt in init_func_opts:
+        # default value of "largest" to "acq_function.maximize" if it exists
+        if opt == "largest" and hasattr(acq_function, "maximize"):
+            init_kwargs[opt] = acq_function.maximize
+
+        if opt in options:
+            init_kwargs[opt] = options.get(opt)
 
     q = 1 if q is None else q
     # the dimension the samples are drawn from
@@ -363,7 +375,9 @@ def gen_batch_initial_conditions(
                         X_rnd_nlzd = torch.rand(
                             n, q, bounds_cpu.shape[-1], dtype=bounds.dtype
                         )
-                    X_rnd = bounds_cpu[0] + (bounds_cpu[1] - bounds_cpu[0]) * X_rnd_nlzd
+                    X_rnd = unnormalize(
+                        X_rnd_nlzd, bounds_cpu, update_constant_bounds=False
+                    )
             else:
                 X_rnd = sample_q_batches_from_polytope(
                     n=n,
@@ -375,7 +389,8 @@ def gen_batch_initial_conditions(
                     equality_constraints=equality_constraints,
                     inequality_constraints=inequality_constraints,
                 )
-            # sample points around best
+
+            # sample additional points around best
             if sample_around_best:
                 X_best_rnd = sample_points_around_best(
                     acq_function=acq_function,
@@ -395,6 +410,8 @@ def gen_batch_initial_conditions(
                     )
             # Keep X on CPU for consistency & to limit GPU memory usage.
             X_rnd = fix_features(X_rnd, fixed_features=fixed_features).cpu()
+
+            # Append the fixed fantasies to the randomly generated points
             if fixed_X_fantasies is not None:
                 if (d_f := fixed_X_fantasies.shape[-1]) != (d_r := X_rnd.shape[-1]):
                     raise BotorchTensorDimensionError(
@@ -411,6 +428,9 @@ def gen_batch_initial_conditions(
                     ],
                     dim=-2,
                 )
+
+            # Evaluate the acquisition function on `X_rnd` using `batch_limit`
+            # sized chunks.
             with torch.no_grad():
                 if batch_limit is None:
                     batch_limit = X_rnd.shape[0]
@@ -423,16 +443,22 @@ def gen_batch_initial_conditions(
                     ],
                     dim=0,
                 )
+
+            # Downselect the initial conditions based on the acquisition function values
             batch_initial_conditions, _ = init_func(
                 X=X_rnd, acq_vals=acq_vals, n=num_restarts, **init_kwargs
             )
             batch_initial_conditions = batch_initial_conditions.to(device=device)
+
+            # Return the initial conditions if no warnings were raised
             if not any(issubclass(w.category, BadInitialCandidatesWarning) for w in ws):
                 return batch_initial_conditions
+
             if factor < max_factor:
                 factor += 1
                 if seed is not None:
                     seed += 1  # make sure to sample different X_rnd
+
     warnings.warn(
         "Unable to find non-zero acquisition function values - initial conditions "
         "are being selected randomly.",
@@ -1055,6 +1081,56 @@ def initialize_q_batch_nonneg(
     if max_idx not in idcs:
         idcs[-1] = max_idx
     return X[idcs], acq_vals[idcs]
+
+
+def initialize_q_batch_topn(
+    X: Tensor, acq_vals: Tensor, n: int, largest: bool = True, sorted: bool = True
+) -> tuple[Tensor, Tensor]:
+    r"""Take the top `n` initial conditions for candidate generation.
+
+    Args:
+        X: A `b x q x d` tensor of `b` samples of `q`-batches from a `d`-dim.
+            feature space. Typically, these are generated using qMC.
+        acq_vals: A tensor of `b` outcomes associated with the samples. Typically, this
+            is the value of the batch acquisition function to be maximized.
+        n: The number of initial condition to be generated. Must be less than `b`.
+
+    Returns:
+        - An `n x q x d` tensor of `n` `q`-batch initial conditions.
+        - An `n` tensor of the corresponding acquisition values.
+
+    Example:
+        >>> # To get `n=10` starting points of q-batch size `q=3`
+        >>> # for model with `d=6`:
+        >>> qUCB = qUpperConfidenceBound(model, beta=0.1)
+        >>> X_rnd = torch.rand(500, 3, 6)
+        >>> X_init, acq_init = initialize_q_batch_topn(
+        ...     X=X_rnd, acq_vals=qUCB(X_rnd), n=10
+        ... )
+
+    """
+    n_samples = X.shape[0]
+    if n > n_samples:
+        raise RuntimeError(
+            f"n ({n}) cannot be larger than the number of "
+            f"provided samples ({n_samples})"
+        )
+    elif n == n_samples:
+        return X, acq_vals
+
+    Ystd = acq_vals.std(dim=0)
+    if torch.any(Ystd == 0):
+        warnings.warn(
+            "All acquisition values for raw samples points are the same for "
+            "at least one batch. Choosing initial conditions at random.",
+            BadInitialCandidatesWarning,
+            stacklevel=3,
+        )
+        idcs = torch.randperm(n=n_samples, device=X.device)[:n]
+        return X[idcs], acq_vals[idcs]
+
+    topk_out, topk_idcs = acq_vals.topk(n, largest=largest, sorted=sorted)
+    return X[topk_idcs], topk_out
 
 
 def sample_points_around_best(

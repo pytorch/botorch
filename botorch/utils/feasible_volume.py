@@ -11,7 +11,7 @@ from collections.abc import Callable
 import botorch.models.model as model
 import torch
 from botorch.logging import _get_logger
-from botorch.utils.sampling import manual_seed
+from botorch.utils.sampling import manual_seed, unnormalize
 from torch import Tensor
 
 
@@ -164,9 +164,10 @@ def estimate_feasible_volume(
     seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
 
     with manual_seed(seed=seed):
-        box_samples = bounds[0] + (bounds[1] - bounds[0]) * torch.rand(
+        samples_nlzd = torch.rand(
             (nsample_feature, bounds.size(1)), dtype=dtype, device=device
         )
+        box_samples = unnormalize(samples_nlzd, bounds, update_constant_bounds=False)
 
     features, p_feature = get_feasible_samples(
         samples=box_samples, inequality_constraints=inequality_constraints
