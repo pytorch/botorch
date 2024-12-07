@@ -308,13 +308,15 @@
 <span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
 <span class="sd">            should be fixed to a particular value during generation.</span>
 <span class="sd">        options: Options for initial condition generation. For valid options see</span>
-<span class="sd">            `initialize_q_batch` and `initialize_q_batch_nonneg`. If `options`</span>
-<span class="sd">            contains a `nonnegative=True` entry, then `acq_function` is</span>
-<span class="sd">            assumed to be non-negative (useful when using custom acquisition</span>
-<span class="sd">            functions). In addition, an "init_batch_limit" option can be passed</span>
-<span class="sd">            to specify the batch limit for the initialization. This is useful</span>
-<span class="sd">            for avoiding memory limits when computing the batch posterior over</span>
-<span class="sd">            raw samples.</span>
+<span class="sd">            `initialize_q_batch_topn`, `initialize_q_batch_nonneg`, and</span>
+<span class="sd">            `initialize_q_batch`. If `options` contains a `topn=True` then</span>
+<span class="sd">            `initialize_q_batch_topn` will be used. Else if `options` contains a</span>
+<span class="sd">            `nonnegative=True` entry, then `acq_function` is assumed to be</span>
+<span class="sd">            non-negative (useful when using custom acquisition functions).</span>
+<span class="sd">            `initialize_q_batch` will be used otherwise. In addition, an</span>
+<span class="sd">            "init_batch_limit" option can be passed to specify the batch limit</span>
+<span class="sd">            for the initialization. This is useful for avoiding memory limits</span>
+<span class="sd">            when computing the batch posterior over raw samples.</span>
 <span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`.</span>
@@ -365,14 +367,24 @@
     <span class="n">init_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">device</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">device</span>
     <span class="n">bounds_cpu</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
-    <span class="k">if</span> <span class="s2">"eta"</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
-        <span class="n">init_kwargs</span><span class="p">[</span><span class="s2">"eta"</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"nonnegative"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">is_nonnegative</span><span class="p">(</span><span class="n">acq_function</span><span class="p">):</span>
+
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"topn"</span><span class="p">):</span>
+        <span class="n">init_func</span> <span class="o">=</span> <span class="n">initialize_q_batch_topn</span>
+        <span class="n">init_func_opts</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"sorted"</span><span class="p">,</span> <span class="s2">"largest"</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"nonnegative"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">is_nonnegative</span><span class="p">(</span><span class="n">acq_function</span><span class="p">):</span>
         <span class="n">init_func</span> <span class="o">=</span> <span class="n">initialize_q_batch_nonneg</span>
-        <span class="k">if</span> <span class="s2">"alpha"</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
-            <span class="n">init_kwargs</span><span class="p">[</span><span class="s2">"alpha"</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">)</span>
+        <span class="n">init_func_opts</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"alpha"</span><span class="p">,</span> <span class="s2">"eta"</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">init_func</span> <span class="o">=</span> <span class="n">initialize_q_batch</span>
+        <span class="n">init_func_opts</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"eta"</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">init_func_opts</span><span class="p">:</span>
+        <span class="c1"># default value of "largest" to "acq_function.maximize" if it exists</span>
+        <span class="k">if</span> <span class="n">opt</span> <span class="o">==</span> <span class="s2">"largest"</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"maximize"</span><span class="p">):</span>
+            <span class="n">init_kwargs</span><span class="p">[</span><span class="n">opt</span><span class="p">]</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">maximize</span>
+
+        <span class="k">if</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">init_kwargs</span><span class="p">[</span><span class="n">opt</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opt</span><span class="p">)</span>
 
     <span class="n">q</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">q</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">q</span>
     <span class="c1"># the dimension the samples are drawn from</span>
@@ -400,7 +412,9 @@
                         <span class="n">X_rnd_nlzd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
                             <span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">bounds_cpu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span>
                         <span class="p">)</span>
-                    <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">bounds_cpu</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds_cpu</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds_cpu</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">X_rnd_nlzd</span>
+                    <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span>
+                        <span class="n">X_rnd_nlzd</span><span class="p">,</span> <span class="n">bounds_cpu</span><span class="p">,</span> <span class="n">update_constant_bounds</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">sample_q_batches_from_polytope</span><span class="p">(</span>
                     <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
@@ -412,7 +426,8 @@
                     <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
                     <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
                 <span class="p">)</span>
-            <span class="c1"># sample points around best</span>
+
+            <span class="c1"># sample additional points around best</span>
             <span class="k">if</span> <span class="n">sample_around_best</span><span class="p">:</span>
                 <span class="n">X_best_rnd</span> <span class="o">=</span> <span class="n">sample_points_around_best</span><span class="p">(</span>
                     <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
@@ -432,6 +447,8 @@
                     <span class="p">)</span>
             <span class="c1"># Keep X on CPU for consistency &amp; to limit GPU memory usage.</span>
             <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+
+            <span class="c1"># Append the fixed fantasies to the randomly generated points</span>
             <span class="k">if</span> <span class="n">fixed_X_fantasies</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">d_f</span> <span class="o">:=</span> <span class="n">fixed_X_fantasies</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">!=</span> <span class="p">(</span><span class="n">d_r</span> <span class="o">:=</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
                     <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
@@ -448,6 +465,9 @@
                     <span class="p">],</span>
                     <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span>
                 <span class="p">)</span>
+
+            <span class="c1"># Evaluate the acquisition function on `X_rnd` using `batch_limit`</span>
+            <span class="c1"># sized chunks.</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">batch_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">batch_limit</span> <span class="o">=</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -460,16 +480,22 @@
                     <span class="p">],</span>
                     <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                 <span class="p">)</span>
+
+            <span class="c1"># Downselect the initial conditions based on the acquisition function values</span>
             <span class="n">batch_initial_conditions</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">init_func</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">acq_vals</span><span class="o">=</span><span class="n">acq_vals</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span> <span class="o">**</span><span class="n">init_kwargs</span>
             <span class="p">)</span>
             <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+            <span class="c1"># Return the initial conditions if no warnings were raised</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">BadInitialCandidatesWarning</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">batch_initial_conditions</span>
+
             <span class="k">if</span> <span class="n">factor</span> <span class="o">&lt;</span> <span class="n">max_factor</span><span class="p">:</span>
                 <span class="n">factor</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">seed</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># make sure to sample different X_rnd</span>
+
     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
         <span class="s2">"Unable to find non-zero acquisition function values - initial conditions "</span>
         <span class="s2">"are being selected randomly."</span><span class="p">,</span>
@@ -1107,6 +1133,59 @@
     <span class="k">if</span> <span class="n">max_idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">idcs</span><span class="p">:</span>
         <span class="n">idcs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_idx</span>
     <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">],</span> <span class="n">acq_vals</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="initialize_q_batch_topn">
+<a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.initialize_q_batch_topn">[docs]</a>
+<span class="k">def</span> <span class="nf">initialize_q_batch_topn</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">acq_vals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">largest</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Take the top `n` initial conditions for candidate generation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `b x q x d` tensor of `b` samples of `q`-batches from a `d`-dim.</span>
+<span class="sd">            feature space. Typically, these are generated using qMC.</span>
+<span class="sd">        acq_vals: A tensor of `b` outcomes associated with the samples. Typically, this</span>
+<span class="sd">            is the value of the batch acquisition function to be maximized.</span>
+<span class="sd">        n: The number of initial condition to be generated. Must be less than `b`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        - An `n x q x d` tensor of `n` `q`-batch initial conditions.</span>
+<span class="sd">        - An `n` tensor of the corresponding acquisition values.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # To get `n=10` starting points of q-batch size `q=3`</span>
+<span class="sd">        &gt;&gt;&gt; # for model with `d=6`:</span>
+<span class="sd">        &gt;&gt;&gt; qUCB = qUpperConfidenceBound(model, beta=0.1)</span>
+<span class="sd">        &gt;&gt;&gt; X_rnd = torch.rand(500, 3, 6)</span>
+<span class="sd">        &gt;&gt;&gt; X_init, acq_init = initialize_q_batch_topn(</span>
+<span class="sd">        ...     X=X_rnd, acq_vals=qUCB(X_rnd), n=10</span>
+<span class="sd">        ... )</span>
+
+<span class="sd">    """</span>
+    <span class="n">n_samples</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">n_samples</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"n (</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">) cannot be larger than the number of "</span>
+            <span class="sa">f</span><span class="s2">"provided samples (</span><span class="si">{</span><span class="n">n_samples</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="n">n_samples</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">acq_vals</span>
+
+    <span class="n">Ystd</span> <span class="o">=</span> <span class="n">acq_vals</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">Ystd</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"All acquisition values for raw samples points are the same for "</span>
+            <span class="s2">"at least one batch. Choosing initial conditions at random."</span><span class="p">,</span>
+            <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">],</span> <span class="n">acq_vals</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span>
+
+    <span class="n">topk_out</span><span class="p">,</span> <span class="n">topk_idcs</span> <span class="o">=</span> <span class="n">acq_vals</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">largest</span><span class="o">=</span><span class="n">largest</span><span class="p">,</span> <span class="nb">sorted</span><span class="o">=</span><span class="nb">sorted</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">topk_idcs</span><span class="p">],</span> <span class="n">topk_out</span></div>
 
 
 

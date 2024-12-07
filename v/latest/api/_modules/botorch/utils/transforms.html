@@ -94,17 +94,18 @@
 
 <div class="viewcode-block" id="normalize">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize">[docs]</a>
-<span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">update_constant_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Min-max normalize X w.r.t. the provided bounds.</span>
-
-<span class="sd">    NOTE: If the upper and lower bounds are identical for a dimension, that dimension</span>
-<span class="sd">    will not be scaled. Such dimensions will only be shifted as</span>
-<span class="sd">    `new_X[..., i] = X[..., i] - bounds[0, i]`. This avoids division by zero issues.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: `... x d` tensor of data</span>
 <span class="sd">        bounds: `2 x d` tensor of lower and upper bounds for each of the X's d</span>
 <span class="sd">            columns.</span>
+<span class="sd">        update_constant_bounds: If `True`, update the constant bounds in order to</span>
+<span class="sd">            avoid division by zero issues. When the upper and lower bounds are</span>
+<span class="sd">            identical for a dimension, that dimension will not be scaled. Such</span>
+<span class="sd">            dimensions will only be shifted as</span>
+<span class="sd">            `new_X[..., i] = X[..., i] - bounds[0, i]`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `... x d`-dim tensor of normalized data, given by</span>
@@ -117,24 +118,30 @@
 <span class="sd">        &gt;&gt;&gt; bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])</span>
 <span class="sd">        &gt;&gt;&gt; X_normalized = normalize(X, bounds)</span>
 <span class="sd">    """</span>
-    <span class="n">bounds</span> <span class="o">=</span> <span class="n">_update_constant_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">_update_constant_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span> <span class="k">if</span> <span class="n">update_constant_bounds</span> <span class="k">else</span> <span class="n">bounds</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
 
 
 
 <div class="viewcode-block" id="unnormalize">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.unnormalize">[docs]</a>
-<span class="k">def</span> <span class="nf">unnormalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">unnormalize</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">update_constant_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Un-normalizes X w.r.t. the provided bounds.</span>
-
-<span class="sd">    NOTE: If the upper and lower bounds are identical for a dimension, that dimension</span>
-<span class="sd">    will not be scaled. Such dimensions will only be shifted as</span>
-<span class="sd">    `new_X[..., i] = X[..., i] + bounds[0, i]`, matching the behavior of `normalize`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        X: `... x d` tensor of data</span>
 <span class="sd">        bounds: `2 x d` tensor of lower and upper bounds for each of the X's d</span>
 <span class="sd">            columns.</span>
+<span class="sd">        update_constant_bounds: If `True`, update the constant bounds in order to</span>
+<span class="sd">            avoid division by zero issues. When the upper and lower bounds are</span>
+<span class="sd">            identical for a dimension, that dimension will not be scaled. Such</span>
+<span class="sd">            dimensions will only be shifted as</span>
+<span class="sd">            `new_X[..., i] = X[..., i] + bounds[0, i]`. This is the inverse of</span>
+<span class="sd">            the behavior of `normalize` when `update_constant_bounds=True`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `... x d`-dim tensor of unnormalized data, given by</span>
@@ -147,7 +154,9 @@
 <span class="sd">        &gt;&gt;&gt; bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])</span>
 <span class="sd">        &gt;&gt;&gt; X = unnormalize(X_normalized, bounds)</span>
 <span class="sd">    """</span>
-    <span class="n">bounds</span> <span class="o">=</span> <span class="n">_update_constant_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">_update_constant_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span> <span class="k">if</span> <span class="n">update_constant_bounds</span> <span class="k">else</span> <span class="n">bounds</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 

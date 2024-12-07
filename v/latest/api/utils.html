@@ -2706,17 +2706,19 @@ data point), this function will return 0 for that batch index.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.transforms.normalize">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.normalize" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_constant_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.normalize" title="Link to this definition">¶</a></dt>
 <dd><p>Min-max normalize X w.r.t. the provided bounds.</p>
-<p>NOTE: If the upper and lower bounds are identical for a dimension, that dimension
-will not be scaled. Such dimensions will only be shifted as
-<cite>new_X[…, i] = X[…, i] - bounds[0, i]</cite>. This avoids division by zero issues.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – <cite>… x d</cite> tensor of data</p></li>
 <li><p><strong>bounds</strong> (<em>Tensor</em>) – <cite>2 x d</cite> tensor of lower and upper bounds for each of the X’s d
 columns.</p></li>
+<li><p><strong>update_constant_bounds</strong> (<em>bool</em>) – If <cite>True</cite>, update the constant bounds in order to
+avoid division by zero issues. When the upper and lower bounds are
+identical for a dimension, that dimension will not be scaled. Such
+dimensions will only be shifted as
+<cite>new_X[…, i] = X[…, i] - bounds[0, i]</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2741,17 +2743,20 @@ contained within <cite>[0, 1]^d</cite>.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.transforms.unnormalize">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">unnormalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#unnormalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.unnormalize" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">unnormalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_constant_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#unnormalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.unnormalize" title="Link to this definition">¶</a></dt>
 <dd><p>Un-normalizes X w.r.t. the provided bounds.</p>
-<p>NOTE: If the upper and lower bounds are identical for a dimension, that dimension
-will not be scaled. Such dimensions will only be shifted as
-<cite>new_X[…, i] = X[…, i] + bounds[0, i]</cite>, matching the behavior of <cite>normalize</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>Tensor</em>) – <cite>… x d</cite> tensor of data</p></li>
 <li><p><strong>bounds</strong> (<em>Tensor</em>) – <cite>2 x d</cite> tensor of lower and upper bounds for each of the X’s d
 columns.</p></li>
+<li><p><strong>update_constant_bounds</strong> (<em>bool</em>) – If <cite>True</cite>, update the constant bounds in order to
+avoid division by zero issues. When the upper and lower bounds are
+identical for a dimension, that dimension will not be scaled. Such
+dimensions will only be shifted as
+<cite>new_X[…, i] = X[…, i] + bounds[0, i]</cite>. This is the inverse of
+the behavior of <cite>normalize</cite> when <cite>update_constant_bounds=True</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

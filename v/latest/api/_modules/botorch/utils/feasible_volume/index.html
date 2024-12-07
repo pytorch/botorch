@@ -34,7 +34,7 @@
 <span class="kn">import</span> <span class="nn">botorch.models.model</span> <span class="k">as</span> <span class="nn">model</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">_get_logger</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">manual_seed</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">manual_seed</span><span class="p">,</span> <span class="n">unnormalize</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -195,9 +195,10 @@
     <span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span> <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000000</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
     <span class="k">with</span> <span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">):</span>
-        <span class="n">box_samples</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
+        <span class="n">samples_nlzd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
             <span class="p">(</span><span class="n">nsample_feature</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span>
         <span class="p">)</span>
+        <span class="n">box_samples</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">samples_nlzd</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">update_constant_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="n">features</span><span class="p">,</span> <span class="n">p_feature</span> <span class="o">=</span> <span class="n">get_feasible_samples</span><span class="p">(</span>
         <span class="n">samples</span><span class="o">=</span><span class="n">box_samples</span><span class="p">,</span> <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span>
