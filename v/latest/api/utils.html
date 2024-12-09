@@ -1352,13 +1352,13 @@ allows a single batch dimension). The calling signature is the same as for
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>) – A <cite>n_ineq x d</cite>-dim numpy array containing the coefficients of the
+<li><p><strong>A</strong> (<em>ndarray</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>) – A <cite>n_ineq x d</cite>-dim numpy array containing the coefficients of the
 constraint inequalities.</p></li>
-<li><p><strong>b</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>) – A <cite>n_ineq x 1</cite>-dim numpy array containing the right hand sides of
+<li><p><strong>b</strong> (<em>ndarray</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>]</em>) – A <cite>n_ineq x 1</cite>-dim numpy array containing the right hand sides of
 the constraint inequalities.</p></li>
-<li><p><strong>A_eq</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A <cite>n_eq x d</cite>-dim numpy array containing the coefficients of the
+<li><p><strong>A_eq</strong> (<em>ndarray</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A <cite>n_eq x d</cite>-dim numpy array containing the coefficients of the
 constraint equalities.</p></li>
-<li><p><strong>b_eq</strong> (<em>ndarray</em><em>[</em><em>Any</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A <cite>n_eq x 1</cite>-dim numpy array containing the right hand sides of
+<li><p><strong>b_eq</strong> (<em>ndarray</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em><em>, </em><em>dtype</em><em>[</em><em>_ScalarType_co</em><em>]</em><em>] </em><em>| </em><em>None</em>) – A <cite>n_eq x 1</cite>-dim numpy array containing the right hand sides of
 the constraint equalities.</p></li>
 </ul>
 </dd>
@@ -1367,7 +1367,7 @@ the constraint equalities.</p></li>
 This function will raise a ValueError if there is no such point.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>ndarray</em>[<em>Any</em>, <em>dtype</em>[<em>_ScalarType_co</em>]]</p>
+<dd class="field-odd"><p><em>ndarray</em>[tuple[int, …], <em>dtype</em>[<em>_ScalarType_co</em>]]</p>
 </dd>
 </dl>
 <p>This method solves the following Linear Program:</p>
