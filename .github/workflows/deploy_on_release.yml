@@ -50,6 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      fetch-tags: true
     - name: Check if major or minor version changed
       id: compare
       run: |
