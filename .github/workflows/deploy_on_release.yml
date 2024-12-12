@@ -51,6 +51,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
+        fetch-depth: 0
         fetch-tags: true
         ref: ${{ github.sha }}
     - name: Check if major or minor version changed
