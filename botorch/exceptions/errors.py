@@ -86,3 +86,9 @@ class OptimizationGradientError(BotorchError, RuntimeError):
         """
         super().__init__(*args, **kwargs)
         self.current_x = current_x
+
+
+class InfeasibilityError(BotorchError, ValueError):
+    r"""Exception raised when infeasibility occurs."""
+
+    pass
