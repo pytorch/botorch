@@ -48,7 +48,6 @@ jobs:
     # needs: package-deploy-pypi
     name: Version and Publish website
     runs-on: ubuntu-latest
-    secrets: inherit
     steps:
     - uses: actions/checkout@v4
     - name: Check if major or minor version changed
