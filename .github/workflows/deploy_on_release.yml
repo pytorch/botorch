@@ -44,10 +44,12 @@ jobs:
   #     with:
   #       verbose: true
 
-  version-and-publish-website:
+  check-versions:
     # needs: package-deploy-pypi
-    name: Version and Publish website
+    name: Check if major or minor version changed
     runs-on: ubuntu-latest
+    outputs:
+      major_minor_changed: ${{ steps.compare.outputs.major_minor_changed }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -70,8 +72,12 @@ jobs:
         else
           echo major_minor_changed=true >> $GITHUB_OUTPUT
         fi
-    - name: Version and Publish website
-      if: ${{ steps.compare.outputs.major_minor_changed == 'true' }}
-      uses: ./.github/workflows/publish_website.yml
-      with:
-        new_version: ${{ github.event.release.tag_name }}
+
+  version-and-publish-website:
+    needs: check-versions
+    name: Version and Publish website
+    if: ${{ needs.check-versions.outputs.major_minor_changed == 'true' }}
+    uses: ./.github/workflows/publish_website.yml
+    with:
+      new_version: ${{ github.event.release.tag_name }}
+    secrets: inherit
