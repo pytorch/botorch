@@ -69,6 +69,11 @@ Higher Order GP Models
 .. automodule:: botorch.models.higher_order_gp
     :members:
 
+Latent Kronecker GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.latent_kronecker_gp
+    :members:
+
 Pairwise GP Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.pairwise_gp
