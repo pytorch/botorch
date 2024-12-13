@@ -149,7 +149,7 @@ plt.tight_layout()
 
 # First, let's define a helper function to fit a SingleTaskGP with an fixed observed noise level.
 
-# In[8]:
+# In[6]:
 
 
 from gpytorch.mlls import ExactMarginalLogLikelihood
@@ -173,7 +173,7 @@ def get_fitted_model(train_X, train_Y, train_Yvar, state_dict=None):
 
 # #### Now let's fit a SingleTaskGP for each base task
 
-# In[9]:
+# In[7]:
 
 
 # Fit base model
@@ -207,7 +207,7 @@ for task in range(NUM_BASE_TASKS):
 # The weights are then computed as:
 # $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big)$$
 
-# In[10]:
+# In[8]:
 
 
 def roll_col(X, shift):
@@ -217,7 +217,7 @@ def roll_col(X, shift):
     return torch.cat((X[..., -shift:], X[..., :-shift]), dim=-1)
 
 
-# In[11]:
+# In[9]:
 
 
 def compute_ranking_loss(f_samps, target_y):
@@ -264,7 +264,7 @@ def compute_ranking_loss(f_samps, target_y):
 # 1. Create a batch mode-gp LOOCV GP using the hyperparameters from `target_model`
 # 2. Draw a joint sample across all points from the target task (in-sample and out-of-sample)
 
-# In[12]:
+# In[10]:
 
 
 def get_target_model_loocv_sample_preds(
@@ -305,7 +305,7 @@ def get_target_model_loocv_sample_preds(
         return sampler(posterior).squeeze(-1)
 
 
-# In[13]:
+# In[11]:
 
 
 def compute_rank_weights(train_x, train_y, base_models, target_model, num_samples):
@@ -355,14 +355,14 @@ def compute_rank_weights(train_x, train_y, base_models, target_model, num_sample
     return rank_weights
 
 
-# In[14]:
+# In[12]:
 
 
 from botorch.models.gpytorch import GPyTorchModel
 from gpytorch.models import GP
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.lazy import PsdSumLazyTensor
 from gpytorch.likelihoods import LikelihoodList
+from linear_operator.operators import PsdSumLinearOperator
 from torch.nn import ModuleList
 
 
@@ -410,13 +410,13 @@ class RGPE(GP, GPyTorchModel):
         # set mean and covariance to be the rank-weighted sum the means and covariances of the
         # base models and target model
         mean_x = torch.stack(weighted_means).sum(dim=0)
-        covar_x = PsdSumLazyTensor(*weighted_covars)
+        covar_x = PsdSumLinearOperator(*weighted_covars)
         return MultivariateNormal(mean_x, covar_x)
 
 
 # ### Optimize target function using RGPE + qNEI
 
-# In[18]:
+# In[13]:
 
 
 # suppress GPyTorch warnings about adding jitter
@@ -567,7 +567,7 @@ for trial in range(N_TRIALS):
 
 # #### Plot best observed value vs iteration
 
-# In[19]:
+# In[14]:
 
 
 import numpy as np
