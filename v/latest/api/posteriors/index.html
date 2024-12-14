@@ -696,6 +696,96 @@ of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p>
 </dd></dl>
 </dd></dl>
 </section>
+<section id="module-botorch.posteriors.latent_kronecker">
+<span id="latent-kronecker-gp-posterior"></span><h3>Latent Kronecker GP Posterior<a class="headerlink" href="#module-botorch.posteriors.latent_kronecker" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.posteriors.latent_kronecker.LatentKroneckerGPPosterior">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.latent_kronecker.</span></span><span class="sig-name descname"><span class="pre">LatentKroneckerGPPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/latent_kronecker.html#LatentKroneckerGPPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.latent_kronecker.LatentKroneckerGPPosterior" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a></p>
+<p>Dummy posterior class for a LatentKroneckerGP model.
+Internally calls model._rsample_from_base_samples to draw posterior samples via
+pathwise conditioning aka Matheron’s rule [wilson2020sampling, wilson2021pathwise].</p>
+<p>This is necessary because BoTorch instantiates the posterior object before creating
+base samples, whereas pathwise conditioning requires the base samples first to
+calculate the posterior samples. To cache expensive computations, which only have
+to be performed once for the same base samples, the results are stored in the model
+instead of the posterior object, because a new posterior object is created in each
+acquisition function call.</p>
+<p>A dummy posterior for LatentKroneckerGP models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>GPyTorchModel</em></a>) – The LatentKroneckerGP model to which this posterior belongs to.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
+of the feature space and <cite>q</cite> is the number of points considered
+jointly, on which the posterior shall be evaluated.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.latent_kronecker.LatentKroneckerGPPosterior.base_sample_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><a class="headerlink" href="#botorch.posteriors.latent_kronecker.LatentKroneckerGPPosterior.base_sample_shape" title="Link to this definition">¶</a></dt>
+<dd><p>The shape of a base sample used for constructing posterior samples.</p>
+<p>Overwrites the standard <cite>base_sample_shape</cite> call to inform samplers that
+<cite>n_train_full + n_train + n_test</cite> samples are needed rather than n samples.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.latent_kronecker.LatentKroneckerGPPosterior.batch_range">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.posteriors.latent_kronecker.LatentKroneckerGPPosterior.batch_range" title="Link to this definition">¶</a></dt>
+<dd><p>The t-batch range.</p>
+<p>This is used in samplers to identify the t-batch component of the
+<cite>base_sample_shape</cite>. The base samples are expanded over the t-batches to
+provide consistency in the acquisition values, i.e., to ensure that a
+candidate produces same value regardless of its position on the t-batch.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.posteriors.latent_kronecker.LatentKroneckerGPPosterior.rsample_from_base_samples">
+<span class="sig-name descname"><span class="pre">rsample_from_base_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/latent_kronecker.html#LatentKroneckerGPPosterior.rsample_from_base_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.latent_kronecker.LatentKroneckerGPPosterior.rsample_from_base_samples" title="Link to this definition">¶</a></dt>
+<dd><p>Sample from the posterior (with gradients) using base samples.</p>
+<p>This is intended to be used with a sampler that produces the corresponding base
+samples, and enables acquisition optimization via Sample Average Approximation.</p>
+<p>Since this posterior is a dummy object, call the model to perform sampling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>Size</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
+draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
+of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
+<li><p><strong>base_samples</strong> (<em>Tensor</em>) – A Tensor of <cite>N(0, I)</cite> base samples of shape
+<cite>sample_shape x base_sample_shape</cite>, typically obtained from
+a <cite>Sampler</cite>. This is used for deterministic optimization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Samples from the posterior, a tensor of shape
+<cite>self._extended_shape(sample_shape=sample_shape)</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.posteriors.latent_kronecker.LatentKroneckerGPPosterior.rsample">
+<span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/latent_kronecker.html#LatentKroneckerGPPosterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.latent_kronecker.LatentKroneckerGPPosterior.rsample" title="Link to this definition">¶</a></dt>
+<dd><p>Sample from the posterior (with gradients).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sample_shape</strong> (<em>Size</em><em> | </em><em>None</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
+draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
+of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Samples from the posterior, a tensor of shape
+<cite>self._extended_shape(sample_shape=sample_shape)</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</section>
 <section id="module-botorch.posteriors.multitask">
 <span id="multitask-gp-posterior"></span><h3>Multitask GP Posterior<a class="headerlink" href="#module-botorch.posteriors.multitask" title="Link to this heading">¶</a></h3>
 <dl class="py class">

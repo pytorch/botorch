@@ -44,6 +44,11 @@ Higher Order GP Posterior
 .. automodule:: botorch.posteriors.higher_order
     :members:
 
+Latent Kronecker GP Posterior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.posteriors.latent_kronecker
+    :members:
+
 Multitask GP Posterior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.posteriors.multitask
