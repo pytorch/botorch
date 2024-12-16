@@ -38,4 +38,4 @@ jobs:
         sphinx-build -WT --keep-going sphinx/source sphinx/build
     - name: Validate and parse tutorials
       run: |
-        python scripts/parse_tutorials.py -w "$(pwd)"
+        python scripts/convert_ipynb_to_mdx.py --clean
