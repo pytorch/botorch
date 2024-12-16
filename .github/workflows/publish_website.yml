@@ -25,9 +25,19 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.10"
+    - if: ${{ !inputs.new_version }}
+      name: Install latest GPyTorch and Linear Operator
+      run: |
+        pip install git+https://github.com/cornellius-gp/linear_operator.git
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
     - name: Install dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
+        ALLOW_BOTORCH_LATEST: true  # Allow Ax to install w/ new BoTorch release.
       run: |
         pip install ."[dev, tutorials]"
+        # There may not be a compatible Ax pip version, so we use the development version.
+        pip install git+https://github.com/facebook/Ax.git
     - if: ${{ inputs.new_version }}
       name: Create new docusaurus version
       run: |

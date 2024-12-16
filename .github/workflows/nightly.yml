@@ -63,7 +63,7 @@ jobs:
   publish-latest-website:
     name: Publish latest website
     needs: [tests-and-coverage-nightly, package-test-deploy-pypi]
-    uses: ./.github/workflows/reusable_website.yml
+    uses: ./.github/workflows/publish_website.yml
     with:
       publish_versioned_website: false
     secrets: inherit
