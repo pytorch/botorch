@@ -75,9 +75,7 @@ if os.environ.get("ALLOW_LATEST_GPYTORCH_LINOP"):
 # Read in pinned versions of the formatting tools
 FMT_REQUIRES += read_deps_from_file("requirements-fmt.txt")
 # Dev is test + formatting + docs generation
-DEV_REQUIRES = (
-    TEST_REQUIRES + FMT_REQUIRES + ["sphinx", "sphinx-rtd-theme"]
-)
+DEV_REQUIRES = TEST_REQUIRES + FMT_REQUIRES + ["sphinx", "sphinx-rtd-theme"]
 
 # read in README.md as the long description
 with open(os.path.join(root_dir, "README.md"), "r") as fh:
