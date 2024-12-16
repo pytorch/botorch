@@ -104,7 +104,7 @@ def run_tutorials(
     )
 
     tutorials = sorted(
-        t for t in tutorial_dir.iterdir() if t.is_file and t.suffix == ".ipynb"
+        t for t in tutorial_dir.rglob("*.ipynb") if t.is_file()
     )
     if name is not None:
         tutorials = [t for t in tutorials if t.name == name]
