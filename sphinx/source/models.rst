@@ -69,6 +69,11 @@ Higher Order GP Models
 .. automodule:: botorch.models.higher_order_gp
     :members:
 
+Latent Kronecker GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.latent_kronecker_gp
+    :members:
+
 Pairwise GP Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.pairwise_gp
@@ -99,6 +104,10 @@ Fully Bayesian Multitask GP Models
 .. automodule:: botorch.models.fully_bayesian_multitask
     :members:
 
+Relevance Pursuit Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.relevance_pursuit
+    :members:
 
 Model Components
 -------------------------------------------
@@ -132,6 +141,9 @@ Kernels
 Likelihoods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.likelihoods.pairwise
+    :members:
+
+.. automodule:: botorch.models.likelihoods.sparse_outlier_noise
     :members:
 
 Transforms

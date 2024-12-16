@@ -11,9 +11,11 @@ Base class for test functions for optimization benchmarks.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Any, Iterable, Iterator, Protocol
 
 import torch
 from botorch.exceptions.errors import InputDataError
+from pyre_extensions import none_throws
 from torch import Tensor
 from torch.nn import Module
 
@@ -203,3 +205,127 @@ class MultiObjectiveTestProblem(BaseTestProblem, ABC):
     def gen_pareto_front(self, n: int) -> Tensor:
         r"""Generate `n` pareto optimal points."""
         raise NotImplementedError
+
+
+class SeedingMixin(ABC):
+    _seeds: Iterator[int] | None
+    _current_seed: int | None
+
+    @property
+    def has_seeds(self) -> bool:
+        return self._seeds is not None
+
+    def increment_seed(self) -> int:
+        self._current_seed = next(none_throws(self._seeds))
+        return none_throws(self._current_seed)
+
+    @property
+    def seed(self) -> int | None:
+        return self._current_seed
+
+
+# Outlier problems
+class OutlierGenerator(Protocol):
+    def __call__(self, problem: BaseTestProblem, X: Tensor, bounds: Tensor) -> Tensor:
+        """Call signature for outlier generators for single-objective problems.
+
+        Args:
+            problem: The test problem.
+            X: The input tensor.
+            bounds: The bounds of the test problem.
+
+        Returns:
+            A tensor of outliers with shape X.shape[:-1] (1d if unbatched).
+        """
+        pass  # pragma: no cover
+
+
+def constant_outlier_generator(
+    problem: Any, X: Tensor, bounds: Any, constant: float
+) -> Tensor:
+    """
+    Generates outliers that are all the same constant. To be used in conjunction with
+    `partial` to fix the constant value and conform to the `OutlierGenerator` protocol.
+
+    Example:
+        >>> generator = partial(constant_outlier_generator, constant=1.0)
+
+    Args:
+        problem: Not used.
+        X: The `batch_shape x n x d`-dim inputs. Also determines the number, dtype,
+            and device of the returned tensor.
+        bounds: Not used.
+        constant: The constant value of the outliers.
+
+    Returns:
+        Tensor of shape `batch_shape x n` (1d if unbatched).
+    """
+    return torch.full(X.shape[:-1], constant, dtype=X.dtype, device=X.device)
+
+
+class CorruptedTestProblem(BaseTestProblem, SeedingMixin):
+    def __init__(
+        self,
+        base_test_problem: BaseTestProblem,
+        outlier_generator: OutlierGenerator,
+        outlier_fraction: float,
+        bounds: list[tuple[float, float]] | None = None,
+        seeds: Iterable[int] | None = None,
+    ) -> None:
+        """A problem with outliers.
+
+        NOTE: Both noise_std and negate will be taken from the base test problem.
+
+        Args:
+            base_test_problem: The base function to be corrupted.
+            outlier_generator: A function that generates outliers. It will be called
+                with arguments `f`, `X` and `bounds`, where `f` is the
+                `base_test_problem`, `X` is the
+                argument passed to the `forward` method, and `bounds`
+                are as here, and it returns the values of outliers.
+            outlier_fraction: The fraction of outliers.
+            bounds: The bounds of the function.
+            seeds: The seeds to use for the outlier generator. If seeds are provided,
+                the problem will iterate through the list of seeds, changing the seed
+                with a call to `next(seeds)` with every `forward` call. If a list is
+                provided, it will first be converted to an iterator.
+        """
+        self.dim: int = base_test_problem.dim
+        self._bounds: list[tuple[float, float]] = (
+            bounds if bounds is not None else base_test_problem._bounds
+        )
+        super().__init__(
+            noise_std=base_test_problem.noise_std,
+            negate=base_test_problem.negate,
+        )
+        self.base_test_problem = base_test_problem
+        self.outlier_generator = outlier_generator
+        self.outlier_fraction = outlier_fraction
+        self._current_seed: int | None = None
+        self._seeds: Iterator[int] | None = None if seeds is None else iter(seeds)
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        return self.base_test_problem.evaluate_true(X)
+
+    def forward(self, X: Tensor, noise: bool = True) -> Tensor:
+        """
+        Generate data at X and corrupt it, if noise is True.
+
+        Args:
+            X: The `batch_shape x n x d`-dim inputs.
+            noise: Whether to corrupt the data.
+
+        Returns:
+            A `batch_shape x n`-dim tensor.
+        """
+        Y = super().forward(X, noise=noise)
+        if noise:
+            if self.has_seeds:
+                self.increment_seed()
+                torch.manual_seed(self.seed)
+            corrupt = torch.rand(X.shape[:-1]) < self.outlier_fraction
+            outliers = self.outlier_generator(
+                problem=self.base_test_problem, X=X, bounds=self.bounds
+            )
+            Y = torch.where(corrupt, outliers, Y)
+        return Y
