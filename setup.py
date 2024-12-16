@@ -76,7 +76,7 @@ if os.environ.get("ALLOW_LATEST_GPYTORCH_LINOP"):
 FMT_REQUIRES += read_deps_from_file("requirements-fmt.txt")
 # Dev is test + formatting + docs generation
 DEV_REQUIRES = (
-    TEST_REQUIRES + FMT_REQUIRES + ["sphinx==7.1.2", "sphinx-rtd-theme==1.3.0rc1"]
+    TEST_REQUIRES + FMT_REQUIRES + ["sphinx", "sphinx-rtd-theme"]
 )
 
 # read in README.md as the long description
