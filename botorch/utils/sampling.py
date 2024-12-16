@@ -27,7 +27,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy
 import torch
-from botorch.exceptions.errors import BotorchError
+from botorch.exceptions.errors import BotorchError, InfeasibilityError
 from botorch.exceptions.warnings import UserInputWarning
 from botorch.sampling.qmc import NormalQMCEngine
 from botorch.utils.transforms import unnormalize
@@ -249,7 +249,7 @@ def sample_polytope(
     """
     # Check that starting point satisfies the constraints.
     if not ((slack := A @ x0 - b) <= 0).all():
-        raise ValueError(
+        raise InfeasibilityError(
             f"Starting point does not satisfy the constraints. Inputs: {A=},"
             f"{b=}, {x0=}, A@x0-b={slack}."
         )
@@ -442,7 +442,7 @@ def find_interior_point(
         )
 
     if result.status == 2:
-        raise ValueError(
+        raise InfeasibilityError(
             "No feasible point found. Constraint polytope appears empty. "
             + "Check your constraints."
         )
@@ -524,7 +524,7 @@ class PolytopeSampler(ABC):
             if self.feasible(interior_point):
                 self.x0 = interior_point
             else:
-                raise ValueError("The given input point is not feasible.")
+                raise InfeasibilityError("The given input point is not feasible.")
         else:
             self.x0 = self.find_interior_point()
 

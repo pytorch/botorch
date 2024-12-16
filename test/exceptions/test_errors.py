@@ -11,6 +11,7 @@ from botorch.exceptions.errors import (
     BotorchTensorDimensionError,
     CandidateGenerationError,
     DeprecationError,
+    InfeasibilityError,
     InputDataError,
     OptimizationGradientError,
     OptimizationTimeoutError,
@@ -28,6 +29,7 @@ class TestBotorchExceptions(BotorchTestCase):
             InputDataError,
             UnsupportedError,
             BotorchTensorDimensionError,
+            InfeasibilityError,
         ]:
             self.assertIsInstance(ErrorClass(), BotorchError)
 
@@ -38,6 +40,7 @@ class TestBotorchExceptions(BotorchTestCase):
             CandidateGenerationError,
             InputDataError,
             UnsupportedError,
+            InfeasibilityError,
         ):
             with self.assertRaises(ErrorClass):
                 raise ErrorClass("message")
