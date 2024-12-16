@@ -3,16 +3,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
+import argparse
+import io
 import json
+import os
 import re
 import shutil
 import subprocess
 import uuid
-import io
-import argparse
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import mdformat  # @manual=fbsource//third-party/pypi/mdformat:mdformat
 import nbformat
@@ -130,7 +130,7 @@ def create_frontmatter(path: Path, nb_metadata: Dict[str, Dict[str, str]]) -> st
     # that define the tutorial sidebar_label information.
     frontmatter_delimiter = ["---"]
     frontmatter = [
-        f"\"{key}\": \"{value}\""
+        f'"{key}": "{value}"'
         for key, value in {
             "title": metadata["title"],
             "sidebar_label": metadata["title"],
@@ -170,7 +170,13 @@ def get_current_git_tag() -> Optional[str]:
         Optional[str]: The current Git tag as a string if available, otherwise None.
     """
     try:
-        tag = subprocess.check_output(['git', 'describe', '--tags', '--exact-match'], stderr=subprocess.STDOUT).strip().decode('utf-8')
+        tag = (
+            subprocess.check_output(
+                ["git", "describe", "--tags", "--exact-match"], stderr=subprocess.STDOUT
+            )
+            .strip()
+            .decode("utf-8")
+        )
         return tag
     except subprocess.CalledProcessError:
         return None
@@ -300,6 +306,7 @@ def transform_style_attributes(markdown: str) -> str:
         markdown = markdown.replace('"{{', "{{").replace('}}"', "}}")
     return markdown
 
+
 def sanitize_mdx(mdx: str) -> str:
     """
     Sanitize the given MDX string.
@@ -322,13 +329,22 @@ def sanitize_mdx(mdx: str) -> str:
 
     # -- KaTeX --
     # Wrap '\begin{}...\end{}' in $$ for KaTeX to work.
-    mdx = re.sub("(\\\\begin\\\\{(\\w*?)\\\\}(.|\n)*?end\\\\{\\2\\\\})", "$$\\g<1>$$", mdx)
+    mdx = re.sub(
+        "(\\\\begin\\\\{(\\w*?)\\\\}(.|\n)*?end\\\\{\\2\\\\})", "$$\\g<1>$$", mdx
+    )
     # # make sure $$ symbols are not escaped and include line breaks.
-    mdx = re.sub("\\\\?\\$\\\\?\\$((?:.|\n)*?)\\\\?\\$\\\\?\\$", "\n$$\n\\g<1>\n$$\n", mdx)
+    mdx = re.sub(
+        "\\\\?\\$\\\\?\\$((?:.|\n)*?)\\\\?\\$\\\\?\\$", "\n$$\n\\g<1>\n$$\n", mdx
+    )
     # # Escaping braces causes issues in math blocks, unescape them.
-    mdx = re.sub("\\$?\\$(.|\n)*?\\$\\$?", lambda match: match[0].replace("\\{", "{").replace("\\}", "}"), mdx)
+    mdx = re.sub(
+        "\\$?\\$(.|\n)*?\\$\\$?",
+        lambda match: match[0].replace("\\{", "{").replace("\\}", "}"),
+        mdx,
+    )
 
     return mdx
+
 
 def handle_markdown_cell(
     cell: NotebookNode,
@@ -884,7 +900,9 @@ def aggregate_output_types(cell_outputs: List[NotebookNode]) -> CELL_OUTPUTS_TO_
         data = (
             cell_output["data"][prioritized_data_dtype]
             if "data" in cell_output
-            else cell_output["text"] if "text" in cell_output else cell_output["evalue"]
+            else cell_output["text"]
+            if "text" in cell_output
+            else cell_output["evalue"]
         )
         bokeh_check = "bokeh" in prioritized_data_dtype or (
             prioritized_data_dtype == "text/html" and "Bokeh Application" in data
@@ -897,7 +915,10 @@ def aggregate_output_types(cell_outputs: List[NotebookNode]) -> CELL_OUTPUTS_TO_
                 cell_outputs_to_process,
                 i,
             )
-        image_check = prioritized_data_dtype.startswith("image") or "plotly" in prioritized_data_dtype
+        image_check = (
+            prioritized_data_dtype.startswith("image")
+            or "plotly" in prioritized_data_dtype
+        )
         if image_check:
             aggregate_images_and_plotly(
                 prioritized_data_dtype,
@@ -1029,8 +1050,14 @@ def clean_up_directories() -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Convert tutorial notebooks into mdx files.")
-    parser.add_argument("--clean", action='store_true', help="Delete output from previously converted notebooks.")
+    parser = argparse.ArgumentParser(
+        description="Convert tutorial notebooks into mdx files."
+    )
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Delete output from previously converted notebooks.",
+    )
     args = parser.parse_args()
 
     tutorials_metadata = load_nb_metadata()
@@ -1040,7 +1067,9 @@ if __name__ == "__main__":
     if args.clean:
         clean_up_directories()
     for metadata in tutorials_metadata:
-        path = (LIB_DIR / "tutorials" / metadata["id"] / (metadata["id"] + ".ipynb")).resolve()
+        path = (
+            LIB_DIR / "tutorials" / metadata["id"] / (metadata["id"] + ".ipynb")
+        ).resolve()
         print(f"{path.stem}")
         mdx = transform_notebook(path, metadata)
     print("")
