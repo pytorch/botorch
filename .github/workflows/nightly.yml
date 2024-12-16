@@ -15,54 +15,54 @@ jobs:
       use_latest_pytorch_gpytorch: true
     secrets: inherit
 
-  package-test-deploy-pypi:
-    name: Package and test deployment to test.pypi.org
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write # This is required for PyPI OIDC authentication.
-    steps:
-    - uses: actions/checkout@v4
-    - name: Fetch all history for all tags and branches
-      run: git fetch --prune --unshallow
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
-    - name: Install dependencies
-      env:
-        ALLOW_LATEST_GPYTORCH_LINOP: true
-      run: |
-        pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cpu
-        pip install git+https://github.com/cornellius-gp/linear_operator.git
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install .[test]
-        pip install --upgrade build setuptools setuptools_scm wheel
-    - name: Extract reduced version and save to env var
-      # strip the commit hash from the version to enable upload to pypi
-      # env var will persist for subsequent steps
-      run: |
-        no_local_version=$(python -m setuptools_scm | cut -d "+" -f 1)
-        echo "SETUPTOOLS_SCM_PRETEND_VERSION=${no_local_version}" >> $GITHUB_ENV
-    - name: Build packages (wheel and source distribution)
-      env:
-        ALLOW_LATEST_GPYTORCH_LINOP: true
-      run: |
-        python -m build --sdist --wheel
-    - name: Verify packages
-      env:
-        ALLOW_LATEST_GPYTORCH_LINOP: true
-      run: |
-        ./scripts/verify_py_packages.sh
-    - name: Deploy to Test PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: https://test.pypi.org/legacy/
-        skip-existing: true
-        verbose: true
+  # package-test-deploy-pypi:
+  #   name: Package and test deployment to test.pypi.org
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     id-token: write # This is required for PyPI OIDC authentication.
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Fetch all history for all tags and branches
+  #     run: git fetch --prune --unshallow
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: "3.10"
+  #   - name: Install dependencies
+  #     env:
+  #       ALLOW_LATEST_GPYTORCH_LINOP: true
+  #     run: |
+  #       pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cpu
+  #       pip install git+https://github.com/cornellius-gp/linear_operator.git
+  #       pip install git+https://github.com/cornellius-gp/gpytorch.git
+  #       pip install .[test]
+  #       pip install --upgrade build setuptools setuptools_scm wheel
+  #   - name: Extract reduced version and save to env var
+  #     # strip the commit hash from the version to enable upload to pypi
+  #     # env var will persist for subsequent steps
+  #     run: |
+  #       no_local_version=$(python -m setuptools_scm | cut -d "+" -f 1)
+  #       echo "SETUPTOOLS_SCM_PRETEND_VERSION=${no_local_version}" >> $GITHUB_ENV
+  #   - name: Build packages (wheel and source distribution)
+  #     env:
+  #       ALLOW_LATEST_GPYTORCH_LINOP: true
+  #     run: |
+  #       python -m build --sdist --wheel
+  #   - name: Verify packages
+  #     env:
+  #       ALLOW_LATEST_GPYTORCH_LINOP: true
+  #     run: |
+  #       ./scripts/verify_py_packages.sh
+  #   - name: Deploy to Test PyPI
+  #     uses: pypa/gh-action-pypi-publish@release/v1
+  #     with:
+  #       repository-url: https://test.pypi.org/legacy/
+  #       skip-existing: true
+  #       verbose: true
 
   publish-latest-website:
     name: Publish latest website
-    needs: [tests-and-coverage-nightly, package-test-deploy-pypi]
+    # needs: [tests-and-coverage-nightly, package-test-deploy-pypi]
     uses: ./.github/workflows/publish_website.yml
     secrets: inherit
 
