@@ -103,9 +103,7 @@ def run_tutorials(
         else IGNORE_ALWAYS | RUN_IF_SMOKE_TEST_IGNORE_IF_STANDARD
     )
 
-    tutorials = sorted(
-        t for t in tutorial_dir.rglob("*.ipynb") if t.is_file()
-    )
+    tutorials = sorted(t for t in tutorial_dir.rglob("*.ipynb") if t.is_file())
     if name is not None:
         tutorials = [t for t in tutorials if t.name == name]
         if len(tutorials) == 0:
