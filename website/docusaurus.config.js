@@ -105,8 +105,7 @@ module.exports={
                 value: '<small>Archived versions<small>',
               },
               {
-                // TODO: Change this to archived link when available
-                href: 'https://botorch.org/versions',
+                href: 'https://archive.botorch.org/versions',
                 label: '<= 0.11.3',
               },
             ],
