@@ -39,8 +39,6 @@ priorities = [
     "text/markdown",
     "image/png",  # matplotlib output.
     "application/vnd.jupyter.widget-view+json",  # tqdm progress bars.
-    "application/vnd.bokehjs_load.v0+json",  # Bokeh loading output.
-    "application/vnd.bokehjs_exec.v0+json",  # Bokeh `show` outputs.
     "application/vnd.plotly.v1+json",  # Plotly
     "text/html",
     "stream",
@@ -158,7 +156,7 @@ def create_imports() -> str:
     plot_out = "@site/src/components/Plotting.jsx"
     imports = f'import LinkButtons from "{link_btn}";\n'
     imports += f'import CellOutput from "{cell_out}";\n'
-    imports += f'import {{BokehFigure, PlotlyFigure}} from "{plot_out}";\n'
+    imports += f'import {{PlotlyFigure}} from "{plot_out}";\n'
     return f"{imports}\n"
 
 
@@ -404,110 +402,6 @@ def handle_cell_input(cell: NotebookNode, language: str) -> str:
     return f"```{language}\n{cell_source}\n```\n\n"
 
 
-def transform_bokeh_json(json_data: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Transform Bokeh JSON found in a cell output to something BokehJS can consume.
-
-    Args:
-        json_data (Dict[str, Any]): JSON data found in a notebook's cell output that is
-            for Bokeh.
-
-    Returns:
-        Dict[str, Any]: Reorganized JSON output for BokehJS.
-    """
-    key = list(json_data.keys())[0]
-    data = json_data[key]
-    json_tx = {}
-    json_tx["target_id"] = key
-    json_tx["root_id"] = data["roots"]["root_ids"][0]
-    json_tx["doc"] = {
-        "defs": data["defs"],
-        "roots": data["roots"],
-        "title": data["title"],
-        "version": data["version"],
-    }
-    json_tx["version"] = data["version"]
-    return json_tx
-
-
-def handle_bokeh(
-    values: List[Dict[str, Union[int, str, NotebookNode]]],
-    plot_data_folder: Path,
-) -> List[Tuple[int, str]]:
-    """
-    Convert Bokeh `show` outputs and Applications to MDX.
-
-    Args:
-        values (List[Dict[str, Union[int, str, NotebookNode]]]): Bokeh tagged cell
-            outputs.
-        plot_data_folder (Path): Path to the folder where plot data should be
-            stored.
-
-    Returns:
-        List[Tuple[int, str]]: A list of tuples, where the first entry in the tuple is
-            the index where the output occurred from the cell, and the second entry of
-            the tuple is the MDX formatted string.
-    """
-    output = []
-    for value in values:
-        index = int(value["index"])
-        data = str(value["data"])
-        app_flag = data.startswith("<!DOCTYPE html>")
-        json_data = {}
-        # Handle Bokeh `show` outputs.
-        if not app_flag:
-            # Parse the JavaScript for the Bokeh JSON data. The BokehJS output is
-            # standardized, so we can make the following assumption for finding the
-            # right spot to for the JSON data. Also, this is pure JavaScript so
-            # parsing it with lxml is not an option.
-            json_string = list(
-                filter(
-                    lambda line: line.startswith("const docs_json = "),
-                    [line.strip() for line in data.splitlines() if line],
-                ),
-            )[0]
-
-            # Ignore the `const` definition and the ending `;` from the line.
-            json_string = json_string[len("const docs_json = ") : -1]
-            json_data = json.loads(json_string)
-
-        # Handle Bokeh Applications.
-        if app_flag:
-            # Bokeh Application objects are rendered in the notebook as HTML. This
-            # HTML is saved in the output cell, which we parse below using lxml and
-            # xpaths.
-            doc = etree.HTML(data)  # pyre-ignore
-            scripts = doc.xpath("//body/script[@type='application/json']")
-            script = scripts[0]
-            script = "".join(script.itertext())
-            # Unescape characters. If we skip this step, then the JSON read in by
-            # the React BokehFigure object will error in the browser.
-            script = script.replace("&amp;", "&")
-            script = script.replace("&lt;", "<")
-            script = script.replace("&gt;", ">")
-            script = script.replace("&quot;", '"')
-            script = script.replace("&#x27;", "'")
-            script = script.replace("&#x60;", "`")
-            json_data = json.loads(script)
-
-        # Shuffle the data so we can save it in a format BokehJS will be able to
-        # consume later.
-        js = transform_bokeh_json(json_data)
-        file_name = js["target_id"]
-        # Save the Bokeh JSON data to disk. It will be read by React when loaded in
-        # Docusaurus.
-        file_path = plot_data_folder / f"{file_name}.json"
-        with file_path.open("w") as f:
-            json.dump(js, f, indent=2)
-
-        # Add the Bokeh figure to the MDX output.
-        path_to_data = f"./assets/plot_data/{file_name}.json"
-        output.append(
-            (index, f"<BokehFigure data={{require('{path_to_data}')}} />\n\n"),
-        )
-    return output
-
-
 def handle_image(
     values: List[Dict[str, Union[int, str, NotebookNode]]],
 ) -> List[Tuple[int, str]]:
@@ -713,8 +607,6 @@ def aggregate_mdx(
     for key, values in cell_outputs_to_process.items():
         if not values:
             continue
-        if key == "bokeh":
-            processed_mdx.extend(handle_bokeh(values, plot_data_folder))
         if key == "image":
             processed_mdx.extend(handle_image(values))
         if key == "markdown":
@@ -770,39 +662,6 @@ def prioritize_dtypes(
         for outputs in cell_output_dtypes
     ]
     return prioritized_cell_output_dtypes, plotly_flags
-
-
-def aggregate_bokeh(
-    prioritized_data_dtype: str,
-    cell_output: NotebookNode,
-    data: NotebookNode,
-    cell_outputs_to_process: CELL_OUTPUTS_TO_PROCESS,
-    i: int,
-) -> None:
-    """
-    Aggregate Bokeh cell outputs.
-
-    Args:
-        prioritized_data_dtype (str): The prioritized cell output data type.
-        cell_output (NotebookNode): The actual cell output from the notebook.
-        data (NotebookNode): The data of the cell output.
-        cell_outputs_to_process (CELL_OUTPUTS_TO_PROCESS): Dictionary containing
-            aggregated cell output objects.
-        i (int): Index for the cell output in the list of cell output objects.
-
-    Returns:
-        None: Does not return anything, instead adds values to the
-            cell_outputs_to_process if applicable.
-    """
-    if prioritized_data_dtype == "application/vnd.bokehjs_load.v0+json":
-        pass
-    # Bokeh `show` outputs.
-    if prioritized_data_dtype == "application/vnd.bokehjs_exec.v0+json":
-        data = cell_output["data"]["application/javascript"]
-        cell_outputs_to_process["bokeh"].append({"index": i, "data": data})
-    # Bokeh applications.
-    if prioritized_data_dtype == "text/html" and "Bokeh Application" in data:
-        cell_outputs_to_process["bokeh"].append({"index": i, "data": data})
 
 
 def aggregate_images_and_plotly(
@@ -887,7 +746,6 @@ def aggregate_output_types(cell_outputs: List[NotebookNode]) -> CELL_OUTPUTS_TO_
     prioritized_cell_output_dtypes, plotly_flags = prioritize_dtypes(cell_outputs)
 
     cell_outputs_to_process = {
-        "bokeh": [],
         "image": [],
         "markdown": [],
         "pandas": [],
@@ -908,17 +766,6 @@ def aggregate_output_types(cell_outputs: List[NotebookNode]) -> CELL_OUTPUTS_TO_
             if "text" in cell_output
             else cell_output["evalue"]
         )
-        bokeh_check = "bokeh" in prioritized_data_dtype or (
-            prioritized_data_dtype == "text/html" and "Bokeh Application" in data
-        )
-        if bokeh_check:
-            aggregate_bokeh(
-                prioritized_data_dtype,
-                cell_output,
-                data,
-                cell_outputs_to_process,
-                i,
-            )
         image_check = (
             prioritized_data_dtype.startswith("image")
             or "plotly" in prioritized_data_dtype
