@@ -11,8 +11,6 @@ on:
         type: boolean
         default: false
   workflow_dispatch:
-  push:
-    branches: [ main ]
 
 
 jobs:
