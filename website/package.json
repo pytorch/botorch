@@ -19,8 +19,10 @@
     "@docusaurus/preset-classic": "^3.6.3",
     "bl": "^6.0.0",
     "clsx": "^1.1.1",
+    "plotly.js": "^2.8.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-plotly.js": "^2.5.1",
     "rehype-katex": "7",
     "remark-math": "6"
   }

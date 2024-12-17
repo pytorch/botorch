@@ -7,23 +7,22 @@
 
 import React from 'react';
 import Loadable from 'react-loadable';
-import BrowserOnly from '@docusaurus/BrowserOnly';
 
-// const Plotly = Loadable({
-//   loader: () => import(`react-plotly.js`),
-//   loading: ({timedOut}) =>
-//     timedOut ? (
-//       <blockquote>Error: Loading Plotly timed out.</blockquote>
-//     ) : (
-//       <div>loading...</div>
-//     ),
-//   timeout: 10000,
-// });
+const Plotly = Loadable({
+  loader: () => import(`react-plotly.js`),
+  loading: ({timedOut}) =>
+    timedOut ? (
+      <blockquote>Error: Loading Plotly timed out.</blockquote>
+    ) : (
+      <div>loading...</div>
+    ),
+  timeout: 10000,
+});
 
-// export const PlotlyFigure = React.memo(({data}) => {
-//   return (
-//     <div className="plotly-figure" style={{"overflow-x": "auto"}}>
-//       <Plotly data={data['data']} layout={data['layout']} />
-//     </div>
-//   );
-// });
+export const PlotlyFigure = React.memo(({data}) => {
+  return (
+    <div className="plotly-figure" style={{"overflow-x": "auto"}}>
+      <Plotly data={data['data']} layout={data['layout']} />
+    </div>
+  );
+});
