@@ -50,7 +50,7 @@
 <span class="kn">import</span> <span class="nn">numpy.typing</span> <span class="k">as</span> <span class="nn">npt</span>
 <span class="kn">import</span> <span class="nn">scipy</span>
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span><span class="p">,</span> <span class="n">InfeasibilityError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">UserInputWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.qmc</span> <span class="kn">import</span> <span class="n">NormalQMCEngine</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
@@ -289,7 +289,7 @@
 <span class="sd">    """</span>
     <span class="c1"># Check that starting point satisfies the constraints.</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="n">slack</span> <span class="o">:=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">x0</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="k">raise</span> <span class="n">InfeasibilityError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Starting point does not satisfy the constraints. Inputs: </span><span class="si">{</span><span class="n">A</span><span class="si">=}</span><span class="s2">,"</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">b</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">x0</span><span class="si">=}</span><span class="s2">, A@x0-b=</span><span class="si">{</span><span class="n">slack</span><span class="si">}</span><span class="s2">."</span>
         <span class="p">)</span>
@@ -488,7 +488,7 @@
         <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="k">raise</span> <span class="n">InfeasibilityError</span><span class="p">(</span>
             <span class="s2">"No feasible point found. Constraint polytope appears empty. "</span>
             <span class="o">+</span> <span class="s2">"Check your constraints."</span>
         <span class="p">)</span>
@@ -573,7 +573,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feasible</span><span class="p">(</span><span class="n">interior_point</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">interior_point</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The given input point is not feasible."</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">InfeasibilityError</span><span class="p">(</span><span class="s2">"The given input point is not feasible."</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_interior_point</span><span class="p">()</span>
 
