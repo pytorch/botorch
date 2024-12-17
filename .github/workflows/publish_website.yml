@@ -15,7 +15,7 @@ on:
 
 jobs:
 
-  publish-website:
+  build-website:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -53,8 +53,22 @@ jobs:
     - name: Build website
       run: |
         bash scripts/build_docs.sh -b
-    - name: Deploy
-      uses: JamesIves/github-pages-deploy-action@releases/v4
+    - name: Upload website build as artifact
+      id: deployment
+      uses: actions/upload-pages-artifact@v3
       with:
-          branch: gh-pages # The branch the action should deploy to.
-          folder: website/build # The folder the action should deploy.
+        path: website/build/
+
+  deploy-website:
+    needs: build-website
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
