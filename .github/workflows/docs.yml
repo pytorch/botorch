@@ -27,8 +27,7 @@ jobs:
       run: |
         pip install git+https://github.com/cornellius-gp/linear_operator.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install .[dev]
-        pip install beautifulsoup4 ipython nbconvert jinja2
+        pip install ."[dev, tutorials]"
     - name: Validate Sphinx
       run: |
         python scripts/validate_sphinx.py -p "$(pwd)"
@@ -38,4 +37,4 @@ jobs:
         sphinx-build -WT --keep-going sphinx/source sphinx/build
     - name: Validate and parse tutorials
       run: |
-        python scripts/parse_tutorials.py -w "$(pwd)"
+        python scripts/convert_ipynb_to_mdx.py --clean
