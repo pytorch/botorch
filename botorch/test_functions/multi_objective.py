@@ -772,7 +772,7 @@ class Penicillin(MultiObjectiveTestProblem):
             F_loss = (
                 V[active]
                 * cls.lambd
-                * (torch.exp(5 * ((T[active] - cls.T_o) / (cls.T_v - cls.T_o))) - 1)
+                * torch.special.expm1(5 * ((T[active] - cls.T_o) / (cls.T_v - cls.T_o)))
             )
             dV_dt = F[active] - F_loss
             mu = (
