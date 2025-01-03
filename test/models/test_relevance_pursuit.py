@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import itertools
+import warnings
 
 from functools import partial
 
@@ -196,6 +197,12 @@ class TestRobustGP(BotorchTestCase):
         sparse_module = map_model.likelihood.noise_covar
         undetected_outliers = set(outlier_indices) - set(sparse_module.support)
         self.assertEqual(len(undetected_outliers), 0)
+
+        # testing that posterior inference on training set does not throw warnings,
+        # in particular, this means that the passed inputs are equal to the cached ones.
+        with warnings.catch_warnings(record=True) as warnings_log:
+            map_model.posterior(X)
+            self.assertEqual(warnings_log, [])
 
     def test_robust_relevance_pursuit(self) -> None:
         for optimizer, convex_parameterization, dtype in itertools.product(

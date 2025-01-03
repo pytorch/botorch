@@ -720,7 +720,8 @@ def get_posterior_over_support(
         mll.train()
         X, Y = mll.model.train_inputs[0], mll.model.train_targets
         F = mll.model(X)
-        mll_i = cast(Tensor, mll(F, Y, X))
+        TX = mll.model.transform_inputs(X) if mll.model.training else X
+        mll_i = cast(Tensor, mll(F, Y, TX))
         log_mll_trace.append(mll_i)
         support_size, log_prior_i = log_prior(
             model,
