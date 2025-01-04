@@ -198,7 +198,7 @@ class GPyTorchModel(Model, ABC):
                     mvn = self.likelihood(mvn, X)
         posterior = GPyTorchPosterior(distribution=mvn)
         if hasattr(self, "outcome_transform"):
-            posterior = self.outcome_transform.untransform_posterior(posterior)
+            posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior
@@ -244,7 +244,7 @@ class GPyTorchModel(Model, ABC):
             # (unless we've already trasnformed if BatchedMultiOutputGPyTorchModel)
             if not isinstance(self, BatchedMultiOutputGPyTorchModel):
                 # `noise` is assumed to already be outcome-transformed.
-                Y, _ = self.outcome_transform(Y=Y, Yvar=Yvar)
+                Y, _ = self.outcome_transform(Y=Y, Yvar=Yvar, X=X)
         # Validate using strict=False, since we cannot tell if Y has an explicit
         # output dimension. Do not check shapes when fantasizing as they are
         # not expected to match.
@@ -467,7 +467,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
 
         posterior = GPyTorchPosterior(distribution=mvn)
         if hasattr(self, "outcome_transform"):
-            posterior = self.outcome_transform.untransform_posterior(posterior)
+            posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior
@@ -511,7 +511,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         if hasattr(self, "outcome_transform"):
             # We need to apply transforms before shifting batch indices around.
             # `noise` is assumed to already be outcome-transformed.
-            Y, _ = self.outcome_transform(Y)
+            Y, _ = self.outcome_transform(Y, X=X)
         # Do not check shapes when fantasizing as they are not expected to match.
         if fantasize_flag.off():
             self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
@@ -924,7 +924,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             )
             posterior = GPyTorchPosterior(distribution=mtmvn)
         if hasattr(self, "outcome_transform"):
-            posterior = self.outcome_transform.untransform_posterior(posterior)
+            posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior

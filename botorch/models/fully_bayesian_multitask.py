@@ -242,7 +242,9 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             )
         if outcome_transform is not None:
             outcome_transform.train()  # Ensure we learn parameters here on init
-            train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
+            train_Y, train_Yvar = outcome_transform(
+                Y=train_Y, Yvar=train_Yvar, X=transformed_X
+            )
         if train_Yvar is not None:  # Clamp after transforming
             train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
 
