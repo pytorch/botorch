@@ -219,7 +219,9 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         if outcome_transform == DEFAULT:
             outcome_transform = Standardize(m=1, batch_shape=train_X.shape[:-2])
         if outcome_transform is not None:
-            train_Y, train_Yvar = outcome_transform(Y=train_Y, Yvar=train_Yvar)
+            train_Y, train_Yvar = outcome_transform(
+                Y=train_Y, Yvar=train_Yvar, X=transformed_X
+            )
 
         # squeeze output dim
         train_Y = train_Y.squeeze(-1)
@@ -464,7 +466,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
-            train_Y, _ = outcome_transform(train_Y)
+            train_Y, _ = outcome_transform(train_Y, X=transformed_X)
 
         self._validate_tensor_args(X=transformed_X, Y=train_Y)
         self._num_outputs = train_Y.shape[-1]
@@ -772,7 +774,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
         )
 
         if hasattr(self, "outcome_transform"):
-            posterior = self.outcome_transform.untransform_posterior(posterior)
+            posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
         return posterior
 
     def train(self, val=True, *args, **kwargs):

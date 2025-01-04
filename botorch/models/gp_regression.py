@@ -160,7 +160,9 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
-            train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
+            train_Y, train_Yvar = outcome_transform(
+                Y=train_Y, Yvar=train_Yvar, X=transformed_X
+            )
         # Validate again after applying the transforms
         self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
         ignore_X_dims = getattr(self, "_ignore_X_dims_scaling_check", None)

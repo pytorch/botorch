@@ -79,7 +79,7 @@ class EnsembleModel(Model, ABC):
         # `posterior` (as is done in GP models). This is more general since it works
         # even if the transform doesn't support `untransform_posterior`.
         if hasattr(self, "outcome_transform"):
-            values, _ = self.outcome_transform.untransform(values)
+            values, _ = self.outcome_transform.untransform(values, X=X)
         if output_indices is not None:
             values = values[..., output_indices]
         posterior = EnsemblePosterior(values=values)
