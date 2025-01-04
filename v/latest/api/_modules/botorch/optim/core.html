@@ -57,7 +57,9 @@
 
 
 <span class="n">_LBFGSB_MAXITER_MAXFUN_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>  <span class="c1"># regex for maxiter and maxfun messages</span>
-    <span class="s2">"TOTAL NO. of (ITERATIONS REACHED LIMIT|f AND g EVALUATIONS EXCEEDS LIMIT)"</span>
+    <span class="c1"># Note that the messages changed with scipy 1.15, hence the different matching here.</span>
+    <span class="s2">"TOTAL NO. (of|OF) "</span>
+    <span class="o">+</span> <span class="s2">"(ITERATIONS REACHED LIMIT|(f AND g|F,G) EVALUATIONS EXCEEDS LIMIT)"</span>
 <span class="p">)</span>
 
 
