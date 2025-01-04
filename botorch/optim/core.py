@@ -35,7 +35,8 @@ except ImportError:  # pragma: no cover
 
 _LBFGSB_MAXITER_MAXFUN_REGEX = re.compile(  # regex for maxiter and maxfun messages
     # Note that the messages changed with scipy 1.15, hence the different matching here.
-    "STOP: TOTAL NO. (of|OF) (ITERATIONS REACHED LIMIT|(f AND g|F,G) EVALUATIONS EXCEEDS LIMIT)"
+    "STOP: TOTAL NO. (of|OF) "
+    + "(ITERATIONS REACHED LIMIT|(f AND g|F,G) EVALUATIONS EXCEEDS LIMIT)"
 )
 
 
