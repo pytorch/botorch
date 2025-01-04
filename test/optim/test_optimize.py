@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import re
 import warnings
 from functools import partial
 from itertools import product
@@ -724,19 +725,20 @@ class TestOptimizeAcqf(BotorchTestCase):
                 raw_samples=raw_samples,
                 batch_initial_conditions=initial_conditions,
             )
-        message = (
-            "Optimization failed in `gen_candidates_scipy` with the following "
-            "warning(s):\n[OptimizationWarning('Optimization failed within "
-            "`scipy.optimize.minimize` with status 2 and message "
-            "ABNORMAL_TERMINATION_IN_LNSRCH.')]\nBecause you specified "
-            "`batch_initial_conditions` larger than required `num_restarts`, "
-            "optimization will not be retried with new initial conditions and "
-            "will proceed with the current solution. Suggested remediation: "
-            "Try again with different `batch_initial_conditions`, don't provide "
-            "`batch_initial_conditions`, or increase `num_restarts`."
+        message_regex = re.compile(
+            r"Optimization failed in `gen_candidates_scipy` with the following "
+            r"warning\(s\):\n\[OptimizationWarning\('Optimization failed within "
+            r"`scipy.optimize.minimize` with status 2 and message "
+            r"ABNORMAL(: |_TERMINATION_IN_LNSRCH).'\)]\nBecause you specified "
+            r"`batch_initial_conditions` larger than required `num_restarts`, "
+            r"optimization will not be retried with new initial conditions and "
+            r"will proceed with the current solution. Suggested remediation: "
+            r"Try again with different `batch_initial_conditions`, don't provide "
+            r"`batch_initial_conditions`, or increase `num_restarts`."
         )
         expected_warning_raised = any(
-            issubclass(w.category, RuntimeWarning) and message in str(w.message)
+            issubclass(w.category, RuntimeWarning)
+            and message_regex.search(str(w.message))
             for w in ws
         )
         self.assertTrue(expected_warning_raised)
@@ -774,14 +776,16 @@ class TestOptimizeAcqf(BotorchTestCase):
                 # more likely
                 options={"maxls": 2},
             )
-        message = (
-            "Optimization failed in `gen_candidates_scipy` with the following "
-            "warning(s):\n[OptimizationWarning('Optimization failed within "
-            "`scipy.optimize.minimize` with status 2 and message ABNORMAL_TERMINATION"
-            "_IN_LNSRCH.')]\nTrying again with a new set of initial conditions."
+        message_regex = re.compile(
+            r"Optimization failed in `gen_candidates_scipy` with the following "
+            r"warning\(s\):\n\[OptimizationWarning\('Optimization failed within "
+            r"`scipy.optimize.minimize` with status 2 and message ABNORMAL(: |"
+            r"_TERMINATION_IN_LNSRCH).'\)\]\nTrying again with a new set of "
+            r"initial conditions."
         )
         expected_warning_raised = any(
-            issubclass(w.category, RuntimeWarning) and message in str(w.message)
+            issubclass(w.category, RuntimeWarning)
+            and message_regex.search(str(w.message))
             for w in ws
         )
         self.assertTrue(expected_warning_raised)
@@ -803,7 +807,8 @@ class TestOptimizeAcqf(BotorchTestCase):
                 retry_on_optimization_warning=False,
             )
         expected_warning_raised = any(
-            issubclass(w.category, RuntimeWarning) and message in str(w.message)
+            issubclass(w.category, RuntimeWarning)
+            and message_regex.search(str(w.message))
             for w in ws
         )
         self.assertFalse(expected_warning_raised)
@@ -840,11 +845,12 @@ class TestOptimizeAcqf(BotorchTestCase):
                 options={"maxls": 2},
             )
 
-        message_1 = (
-            "Optimization failed in `gen_candidates_scipy` with the following "
-            "warning(s):\n[OptimizationWarning('Optimization failed within "
-            "`scipy.optimize.minimize` with status 2 and message ABNORMAL_TERMINATION"
-            "_IN_LNSRCH.')]\nTrying again with a new set of initial conditions."
+        message_1_regex = re.compile(
+            r"Optimization failed in `gen_candidates_scipy` with the following "
+            r"warning\(s\):\n\[OptimizationWarning\('Optimization failed within "
+            r"`scipy.optimize.minimize` with status 2 and message ABNORMAL(: |"
+            r"_TERMINATION_IN_LNSRCH).'\)\]\nTrying again with a new set of "
+            r"initial conditions."
         )
 
         message_2 = (
@@ -852,7 +858,8 @@ class TestOptimizeAcqf(BotorchTestCase):
             "of initial conditions."
         )
         first_expected_warning_raised = any(
-            issubclass(w.category, RuntimeWarning) and message_1 in str(w.message)
+            issubclass(w.category, RuntimeWarning)
+            and message_1_regex.search(str(w.message))
             for w in ws
         )
         second_expected_warning_raised = any(

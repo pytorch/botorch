@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+import re
 from collections.abc import Callable, Iterable
 from contextlib import ExitStack, nullcontext
 from copy import deepcopy
@@ -30,7 +31,10 @@ from gpytorch.kernels import RBFKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, VariationalELBO
 from linear_operator.utils.errors import NotPSDError
 
-MAX_ITER_MSG = "TOTAL NO. of ITERATIONS REACHED LIMIT"
+MAX_ITER_MSG_REGEX = re.compile(
+    # Note that the message changed with scipy 1.15, hence the different matching here.
+    "TOTAL NO. (of|OF) ITERATIONS REACHED LIMIT"
+)
 
 
 class MockOptimizer:
@@ -215,7 +219,12 @@ class TestFitFallback(BotorchTestCase):
         optimizer = MockOptimizer(randomize_requires_grad=False)
         optimizer.warnings = [
             WarningMessage("test_runtime_warning", RuntimeWarning, __file__, 0),
-            WarningMessage(MAX_ITER_MSG, OptimizationWarning, __file__, 0),
+            WarningMessage(
+                "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+                OptimizationWarning,
+                __file__,
+                0,
+            ),
             WarningMessage(
                 "Optimization timed out after X", OptimizationWarning, __file__, 0
             ),
@@ -260,7 +269,9 @@ class TestFitFallback(BotorchTestCase):
                     {str(w.message) for w in rethrown + unresolved},
                 )
                 if logs:  # test that default filter logs certain warnings
-                    self.assertTrue(any(MAX_ITER_MSG in log for log in logs.output))
+                    self.assertTrue(
+                        any(MAX_ITER_MSG_REGEX.search(log) for log in logs.output)
+                    )
 
         # Test default of retrying upon encountering an uncaught OptimizationWarning
         optimizer.warnings.append(
