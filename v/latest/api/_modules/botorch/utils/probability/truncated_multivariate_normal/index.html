@@ -27,22 +27,22 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.probability.lin_ess</span> <span class="kn">import</span> <span class="n">LinearEllipticalSliceSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.probability.mvnxpb</span> <span class="kn">import</span> <span class="n">MVNXPB</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.probability.utils</span> <span class="kn">import</span> <span class="n">get_constants_like</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.probability.lin_ess</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearEllipticalSliceSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.probability.mvnxpb</span><span class="w"> </span><span class="kn">import</span> <span class="n">MVNXPB</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.probability.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_constants_like</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions.multivariate_normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultivariateNormal</span>
 
 
 <div class="viewcode-block" id="TruncatedMultivariateNormal">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal">[docs]</a>
-<span class="k">class</span> <span class="nc">TruncatedMultivariateNormal</span><span class="p">(</span><span class="n">MultivariateNormal</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TruncatedMultivariateNormal</span><span class="p">(</span><span class="n">MultivariateNormal</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">loc</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">covariance_matrix</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -93,7 +93,7 @@
 
 <div class="viewcode-block" id="TruncatedMultivariateNormal.log_prob">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal.log_prob">[docs]</a>
-    <span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Approximates the true log probability."""</span>
         <span class="n">neg_inf</span> <span class="o">=</span> <span class="n">get_constants_like</span><span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
         <span class="n">inbounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
@@ -111,7 +111,7 @@
 
 <div class="viewcode-block" id="TruncatedMultivariateNormal.rsample">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal.rsample">[docs]</a>
-    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># noqa: B008</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># noqa: B008</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples from the Truncated Multivariate Normal.</span>
 
 <span class="sd">        Args:</span>
@@ -125,11 +125,11 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">log_prob</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">solver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MVNXPB</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span> <span class="o">=</span> <span class="n">MVNXPB</span><span class="p">(</span>
                 <span class="n">covariance_matrix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">,</span>
@@ -139,7 +139,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">sampler</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearEllipticalSliceSampler</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sampler</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearEllipticalSliceSampler</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">scale_tril</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
@@ -164,7 +164,7 @@
 
 <div class="viewcode-block" id="TruncatedMultivariateNormal.expand">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.truncated_multivariate_normal.TruncatedMultivariateNormal.expand">[docs]</a>
-    <span class="k">def</span> <span class="nf">expand</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">expand</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">_instance</span><span class="p">:</span> <span class="n">TruncatedMultivariateNormal</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TruncatedMultivariateNormal</span><span class="p">:</span>
         <span class="n">new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_checked_instance</span><span class="p">(</span><span class="n">TruncatedMultivariateNormal</span><span class="p">,</span> <span class="n">_instance</span><span class="p">)</span>
@@ -178,7 +178,7 @@
         <span class="k">return</span> <span class="n">new</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">", bounds: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">)"</span></div>
 
 </pre></div>

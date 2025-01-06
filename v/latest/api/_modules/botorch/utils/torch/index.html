@@ -29,18 +29,18 @@
 
 <span class="c1"># NOTE: To be removed once (if) https://github.com/pytorch/pytorch/pull/37385 lands</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">collections</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">collections</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
 
 
 <div class="viewcode-block" id="BufferDict">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.torch.BufferDict">[docs]</a>
-<span class="k">class</span> <span class="nc">BufferDict</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BufferDict</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Holds buffers in a dictionary.</span>
 
 <span class="sd">    BufferDict can be indexed like a regular Python dictionary, but buffers it</span>
@@ -78,7 +78,7 @@
 <span class="sd">                return x</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            buffers: A mapping (dictionary) from string to :class:`~torch.Tensor`, or</span>
@@ -88,34 +88,34 @@
         <span class="k">if</span> <span class="n">buffers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">buffers</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">buffer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">buffer</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span>
 
 <div class="viewcode-block" id="BufferDict.clear">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.torch.BufferDict.clear">[docs]</a>
-    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Remove all items from the BufferDict."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="BufferDict.pop">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.torch.BufferDict.pop">[docs]</a>
-    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Remove key from the BufferDict and return its buffer.</span>
 
 <span class="sd">        Args:</span>
@@ -128,28 +128,28 @@
 
 <div class="viewcode-block" id="BufferDict.keys">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.torch.BufferDict.keys">[docs]</a>
-    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Return an iterable of the BufferDict keys."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="BufferDict.items">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.torch.BufferDict.items">[docs]</a>
-    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Return an iterable of the BufferDict key/value pairs."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="BufferDict.values">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.torch.BufferDict.values">[docs]</a>
-    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Return an iterable of the BufferDict values."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span><span class="o">.</span><span class="n">values</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="BufferDict.update">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.torch.BufferDict.update">[docs]</a>
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffers</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffers</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Update the :class:`~torch.nn.BufferDict` with the key-value pairs from a</span>
 <span class="sd">        mapping or an iterable, overwriting existing keys.</span>
 
@@ -193,7 +193,7 @@
 
 <div class="viewcode-block" id="BufferDict.extra_repr">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.torch.BufferDict.extra_repr">[docs]</a>
-    <span class="k">def</span> <span class="nf">extra_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extra_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">child_lines</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">size_str</span> <span class="o">=</span> <span class="s2">"x"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
@@ -206,7 +206,7 @@
         <span class="k">return</span> <span class="n">tmpstr</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"BufferDict should not be called."</span><span class="p">)</span></div>
 
 </pre></div>

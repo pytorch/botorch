@@ -31,19 +31,19 @@
 <span class="sd">Helpers for handling objectives.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.safe_math</span> <span class="kn">import</span> <span class="n">log_fatmoid</span><span class="p">,</span> <span class="n">logexpit</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.safe_math</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_fatmoid</span><span class="p">,</span> <span class="n">logexpit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_indices</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="get_objective_weights_transform">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.get_objective_weights_transform">[docs]</a>
-<span class="k">def</span> <span class="nf">get_objective_weights_transform</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_objective_weights_transform</span><span class="p">(</span>
     <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Create a linear objective callable from a set of weights.</span>
@@ -67,7 +67,7 @@
 <span class="sd">        &gt;&gt;&gt; transform = get_objective_weights_transform(weights)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">_objective</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_objective</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate objective.</span>
 
 <span class="sd">        Note: einsum multiples Y by weights and sums over the `m`-dimension.</span>
@@ -91,7 +91,7 @@
 
 <div class="viewcode-block" id="apply_constraints_nonnegative_soft">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.apply_constraints_nonnegative_soft">[docs]</a>
-<span class="k">def</span> <span class="nf">apply_constraints_nonnegative_soft</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_constraints_nonnegative_soft</span><span class="p">(</span>
     <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -129,7 +129,7 @@
 
 <div class="viewcode-block" id="compute_feasibility_indicator">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.compute_feasibility_indicator">[docs]</a>
-<span class="k">def</span> <span class="nf">compute_feasibility_indicator</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_feasibility_indicator</span><span class="p">(</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">marginalize_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -165,7 +165,7 @@
 
 <div class="viewcode-block" id="compute_smoothed_feasibility_indicator">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.compute_smoothed_feasibility_indicator">[docs]</a>
-<span class="k">def</span> <span class="nf">compute_smoothed_feasibility_indicator</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_smoothed_feasibility_indicator</span><span class="p">(</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">eta</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span>
@@ -217,7 +217,7 @@
 
 <div class="viewcode-block" id="apply_constraints">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.objective.apply_constraints">[docs]</a>
-<span class="k">def</span> <span class="nf">apply_constraints</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_constraints</span><span class="p">(</span>
     <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>

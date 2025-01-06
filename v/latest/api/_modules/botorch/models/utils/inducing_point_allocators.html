@@ -41,32 +41,32 @@
 
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 
-<span class="kn">from</span> <span class="nn">botorch.utils.probability.utils</span> <span class="kn">import</span> <span class="n">ndtr</span> <span class="k">as</span> <span class="n">Phi</span><span class="p">,</span> <span class="n">phi</span>
-<span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">LinearOperator</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.probability.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndtr</span> <span class="k">as</span> <span class="n">Phi</span><span class="p">,</span> <span class="n">phi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.module</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.operators</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearOperator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">NEG_INF</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">"-inf"</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="InducingPointAllocator">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.InducingPointAllocator">[docs]</a>
-<span class="k">class</span> <span class="nc">InducingPointAllocator</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InducingPointAllocator</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    This class provides functionality to initialize the inducing point locations</span>
 <span class="sd">    of an inducing point-based model, e.g. a `SingleTaskVariationalGP`.</span>
 <span class="sd">    """</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">_get_quality_function</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_quality_function</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QualityFunction</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -78,7 +78,7 @@
 
 <div class="viewcode-block" id="InducingPointAllocator.allocate_inducing_points">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.InducingPointAllocator.allocate_inducing_points">[docs]</a>
-    <span class="k">def</span> <span class="nf">allocate_inducing_points</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allocate_inducing_points</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">covar_module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
@@ -181,12 +181,12 @@
 
 <div class="viewcode-block" id="QualityFunction">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.QualityFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">QualityFunction</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">QualityFunction</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A function that scores inputs with respect</span>
 <span class="sd">    to a specific criterion."""</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># [n, d] -&gt; [n]</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># [n, d] -&gt; [n]</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            inputs: inputs (of shape n x d)</span>
@@ -199,7 +199,7 @@
 
 <div class="viewcode-block" id="UnitQualityFunction">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.UnitQualityFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">UnitQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UnitQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    A function returning ones for each element. Using this quality function</span>
 <span class="sd">    for inducing point allocation corresponds to allocating inducing points</span>
@@ -208,7 +208,7 @@
 <span class="sd">    """</span>
 
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># [n, d]-&gt; [n]</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># [n, d]-&gt; [n]</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            inputs: inputs (of shape n x d)</span>
@@ -222,7 +222,7 @@
 
 <div class="viewcode-block" id="ExpectedImprovementQualityFunction">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.ExpectedImprovementQualityFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">ExpectedImprovementQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExpectedImprovementQualityFunction</span><span class="p">(</span><span class="n">QualityFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    A function measuring the quality of input points as their expected</span>
 <span class="sd">    improvement with respect to a conservative baseline. Expectations</span>
@@ -230,7 +230,7 @@
 <span class="sd">    for details and justification.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            model: The model fitted during the previous BO step. For now, this</span>
@@ -246,7 +246,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_maximize</span> <span class="o">=</span> <span class="n">maximize</span>
 
     <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># [n, d] -&gt; [n]</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>  <span class="c1"># [n, d] -&gt; [n]</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            inputs: inputs (of shape n x d)</span>
@@ -267,14 +267,14 @@
 
 <div class="viewcode-block" id="GreedyVarianceReduction">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.GreedyVarianceReduction">[docs]</a>
-<span class="k">class</span> <span class="nc">GreedyVarianceReduction</span><span class="p">(</span><span class="n">InducingPointAllocator</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GreedyVarianceReduction</span><span class="p">(</span><span class="n">InducingPointAllocator</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    The inducing point allocator proposed by [burt2020svgp]_, that</span>
 <span class="sd">    greedily chooses inducing point locations with maximal (conditional)</span>
 <span class="sd">    predictive variance.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">_get_quality_function</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_quality_function</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QualityFunction</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -291,14 +291,14 @@
 
 <div class="viewcode-block" id="GreedyImprovementReduction">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators.GreedyImprovementReduction">[docs]</a>
-<span class="k">class</span> <span class="nc">GreedyImprovementReduction</span><span class="p">(</span><span class="n">InducingPointAllocator</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GreedyImprovementReduction</span><span class="p">(</span><span class="n">InducingPointAllocator</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    An inducing point allocator that greedily chooses inducing points with large</span>
 <span class="sd">    predictive variance and that are in promising regions of the search</span>
 <span class="sd">    space (according to the model form the previous BO step), see [moss2023ipa]_.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 
 <span class="sd">        Args:</span>
@@ -309,7 +309,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_maximize</span> <span class="o">=</span> <span class="n">maximize</span>
 
-    <span class="k">def</span> <span class="nf">_get_quality_function</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_quality_function</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QualityFunction</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -326,7 +326,7 @@
 
 <div class="viewcode-block" id="_pivoted_cholesky_init">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.inducing_point_allocators._pivoted_cholesky_init">[docs]</a>
-<span class="k">def</span> <span class="nf">_pivoted_cholesky_init</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_pivoted_cholesky_init</span><span class="p">(</span>
     <span class="n">train_inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">kernel_matrix</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="n">LinearOperator</span><span class="p">,</span>
     <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>

@@ -27,10 +27,10 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="c1"># maximum tensor size for simple pareto computation</span>
 <span class="n">MAX_BYTES</span> <span class="o">=</span> <span class="mf">5e6</span>
@@ -38,7 +38,7 @@
 
 <div class="viewcode-block" id="is_non_dominated">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.pareto.is_non_dominated">[docs]</a>
-<span class="k">def</span> <span class="nf">is_non_dominated</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_non_dominated</span><span class="p">(</span>
     <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -90,7 +90,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_is_non_dominated_loop</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_non_dominated_loop</span><span class="p">(</span>
     <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">deduplicate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>

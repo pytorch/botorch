@@ -31,31 +31,31 @@
 <span class="sd">Utilities for acquisition functions.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">logei</span><span class="p">,</span> <span class="n">monte_carlo</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">logei</span><span class="p">,</span> <span class="n">monte_carlo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">logei</span> <span class="k">as</span> <span class="n">moo_logei</span><span class="p">,</span>
     <span class="n">monte_carlo</span> <span class="k">as</span> <span class="n">moo_monte_carlo</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">compute_best_feasible_objective</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.get_sampler</span> <span class="kn">import</span> <span class="n">get_sampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_best_feasible_objective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.get_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_sampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="get_acquisition_function">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.factory.get_acquisition_function">[docs]</a>
-<span class="k">def</span> <span class="nf">get_acquisition_function</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_acquisition_function</span><span class="p">(</span>
     <span class="n">acquisition_function_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span>

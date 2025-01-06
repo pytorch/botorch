@@ -49,33 +49,33 @@
 <span class="sd">    Theory and applications, 2011.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.deterministic</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeterministicModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">concatenate_pending_points</span><span class="p">,</span>
     <span class="n">match_batch_shape</span><span class="p">,</span>
     <span class="n">t_batch_mode_transform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Bernoulli</span><span class="p">,</span> <span class="n">Normal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bernoulli</span><span class="p">,</span> <span class="n">Normal</span>
 
 <span class="n">SIGMA_JITTER</span> <span class="o">=</span> <span class="mf">1e-8</span>
 
 
 <div class="viewcode-block" id="AnalyticExpectedUtilityOfBestOption">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption">[docs]</a>
-<span class="k">class</span> <span class="nc">AnalyticExpectedUtilityOfBestOption</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnalyticExpectedUtilityOfBestOption</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Analytic Preferential Expected Utility of Best Options, i.e., Analytical EUBO"""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">pref_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">outcome_model</span><span class="p">:</span> <span class="n">DeterministicModel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -113,7 +113,7 @@
 <div class="viewcode-block" id="AnalyticExpectedUtilityOfBestOption.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate analytical EUBO on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -160,7 +160,7 @@
 
 <div class="viewcode-block" id="qExpectedUtilityOfBestOption">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.qExpectedUtilityOfBestOption">[docs]</a>
-<span class="k">class</span> <span class="nc">qExpectedUtilityOfBestOption</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qExpectedUtilityOfBestOption</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based Expected Utility of Best Option (qEUBO)</span>
 
 <span class="sd">    This computes qEUBO by</span>
@@ -171,7 +171,7 @@
 <span class="sd">    `qEUBO(X) = E[max Y], Y ~ f(X), where X = (x_1,...,x_q)`</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">pref_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">outcome_model</span><span class="p">:</span> <span class="n">DeterministicModel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -214,7 +214,7 @@
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.qExpectedUtilityOfBestOption.forward">[docs]</a>
     <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qEUBO on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -237,10 +237,10 @@
 
 <div class="viewcode-block" id="PairwiseBayesianActiveLearningByDisagreement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.PairwiseBayesianActiveLearningByDisagreement">[docs]</a>
-<span class="k">class</span> <span class="nc">PairwiseBayesianActiveLearningByDisagreement</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PairwiseBayesianActiveLearningByDisagreement</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC Bayesian Active Learning by Disagreement"""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">pref_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">outcome_model</span><span class="p">:</span> <span class="n">DeterministicModel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -273,7 +273,7 @@
 <div class="viewcode-block" id="PairwiseBayesianActiveLearningByDisagreement.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.preference.PairwiseBayesianActiveLearningByDisagreement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate MC BALD on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>

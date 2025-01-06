@@ -29,23 +29,23 @@
 
 <span class="sa">r</span><span class="sd">"""Box decomposition container."""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.box_decomposition</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.box_decomposition</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BoxDecomposition</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleList</span>
 
 
 <div class="viewcode-block" id="BoxDecompositionList">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList">[docs]</a>
-<span class="k">class</span> <span class="nc">BoxDecompositionList</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BoxDecompositionList</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A list of box decompositions."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">box_decompositions</span><span class="p">:</span> <span class="n">BoxDecomposition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">box_decompositions</span><span class="p">:</span> <span class="n">BoxDecomposition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize the box decomposition list.</span>
 
 <span class="sd">        Args:</span>
@@ -60,7 +60,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">box_decompositions</span> <span class="o">=</span> <span class="n">ModuleList</span><span class="p">(</span><span class="n">box_decompositions</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">pareto_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pareto_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""This returns the non-dominated set.</span>
 
 <span class="sd">        Note: Internally, we store the negative pareto set (minimization).</span>
@@ -72,7 +72,7 @@
         <span class="k">return</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">pareto_Y</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_decompositions</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ref_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ref_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the reference point.</span>
 
 <span class="sd">        Note: Internally, we store the negative reference point (minimization).</span>
@@ -84,7 +84,7 @@
 
 <div class="viewcode-block" id="BoxDecompositionList.get_hypercell_bounds">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.get_hypercell_bounds">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_hypercell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_hypercell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the bounds of each hypercell in the decomposition.</span>
 
 <span class="sd">        Returns:</span>
@@ -122,7 +122,7 @@
 
 <div class="viewcode-block" id="BoxDecompositionList.update">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.update">[docs]</a>
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Update the partitioning.</span>
 
 <span class="sd">        Args:</span>
@@ -146,7 +146,7 @@
 
 <div class="viewcode-block" id="BoxDecompositionList.compute_hypervolume">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.compute_hypervolume">[docs]</a>
-    <span class="k">def</span> <span class="nf">compute_hypervolume</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_hypervolume</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume that is dominated by the Pareto Froniter.</span>
 
 <span class="sd">        Returns:</span>

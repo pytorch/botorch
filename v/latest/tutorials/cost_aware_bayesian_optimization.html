@@ -92,25 +92,25 @@ $$</p>
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span><span class="p">,</span> <span class="n">ExpectedImprovement</span>
-<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms</span> <span class="kn">import</span> <span class="n">Log</span>
-<span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
-<span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">Ackley</span>
-<span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">standardize</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_samples</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span><span class="p">,</span> <span class="n">ExpectedImprovement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">Log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.test_functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ackley</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">standardize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_sobol_samples</span>
 
-<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
 
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="o">%</span><span class="k">matplotlib</span> inline
 
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
@@ -138,23 +138,23 @@ $$</p>
 <div class="prompt input_prompt">In [2]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">CostModel</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CostModel</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Simple abstract class for a cost model.</span>
 <span class="sd">    """</span>    
     
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
         <span class="k">pass</span>
     
 
-<span class="k">class</span> <span class="nc">CostModelGP</span><span class="p">(</span><span class="n">CostModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CostModelGP</span><span class="p">(</span><span class="n">CostModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    A basic cost model that assumes the cost is positive.</span>
 <span class="sd">    It models the log cost to guarantee positive cost predictions.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y_cost</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y_cost</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">Y_cost</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="n">gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">Y_cost</span><span class="p">,</span> <span class="n">outcome_transform</span><span class="o">=</span><span class="n">Log</span><span class="p">())</span>
@@ -162,7 +162,7 @@ $$</p>
         <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gp</span> <span class="o">=</span> <span class="n">gp</span>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -174,7 +174,7 @@ $$</p>
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">synthetic_objective_with_cost</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">synthetic_objective_with_cost</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="n">dim</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">f</span> <span class="o">=</span> <span class="n">Ackley</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>  <span class="c1"># synthetic objective is the Ackley</span>
     <span class="n">fx</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
@@ -268,20 +268,20 @@ $$</p>
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">ExpectedImprovementWithCost</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ExpectedImprovementWithCost</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    This is the acquisition function EI(x) / c(x) ^ alpha, where alpha is a decay</span>
 <span class="sd">    factor that reduces or increases the emphasis of the cost model c(x).</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="p">,</span> <span class="n">cost_model</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="p">,</span> <span class="n">cost_model</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cost_model</span> <span class="o">=</span> <span class="n">cost_model</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ei</span> <span class="o">=</span> <span class="n">ExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="n">best_f</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ei</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cost_model</span><span class="p">(</span><span class="n">X</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -298,7 +298,7 @@ $$</p>
 <span class="n">X_batch</span> <span class="o">=</span> <span class="n">X_preds</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">normalize_acquisition_values</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_acquisition_values</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
     <span class="n">max_value</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
     <span class="n">min_value</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">values</span> <span class="o">-</span> <span class="n">min_value</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">max_value</span> <span class="o">-</span> <span class="n">min_value</span><span class="p">)</span>
@@ -355,18 +355,18 @@ $$</p>
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">NoisyLinearLeastSquares</span><span class="p">:</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">NoisyLinearLeastSquares</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    The standard linear least squares problem min_x ||Ax - b||_2.</span>
 <span class="sd">    We compute the loss via batching that introduces noise.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">A</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">niters</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">niters</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
         <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">([</span><span class="n">x</span><span class="p">],</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
         <span class="n">batch_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">]</span>
@@ -467,7 +467,7 @@ $$</p>
 <span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">400</span><span class="p">]],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">objective</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="n">learning_rate</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">num_iters</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
@@ -479,16 +479,16 @@ $$</p>
 
 
 <span class="c1"># Simplified cost model based on analysis above</span>
-<span class="k">class</span> <span class="nc">LinearCostModel</span><span class="p">(</span><span class="n">CostModel</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LinearCostModel</span><span class="p">(</span><span class="n">CostModel</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
     <span class="c1"># Assume x1 is batch_size, x2 is iterations</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">X</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">X</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">generate_initial_data</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_initial_data</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
     <span class="n">dim</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">train_x</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">num</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">111</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">train_y</span> <span class="o">=</span> <span class="p">[]</span>

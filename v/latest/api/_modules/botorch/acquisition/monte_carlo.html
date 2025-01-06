@@ -43,50 +43,50 @@
 <span class="sd">    The reparameterization trick for acquisition functions. ArXiv 2017.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Protocol</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.cached_cholesky</span> <span class="kn">import</span> <span class="n">CachedCholeskyMCSamplerMixin</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.cached_cholesky</span><span class="w"> </span><span class="kn">import</span> <span class="n">CachedCholeskyMCSamplerMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ConstrainedMCObjective</span><span class="p">,</span>
     <span class="n">IdentityMCObjective</span><span class="p">,</span>
     <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
     <span class="n">PosteriorTransform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">compute_best_feasible_objective</span><span class="p">,</span>
     <span class="n">prune_inferior_points</span><span class="p">,</span>
     <span class="n">repeat_to_match_aug_dim</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">legacy_ei_numerics_warning</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_smoothed_feasibility_indicator</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">legacy_ei_numerics_warning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_smoothed_feasibility_indicator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">concatenate_pending_points</span><span class="p">,</span>
     <span class="n">match_batch_shape</span><span class="p">,</span>
     <span class="n">t_batch_mode_transform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="MCAcquisitionFunction">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">MCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for Monte-Carlo based batch acquisition functions.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -130,7 +130,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">=</span> <span class="n">objective</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_get_samples_and_objectives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_samples_and_objectives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Computes posterior samples and objective values at input X.</span>
 
 <span class="sd">        Args:</span>
@@ -151,7 +151,7 @@
 <div class="viewcode-block" id="MCAcquisitionFunction.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction.forward">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Takes in a `batch_shape x q x d` X Tensor of t-batches with `q` `d`-dim</span>
 <span class="sd">        design points each, and returns a Tensor with shape `batch_shape'`, where</span>
 <span class="sd">        `batch_shape'` is the broadcasted batch shape of model and input `X`. Should</span>
@@ -165,18 +165,18 @@
 
 <div class="viewcode-block" id="SampleReductionProtocol">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.SampleReductionProtocol">[docs]</a>
-<span class="k">class</span> <span class="nc">SampleReductionProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SampleReductionProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""For static type check of SampleReducingMCAcquisitionFunction's mc_reduction."""</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
 
 
 <div class="viewcode-block" id="SampleReducingMCAcquisitionFunction">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">SampleReducingMCAcquisitionFunction</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SampleReducingMCAcquisitionFunction</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch acquisition function that reduces across samples and implements</span>
 <span class="sd">    a general treatment of outcome constraints.</span>
 
@@ -212,7 +212,7 @@
 
     <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># whether the acquisition utilities are in log-space</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -289,7 +289,7 @@
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.SampleReducingMCAcquisitionFunction.forward">[docs]</a>
     <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes the acquisition value associated with the input `X`. Weighs the</span>
 <span class="sd">        acquisition utility values by smoothed constraint indicators if `constraints`</span>
 <span class="sd">        was passed to the constructor of the class. Applies `self.sample_reduction` and</span>
@@ -311,7 +311,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_reduction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_q_reduction</span><span class="p">(</span><span class="n">non_reduced_acqval</span><span class="p">))</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_non_reduced_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_non_reduced_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Compute the constrained acquisition values at the MC-sample, q level.</span>
 
 <span class="sd">        Args:</span>
@@ -327,7 +327,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_constraints</span><span class="p">(</span><span class="n">acqval</span><span class="o">=</span><span class="n">acqval</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evaluates the acquisition utility per MC sample based on objective value obj.</span>
 <span class="sd">        Should utilize the result of `set_X_pending` as needed to account for pending</span>
 <span class="sd">        function evaluations.</span>
@@ -340,7 +340,7 @@
 <span class="sd">        """</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
-    <span class="k">def</span> <span class="nf">_apply_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acqval</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acqval</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Multiplies the acquisition utility by constraint indicators.</span>
 
 <span class="sd">        Args:</span>
@@ -371,7 +371,7 @@
 
 <div class="viewcode-block" id="qExpectedImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">qExpectedImprovement</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qExpectedImprovement</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Expected Improvement.</span>
 
 <span class="sd">    This computes qEI by</span>
@@ -394,7 +394,7 @@
 <span class="sd">    improved numerics. See https://arxiv.org/abs/2310.20708 for details.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -443,7 +443,7 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"best_f"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">best_f</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qExpectedImprovement per sample on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -458,7 +458,7 @@
 
 <div class="viewcode-block" id="qNoisyExpectedImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">qNoisyExpectedImprovement</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qNoisyExpectedImprovement</span><span class="p">(</span>
     <span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">,</span> <span class="n">CachedCholeskyMCSamplerMixin</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Noisy Expected Improvement.</span>
@@ -482,7 +482,7 @@
 <span class="sd">    improved numerics. See https://arxiv.org/abs/2310.20708 for details.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -597,7 +597,7 @@
 
 <div class="viewcode-block" id="qNoisyExpectedImprovement.compute_best_f">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement.compute_best_f">[docs]</a>
-    <span class="k">def</span> <span class="nf">compute_best_f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_best_f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Computes the best (feasible) noisy objective value.</span>
 
 <span class="sd">        Args:</span>
@@ -624,7 +624,7 @@
         <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">view_shape</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>  <span class="c1"># obj.shape[:-1], i.e. without `q`-dim`</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evaluate qNoisyExpectedImprovement per objective value in `obj`.</span>
 
 <span class="sd">        Args:</span>
@@ -635,7 +635,7 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">obj</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_best_f</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_get_samples_and_objectives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_samples_and_objectives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute samples at new points, using the cached root decomposition.</span>
 
 <span class="sd">        Args:</span>
@@ -671,7 +671,7 @@
 
         <span class="k">return</span> <span class="n">samples</span><span class="p">,</span> <span class="n">obj</span>
 
-    <span class="k">def</span> <span class="nf">_compute_best_feasible_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_best_feasible_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Computes best feasible objective value from samples.</span>
 
 <span class="sd">        Args:</span>
@@ -695,7 +695,7 @@
 
 <div class="viewcode-block" id="qProbabilityOfImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qProbabilityOfImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">qProbabilityOfImprovement</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qProbabilityOfImprovement</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Probability of Improvement.</span>
 
 <span class="sd">    Estimates the probability of improvement over the current best observed</span>
@@ -714,7 +714,7 @@
 <span class="sd">        &gt;&gt;&gt; qpi = qPI(test_X)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -768,7 +768,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"best_f"</span><span class="p">,</span> <span class="n">best_f</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"tau"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qProbabilityOfImprovement per sample on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -784,7 +784,7 @@
 
 <div class="viewcode-block" id="qSimpleRegret">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qSimpleRegret">[docs]</a>
-<span class="k">class</span> <span class="nc">qSimpleRegret</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qSimpleRegret</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Simple Regret.</span>
 
 <span class="sd">    Samples from the joint posterior over the q-batch and computes the simple regret.</span>
@@ -809,7 +809,7 @@
 <span class="sd">        &gt;&gt;&gt; qsr = qSR(test_X)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -839,7 +839,7 @@
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qSimpleRegret per sample on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -854,7 +854,7 @@
 
 <div class="viewcode-block" id="qUpperConfidenceBound">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qUpperConfidenceBound">[docs]</a>
-<span class="k">class</span> <span class="nc">qUpperConfidenceBound</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qUpperConfidenceBound</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Upper Confidence Bound.</span>
 
 <span class="sd">    Uses a reparameterization to extend UCB to qUCB for q &gt; 1 (See Appendix A</span>
@@ -881,7 +881,7 @@
 <span class="sd">        &gt;&gt;&gt; qucb = qUCB(test_X)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -914,10 +914,10 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">beta_prime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_beta_prime</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_get_beta_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_beta_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qUpperConfidenceBound per sample on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -933,7 +933,7 @@
 
 <div class="viewcode-block" id="qLowerConfidenceBound">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qLowerConfidenceBound">[docs]</a>
-<span class="k">class</span> <span class="nc">qLowerConfidenceBound</span><span class="p">(</span><span class="n">qUpperConfidenceBound</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qLowerConfidenceBound</span><span class="p">(</span><span class="n">qUpperConfidenceBound</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batched lower confidence bound.</span>
 
 <span class="sd">    This acquisition function is useful for confident/risk-averse decision making.</span>
@@ -942,7 +942,7 @@
 <span class="sd">    lead to conservative candidates.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">_get_beta_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_beta_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Multiply beta prime by -1 to get the lower confidence bound."""</span>
         <span class="k">return</span> <span class="o">-</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_beta_prime</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span></div>
 

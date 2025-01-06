@@ -26,27 +26,27 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 
-<span class="kn">from</span> <span class="nn">botorch.generation.gen</span> <span class="kn">import</span> <span class="n">TGenCandidates</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.homotopy</span> <span class="kn">import</span> <span class="n">Homotopy</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.initializers</span> <span class="kn">import</span> <span class="n">TGenInitialConditions</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span><span class="p">,</span> <span class="n">optimize_acqf_mixed</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.generation.gen</span><span class="w"> </span><span class="kn">import</span> <span class="n">TGenCandidates</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.homotopy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Homotopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.initializers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TGenInitialConditions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span><span class="p">,</span> <span class="n">optimize_acqf_mixed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="prune_candidates">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_homotopy.prune_candidates">[docs]</a>
-<span class="k">def</span> <span class="nf">prune_candidates</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">prune_candidates</span><span class="p">(</span>
     <span class="n">candidates</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">acq_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">prune_tolerance</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Prune candidates based on their distance to other candidates.</span>
@@ -83,7 +83,7 @@
 
 <div class="viewcode-block" id="optimize_acqf_homotopy">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_homotopy.optimize_acqf_homotopy">[docs]</a>
-<span class="k">def</span> <span class="nf">optimize_acqf_homotopy</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_acqf_homotopy</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>

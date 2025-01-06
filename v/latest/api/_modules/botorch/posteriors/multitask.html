@@ -27,18 +27,18 @@
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">LinearOperator</span><span class="p">,</span> <span class="n">to_linear_operator</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.operators</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearOperator</span><span class="p">,</span> <span class="n">to_linear_operator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="MultitaskGPPosterior">
 <a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior">[docs]</a>
-<span class="k">class</span> <span class="nc">MultitaskGPPosterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MultitaskGPPosterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">distribution</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">,</span>
         <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span>
@@ -86,7 +86,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">num_tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_train_covar</span><span class="o">.</span><span class="n">linear_ops</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The shape of a base sample used for constructing posterior samples.</span>
 
 <span class="sd">        Overwrites the standard `base_sample_shape` call to inform samplers that</span>
@@ -101,7 +101,7 @@
         <span class="k">return</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="n">sampling_shape</span><span class="p">,))</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The t-batch range.</span>
 
 <span class="sd">        This is used in samplers to identify the t-batch component of the</span>
@@ -111,7 +111,7 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_prepare_base_samples</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
         <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint_covariance_matrix</span>
@@ -207,7 +207,7 @@
 
 <div class="viewcode-block" id="MultitaskGPPosterior.rsample_from_base_samples">
 <a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.rsample_from_base_samples">[docs]</a>
-    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rsample_from_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -282,7 +282,7 @@
 
 <div class="viewcode-block" id="MultitaskGPPosterior.rsample">
 <a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.rsample">[docs]</a>
-    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -304,7 +304,7 @@
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_draw_from_base_covar</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_draw_from_base_covar</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">covar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="n">LinearOperator</span><span class="p">,</span> <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="c1"># Now reparameterize those base samples</span>
@@ -323,7 +323,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_permute_solve</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearOperator</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_permute_solve</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">LinearOperator</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearOperator</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Solve the batched linear system AX = b, where b is a batched column</span>
 <span class="sd">    vector. The solve is carried out after permuting the largest batch</span>
 <span class="sd">    dimension of b to the final position, which results in a more efficient</span>

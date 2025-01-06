@@ -27,13 +27,13 @@
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.posterior_samplers</span> <span class="kn">import</span> <span class="n">get_matheron_path_model</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.analytic</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.posterior_samplers</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_matheron_path_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <span class="n">BATCH_SIZE_CHANGE_ERROR</span> <span class="o">=</span> <span class="s2">"""The batch size of PathwiseThompsonSampling should </span><span class="se">\</span>
@@ -43,7 +43,7 @@
 
 <div class="viewcode-block" id="PathwiseThompsonSampling">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling">[docs]</a>
-<span class="k">class</span> <span class="nc">PathwiseThompsonSampling</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PathwiseThompsonSampling</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Thompson Sampling packaged as an (analytic)</span>
 <span class="sd">    acquisition function. Querying the acquisition function gives the summed</span>
 <span class="sd">    values of one or more draws from a pathwise drawn posterior sample, and thus</span>
@@ -54,7 +54,7 @@
 <span class="sd">        &gt;&gt;&gt; TS = PathwiseThompsonSampling(model)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -77,7 +77,7 @@
 
 <div class="viewcode-block" id="PathwiseThompsonSampling.redraw">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling.redraw">[docs]</a>
-    <span class="k">def</span> <span class="nf">redraw</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">redraw</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">samples</span> <span class="o">=</span> <span class="n">get_matheron_path_model</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">sample_shape</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">])</span>
         <span class="p">)</span></div>
@@ -86,7 +86,7 @@
 <div class="viewcode-block" id="PathwiseThompsonSampling.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.thompson_sampling.PathwiseThompsonSampling.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the pathwise posterior sample draws on the candidate set X.</span>
 
 <span class="sd">        Args:</span>

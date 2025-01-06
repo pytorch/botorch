@@ -27,21 +27,21 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="n">get_covar_module_with_dim_scaled_prior</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
-<span class="kn">from</span> <span class="nn">linear_operator.operators.sum_linear_operator</span> <span class="kn">import</span> <span class="n">SumLinearOperator</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleDict</span>  <span class="c1"># pyre-ignore</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils.gpytorch_modules</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_covar_module_with_dim_scaled_prior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels.scale_kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.priors.torch_priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">GammaPrior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.operators.sum_linear_operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">SumLinearOperator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleDict</span>  <span class="c1"># pyre-ignore</span>
 
 
 <div class="viewcode-block" id="SACKernel">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.contextual_sac.SACKernel">[docs]</a>
-<span class="k">class</span> <span class="nc">SACKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SACKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The structural additive contextual(SAC) kernel.</span>
 
 <span class="sd">    The kernel is used for contextual BO without oberseving context breakdowns.</span>
@@ -65,7 +65,7 @@
 <span class="sd">    with same lengthscales but different outputscales.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">decomposition</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
         <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
@@ -110,10 +110,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">kernel_dict</span> <span class="o">=</span> <span class="n">ModuleDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_dict</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>

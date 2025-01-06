@@ -27,37 +27,37 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">NoneType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoneType</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.models.approximate_gp</span> <span class="kn">import</span> <span class="n">ApproximateGPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.features</span> <span class="kn">import</span> <span class="n">KernelEvaluationMap</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.paths</span> <span class="kn">import</span> <span class="n">GeneralizedLinearPath</span><span class="p">,</span> <span class="n">SamplePath</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.approximate_gp</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApproximateGPyTorchModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.input</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">KernelEvaluationMap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneralizedLinearPath</span><span class="p">,</span> <span class="n">SamplePath</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_input_transform</span><span class="p">,</span>
     <span class="n">get_train_inputs</span><span class="p">,</span>
     <span class="n">get_train_targets</span><span class="p">,</span>
     <span class="n">TInputTransform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.types</span> <span class="kn">import</span> <span class="n">DEFAULT</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">_GaussianLikelihoodBase</span><span class="p">,</span> <span class="n">Likelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">ApproximateGP</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="n">GP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.variational</span> <span class="kn">import</span> <span class="n">VariationalStrategy</span>
-<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods</span><span class="w"> </span><span class="kn">import</span> <span class="n">_GaussianLikelihoodBase</span><span class="p">,</span> <span class="n">Likelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApproximateGP</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="n">GP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.variational</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariationalStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.operators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">LinearOperator</span><span class="p">,</span>
     <span class="n">SumLinearOperator</span><span class="p">,</span>
     <span class="n">ZeroLinearOperator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">TPathwiseUpdate</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">GP</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">SamplePath</span><span class="p">]</span>
 <span class="n">GaussianUpdate</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="s2">"gaussian_update"</span><span class="p">)</span>
@@ -65,7 +65,7 @@
 
 <div class="viewcode-block" id="gaussian_update">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.update_strategies.gaussian_update">[docs]</a>
-<span class="k">def</span> <span class="nf">gaussian_update</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gaussian_update</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">GP</span><span class="p">,</span>
     <span class="n">sample_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">likelihood</span><span class="p">:</span> <span class="n">Likelihood</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">DEFAULT</span><span class="p">,</span>
@@ -97,7 +97,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_gaussian_update_exact</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gaussian_update_exact</span><span class="p">(</span>
     <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
     <span class="n">points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">target_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -133,7 +133,7 @@
 
 
 <span class="nd">@GaussianUpdate</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">_GaussianLikelihoodBase</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_gaussian_update_ExactGP</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gaussian_update_ExactGP</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ExactGP</span><span class="p">,</span>
     <span class="n">likelihood</span><span class="p">:</span> <span class="n">_GaussianLikelihoodBase</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -164,7 +164,7 @@
 
 
 <span class="nd">@GaussianUpdate</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ApproximateGPyTorchModel</span><span class="p">,</span> <span class="p">(</span><span class="n">Likelihood</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">))</span>
-<span class="k">def</span> <span class="nf">_gaussian_update_ApproximateGPyTorchModel</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gaussian_update_ApproximateGPyTorchModel</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ApproximateGPyTorchModel</span><span class="p">,</span>
     <span class="n">likelihood</span><span class="p">:</span> <span class="n">Likelihood</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -175,14 +175,14 @@
 
 
 <span class="nd">@GaussianUpdate</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ApproximateGP</span><span class="p">,</span> <span class="p">(</span><span class="n">Likelihood</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">))</span>
-<span class="k">def</span> <span class="nf">_gaussian_update_ApproximateGP</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gaussian_update_ApproximateGP</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ApproximateGP</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">:</span> <span class="n">Likelihood</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneralizedLinearPath</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">GaussianUpdate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">variational_strategy</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <span class="nd">@GaussianUpdate</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ApproximateGP</span><span class="p">,</span> <span class="n">VariationalStrategy</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_gaussian_update_ApproximateGP_VariationalStrategy</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gaussian_update_ApproximateGP_VariationalStrategy</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ApproximateGP</span><span class="p">,</span>
     <span class="n">_</span><span class="p">:</span> <span class="n">VariationalStrategy</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>

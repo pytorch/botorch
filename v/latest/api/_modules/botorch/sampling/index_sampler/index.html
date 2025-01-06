@@ -32,23 +32,23 @@
 <span class="sd">deterministic optimization of acquisition functions with ensemble models.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.ensemble</span> <span class="kn">import</span> <span class="n">EnsemblePosterior</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.ensemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnsemblePosterior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="IndexSampler">
 <a class="viewcode-back" href="../../../sampling.html#botorch.sampling.index_sampler.IndexSampler">[docs]</a>
-<span class="k">class</span> <span class="nc">IndexSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IndexSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A sampler that calls `posterior.rsample_from_base_samples` to</span>
 <span class="sd">    generate the samples via index base samples."""</span>
 
 <div class="viewcode-block" id="IndexSampler.forward">
 <a class="viewcode-back" href="../../../sampling.html#botorch.sampling.index_sampler.IndexSampler.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -64,7 +64,7 @@
         <span class="k">return</span> <span class="n">samples</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_construct_base_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_construct_base_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructs base samples as indices to sample with them from</span>
 <span class="sd">        the Posterior.</span>
 
@@ -84,7 +84,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># pragma: nocover</span>
 
-    <span class="k">def</span> <span class="nf">_update_base_samples</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">EnsemblePosterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="p">:</span> <span class="n">IndexSampler</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Null operation just needed for compatibility with</span>

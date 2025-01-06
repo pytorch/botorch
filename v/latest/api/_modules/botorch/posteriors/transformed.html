@@ -27,21 +27,21 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.posterior</span><span class="w"> </span><span class="kn">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="TransformedPosterior">
 <a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.transformed.TransformedPosterior">[docs]</a>
-<span class="k">class</span> <span class="nc">TransformedPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransformedPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A generic transformation of a posterior (implicitly represented)."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>
         <span class="n">sample_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span>
@@ -69,12 +69,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_variance_transform</span> <span class="o">=</span> <span class="n">variance_transform</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The shape of a base sample used for constructing posterior samples."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">base_sample_shape</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The t-batch range.</span>
 
 <span class="sd">        This is used in samplers to identify the t-batch component of the</span>
@@ -85,16 +85,16 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">batch_range</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">device</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">dtype</span>
 
-    <span class="k">def</span> <span class="nf">_extended_shape</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extended_shape</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(),</span>  <span class="c1"># noqa: B008</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
@@ -107,7 +107,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">_extended_shape</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The mean of the posterior as a `batch_shape x n x m`-dim Tensor."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"No mean transform provided."</span><span class="p">)</span>
@@ -118,7 +118,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mean_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_posterior</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">variance</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The variance of the posterior as a `batch_shape x n x m`-dim Tensor."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variance_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"No variance transform provided."</span><span class="p">)</span>
@@ -126,7 +126,7 @@
 
 <div class="viewcode-block" id="TransformedPosterior.rsample_from_base_samples">
 <a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.transformed.TransformedPosterior.rsample_from_base_samples">[docs]</a>
-    <span class="k">def</span> <span class="nf">rsample_from_base_samples</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rsample_from_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -155,7 +155,7 @@
 
 <div class="viewcode-block" id="TransformedPosterior.rsample">
 <a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.transformed.TransformedPosterior.rsample">[docs]</a>
-    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rsample</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>

@@ -27,17 +27,17 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Positive</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">Positive</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="InfiniteWidthBNNKernel">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.infinite_width_bnn.InfiniteWidthBNNKernel">[docs]</a>
-<span class="k">class</span> <span class="nc">InfiniteWidthBNNKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InfiniteWidthBNNKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Infinite-width BNN kernel.</span>
 
 <span class="sd">    Defines the GP kernel which is equivalent to performing exact Bayesian</span>
@@ -56,7 +56,7 @@
 
     <span class="n">has_lengthscale</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
         <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -93,11 +93,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_constraint</span><span class="p">(</span><span class="s2">"raw_bias_var"</span><span class="p">,</span> <span class="n">Positive</span><span class="p">())</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">weight_var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">weight_var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_weight_var_constraint</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_weight_var</span><span class="p">)</span>
 
     <span class="nd">@weight_var</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">weight_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">weight_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_weight_var</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
@@ -105,29 +105,29 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">bias_var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bias_var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_bias_var_constraint</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_bias_var</span><span class="p">)</span>
 
     <span class="nd">@bias_var</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">bias_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bias_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_bias_var</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
             <span class="n">raw_bias_var</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_bias_var_constraint</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_initialize_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Computes the initial variance of x for layer 0"""</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">weight_var</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias_var</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_update_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">K</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">K</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Computes the updated variance of x for next layer"""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_var</span> <span class="o">*</span> <span class="n">K</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias_var</span>
 
-    <span class="k">def</span> <span class="nf">k</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">k</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        For single-layer infinite-width neural networks with i.i.d. priors,</span>
 <span class="sd">        the covariance between outputs can be computed by</span>
@@ -176,7 +176,7 @@
 
         <span class="k">return</span> <span class="n">K_12</span>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>

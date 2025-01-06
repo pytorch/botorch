@@ -27,25 +27,25 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.base_samples</span> <span class="kn">import</span> <span class="n">_reshape_base_samples_non_interleaved</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions.multitask_multivariate_normal</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.base_samples</span><span class="w"> </span><span class="kn">import</span> <span class="n">_reshape_base_samples_non_interleaved</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.distributions.multitask_multivariate_normal</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">BlockDiagLinearOperator</span><span class="p">,</span> <span class="n">LinearOperator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.operators</span><span class="w"> </span><span class="kn">import</span> <span class="n">BlockDiagLinearOperator</span><span class="p">,</span> <span class="n">LinearOperator</span>
 
-<span class="kn">from</span> <span class="nn">linear_operator.utils.cholesky</span> <span class="kn">import</span> <span class="n">psd_safe_cholesky</span>
-<span class="kn">from</span> <span class="nn">linear_operator.utils.errors</span> <span class="kn">import</span> <span class="n">NanError</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.utils.cholesky</span><span class="w"> </span><span class="kn">import</span> <span class="n">psd_safe_cholesky</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.utils.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">NanError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="extract_batch_covar">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.low_rank.extract_batch_covar">[docs]</a>
-<span class="k">def</span> <span class="nf">extract_batch_covar</span><span class="p">(</span><span class="n">mt_mvn</span><span class="p">:</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearOperator</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_batch_covar</span><span class="p">(</span><span class="n">mt_mvn</span><span class="p">:</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearOperator</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Extract a batched independent covariance matrix from an MTMVN.</span>
 
 <span class="sd">    Args:</span>
@@ -66,7 +66,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_reshape_base_samples</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_reshape_base_samples</span><span class="p">(</span>
     <span class="n">base_samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Manipulate shape of base_samples to match `MultivariateNormal.rsample`.</span>
@@ -110,7 +110,7 @@
 
 <div class="viewcode-block" id="sample_cached_cholesky">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.low_rank.sample_cached_cholesky">[docs]</a>
-<span class="k">def</span> <span class="nf">sample_cached_cholesky</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_cached_cholesky</span><span class="p">(</span>
     <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span>
     <span class="n">baseline_L</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>

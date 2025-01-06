@@ -42,51 +42,51 @@
 <span class="sd">    space. Proc. 13th Annual Conf. Genetic Evol. Comput., 2011.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
 
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">combinations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.cached_cholesky</span> <span class="kn">import</span> <span class="n">CachedCholeskyMCSamplerMixin</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="n">MCMultiOutputObjective</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.cached_cholesky</span><span class="w"> </span><span class="kn">import</span> <span class="n">CachedCholeskyMCSamplerMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCMultiOutputObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">prune_inferior_points_multi_objective</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BotorchError</span><span class="p">,</span>
     <span class="n">BotorchTensorDimensionError</span><span class="p">,</span>
     <span class="n">UnsupportedError</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.box_decomposition_list</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchWarning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.box_decomposition_list</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BoxDecompositionList</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.dominated</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.dominated</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_pad_batch_pareto_frontier</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_feasibility_indicator</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.torch</span> <span class="kn">import</span> <span class="n">BufferDict</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_feasibility_indicator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BufferDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">MIN_Y_RANGE</span> <span class="o">=</span> <span class="mf">1e-7</span>
 
 
 <div class="viewcode-block" id="infer_reference_point">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.infer_reference_point">[docs]</a>
-<span class="k">def</span> <span class="nf">infer_reference_point</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">infer_reference_point</span><span class="p">(</span>
     <span class="n">pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">max_ref_point</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
@@ -176,7 +176,7 @@
 
 <div class="viewcode-block" id="Hypervolume">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume">[docs]</a>
-<span class="k">class</span> <span class="nc">Hypervolume</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Hypervolume</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Hypervolume computation dimension sweep algorithm from [Fonseca2006]_.</span>
 
 <span class="sd">    Adapted from Simon Wessing's implementation of the algorithm</span>
@@ -188,7 +188,7 @@
 <span class="sd">    TODO: write this in C++ for faster looping.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize hypervolume object.</span>
 
 <span class="sd">        Args:</span>
@@ -198,7 +198,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ref_point</span> <span class="o">=</span> <span class="n">ref_point</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ref_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ref_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get reference point (for maximization).</span>
 
 <span class="sd">        Returns:</span>
@@ -207,7 +207,7 @@
         <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_ref_point</span>
 
     <span class="nd">@ref_point</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">ref_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ref_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Set the reference point for maximization</span>
 
 <span class="sd">        Args:</span>
@@ -217,7 +217,7 @@
 
 <div class="viewcode-block" id="Hypervolume.compute">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume.compute">[docs]</a>
-    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume.</span>
 
 <span class="sd">        Args:</span>
@@ -249,7 +249,7 @@
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_hv_recursive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_pareto</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hv_recursive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_pareto</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Recursive method for hypervolume calculation.</span>
 
 <span class="sd">        This assumes minimization (internally).</span>
@@ -332,7 +332,7 @@
             <span class="n">hvol</span> <span class="o">-=</span> <span class="n">q</span><span class="o">.</span><span class="n">area</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">q</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
             <span class="k">return</span> <span class="n">hvol</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_initialize_multilist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_multilist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pareto_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sets up the multilist data structure needed for calculation.</span>
 
 <span class="sd">        Note: this assumes minimization.</span>
@@ -355,7 +355,7 @@
 
 <div class="viewcode-block" id="sort_by_dimension">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.sort_by_dimension">[docs]</a>
-<span class="k">def</span> <span class="nf">sort_by_dimension</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sort_by_dimension</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sorts the list of nodes in-place by the specified objective.</span>
 
 <span class="sd">    Args:</span>
@@ -374,10 +374,10 @@
 
 <div class="viewcode-block" id="Node">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.Node">[docs]</a>
-<span class="k">class</span> <span class="nc">Node</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Node</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Node in the MultiList data structure."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">m</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
@@ -403,14 +403,14 @@
 
 <div class="viewcode-block" id="MultiList">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList">[docs]</a>
-<span class="k">class</span> <span class="nc">MultiList</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MultiList</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A special data structure used in hypervolume computation.</span>
 
 <span class="sd">    It consists of several doubly linked lists that share common nodes.</span>
 <span class="sd">    Every node has multiple predecessors and successors, one in every list.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize `m` doubly linked lists.</span>
 
 <span class="sd">        Args:</span>
@@ -426,7 +426,7 @@
 
 <div class="viewcode-block" id="MultiList.append">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.append">[docs]</a>
-    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Appends a node to the end of the list at the given index.</span>
 
 <span class="sd">        Args:</span>
@@ -443,7 +443,7 @@
 
 <div class="viewcode-block" id="MultiList.extend">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.extend">[docs]</a>
-    <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Extends the list at the given index with the nodes.</span>
 
 <span class="sd">        Args:</span>
@@ -457,7 +457,7 @@
 
 <div class="viewcode-block" id="MultiList.remove">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.remove">[docs]</a>
-    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Node</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Node</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Removes and returns 'node' from all lists in [0, 'index'].</span>
 
 <span class="sd">        Args:</span>
@@ -476,7 +476,7 @@
 
 <div class="viewcode-block" id="MultiList.reinsert">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.MultiList.reinsert">[docs]</a>
-    <span class="k">def</span> <span class="nf">reinsert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reinsert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Re-inserts the node at its original position.</span>
 
 <span class="sd">        Re-inserts the node at its original position in all lists in [0, 'index']</span>
@@ -499,17 +499,17 @@
 
 <div class="viewcode-block" id="SubsetIndexCachingMixin">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin">[docs]</a>
-<span class="k">class</span> <span class="nc">SubsetIndexCachingMixin</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubsetIndexCachingMixin</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""A Mixin class that adds q-subset index computations and caching."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Initializes the class with q_out = -1 and an empty q_subset_indices dict."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">q_out</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">q_subset_indices</span><span class="p">:</span> <span class="n">BufferDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">BufferDict</span><span class="p">()</span>
 
 <div class="viewcode-block" id="SubsetIndexCachingMixin.compute_q_subset_indices">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.SubsetIndexCachingMixin.compute_q_subset_indices">[docs]</a>
-    <span class="k">def</span> <span class="nf">compute_q_subset_indices</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_q_subset_indices</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">q_out</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BufferDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns and caches a dict of indices equal to subsets of `{1, ..., q_out}`.</span>
@@ -542,7 +542,7 @@
 
 <div class="viewcode-block" id="compute_subset_indices">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.compute_subset_indices">[docs]</a>
-<span class="k">def</span> <span class="nf">compute_subset_indices</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_subset_indices</span><span class="p">(</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BufferDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Compute all (2^q - 1) distinct subsets of {1, ..., `q`}.</span>
@@ -567,8 +567,8 @@
 
 <div class="viewcode-block" id="NoisyExpectedHypervolumeMixin">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.NoisyExpectedHypervolumeMixin">[docs]</a>
-<span class="k">class</span> <span class="nc">NoisyExpectedHypervolumeMixin</span><span class="p">(</span><span class="n">CachedCholeskyMCSamplerMixin</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NoisyExpectedHypervolumeMixin</span><span class="p">(</span><span class="n">CachedCholeskyMCSamplerMixin</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">ref_point</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -710,11 +710,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">q_in</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">X_baseline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">X_baseline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Return X_baseline augmented with pending points cached using CBD."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_baseline_and_pending</span>
 
-    <span class="k">def</span> <span class="nf">_compute_initial_hvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">feas</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_initial_hvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">feas</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume dominated by f(X_baseline) under each sample.</span>
 
 <span class="sd">        Args:</span>
@@ -740,7 +740,7 @@
             <span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_set_cell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_new_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_cell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_new_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the box decomposition under each posterior sample.</span>
 
 <span class="sd">        Args:</span>
@@ -840,7 +840,7 @@
 
 <div class="viewcode-block" id="NoisyExpectedHypervolumeMixin.set_X_pending">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.multi_objective.hypervolume.NoisyExpectedHypervolumeMixin.set_X_pending">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Informs the acquisition function about pending design points.</span>
 
 <span class="sd">        Args:</span>
@@ -889,7 +889,7 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_hypervolumes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hypervolumes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume over X_baseline under each posterior sample.</span>
 
 <span class="sd">        Returns:</span>

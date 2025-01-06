@@ -31,25 +31,25 @@
 <span class="sd">[Ament2023logei]_ for details.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.logei</span> <span class="kn">import</span> <span class="n">TAU_MAX</span><span class="p">,</span> <span class="n">TAU_RELU</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.base</span> <span class="kn">import</span> <span class="n">MultiObjectiveMCAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="n">MCMultiOutputObjective</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.logei</span><span class="w"> </span><span class="kn">import</span> <span class="n">TAU_MAX</span><span class="p">,</span> <span class="n">TAU_RELU</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiObjectiveMCAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCMultiOutputObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.hypervolume</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.hypervolume</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">NoisyExpectedHypervolumeMixin</span><span class="p">,</span>
     <span class="n">SubsetIndexCachingMixin</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.objective</span> <span class="kn">import</span> <span class="n">compute_smoothed_feasibility_indicator</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.safe_math</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_smoothed_feasibility_indicator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.safe_math</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">fatmin</span><span class="p">,</span>
     <span class="n">log_fatplus</span><span class="p">,</span>
     <span class="n">log_softplus</span><span class="p">,</span>
@@ -59,23 +59,23 @@
     <span class="n">logsumexp</span><span class="p">,</span>
     <span class="n">smooth_amin</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">concatenate_pending_points</span><span class="p">,</span>
     <span class="n">is_ensemble</span><span class="p">,</span>
     <span class="n">match_batch_shape</span><span class="p">,</span>
     <span class="n">t_batch_mode_transform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="qLogExpectedHypervolumeImprovement">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">qLogExpectedHypervolumeImprovement</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qLogExpectedHypervolumeImprovement</span><span class="p">(</span>
     <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">,</span> <span class="n">SubsetIndexCachingMixin</span>
 <span class="p">):</span>
     <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">ref_point</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -168,7 +168,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tau_max</span> <span class="o">=</span> <span class="n">tau_max</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fat</span> <span class="o">=</span> <span class="n">fat</span>
 
-    <span class="k">def</span> <span class="nf">_compute_log_qehvi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_log_qehvi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the expected (feasible) hypervolume improvement given MC samples.</span>
 
 <span class="sd">        Args:</span>
@@ -290,7 +290,7 @@
         <span class="c1"># 9) sum over segments (n_cells-dim) and average over MC samples</span>
         <span class="k">return</span> <span class="n">logmeanexp</span><span class="p">(</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">log_areas_per_segment</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_log_improvement</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_improvement</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">obj_subsets</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">view_shape</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="c1"># smooth out the clamp and take the log (previous step 3)</span>
@@ -305,7 +305,7 @@
         <span class="n">log_Zi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_smooth_relu</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">log_Zi</span>  <span class="c1"># mc_samples x batch_shape x num_cells x q_choose_i x i x m</span>
 
-    <span class="k">def</span> <span class="nf">_log_cell_lengths</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_cell_lengths</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">log_improvement_i</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">view_shape</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">cell_upper_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_upper_bounds</span><span class="o">.</span><span class="n">clamp_max</span><span class="p">(</span>
@@ -321,15 +321,15 @@
             <span class="n">log_cell_lengths</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_log_smooth_relu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_smooth_relu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">log_fatplus</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fat</span> <span class="k">else</span> <span class="n">log_softplus</span>
         <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tau_relu</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_smooth_min</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">keepdim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_smooth_min</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">keepdim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">fatmin</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fat</span> <span class="k">else</span> <span class="n">smooth_amin</span>
         <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tau_max</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_smooth_minimum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_smooth_minimum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">XY</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">broadcast_tensors</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smooth_min</span><span class="p">(</span><span class="n">XY</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -337,7 +337,7 @@
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement.forward">[docs]</a>
     <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_posterior_samples</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_log_qehvi</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div>
@@ -347,13 +347,13 @@
 
 <div class="viewcode-block" id="qLogNoisyExpectedHypervolumeImprovement">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>
     <span class="n">NoisyExpectedHypervolumeMixin</span><span class="p">,</span>
     <span class="n">qLogExpectedHypervolumeImprovement</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">ref_point</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -472,7 +472,7 @@
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement.forward">[docs]</a>
     <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">X_full</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">match_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
         <span class="c1"># NOTE: To ensure that we correctly sample `f(X)` from the joint distribution</span>
         <span class="c1"># `f((X_baseline, X)) ~ P(f | D)`, it is critical to compute the joint posterior</span>

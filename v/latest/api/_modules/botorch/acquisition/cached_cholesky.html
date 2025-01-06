@@ -32,32 +32,32 @@
 <span class="sd">decomposition of the posterior covariance over f(X_baseline).</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">MCSamplerMixin</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.higher_order_gp</span> <span class="kn">import</span> <span class="n">HigherOrderGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">KroneckerMultiTaskGP</span><span class="p">,</span> <span class="n">MultiTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.low_rank</span> <span class="kn">import</span> <span class="n">extract_batch_covar</span><span class="p">,</span> <span class="n">sample_cached_cholesky</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions.multitask_multivariate_normal</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSamplerMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchWarning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPyTorchModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.higher_order_gp</span><span class="w"> </span><span class="kn">import</span> <span class="n">HigherOrderGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model_list_gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.multitask</span><span class="w"> </span><span class="kn">import</span> <span class="n">KroneckerMultiTaskGP</span><span class="p">,</span> <span class="n">MultiTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.posterior</span><span class="w"> </span><span class="kn">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.low_rank</span><span class="w"> </span><span class="kn">import</span> <span class="n">extract_batch_covar</span><span class="p">,</span> <span class="n">sample_cached_cholesky</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.distributions.multitask_multivariate_normal</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">linear_operator.utils.errors</span> <span class="kn">import</span> <span class="n">NanError</span><span class="p">,</span> <span class="n">NotPSDError</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.utils.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">NanError</span><span class="p">,</span> <span class="n">NotPSDError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="supports_cache_root">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.supports_cache_root">[docs]</a>
-<span class="k">def</span> <span class="nf">supports_cache_root</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">supports_cache_root</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Checks if a model supports the cache_root functionality.</span>
 <span class="sd">    The two criteria are that the model is not multi-task and the model</span>
 <span class="sd">    produces a GPyTorchPosterior.</span>
@@ -76,7 +76,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_get_cache_root_not_supported_message</span><span class="p">(</span><span class="n">model_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_cache_root_not_supported_message</span><span class="p">(</span><span class="n">model_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">"`cache_root` is only supported for GPyTorchModels that "</span>
         <span class="s2">"are not MultiTask models and don't produce a "</span>
@@ -88,7 +88,7 @@
 
 <div class="viewcode-block" id="CachedCholeskyMCSamplerMixin">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.cached_cholesky.CachedCholeskyMCSamplerMixin">[docs]</a>
-<span class="k">class</span> <span class="nc">CachedCholeskyMCSamplerMixin</span><span class="p">(</span><span class="n">MCSamplerMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CachedCholeskyMCSamplerMixin</span><span class="p">(</span><span class="n">MCSamplerMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract Mixin class for acquisition functions using a cached Cholesky.</span>
 
 <span class="sd">    Specifically, this is for acquisition functions that require sampling from</span>
@@ -96,7 +96,7 @@
 <span class="sd">    covariance over f(X_baseline) is cached.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">cache_root</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -120,7 +120,7 @@
             <span class="n">cache_root</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache_root</span> <span class="o">=</span> <span class="n">cache_root</span>
 
-    <span class="k">def</span> <span class="nf">_compute_root_decomposition</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_root_decomposition</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -148,7 +148,7 @@
         <span class="n">lazy_covar_root</span> <span class="o">=</span> <span class="n">lazy_covar</span><span class="o">.</span><span class="n">root_decomposition</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">lazy_covar_root</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_get_f_X_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">q_in</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_f_X_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">q_in</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get posterior samples at the `q_in` new points from the joint posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -194,7 +194,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">q_in</span><span class="p">:,</span> <span class="p">:]</span>
 
-    <span class="k">def</span> <span class="nf">_set_sampler</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_sampler</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">q_in</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span>

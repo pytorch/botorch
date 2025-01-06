@@ -91,8 +91,8 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">torch</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
 
 <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
@@ -115,8 +115,8 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 <div class="prompt input_prompt">In [2]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Kumaraswamy</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kumaraswamy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
 <span class="o">%</span><span class="k">matplotlib</span> inline
 
@@ -161,12 +161,12 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">Hartmann</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.test_functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hartmann</span>
 
 <span class="n">neg_hartmann6</span> <span class="o">=</span> <span class="n">Hartmann</span><span class="p">(</span><span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">obj</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">obj</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
     <span class="n">X_warp</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">icdf</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">neg_hartmann6</span><span class="p">(</span><span class="n">X_warp</span><span class="p">)</span>
 </pre></div>
@@ -187,9 +187,9 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 <div class="prompt input_prompt">In [4]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_samples</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_sobol_samples</span>
 
 <span class="n">NOISE_SE</span> <span class="o">=</span> <span class="mf">0.05</span>
 <span class="n">train_yvar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">NOISE_SE</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
@@ -223,11 +223,11 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">Warp</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">LogNormalPrior</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.input</span><span class="w"> </span><span class="kn">import</span> <span class="n">Warp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.priors.torch_priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogNormalPrior</span>
 
 
-<span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">):</span>
     <span class="c1"># initialize input_warping transformation</span>
     <span class="n">warp_tf</span> <span class="o">=</span> <span class="n">Warp</span><span class="p">(</span>
         <span class="n">indices</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])),</span>
@@ -262,14 +262,14 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
 
 
 <span class="n">num_restarts</span> <span class="o">=</span> <span class="mi">20</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">2</span>
 <span class="n">raw_samples</span> <span class="o">=</span> <span class="mi">512</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">32</span>
 
 
-<span class="k">def</span> <span class="nf">optimize_acqf_and_get_observation</span><span class="p">(</span><span class="n">acq_func</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_acqf_and_get_observation</span><span class="p">(</span><span class="n">acq_func</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Optimizes the acquisition function, and returns a new candidate and a noisy observation."""</span>
     <span class="c1"># optimize</span>
     <span class="n">candidates</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
@@ -308,11 +308,11 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.logei</span> <span class="kn">import</span> <span class="n">qLogNoisyExpectedImprovement</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">BadInitialCandidatesWarning</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.logei</span><span class="w"> </span><span class="kn">import</span> <span class="n">qLogNoisyExpectedImprovement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">BadInitialCandidatesWarning</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">BadInitialCandidatesWarning</span><span class="p">)</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
@@ -372,8 +372,8 @@ We first warp each input dimension through a different inverse Kumaraswamy CDF.<
 <div class="prompt input_prompt">In [8]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
 <span class="o">%</span><span class="k">matplotlib</span> inline
 

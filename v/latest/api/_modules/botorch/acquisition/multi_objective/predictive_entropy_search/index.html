@@ -44,23 +44,23 @@
 
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">InputDataError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">check_no_nans</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputDataError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model_list_gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_no_nans</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Normal</span>
 
 
 <div class="viewcode-block" id="qMultiObjectivePredictiveEntropySearch">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch">[docs]</a>
-<span class="k">class</span> <span class="nc">qMultiObjectivePredictiveEntropySearch</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qMultiObjectivePredictiveEntropySearch</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for Predictive Entropy Search. The code supports</span>
 <span class="sd">    both single and multiple objectives as well as batching.</span>
 
@@ -120,7 +120,7 @@
 <span class="sd">    (iii) The estimated acquisition value could be negative.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">pareto_sets</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -191,7 +191,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_expectation_propagation</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_expectation_propagation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expectation_propagation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Perform expectation propagation to obtain the covariance factors that</span>
 <span class="sd">        depend on the Pareto sets.</span>
 
@@ -351,7 +351,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_omega_f_nat_mean</span> <span class="o">=</span> <span class="n">omega_f_nat_mean</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_omega_f_nat_cov</span> <span class="o">=</span> <span class="n">omega_f_nat_cov</span>
 
-    <span class="k">def</span> <span class="nf">_compute_information_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_information_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -500,7 +500,7 @@
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.qMultiObjectivePredictiveEntropySearch.forward">[docs]</a>
     <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -518,7 +518,7 @@
 
 <div class="viewcode-block" id="log_cdf_robust">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.predictive_entropy_search.log_cdf_robust">[docs]</a>
-<span class="k">def</span> <span class="nf">log_cdf_robust</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_cdf_robust</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the logarithm of the normal cumulative density robustly. This uses</span>
 <span class="sd">    the approximation log(1-z) ~ -z when z is small:</span>
 
@@ -544,7 +544,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_initialize_predictive_matrices</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_initialize_predictive_matrices</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -612,7 +612,7 @@
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_cov</span>
 
 
-<span class="k">def</span> <span class="nf">_get_omega_f_contribution</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_omega_f_contribution</span><span class="p">(</span>
     <span class="n">mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">P</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">M</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Extract the mean vector and covariance matrix corresponding to the `2 x 2`</span>
@@ -673,7 +673,7 @@
     <span class="k">return</span> <span class="n">mean_fX_fS</span><span class="p">,</span> <span class="n">cov_fX_fS</span>
 
 
-<span class="k">def</span> <span class="nf">_replace_pareto_diagonal</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_replace_pareto_diagonal</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Replace the pareto diagonal with identity matricx.</span>
 
 <span class="sd">    The Pareto diagonal of the omega factor shouldn't be updated because does not</span>
@@ -698,7 +698,7 @@
     <span class="k">return</span> <span class="n">A</span>
 
 
-<span class="k">def</span> <span class="nf">_update_omega</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_update_omega</span><span class="p">(</span>
     <span class="n">mean_f</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">cov_f</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">omega_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -867,7 +867,7 @@
     <span class="k">return</span> <span class="n">omega_f_nat_mean_new</span><span class="p">,</span> <span class="n">omega_f_nat_cov_new</span>
 
 
-<span class="k">def</span> <span class="nf">_safe_update_omega</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_safe_update_omega</span><span class="p">(</span>
     <span class="n">mean_f</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">cov_f</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">omega_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -925,7 +925,7 @@
         <span class="k">return</span> <span class="n">omega_f_nat_mean</span><span class="p">,</span> <span class="n">omega_f_nat_cov</span>
 
 
-<span class="k">def</span> <span class="nf">_update_marginals</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_update_marginals</span><span class="p">(</span>
     <span class="n">pred_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">pred_f_nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">omega_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -999,7 +999,7 @@
     <span class="k">return</span> <span class="n">nat_mean_f</span><span class="p">,</span> <span class="n">nat_cov_f</span>
 
 
-<span class="k">def</span> <span class="nf">_damped_update</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_damped_update</span><span class="p">(</span>
     <span class="n">old_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">new_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">damping_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1027,7 +1027,7 @@
     <span class="k">return</span> <span class="n">df</span> <span class="o">*</span> <span class="n">new_factor</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">df</span><span class="p">)</span> <span class="o">*</span> <span class="n">old_factor</span>
 
 
-<span class="k">def</span> <span class="nf">_update_damping</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_update_damping</span><span class="p">(</span>
     <span class="n">nat_cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">nat_cov_new</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">damping_factor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1092,7 +1092,7 @@
     <span class="k">return</span> <span class="n">df</span><span class="p">,</span> <span class="n">cholesky_factor</span>
 
 
-<span class="k">def</span> <span class="nf">_update_damping_when_converged</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_update_damping_when_converged</span><span class="p">(</span>
     <span class="n">mean_old</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">mean_new</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">cov_old</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1137,7 +1137,7 @@
     <span class="k">return</span> <span class="n">df</span><span class="p">,</span> <span class="n">delta_mean</span><span class="p">,</span> <span class="n">delta_cov</span>
 
 
-<span class="k">def</span> <span class="nf">_augment_factors_with_cached_factors</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_augment_factors_with_cached_factors</span><span class="p">(</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">N</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">omega_f_nat_mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1193,7 +1193,7 @@
     <span class="k">return</span> <span class="n">omega_f_nat_mean</span><span class="p">,</span> <span class="n">omega_f_nat_cov</span>
 
 
-<span class="k">def</span> <span class="nf">_compute_log_determinant</span><span class="p">(</span><span class="n">cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_log_determinant</span><span class="p">(</span><span class="n">cov</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the sum of the log determinants of a block diagonal covariance</span>
 <span class="sd">    matrices averaged over the Pareto samples.</span>
 

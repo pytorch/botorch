@@ -100,9 +100,9 @@ of the sampled scalarization.</p>
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
 <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"dtype"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">,</span>
@@ -129,7 +129,7 @@ of the sampled scalarization.</p>
 <div class="prompt input_prompt">In [2]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.test_functions.multi_objective</span> <span class="kn">import</span> <span class="n">ToyRobust</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.test_functions.multi_objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToyRobust</span>
 
 <span class="n">base_function</span> <span class="o">=</span> <span class="n">ToyRobust</span><span class="p">(</span><span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>  <span class="c1"># define test function</span>
 <span class="n">bounds</span> <span class="o">=</span> <span class="n">base_function</span><span class="o">.</span><span class="n">bounds</span>
@@ -182,10 +182,10 @@ of the sampled scalarization.</p>
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">unnormalize</span>
 
 <span class="c1"># define function for evaluation</span>
-<span class="k">def</span> <span class="nf">eval_problem</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">eval_problem</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">base_function</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">base_function</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 </pre></div>
@@ -205,13 +205,13 @@ of the sampled scalarization.</p>
 <div class="prompt input_prompt">In [4]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_samples</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_sobol_samples</span>
 
 <span class="n">standard_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">base_function</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
 <span class="n">standard_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
 
-<span class="k">def</span> <span class="nf">generate_initial_data</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_initial_data</span><span class="p">(</span>
     <span class="n">n</span><span class="p">,</span>
     <span class="n">eval_problem</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">,</span>
@@ -247,17 +247,17 @@ of the sampled scalarization.</p>
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.multi_output_risk_measures</span> <span class="kn">import</span> <span class="n">MVaR</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.dominated</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.multi_output_risk_measures</span><span class="w"> </span><span class="kn">import</span> <span class="n">MVaR</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.dominated</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputPerturbation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.input</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputPerturbation</span>
 
 
-<span class="k">class</span> <span class="nc">MVaRHV</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MVaRHV</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A helper class that calculates the HV of the MVaR set."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">,</span>
         <span class="n">eval_problem</span><span class="p">,</span>
@@ -273,7 +273,7 @@ of the sampled scalarization.</p>
         <span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval_problem</span> <span class="o">=</span> <span class="n">eval_problem</span>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_X</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_X</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Calculate the resulting HV by adding the MVaR corresponding to the new_X</span>
 <span class="sd">        to the Pareto set.</span>
 <span class="sd">        Args:</span>
@@ -305,13 +305,13 @@ of the sampled scalarization.</p>
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model_list_gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls</span><span class="w"> </span><span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">Standardize</span>
 
 
-<span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">perturbation_set</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">perturbation_set</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constructs the model and its MLL.</span>
 <span class="sd">    Args:</span>
 <span class="sd">        train_x: An `n x d`-dim tensor of training inputs.</span>
@@ -353,12 +353,12 @@ of the sampled scalarization.</p>
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.multi_output_risk_measures</span> <span class="kn">import</span> <span class="n">MARS</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">qNoisyExpectedImprovement</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">sample_simplex</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.multi_output_risk_measures</span><span class="w"> </span><span class="kn">import</span> <span class="n">MARS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">qNoisyExpectedImprovement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">sample_simplex</span>
 
 
-<span class="k">def</span> <span class="nf">get_MARS_NEI</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_MARS_NEI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">,</span>
     <span class="n">n_w</span><span class="p">,</span>
     <span class="n">X_baseline</span><span class="p">,</span>
@@ -434,7 +434,7 @@ of the sampled scalarization.</p>
 <div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_normal_samples</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_sobol_normal_samples</span>
 
 <span class="c1"># Ensure consistency of MVaRHV across seeds by using same perturbations.</span>
 <span class="c1"># This sets the random seed and generates the perturbations on CPU.</span>
@@ -487,12 +487,12 @@ of the sampled scalarization.</p>
 <div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">import</span> <span class="nn">gpytorch.settings</span> <span class="k">as</span> <span class="nn">gpt_settings</span>
-<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
-<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gpytorch.settings</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpt_settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
 
 <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
@@ -753,7 +753,7 @@ Optimization failed on the second try, after generating a new set of initial con
 <div class="prompt input_prompt">In [12]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
 <span class="o">%</span><span class="k">matplotlib</span> inline
 <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">all_mvar_hvs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">all_mvar_hvs</span><span class="p">)</span>
@@ -793,7 +793,7 @@ Optimization failed on the second try, after generating a new set of initial con
 <div class="prompt input_prompt">In [15]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.pareto</span> <span class="kn">import</span> <span class="n">is_non_dominated</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.pareto</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_non_dominated</span>
 
 <span class="c1"># Evaluate true MVaR</span>
 <span class="c1"># Perturb X</span>

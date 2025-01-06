@@ -55,21 +55,21 @@
 <span class="sd">4) Support multiple Markov chains running in parallel.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">PolytopeSampler</span>
-<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">DiagLinearOperator</span><span class="p">,</span> <span class="n">LinearOperator</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolytopeSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.operators</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiagLinearOperator</span><span class="p">,</span> <span class="n">LinearOperator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">_twopi</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span>
 
 
 <div class="viewcode-block" id="LinearEllipticalSliceSampler">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler">[docs]</a>
-<span class="k">class</span> <span class="nc">LinearEllipticalSliceSampler</span><span class="p">(</span><span class="n">PolytopeSampler</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LinearEllipticalSliceSampler</span><span class="p">(</span><span class="n">PolytopeSampler</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Linear Elliptical Slice Sampler.</span>
 
 <span class="sd">    Ideas:</span>
@@ -77,7 +77,7 @@
 <span class="sd">    - Extend fixed features constraint to general linear equality constraints.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">inequality_constraints</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -203,7 +203,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">burnin</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">thinning</span> <span class="o">=</span> <span class="n">thinning</span>
 
-    <span class="k">def</span> <span class="nf">_fixed_features_initialization</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fixed_features_initialization</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">A</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -259,7 +259,7 @@
 
         <span class="k">return</span> <span class="n">mean</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="p">,</span> <span class="n">covariance_root</span>
 
-    <span class="k">def</span> <span class="nf">_standardization_initialization</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_standardization_initialization</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""For non-standard mean and covariance, we're going to rewrite the problem as</span>
 <span class="sd">        sampling from a standard normal distribution subject to modified constraints.</span>
 <span class="sd">            A @ x - b = A @ (covar_root @ z + mean) - b</span>
@@ -275,13 +275,13 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_Az</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Az</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance_root</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">lifetime_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lifetime_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The total number of samples generated by the sampler during its lifetime."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lifetime_samples</span>
 
 <div class="viewcode-block" id="LinearEllipticalSliceSampler.draw">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.draw">[docs]</a>
-    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw samples.</span>
 
 <span class="sd">        Args:</span>
@@ -300,7 +300,7 @@
 
 <div class="viewcode-block" id="LinearEllipticalSliceSampler.step">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.lin_ess.LinearEllipticalSliceSampler.step">[docs]</a>
-    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Take a step, return the new sample, update the internal state.</span>
 
 <span class="sd">        Returns:</span>
@@ -326,7 +326,7 @@
         <span class="k">return</span> <span class="n">x</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_draw_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_draw_angle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draw the rotation angle.</span>
 
 <span class="sd">        Args:</span>
@@ -356,7 +356,7 @@
 
         <span class="k">return</span> <span class="n">u</span> <span class="o">-</span> <span class="n">padded_csum</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">indices_batch</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">+</span> <span class="n">left</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">indices_batch</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">_get_cart_coords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_cart_coords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Determine location on the ellipse in Cartesian coordinates.</span>
 
 <span class="sd">        Args:</span>
@@ -369,7 +369,7 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_trim_intervals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_trim_intervals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Trim the intervals by a small positive constant. This encourages the Markov</span>
 <span class="sd">        chain to stay in the interior of the domain.</span>
 <span class="sd">        """</span>
@@ -378,7 +378,7 @@
 
         <span class="k">return</span> <span class="n">left</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">right</span> <span class="o">-</span> <span class="n">eps</span>
 
-    <span class="k">def</span> <span class="nf">_find_active_intersection_angles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_active_intersection_angles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Construct the active intersection angles.</span>
 
 <span class="sd">        Args:</span>
@@ -405,7 +405,7 @@
 
         <span class="k">return</span> <span class="n">cummax</span><span class="p">,</span> <span class="n">srted</span>
 
-    <span class="k">def</span> <span class="nf">_find_intersection_angles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_intersection_angles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Compute all 2 * m intersections of the ellipse and the domain, where</span>
 <span class="sd">        `m = n_ineq_con` is the number of inequality constraints defining the domain.</span>
 <span class="sd">        If the i-th linear inequality constraint has no intersection with the ellipse,</span>
@@ -444,7 +444,7 @@
 
         <span class="k">return</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span>
 
-    <span class="k">def</span> <span class="nf">_is_feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Returns a Boolean tensor indicating whether the `points` are feasible,</span>
 <span class="sd">        i.e. they satisfy `A @ points &lt;= b`, where `(A, b)` are the tensors passed</span>
 <span class="sd">        as the `inequality_constraints` to the constructor of the sampler.</span>
@@ -462,7 +462,7 @@
         <span class="n">A</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Az</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bz</span><span class="p">)</span> <span class="k">if</span> <span class="n">transformed</span> <span class="k">else</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">A</span> <span class="o">@</span> <span class="n">points</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Transforms the input so that it is equivalent to a standard Normal variable</span>
 <span class="sd">        constrained with the modified system constraints (self._Az, self._bz).</span>
 
@@ -477,7 +477,7 @@
             <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_not_fixed</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_standardize</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The inverse transform of the `_transform`, i.e. maps `z` back to the original</span>
 <span class="sd">        space where it is subject to the original constraint system (self.A, self.b).</span>
 
@@ -495,7 +495,7 @@
             <span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_not_fixed</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unstandardize</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">x</span>
 
-    <span class="k">def</span> <span class="nf">_standardize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_standardize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""_transform helper standardizing the input `x`, which is assumed to be a</span>
 <span class="sd">        `d x 1`-dim Tensor, or a `len(self._not_fixed) x 1`-dim if there are fixed</span>
 <span class="sd">        indices.</span>
@@ -509,7 +509,7 @@
 
         <span class="k">return</span> <span class="n">z</span>
 
-    <span class="k">def</span> <span class="nf">_unstandardize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_unstandardize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""_untransform helper un-standardizing the input `z`, which is assumed to be a</span>
 <span class="sd">        `d x 1`-dim Tensor, or a `len(self._not_fixed) x 1`-dim if there are fixed</span>
 <span class="sd">        indices.</span>
@@ -525,7 +525,7 @@
 
 <div class="viewcode-block" id="get_index_tensors">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.lin_ess.get_index_tensors">[docs]</a>
-<span class="k">def</span> <span class="nf">get_index_tensors</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_index_tensors</span><span class="p">(</span>
     <span class="n">fixed_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Converts `fixed_indices` to a `d`-dim integral Tensor that is True at indices</span>

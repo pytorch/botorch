@@ -27,23 +27,23 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">TInputTransform</span><span class="p">,</span>
     <span class="n">TOutputTransform</span><span class="p">,</span>
     <span class="n">TransformedModuleMixin</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="n">LinearOperator</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Size</span><span class="p">,</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.operators</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearOperator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Size</span><span class="p">,</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
 
 
 <div class="viewcode-block" id="FeatureMap">
 <a class="viewcode-back" href="../../../../../sampling.html#botorch.sampling.pathwise.features.maps.FeatureMap">[docs]</a>
-<span class="k">class</span> <span class="nc">FeatureMap</span><span class="p">(</span><span class="n">TransformedModuleMixin</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FeatureMap</span><span class="p">(</span><span class="n">TransformedModuleMixin</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
     <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Size</span>
     <span class="n">input_transform</span><span class="p">:</span> <span class="n">TInputTransform</span> <span class="o">|</span> <span class="kc">None</span>
@@ -53,10 +53,10 @@
 
 <div class="viewcode-block" id="KernelEvaluationMap">
 <a class="viewcode-back" href="../../../../../sampling.html#botorch.sampling.pathwise.features.maps.KernelEvaluationMap">[docs]</a>
-<span class="k">class</span> <span class="nc">KernelEvaluationMap</span><span class="p">(</span><span class="n">FeatureMap</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">KernelEvaluationMap</span><span class="p">(</span><span class="n">FeatureMap</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A feature map defined by centering a kernel at a set of points."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
         <span class="n">points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -90,12 +90,12 @@
 
 <div class="viewcode-block" id="KernelEvaluationMap.forward">
 <a class="viewcode-back" href="../../../../../sampling.html#botorch.sampling.pathwise.features.maps.KernelEvaluationMap.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="n">LinearOperator</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="n">LinearOperator</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
@@ -105,20 +105,20 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_transform</span><span class="p">(</span><span class="n">canary</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Size</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Size</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">batch_shape</span></div>
 
 
 
 <div class="viewcode-block" id="KernelFeatureMap">
 <a class="viewcode-back" href="../../../../../sampling.html#botorch.sampling.pathwise.features.maps.KernelFeatureMap">[docs]</a>
-<span class="k">class</span> <span class="nc">KernelFeatureMap</span><span class="p">(</span><span class="n">FeatureMap</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">KernelFeatureMap</span><span class="p">(</span><span class="n">FeatureMap</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Representation of a kernel :math:`k: \mathcal{X}^2 \to \mathbb{R}` as an</span>
 <span class="sd">    n-dimensional feature map :math:`\phi: \mathcal{X} \to \mathbb{R}^n` satisfying:</span>
 <span class="sd">    :math:`k(x, x') ≈ \phi(x)^\top \phi(x')`.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
         <span class="n">weight</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -150,13 +150,13 @@
 
 <div class="viewcode-block" id="KernelFeatureMap.forward">
 <a class="viewcode-back" href="../../../../../sampling.html#botorch.sampling.pathwise.features.maps.KernelFeatureMap.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">x</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">out</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
 
@@ -166,7 +166,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_transform</span><span class="p">(</span><span class="n">canary</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Size</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Size</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">batch_shape</span></div>
 
 </pre></div>

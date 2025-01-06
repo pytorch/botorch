@@ -29,22 +29,22 @@
 
 <span class="sa">r</span><span class="sd">"""Representations for different kinds of datasets."""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">InputDataError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">SliceContainer</span>
-<span class="kn">from</span> <span class="nn">pyre_extensions</span> <span class="kn">import</span> <span class="n">none_throws</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">long</span><span class="p">,</span> <span class="n">ones</span><span class="p">,</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputDataError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.containers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchContainer</span><span class="p">,</span> <span class="n">SliceContainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyre_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">none_throws</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">long</span><span class="p">,</span> <span class="n">ones</span><span class="p">,</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="SupervisedDataset">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.SupervisedDataset">[docs]</a>
-<span class="k">class</span> <span class="nc">SupervisedDataset</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SupervisedDataset</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Base class for datasets consisting of labelled pairs `(X, Y)`</span>
 <span class="sd">    and an optional `Yvar` that stipulates observations variances so</span>
 <span class="sd">    that `Y[i] ~ N(f(X[i]), Yvar[i])`.</span>
@@ -72,7 +72,7 @@
 <span class="sd">        assert A == B</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">BotorchContainer</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">Y</span><span class="p">:</span> <span class="n">BotorchContainer</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -109,24 +109,24 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Y</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Y</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Y</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Yvar</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">validate_feature_names</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">validate_outcome_names</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -177,7 +177,7 @@
                     <span class="sa">f</span><span class="s2">"group_indices (</span><span class="si">{</span><span class="n">none_throws</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">)."</span>
                 <span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">group_indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">group_indices_equal</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">other</span><span class="o">.</span><span class="n">group_indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -200,7 +200,7 @@
 
 <div class="viewcode-block" id="SupervisedDataset.clone">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.SupervisedDataset.clone">[docs]</a>
-    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clone</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SupervisedDataset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return a copy of the dataset.</span>
@@ -251,7 +251,7 @@
 
 <div class="viewcode-block" id="RankingDataset">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.RankingDataset">[docs]</a>
-<span class="k">class</span> <span class="nc">RankingDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RankingDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A SupervisedDataset whose labelled pairs `(x, y)` consist of m-ary combinations</span>
 <span class="sd">    `x ∈ Z^{m}` of elements from a ground set `Z = (z_1, ...)` and ranking vectors</span>
 <span class="sd">    `y {0, ..., m - 1}^{m}` with properties:</span>
@@ -283,7 +283,7 @@
 <span class="sd">        )</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">SliceContainer</span><span class="p">,</span>
         <span class="n">Y</span><span class="p">:</span> <span class="n">BotorchContainer</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -309,7 +309,7 @@
             <span class="n">validate_init</span><span class="o">=</span><span class="n">validate_init</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span>
             <span class="n">validate_feature_names</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">validate_outcome_names</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -351,7 +351,7 @@
 
 <div class="viewcode-block" id="MultiTaskDataset">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset">[docs]</a>
-<span class="k">class</span> <span class="nc">MultiTaskDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MultiTaskDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""This is a multi-task dataset that is constructed from the datasets of</span>
 <span class="sd">    individual tasks. It offers functionality to combine parts of individual</span>
 <span class="sd">    datasets to construct the inputs necessary for the `MultiTaskGP` models.</span>
@@ -361,7 +361,7 @@
 <span class="sd">    `MultiTaskDataset.X` will result in an error.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">datasets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
         <span class="n">target_outcome_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -397,7 +397,7 @@
 <div class="viewcode-block" id="MultiTaskDataset.from_joint_dataset">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.from_joint_dataset">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_joint_dataset</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_joint_dataset</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">dataset</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
         <span class="n">task_feature_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -462,7 +462,7 @@
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_validate_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validates that:</span>
 <span class="sd">        * Each dataset models only one outcome;</span>
 <span class="sd">        * Each outcome is modeled by only one dataset;</span>
@@ -508,7 +508,7 @@
             <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Appends task features, if needed, and concatenates the Xs of datasets to</span>
 <span class="sd">        produce the `train_X` expected by `MultiTaskGP` and subclasses.</span>
 
@@ -536,19 +536,19 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_Xs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Concatenates Ys of the datasets."""</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">ds</span><span class="o">.</span><span class="n">Y</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">()],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Concatenates Yvars of the datasets if they exist."""</span>
         <span class="n">all_Yvars</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">Yvar</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
         <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">all_Yvars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">all_Yvars</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MultiTaskDataset.get_dataset_without_task_feature">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.get_dataset_without_task_feature">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_dataset_without_task_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcome_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SupervisedDataset</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dataset_without_task_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcome_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SupervisedDataset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""A helper for extracting the child datasets with their task features removed.</span>
 
 <span class="sd">        If the task feature index is `None`, the dataset will be returned as is.</span>
@@ -575,7 +575,7 @@
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">datasets</span>
@@ -585,7 +585,7 @@
 
 <div class="viewcode-block" id="MultiTaskDataset.clone">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.MultiTaskDataset.clone">[docs]</a>
-    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clone</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultiTaskDataset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return a copy of the dataset.</span>
@@ -621,13 +621,13 @@
 
 <div class="viewcode-block" id="ContextualDataset">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.ContextualDataset">[docs]</a>
-<span class="k">class</span> <span class="nc">ContextualDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ContextualDataset</span><span class="p">(</span><span class="n">SupervisedDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""This is a contextual dataset that is constructed from either a single</span>
 <span class="sd">    dateset containing overall outcome or a list of datasets that each corresponds</span>
 <span class="sd">    to a context breakdown.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">datasets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
         <span class="n">parameter_decomposition</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
@@ -661,11 +661,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">group_indices</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">outcome_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">X</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Concatenates the Ys from the child datasets to create the Y expected</span>
 <span class="sd">        by LCEM model if there are multiple datasets; Or return the Y expected</span>
 <span class="sd">        by LCEA model if there is only one dataset.</span>
@@ -677,7 +677,7 @@
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">Ys</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Yvar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Concatenates the Yvars from the child datasets to create the Y expected</span>
 <span class="sd">        by LCEM model if there are multiple datasets; Or return the Yvar expected</span>
 <span class="sd">        by LCEA model if there is only one dataset.</span>
@@ -690,7 +690,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">Yvars</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_extract_context_buckets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_context_buckets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Determines the context buckets from the data, and sets the</span>
 <span class="sd">        context_buckets attribute.</span>
 
@@ -714,7 +714,7 @@
             <span class="n">context_buckets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameter_decomposition</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">context_buckets</span>
 
-    <span class="k">def</span> <span class="nf">_validate_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validation of given datasets.</span>
 <span class="sd">        1. each dataset has same X.</span>
 <span class="sd">        2. metric_decomposition is not None if there are multiple datasets.</span>
@@ -747,7 +747,7 @@
                     <span class="o">+</span> <span class="s2">"dataset for overall outcome."</span>
                 <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_validate_decompositions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_decompositions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Checks that the decompositions are valid.</span>
 
 <span class="sd">        Raises:</span>
@@ -785,7 +785,7 @@
 
 <div class="viewcode-block" id="ContextualDataset.clone">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.datasets.ContextualDataset.clone">[docs]</a>
-    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clone</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ContextualDataset</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return a copy of the dataset.</span>

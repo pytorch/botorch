@@ -31,27 +31,27 @@
 <span class="sd">Abstract base module for all botorch posteriors.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">cached_property</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.fully_bayesian</span> <span class="kn">import</span> <span class="n">GaussianMixturePosterior</span><span class="p">,</span> <span class="n">MCMC_DIM</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.fully_bayesian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianMixturePosterior</span><span class="p">,</span> <span class="n">MCMC_DIM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.posterior</span><span class="w"> </span><span class="kn">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="PosteriorList">
 <a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior_list.PosteriorList">[docs]</a>
-<span class="k">class</span> <span class="nc">PosteriorList</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PosteriorList</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A Posterior represented by a list of independent Posteriors.</span>
 
 <span class="sd">    When at least one of the posteriors is a `GaussianMixturePosterior`, the other</span>
 <span class="sd">    posteriors are expanded to match the size of the `GaussianMixturePosterior`.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">posteriors</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">posteriors</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""A Posterior represented by a list of independent Posteriors.</span>
 
 <span class="sd">        Args:</span>
@@ -68,11 +68,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">posteriors</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">_is_gaussian_mixture</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_gaussian_mixture</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Check if any of the posteriors is a `GaussianMixturePosterior`."""</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">GaussianMixturePosterior</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_get_mcmc_batch_dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_mcmc_batch_dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return the number of MCMC samples in the corresponding batch dimension."""</span>
         <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">p</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">MCMC_DIM</span><span class="p">]</span>
@@ -87,12 +87,12 @@
         <span class="k">return</span> <span class="n">mcmc_samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_reshape_tensor</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reshape_tensor</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Reshape a tensor without an MCMC batch dimension to match the shape."""</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">MCMC_DIM</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="n">MCMC_DIM</span><span class="p">],</span> <span class="n">mcmc_samples</span><span class="p">,</span> <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">MCMC_DIM</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:])</span>
 
-    <span class="k">def</span> <span class="nf">_reshape_and_cat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reshape_and_cat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Reshape, if needed, and concatenate (across dim=-1) a list of tensors."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_gaussian_mixture</span><span class="p">:</span>
             <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mcmc_batch_dimension</span><span class="p">()</span>
@@ -111,7 +111,7 @@
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
         <span class="n">devices</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">device</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">}</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">devices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -122,7 +122,7 @@
         <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">devices</span><span class="p">))</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
         <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">dtype</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">}</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dtypes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -132,7 +132,7 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">dtypes</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_extended_shape</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extended_shape</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(),</span>  <span class="c1"># noqa: B008</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
@@ -165,7 +165,7 @@
         <span class="k">return</span> <span class="n">batch_shapes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="nb">sum</span><span class="p">(</span><span class="n">es</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">es</span> <span class="ow">in</span> <span class="n">extended_shapes</span><span class="p">)])</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The mean of the posterior as a `(b) x n x m`-dim Tensor.</span>
 
 <span class="sd">        This is only supported if all posteriors provide a mean.</span>
@@ -173,7 +173,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reshape_and_cat</span><span class="p">(</span><span class="n">tensors</span><span class="o">=</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">mean</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">posteriors</span><span class="p">])</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The variance of the posterior as a `(b) x n x m`-dim Tensor.</span>
 
 <span class="sd">        This is only supported if all posteriors provide a variance.</span>
@@ -182,7 +182,7 @@
 
 <div class="viewcode-block" id="PosteriorList.rsample">
 <a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior_list.PosteriorList.rsample">[docs]</a>
-    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
 
 <span class="sd">        Args:</span>
@@ -198,7 +198,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reshape_and_cat</span><span class="p">(</span><span class="n">tensors</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""A catch-all for attributes not defined on the posterior level.</span>
 
 <span class="sd">        Raises an attribute error.</span>

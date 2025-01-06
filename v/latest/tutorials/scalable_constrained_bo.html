@@ -85,29 +85,29 @@
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 
-<span class="kn">import</span> <span class="nn">gpytorch</span>
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Interval</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">GaussianLikelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gpytorch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interval</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.quasirandom</span><span class="w"> </span><span class="kn">import</span> <span class="n">SobolEngine</span>
 
-<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
 <span class="c1"># Constrained Max Posterior Sampling s a new sampling class, similar to MaxPosteriorSampling,</span>
 <span class="c1"># which implements the constrained version of Thompson Sampling described in [1].</span>
-<span class="kn">from</span> <span class="nn">botorch.generation.sampling</span> <span class="kn">import</span> <span class="n">ConstrainedMaxPosteriorSampling</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
-<span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">Ackley</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.generation.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstrainedMaxPosteriorSampling</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model_list_gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">Standardize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.test_functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ackley</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">unnormalize</span>
 
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
 
@@ -146,7 +146,7 @@
 
 <span class="c1"># When evaluating the function, we must first unnormalize the inputs since</span>
 <span class="c1"># we will use normalized inputs x in the main optimizaiton loop</span>
-<span class="k">def</span> <span class="nf">eval_objective</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">eval_objective</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""This is a helper function we use to unnormalize and evalaute a point"""</span>
     <span class="k">return</span> <span class="n">fun</span><span class="p">(</span><span class="n">unnormalize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fun</span><span class="o">.</span><span class="n">bounds</span><span class="p">))</span>
 </pre></div>
@@ -169,21 +169,21 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">c1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>  <span class="c1"># Equivalent to enforcing that sum(x) &lt;= 0</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">c1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>  <span class="c1"># Equivalent to enforcing that sum(x) &lt;= 0</span>
     <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">c2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>  <span class="c1"># Equivalent to enforcing that ||x||_2 &lt;= 5</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">c2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>  <span class="c1"># Equivalent to enforcing that ||x||_2 &lt;= 5</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">5</span>
 
 
 <span class="c1"># We assume c1, c2 have same bounds as the Ackley function above</span>
-<span class="k">def</span> <span class="nf">eval_c1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">eval_c1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""This is a helper function we use to unnormalize and evalaute a point"""</span>
     <span class="k">return</span> <span class="n">c1</span><span class="p">(</span><span class="n">unnormalize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fun</span><span class="o">.</span><span class="n">bounds</span><span class="p">))</span>
 
 
-<span class="k">def</span> <span class="nf">eval_c2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">eval_c2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""This is a helper function we use to unnormalize and evalaute a point"""</span>
     <span class="k">return</span> <span class="n">c2</span><span class="p">(</span><span class="n">unnormalize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fun</span><span class="o">.</span><span class="n">bounds</span><span class="p">))</span>
 </pre></div>
@@ -204,7 +204,7 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">ScboState</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScboState</span><span class="p">:</span>
     <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">length</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span>
@@ -218,11 +218,11 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
     <span class="n">best_constraint_values</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">inf</span>
     <span class="n">restart_triggered</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">failure_tolerance</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">max</span><span class="p">([</span><span class="mf">4.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">]))</span>
 
 
-<span class="k">def</span> <span class="nf">update_tr_length</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">ScboState</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_tr_length</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">ScboState</span><span class="p">):</span>
     <span class="c1"># Update the length of the trust region according to</span>
     <span class="c1"># success and failure counters</span>
     <span class="c1"># (Just as in original TuRBO paper)</span>
@@ -239,7 +239,7 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
     <span class="k">return</span> <span class="n">state</span>
 
 
-<span class="k">def</span> <span class="nf">get_best_index_for_batch</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">C</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_best_index_for_batch</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">C</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Return the index for the best point."""</span>
     <span class="n">is_feas</span> <span class="o">=</span> <span class="p">(</span><span class="n">C</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">is_feas</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>  <span class="c1"># Choose best feasible candidate</span>
@@ -249,7 +249,7 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
     <span class="k">return</span> <span class="n">C</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">update_state</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">Y_next</span><span class="p">,</span> <span class="n">C_next</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_state</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">Y_next</span><span class="p">,</span> <span class="n">C_next</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Method used to update the TuRBO state after each step of optimization.</span>
 
 <span class="sd">    Success and failure counters are updated according to the objective values</span>
@@ -329,7 +329,7 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_initial_points</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">n_pts</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_initial_points</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">n_pts</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="n">sobol</span> <span class="o">=</span> <span class="n">SobolEngine</span><span class="p">(</span><span class="n">dimension</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">scramble</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
     <span class="n">X_init</span> <span class="o">=</span> <span class="n">sobol</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_pts</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">X_init</span>
@@ -352,7 +352,7 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">generate_batch</span><span class="p">(</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">generate_batch</span><span class="p">(</span>
     <span class="n">state</span><span class="p">,</span>
     <span class="n">model</span><span class="p">,</span>  <span class="c1"># GP model</span>
     <span class="n">X</span><span class="p">,</span>  <span class="c1"># Evaluated points on the domain [0, 1]^d</span>
@@ -426,7 +426,7 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
 <span class="n">sobol</span> <span class="o">=</span> <span class="n">SobolEngine</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">scramble</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">get_fitted_model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_fitted_model</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
     <span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span><span class="n">noise_constraint</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="mf">1e-8</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">))</span>
     <span class="n">covar_module</span> <span class="o">=</span> <span class="n">ScaleKernel</span><span class="p">(</span>  <span class="c1"># Use the same lengthscale prior as in the TuRBO paper</span>
         <span class="n">MaternKernel</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">lengthscale_constraint</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="mf">0.005</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">))</span>
@@ -567,9 +567,9 @@ Note that SCBO expects all constraints to be of the for c(x) &lt;= 0, so any oth
 <div class="prompt input_prompt">In [8]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rc</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">rc</span>
 
 <span class="o">%</span><span class="k">matplotlib</span> inline
 

@@ -32,16 +32,16 @@
 <span class="sd">constructors programmatically from a consistent input format.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">inspect</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.active_learning</span> <span class="kn">import</span> <span class="n">qNegIntegratedPosteriorVariance</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.active_learning</span><span class="w"> </span><span class="kn">import</span> <span class="n">qNegIntegratedPosteriorVariance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.analytic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExpectedImprovement</span><span class="p">,</span>
     <span class="n">LogExpectedImprovement</span><span class="p">,</span>
     <span class="n">LogNoisyExpectedImprovement</span><span class="p">,</span>
@@ -51,27 +51,27 @@
     <span class="n">ProbabilityOfImprovement</span><span class="p">,</span>
     <span class="n">UpperConfidenceBound</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.bayesian_active_learning</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.bayesian_active_learning</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qBayesianActiveLearningByDisagreement</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="kn">import</span> <span class="n">InverseCostWeightedUtility</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.fixed_feature</span> <span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.joint_entropy_search</span> <span class="kn">import</span> <span class="n">qJointEntropySearch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.cost_aware</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseCostWeightedUtility</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.fixed_feature</span><span class="w"> </span><span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.joint_entropy_search</span><span class="w"> </span><span class="kn">import</span> <span class="n">qJointEntropySearch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.knowledge_gradient</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qKnowledgeGradient</span><span class="p">,</span>
     <span class="n">qMultiFidelityKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.logei</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.logei</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qLogExpectedImprovement</span><span class="p">,</span>
     <span class="n">qLogNoisyExpectedImprovement</span><span class="p">,</span>
     <span class="n">TAU_MAX</span><span class="p">,</span>
     <span class="n">TAU_RELU</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.max_value_entropy_search</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.max_value_entropy_search</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qMaxValueEntropy</span><span class="p">,</span>
     <span class="n">qMultiFidelityMaxValueEntropy</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qExpectedImprovement</span><span class="p">,</span>
     <span class="n">qLowerConfidenceBound</span><span class="p">,</span>
     <span class="n">qNoisyExpectedImprovement</span><span class="p">,</span>
@@ -79,25 +79,25 @@
     <span class="n">qSimpleRegret</span><span class="p">,</span>
     <span class="n">qUpperConfidenceBound</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExpectedHypervolumeImprovement</span><span class="p">,</span>
     <span class="n">MCMultiOutputObjective</span><span class="p">,</span>
     <span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span>
     <span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_get_hv_value_function</span><span class="p">,</span>
     <span class="n">qHypervolumeKnowledgeGradient</span><span class="p">,</span>
     <span class="n">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.logei</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.logei</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qLogExpectedHypervolumeImprovement</span><span class="p">,</span>
     <span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="n">IdentityMCMultiOutputObjective</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.parego</span> <span class="kn">import</span> <span class="n">qLogNParEGO</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.utils</span> <span class="kn">import</span> <span class="n">get_default_partitioning_alpha</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">IdentityMCMultiOutputObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.parego</span><span class="w"> </span><span class="kn">import</span> <span class="n">qLogNParEGO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_default_partitioning_alpha</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ConstrainedMCObjective</span><span class="p">,</span>
     <span class="n">IdentityMCObjective</span><span class="p">,</span>
     <span class="n">LearnedObjective</span><span class="p">,</span>
@@ -105,34 +105,34 @@
     <span class="n">PosteriorTransform</span><span class="p">,</span>
     <span class="n">ScalarizedPosteriorTransform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.preference</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.preference</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AnalyticExpectedUtilityOfBestOption</span><span class="p">,</span>
     <span class="n">qExpectedUtilityOfBestOption</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.risk_measures</span> <span class="kn">import</span> <span class="n">RiskMeasureMCObjective</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.risk_measures</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasureMCObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">compute_best_feasible_objective</span><span class="p">,</span>
     <span class="n">expand_trace_observations</span><span class="p">,</span>
     <span class="n">get_infeasible_cost</span><span class="p">,</span>
     <span class="n">get_optimal_samples</span><span class="p">,</span>
     <span class="n">project_to_target_fidelity</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.models.cost</span> <span class="kn">import</span> <span class="n">AffineFidelityCostModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">FixedSingleSampleModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">BotorchContainer</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.cost</span><span class="w"> </span><span class="kn">import</span> <span class="n">AffineFidelityCostModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.deterministic</span><span class="w"> </span><span class="kn">import</span> <span class="n">FixedSingleSampleModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPyTorchModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.containers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchContainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">SupervisedDataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_samples</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_sobol_samples</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <span class="n">ACQF_INPUT_CONSTRUCTOR_REGISTRY</span> <span class="o">=</span> <span class="p">{}</span>
@@ -153,7 +153,7 @@
 <span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">_field_is_shared</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_field_is_shared</span><span class="p">(</span>
     <span class="n">datasets</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">fieldname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -178,7 +178,7 @@
     <span class="k">return</span> <span class="kc">True</span>
 
 
-<span class="k">def</span> <span class="nf">_get_dataset_field</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_dataset_field</span><span class="p">(</span>
     <span class="n">dataset</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">fieldname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">BotorchContainer</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -205,7 +205,7 @@
 
 <div class="viewcode-block" id="get_acqf_input_constructor">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.get_acqf_input_constructor">[docs]</a>
-<span class="k">def</span> <span class="nf">get_acqf_input_constructor</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_acqf_input_constructor</span><span class="p">(</span>
     <span class="n">acqf_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Get acquisition function input constructor from registry.</span>
@@ -230,7 +230,7 @@
 
 <div class="viewcode-block" id="allow_only_specific_variable_kwargs">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.allow_only_specific_variable_kwargs">[docs]</a>
-<span class="k">def</span> <span class="nf">allow_only_specific_variable_kwargs</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">allow_only_specific_variable_kwargs</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Decorator for allowing a function to accept keyword arguments that are not</span>
 <span class="sd">    explicitly listed in the function signature, but only specific ones.</span>
@@ -253,7 +253,7 @@
         <span class="s2">"bounds"</span><span class="p">,</span>
     <span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">g</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
         <span class="n">new_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">accepted_kwargs</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -272,7 +272,7 @@
 
 <div class="viewcode-block" id="acqf_input_constructor">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.acqf_input_constructor">[docs]</a>
-<span class="k">def</span> <span class="nf">acqf_input_constructor</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">acqf_input_constructor</span><span class="p">(</span>
     <span class="o">*</span><span class="n">acqf_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">AcquisitionFunction</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Decorator for registering acquisition function input constructors.</span>
@@ -288,7 +288,7 @@
                 <span class="sa">f</span><span class="s2">"class `</span><span class="si">{</span><span class="n">acqf_cls_</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">`"</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
         <span class="n">method_kwargs</span> <span class="o">=</span> <span class="n">allow_only_specific_variable_kwargs</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">acqf_cls_</span> <span class="ow">in</span> <span class="n">acqf_cls</span><span class="p">:</span>
             <span class="n">ACQF_INPUT_CONSTRUCTOR_REGISTRY</span><span class="p">[</span><span class="n">acqf_cls_</span><span class="p">]</span> <span class="o">=</span> <span class="n">method_kwargs</span>
@@ -298,7 +298,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_register_acqf_input_constructor</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_register_acqf_input_constructor</span><span class="p">(</span>
     <span class="n">acqf_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">],</span>
     <span class="n">input_constructor</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -311,7 +311,7 @@
 <div class="viewcode-block" id="construct_inputs_posterior_mean">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_posterior_mean">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">PosteriorMean</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_posterior_mean</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_posterior_mean</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Model</span> <span class="o">|</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
@@ -337,7 +337,7 @@
     <span class="n">ProbabilityOfImprovement</span><span class="p">,</span>
     <span class="n">LogProbabilityOfImprovement</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_best_f</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_best_f</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -376,7 +376,7 @@
 <div class="viewcode-block" id="construct_inputs_ucb">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_ucb">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">UpperConfidenceBound</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_ucb</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_ucb</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
@@ -407,7 +407,7 @@
 <div class="viewcode-block" id="construct_inputs_noisy_ei">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_noisy_ei">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">NoisyExpectedImprovement</span><span class="p">,</span> <span class="n">LogNoisyExpectedImprovement</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_noisy_ei</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_noisy_ei</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">num_fantasies</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
@@ -440,7 +440,7 @@
 <div class="viewcode-block" id="construct_inputs_qSimpleRegret">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qSimpleRegret">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qSimpleRegret</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qSimpleRegret</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qSimpleRegret</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -496,7 +496,7 @@
 <div class="viewcode-block" id="construct_inputs_qEI">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qEI">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qExpectedImprovement</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qEI</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qEI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -557,7 +557,7 @@
 <div class="viewcode-block" id="construct_inputs_qLogEI">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qLogEI">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qLogExpectedImprovement</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qLogEI</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qLogEI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -624,7 +624,7 @@
 <div class="viewcode-block" id="construct_inputs_qNEI">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qNEI">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qNoisyExpectedImprovement</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qNEI</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qNEI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -693,7 +693,7 @@
 <div class="viewcode-block" id="construct_inputs_qLogNEI">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qLogNEI">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qLogNoisyExpectedImprovement</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qLogNEI</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qLogNEI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -770,7 +770,7 @@
 <div class="viewcode-block" id="construct_inputs_qPI">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qPI">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qProbabilityOfImprovement</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qPI</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qPI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -839,7 +839,7 @@
 <div class="viewcode-block" id="construct_inputs_qUCB">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qUCB">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qLowerConfidenceBound</span><span class="p">,</span> <span class="n">qUpperConfidenceBound</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qUCB</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qUCB</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -896,7 +896,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_get_sampler</span><span class="p">(</span><span class="n">mc_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_sampler</span><span class="p">(</span><span class="n">mc_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCSampler</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Set up MC sampler for q(N)EHVI."""</span>
     <span class="c1"># initialize the sampler</span>
     <span class="n">shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">mc_samples</span><span class="p">])</span>
@@ -908,7 +908,7 @@
 <div class="viewcode-block" id="construct_inputs_EHVI">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_EHVI">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">ExpectedHypervolumeImprovement</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_EHVI</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_EHVI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -968,7 +968,7 @@
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span>
     <span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span> <span class="n">qLogExpectedHypervolumeImprovement</span>
 <span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qEHVI</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qEHVI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1050,7 +1050,7 @@
 <div class="viewcode-block" id="construct_inputs_qNEHVI">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qNEHVI">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qNEHVI</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qNEHVI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1125,7 +1125,7 @@
 <div class="viewcode-block" id="construct_inputs_qLogNEHVI">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qLogNEHVI">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qLogNEHVI</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qLogNEHVI</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1180,7 +1180,7 @@
 <div class="viewcode-block" id="construct_inputs_qLogNParEGO">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qLogNParEGO">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qLogNParEGO</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qLogNParEGO</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qLogNParEGO</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">scalarization_weights</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1261,7 +1261,7 @@
 <div class="viewcode-block" id="construct_inputs_qMES">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMES">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qMaxValueEntropy</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qMES</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qMES</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
@@ -1287,7 +1287,7 @@
 
 <div class="viewcode-block" id="construct_inputs_mf_base">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_mf_base">[docs]</a>
-<span class="k">def</span> <span class="nf">construct_inputs_mf_base</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_mf_base</span><span class="p">(</span>
     <span class="n">target_fidelities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">fidelity_weights</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">cost_intercept</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
@@ -1327,7 +1327,7 @@
 <div class="viewcode-block" id="construct_inputs_qKG">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qKG">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qKnowledgeGradient</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qKG</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qKG</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
@@ -1367,7 +1367,7 @@
 <div class="viewcode-block" id="construct_inputs_qHVKG">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qHVKG">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qHypervolumeKnowledgeGradient</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qHVKG</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qHVKG</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
@@ -1416,7 +1416,7 @@
 <div class="viewcode-block" id="construct_inputs_qMFKG">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMFKG">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qMultiFidelityKnowledgeGradient</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qMFKG</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qMFKG</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
@@ -1465,7 +1465,7 @@
 <div class="viewcode-block" id="construct_inputs_qMFHVKG">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMFHVKG">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qMFHVKG</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qMFHVKG</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
@@ -1538,7 +1538,7 @@
 <div class="viewcode-block" id="construct_inputs_qMFMES">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qMFMES">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qMultiFidelityMaxValueEntropy</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qMFMES</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qMFMES</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
@@ -1573,7 +1573,7 @@
 <div class="viewcode-block" id="construct_inputs_analytic_eubo">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_analytic_eubo">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">AnalyticExpectedUtilityOfBestOption</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_analytic_eubo</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_analytic_eubo</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">pref_model</span><span class="p">:</span> <span class="n">Model</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">previous_winner</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1635,7 +1635,7 @@
 <div class="viewcode-block" id="construct_inputs_qeubo">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qeubo">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qExpectedUtilityOfBestOption</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qeubo</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qeubo</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">pref_model</span><span class="p">:</span> <span class="n">Model</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sample_multiplier</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
@@ -1697,7 +1697,7 @@
 
 <div class="viewcode-block" id="get_best_f_analytic">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.get_best_f_analytic">[docs]</a>
-<span class="k">def</span> <span class="nf">get_best_f_analytic</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_best_f_analytic</span><span class="p">(</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -1725,7 +1725,7 @@
 
 <div class="viewcode-block" id="get_best_f_mc">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.get_best_f_mc">[docs]</a>
-<span class="k">def</span> <span class="nf">get_best_f_mc</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_best_f_mc</span><span class="p">(</span>
     <span class="n">training_data</span><span class="p">:</span> <span class="n">MaybeDict</span><span class="p">[</span><span class="n">SupervisedDataset</span><span class="p">],</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1803,7 +1803,7 @@
 
 <div class="viewcode-block" id="optimize_objective">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.optimize_objective">[docs]</a>
-<span class="k">def</span> <span class="nf">optimize_objective</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_objective</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1915,7 +1915,7 @@
 <div class="viewcode-block" id="construct_inputs_qJES">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_qJES">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qJointEntropySearch</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_qJES</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_qJES</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
     <span class="n">num_optima</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
@@ -1951,7 +1951,7 @@
 <div class="viewcode-block" id="construct_inputs_BALD">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_BALD">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qBayesianActiveLearningByDisagreement</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_BALD</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_BALD</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1970,7 +1970,7 @@
 <div class="viewcode-block" id="construct_inputs_NIPV">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.input_constructors.construct_inputs_NIPV">[docs]</a>
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">qNegIntegratedPosteriorVariance</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_NIPV</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_NIPV</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
     <span class="n">num_mc_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
@@ -1990,7 +1990,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_get_ref_point</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_ref_point</span><span class="p">(</span>
     <span class="n">objective_thresholds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCMultiOutputObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>

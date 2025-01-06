@@ -27,31 +27,31 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.kernels.categorical</span> <span class="kn">import</span> <span class="n">CategoricalKernel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="n">get_covar_module_with_dim_scaled_prior</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.types</span> <span class="kn">import</span> <span class="n">_DefaultType</span><span class="p">,</span> <span class="n">DEFAULT</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="kn">import</span> <span class="n">Likelihood</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.kernels.categorical</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.input</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutcomeTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils.gpytorch_modules</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_covar_module_with_dim_scaled_prior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">SupervisedDataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_indices</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">_DefaultType</span><span class="p">,</span> <span class="n">DEFAULT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">GreaterThan</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels.scale_kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods.likelihood</span><span class="w"> </span><span class="kn">import</span> <span class="n">Likelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="MixedSingleTaskGP">
 <a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP">[docs]</a>
-<span class="k">class</span> <span class="nc">MixedSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MixedSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A single-task exact GP model for mixed search spaces.</span>
 
 <span class="sd">    This model is similar to `SingleTaskGP`, but supports mixed search spaces,</span>
@@ -83,7 +83,7 @@
 <span class="sd">        &gt;&gt;&gt; model = MixedSingleTaskGP(train_X, train_Y, cat_dims=[-1])</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -188,7 +188,7 @@
 <div class="viewcode-block" id="MixedSingleTaskGP.construct_inputs">
 <a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_mixed.MixedSingleTaskGP.construct_inputs">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
         <span class="n">categorical_features</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>

@@ -252,22 +252,22 @@
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_samples</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">Standardize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_sobol_samples</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
 
 <span class="n">SMOKE_TEST</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SMOKE_TEST"</span><span class="p">)</span>
 <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="s2">"cpu"</span><span class="p">}</span>
 
 
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="n">p1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
     <span class="n">p2</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
     <span class="n">p3</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
@@ -300,7 +300,7 @@
 <span class="n">train_Y</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">fit_model</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fit_model</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">):</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">outcome_transform</span><span class="o">=</span><span class="n">Standardize</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">num_outputs</span><span class="p">))</span>
     <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
     <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
@@ -356,7 +356,7 @@
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">get_optimal_samples</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_optimal_samples</span>
 
 <span class="n">num_samples</span> <span class="o">=</span> <span class="mi">12</span>
 
@@ -381,9 +381,9 @@
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.joint_entropy_search</span> <span class="kn">import</span> <span class="n">qJointEntropySearch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.max_value_entropy_search</span> <span class="kn">import</span> <span class="n">qLowerBoundMaxValueEntropy</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.predictive_entropy_search</span> <span class="kn">import</span> <span class="n">qPredictiveEntropySearch</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.joint_entropy_search</span><span class="w"> </span><span class="kn">import</span> <span class="n">qJointEntropySearch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.max_value_entropy_search</span><span class="w"> </span><span class="kn">import</span> <span class="n">qLowerBoundMaxValueEntropy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.predictive_entropy_search</span><span class="w"> </span><span class="kn">import</span> <span class="n">qPredictiveEntropySearch</span>
 
 <span class="n">pes</span> <span class="o">=</span> <span class="n">qPredictiveEntropySearch</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">optimal_inputs</span><span class="o">=</span><span class="n">optimal_inputs</span><span class="p">)</span>
 
@@ -466,7 +466,7 @@
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
 
 <span class="c1"># Use finite difference for PES</span>
 <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
@@ -520,12 +520,12 @@
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">compute_sample_box_decomposition</span><span class="p">,</span>
     <span class="n">random_search_optimizer</span><span class="p">,</span>
     <span class="n">sample_optimal_points</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.test_functions.multi_objective</span> <span class="kn">import</span> <span class="n">ZDT1</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.test_functions.multi_objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZDT1</span>
 
 <span class="n">d</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="n">M</span> <span class="o">=</span> <span class="mi">2</span>
@@ -603,13 +603,13 @@
 <div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.joint_entropy_search</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.joint_entropy_search</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qLowerBoundMultiObjectiveJointEntropySearch</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.max_value_entropy_search</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.max_value_entropy_search</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qLowerBoundMultiObjectiveMaxValueEntropySearch</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.predictive_entropy_search</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.predictive_entropy_search</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qMultiObjectivePredictiveEntropySearch</span><span class="p">,</span>
 <span class="p">)</span>
 

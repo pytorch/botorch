@@ -27,31 +27,31 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">import</span> <span class="nn">dataclasses</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">CandidateGenerationError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">OptimizationWarning</span>
-<span class="kn">from</span> <span class="nn">botorch.generation.gen</span> <span class="kn">import</span> <span class="n">gen_candidates_scipy</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.initializers</span> <span class="kn">import</span> <span class="n">initialize_q_batch</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CandidateGenerationError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationWarning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.generation.gen</span><span class="w"> </span><span class="kn">import</span> <span class="n">gen_candidates_scipy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.initializers</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_q_batch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_optimize_acqf</span><span class="p">,</span>
     <span class="n">_validate_sequential_inputs</span><span class="p">,</span>
     <span class="n">OptimizeAcqfInputs</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.utils.acquisition_utils</span> <span class="kn">import</span> <span class="n">fix_features</span><span class="p">,</span> <span class="n">get_X_baseline</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.utils.acquisition_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">fix_features</span><span class="p">,</span> <span class="n">get_X_baseline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">draw_sobol_samples</span><span class="p">,</span>
     <span class="n">HitAndRunPolytopeSampler</span><span class="p">,</span>
     <span class="n">sparse_to_dense_constraints</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
-<span class="kn">from</span> <span class="nn">pyre_extensions</span> <span class="kn">import</span> <span class="n">assert_is_instance</span><span class="p">,</span> <span class="n">none_throws</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">unnormalize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyre_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">assert_is_instance</span><span class="p">,</span> <span class="n">none_throws</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.quasirandom</span><span class="w"> </span><span class="kn">import</span> <span class="n">SobolEngine</span>
 
 <span class="c1"># Default values.</span>
 <span class="c1"># NOTE: When changing a default, update the corresponding value in the docstrings.</span>
@@ -88,7 +88,7 @@
 <span class="n">SUPPORTED_INITIALIZATION</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"continuous_relaxation"</span><span class="p">,</span> <span class="s2">"equally_spaced"</span><span class="p">,</span> <span class="s2">"random"</span><span class="p">}</span>
 
 
-<span class="k">def</span> <span class="nf">_setup_continuous_relaxation</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_setup_continuous_relaxation</span><span class="p">(</span>
     <span class="n">discrete_dims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">max_discrete_values</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -111,7 +111,7 @@
     <span class="c1"># Remove relaxed dims from `discrete_dims`.</span>
     <span class="n">discrete_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">discrete_dims</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">dims_to_relax</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
 
-    <span class="k">def</span> <span class="nf">new_post_processing_func</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">new_post_processing_func</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Round the relaxed dimensions to the nearest integer and apply the original</span>
 <span class="sd">        `post_processing_func`."""</span>
         <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">dims_to_relax</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">dims_to_relax</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">()</span>
@@ -122,7 +122,7 @@
     <span class="k">return</span> <span class="n">discrete_dims</span><span class="p">,</span> <span class="n">new_post_processing_func</span>
 
 
-<span class="k">def</span> <span class="nf">_filter_infeasible</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_filter_infeasible</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Filters infeasible points from a set of points.</span>
@@ -152,7 +152,7 @@
 
 <div class="viewcode-block" id="get_nearest_neighbors">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_mixed.get_nearest_neighbors">[docs]</a>
-<span class="k">def</span> <span class="nf">get_nearest_neighbors</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_nearest_neighbors</span><span class="p">(</span>
     <span class="n">current_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">discrete_dims</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -192,7 +192,7 @@
 
 <div class="viewcode-block" id="get_spray_points">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_mixed.get_spray_points">[docs]</a>
-<span class="k">def</span> <span class="nf">get_spray_points</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_spray_points</span><span class="p">(</span>
     <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">cont_dims</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">discrete_dims</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -244,7 +244,7 @@
 
 <div class="viewcode-block" id="sample_feasible_points">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_mixed.sample_feasible_points">[docs]</a>
-<span class="k">def</span> <span class="nf">sample_feasible_points</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_feasible_points</span><span class="p">(</span>
     <span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">,</span>
     <span class="n">discrete_dims</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">num_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -280,7 +280,7 @@
         <span class="c1"># Generate base points using Sobol.</span>
         <span class="n">sobol_engine</span> <span class="o">=</span> <span class="n">SobolEngine</span><span class="p">(</span><span class="n">dimension</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">scramble</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">generator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">generator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
             <span class="n">samples</span> <span class="o">=</span> <span class="n">sobol_engine</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
 
@@ -293,7 +293,7 @@
             <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">inequality_constraints</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">A</span><span class="p">,</span> <span class="o">-</span><span class="n">b</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">generator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">generator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">polytope_sampler</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
@@ -324,7 +324,7 @@
 
 <div class="viewcode-block" id="generate_starting_points">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_mixed.generate_starting_points">[docs]</a>
-<span class="k">def</span> <span class="nf">generate_starting_points</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_starting_points</span><span class="p">(</span>
     <span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">,</span>
     <span class="n">discrete_dims</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">cont_dims</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -488,7 +488,7 @@
 
 <div class="viewcode-block" id="discrete_step">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_mixed.discrete_step">[docs]</a>
-<span class="k">def</span> <span class="nf">discrete_step</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">discrete_step</span><span class="p">(</span>
     <span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">,</span>
     <span class="n">discrete_dims</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">current_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -545,7 +545,7 @@
 
 <div class="viewcode-block" id="continuous_step">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_mixed.continuous_step">[docs]</a>
-<span class="k">def</span> <span class="nf">continuous_step</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">continuous_step</span><span class="p">(</span>
     <span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">,</span>
     <span class="n">discrete_dims</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">current_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -593,7 +593,7 @@
 
 <div class="viewcode-block" id="optimize_acqf_mixed_alternating">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_mixed.optimize_acqf_mixed_alternating">[docs]</a>
-<span class="k">def</span> <span class="nf">optimize_acqf_mixed_alternating</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_acqf_mixed_alternating</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">discrete_dims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
@@ -794,7 +794,7 @@
 
 <div class="viewcode-block" id="complement_indices_like">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_mixed.complement_indices_like">[docs]</a>
-<span class="k">def</span> <span class="nf">complement_indices_like</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">complement_indices_like</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes a tensor of complement indices: {range(d) \\ indices}.</span>
 <span class="sd">    Same as complement_indices but returns an integer tensor like indices.</span>
 <span class="sd">    """</span>
@@ -808,7 +808,7 @@
 
 <div class="viewcode-block" id="complement_indices">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize_mixed.complement_indices">[docs]</a>
-<span class="k">def</span> <span class="nf">complement_indices</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">complement_indices</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes a list of complement indices: {range(d) \\ indices}.</span>
 
 <span class="sd">    Args:</span>

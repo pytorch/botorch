@@ -41,25 +41,25 @@
 
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.fully_bayesian</span> <span class="kn">import</span> <span class="n">MCMC_DIM</span><span class="p">,</span> <span class="n">SaasFullyBayesianSingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.fully_bayesian</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCMC_DIM</span><span class="p">,</span> <span class="n">SaasFullyBayesianSingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">concatenate_pending_points</span><span class="p">,</span>
     <span class="n">is_fully_bayesian</span><span class="p">,</span>
     <span class="n">t_batch_mode_transform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions.multitask_multivariate_normal</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.distributions.multitask_multivariate_normal</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <span class="n">FULLY_BAYESIAN_ERROR_MSG</span> <span class="o">=</span> <span class="p">(</span>
@@ -76,7 +76,7 @@
 
 <div class="viewcode-block" id="check_negative_info_gain">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.bayesian_active_learning.check_negative_info_gain">[docs]</a>
-<span class="k">def</span> <span class="nf">check_negative_info_gain</span><span class="p">(</span><span class="n">info_gain</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_negative_info_gain</span><span class="p">(</span><span class="n">info_gain</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Check if the (expected) information gain is negative, raise a warning if so."""</span>
     <span class="k">if</span> <span class="n">info_gain</span><span class="o">.</span><span class="n">lt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">NEGATIVE_INFOGAIN_WARNING</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
@@ -85,8 +85,8 @@
 
 <div class="viewcode-block" id="FullyBayesianAcquisitionFunction">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.bayesian_active_learning.FullyBayesianAcquisitionFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">FullyBayesianAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FullyBayesianAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Base class for acquisition functions which require a Fully Bayesian</span>
 <span class="sd">        model treatment.</span>
 
@@ -103,10 +103,10 @@
 
 <div class="viewcode-block" id="qBayesianActiveLearningByDisagreement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement">[docs]</a>
-<span class="k">class</span> <span class="nc">qBayesianActiveLearningByDisagreement</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qBayesianActiveLearningByDisagreement</span><span class="p">(</span>
     <span class="n">FullyBayesianAcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
 <span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">ModelListGP</span> <span class="o">|</span> <span class="n">SaasFullyBayesianSingleTaskGP</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -137,7 +137,7 @@
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.bayesian_active_learning.qBayesianActiveLearningByDisagreement.forward">[docs]</a>
     <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qBayesianActiveLearningByDisagreement on the candidate set `X`.</span>
 <span class="sd">        A monte carlo-estimated information gain is computed over a Gaussian Mixture</span>
 <span class="sd">        marginal posterior, and the Gaussian conditional posterior to obtain the</span>

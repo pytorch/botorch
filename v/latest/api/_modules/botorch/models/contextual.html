@@ -27,21 +27,21 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.kernels.contextual_lcea</span> <span class="kn">import</span> <span class="n">LCEAKernel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.kernels.contextual_sac</span> <span class="kn">import</span> <span class="n">SACKernel</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.datasets</span> <span class="kn">import</span> <span class="n">SupervisedDataset</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.kernels.contextual_lcea</span><span class="w"> </span><span class="kn">import</span> <span class="n">LCEAKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.kernels.contextual_sac</span><span class="w"> </span><span class="kn">import</span> <span class="n">SACKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">SupervisedDataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="SACGP">
 <a class="viewcode-back" href="../../../models.html#botorch.models.contextual.SACGP">[docs]</a>
-<span class="k">class</span> <span class="nc">SACGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SACGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A GP using a Structural Additive Contextual(SAC) kernel."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -70,7 +70,7 @@
 <div class="viewcode-block" id="SACGP.construct_inputs">
 <a class="viewcode-back" href="../../../models.html#botorch.models.contextual.SACGP.construct_inputs">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
         <span class="n">decomposition</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
@@ -93,14 +93,14 @@
 
 <div class="viewcode-block" id="LCEAGP">
 <a class="viewcode-back" href="../../../models.html#botorch.models.contextual.LCEAGP">[docs]</a>
-<span class="k">class</span> <span class="nc">LCEAGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LCEAGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A GP using a Latent Context Embedding Additive (LCE-A) Kernel.</span>
 
 <span class="sd">    Note that the model does not support batch training. Input training</span>
 <span class="sd">    data sets should have dim = 2.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -155,7 +155,7 @@
 <div class="viewcode-block" id="LCEAGP.construct_inputs">
 <a class="viewcode-back" href="../../../models.html#botorch.models.contextual.LCEAGP.construct_inputs">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
         <span class="n">decomposition</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>

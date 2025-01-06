@@ -1286,8 +1286,8 @@ cost of the form</p>
 <a class="reference external" href="https://botorch.org/tutorials/multi_fidelity_bo">tutorial</a> on continuous
 multi-fidelity Bayesian Optimization.</p>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">AffineFidelityCostModel</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="kn">import</span> <span class="n">InverseCostWeightedUtility</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AffineFidelityCostModel</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.cost_aware</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseCostWeightedUtility</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cost_model</span> <span class="o">=</span> <span class="n">AffineFidelityCostModel</span><span class="p">(</span>
 <span class="gp">&gt;&gt;&gt; </span>   <span class="n">fidelity_weights</span><span class="o">=</span><span class="p">{</span><span class="mi">6</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">},</span> <span class="n">fixed_cost</span><span class="o">=</span><span class="mf">5.0</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
@@ -1409,9 +1409,9 @@ noise-free. Noise-free observations can be modeled using arbitrarily small
 noise values, such as <cite>train_Yvar=torch.full_like(train_Y, 1e-6)</cite>.</p>
 <p class="rubric">Example</p>
 <p>Model with inferred noise levels:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">Standardize</span>
 <span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -2185,7 +2185,7 @@ linear operator, which are disabled by default in BoTorch. These are enabled
 by default in the <cite>HigherOrderGP.posterior</cite> call. However, they need to be
 manually enabled by the user during model fitting.</p>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">linear_operator.settings</span> <span class="kn">import</span> <span class="n">_fast_solves</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">_fast_solves</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">_fast_solves</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
@@ -2602,8 +2602,8 @@ elsewhere in BoTorch, we instead do not include <span class="math notranslate no
 the first item over the second item and the third item over the second item,
 generating comparisons [0, 1] and [2, 1].
 .. rubric:: Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">PairwiseGP</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PairwiseGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">datapoints</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">comparisons</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">PairwiseGP</span><span class="p">(</span><span class="n">datapoints</span><span class="p">,</span> <span class="n">comparisons</span><span class="p">)</span>
@@ -3209,9 +3209,9 @@ ModelListGP.</p>
 <p>To train this model, you should use gpytorch.mlls.VariationalELBO and not
 the exact marginal log likelihood.</p>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskVariationalGP</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">VariationalELBO</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskVariationalGP</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariationalELBO</span>
 <span class="gp">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskVariationalGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>

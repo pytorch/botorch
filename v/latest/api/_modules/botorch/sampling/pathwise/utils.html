@@ -27,23 +27,23 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.models.approximate_gp</span> <span class="kn">import</span> <span class="n">SingleTaskVariationalGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ModelList</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">LongTensor</span><span class="p">,</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleList</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.approximate_gp</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskVariationalGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPyTorchModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ModelList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.input</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutcomeTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">LongTensor</span><span class="p">,</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleList</span>
 
 <span class="n">TInputTransform</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span>
 <span class="n">TOutputTransform</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span>
@@ -53,13 +53,13 @@
 
 <div class="viewcode-block" id="TransformedModuleMixin">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TransformedModuleMixin">[docs]</a>
-<span class="k">class</span> <span class="nc">TransformedModuleMixin</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransformedModuleMixin</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Mixin that wraps a module's __call__ method with optional transforms."""</span>
 
     <span class="n">input_transform</span><span class="p">:</span> <span class="n">TInputTransform</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">output_transform</span><span class="p">:</span> <span class="n">TOutputTransform</span> <span class="o">|</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">(</span>
@@ -83,13 +83,13 @@
 
 <div class="viewcode-block" id="TensorTransform">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TensorTransform">[docs]</a>
-<span class="k">class</span> <span class="nc">TensorTransform</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TensorTransform</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for transforms that map tensor to tensor."""</span>
 
 <div class="viewcode-block" id="TensorTransform.forward">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.TensorTransform.forward">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 </div>
 
@@ -97,10 +97,10 @@
 
 <div class="viewcode-block" id="ChainedTransform">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.ChainedTransform">[docs]</a>
-<span class="k">class</span> <span class="nc">ChainedTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChainedTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A composition of TensorTransforms."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">transforms</span><span class="p">:</span> <span class="n">TensorTransform</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">transforms</span><span class="p">:</span> <span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a ChainedTransform instance.</span>
 
 <span class="sd">        Args:</span>
@@ -111,7 +111,7 @@
 
 <div class="viewcode-block" id="ChainedTransform.forward">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.ChainedTransform.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">transform</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transforms</span><span class="p">):</span>
             <span class="n">values</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span></div>
@@ -121,10 +121,10 @@
 
 <div class="viewcode-block" id="SineCosineTransform">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.SineCosineTransform">[docs]</a>
-<span class="k">class</span> <span class="nc">SineCosineTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SineCosineTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that returns concatenated sine and cosine features."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a SineCosineTransform instance.</span>
 
 <span class="sd">        Args:</span>
@@ -135,7 +135,7 @@
 
 <div class="viewcode-block" id="SineCosineTransform.forward">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.SineCosineTransform.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">sincos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">values</span><span class="o">.</span><span class="n">sin</span><span class="p">(),</span> <span class="n">values</span><span class="o">.</span><span class="n">cos</span><span class="p">()],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">sincos</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">*</span> <span class="n">sincos</span></div>
 </div>
@@ -144,10 +144,10 @@
 
 <div class="viewcode-block" id="InverseLengthscaleTransform">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.InverseLengthscaleTransform">[docs]</a>
-<span class="k">class</span> <span class="nc">InverseLengthscaleTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InverseLengthscaleTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that divides its inputs by a kernels lengthscales."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes an InverseLengthscaleTransform instance.</span>
 
 <span class="sd">        Args:</span>
@@ -161,7 +161,7 @@
 
 <div class="viewcode-block" id="InverseLengthscaleTransform.forward">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.InverseLengthscaleTransform.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">()</span> <span class="o">*</span> <span class="n">values</span></div>
 </div>
 
@@ -169,11 +169,11 @@
 
 <div class="viewcode-block" id="OutputscaleTransform">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutputscaleTransform">[docs]</a>
-<span class="k">class</span> <span class="nc">OutputscaleTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OutputscaleTransform</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that multiplies its inputs by the square root of a</span>
 <span class="sd">    kernel's outputscale."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kernel</span><span class="p">:</span> <span class="n">ScaleKernel</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kernel</span><span class="p">:</span> <span class="n">ScaleKernel</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes an OutputscaleTransform instance.</span>
 
 <span class="sd">        Args:</span>
@@ -184,7 +184,7 @@
 
 <div class="viewcode-block" id="OutputscaleTransform.forward">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutputscaleTransform.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">outputscale</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">outputscale</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">batch_shape</span>
@@ -197,11 +197,11 @@
 
 <div class="viewcode-block" id="FeatureSelector">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.FeatureSelector">[docs]</a>
-<span class="k">class</span> <span class="nc">FeatureSelector</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FeatureSelector</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A transform that returns a subset of its input's features.</span>
 <span class="sd">    along a given tensor dimension."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">LongTensor</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">LongTensor</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializes a FeatureSelector instance.</span>
 
 <span class="sd">        Args:</span>
@@ -216,7 +216,7 @@
 
 <div class="viewcode-block" id="FeatureSelector.forward">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.FeatureSelector.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span></div>
 </div>
 
@@ -224,10 +224,10 @@
 
 <div class="viewcode-block" id="OutcomeUntransformer">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutcomeUntransformer">[docs]</a>
-<span class="k">class</span> <span class="nc">OutcomeUntransformer</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OutcomeUntransformer</span><span class="p">(</span><span class="n">TensorTransform</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Module acting as a bridge for `OutcomeTransform.untransform`."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">transform</span><span class="p">:</span> <span class="n">OutcomeTransform</span><span class="p">,</span>
         <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">LongTensor</span><span class="p">,</span>
@@ -248,7 +248,7 @@
 
 <div class="viewcode-block" id="OutcomeUntransformer.forward">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.OutcomeUntransformer.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="c1"># OutcomeTransforms expect an explicit output dimension in the final position.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># BoTorch has suppressed the output dimension</span>
             <span class="n">output_values</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
@@ -263,7 +263,7 @@
 
 <div class="viewcode-block" id="get_input_transform">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_input_transform">[docs]</a>
-<span class="k">def</span> <span class="nf">get_input_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InputTransform</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_input_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InputTransform</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns a model's input_transform or None."""</span>
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
@@ -271,7 +271,7 @@
 
 <div class="viewcode-block" id="get_output_transform">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_output_transform">[docs]</a>
-<span class="k">def</span> <span class="nf">get_output_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutcomeUntransformer</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_output_transform</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutcomeUntransformer</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Returns a wrapped version of a model's outcome_transform or None."""</span>
     <span class="n">transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -282,24 +282,24 @@
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">get_train_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_train_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
     <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">get_train_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelList</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="o">...</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_train_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelList</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="o">...</span><span class="p">]:</span>
     <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
 <div class="viewcode-block" id="get_train_inputs">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_train_inputs">[docs]</a>
-<span class="k">def</span> <span class="nf">get_train_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_train_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">GetTrainInputs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">transformed</span><span class="o">=</span><span class="n">transformed</span><span class="p">)</span></div>
 
 
 
 <span class="nd">@GetTrainInputs</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Model</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_get_train_inputs_Model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_train_inputs_Model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">transformed</span><span class="p">:</span>
         <span class="n">original_train_input</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"_original_train_inputs"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">original_train_input</span><span class="p">):</span>
@@ -316,7 +316,7 @@
 
 
 <span class="nd">@GetTrainInputs</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">SingleTaskVariationalGP</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_get_train_inputs_SingleTaskVariationalGP</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_train_inputs_SingleTaskVariationalGP</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">SingleTaskVariationalGP</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
     <span class="p">(</span><span class="n">X</span><span class="p">,)</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span>
@@ -331,31 +331,31 @@
 
 
 <span class="nd">@GetTrainInputs</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ModelList</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_get_train_inputs_ModelList</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_train_inputs_ModelList</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ModelList</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="o">...</span><span class="p">]:</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">get_train_inputs</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">transformed</span><span class="o">=</span><span class="n">transformed</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">]</span>
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">get_train_targets</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_train_targets</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">get_train_targets</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelList</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="o">...</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_train_targets</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelList</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="o">...</span><span class="p">]:</span>
     <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 
 <div class="viewcode-block" id="get_train_targets">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.utils.get_train_targets">[docs]</a>
-<span class="k">def</span> <span class="nf">get_train_targets</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_train_targets</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">GetTrainTargets</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">transformed</span><span class="o">=</span><span class="n">transformed</span><span class="p">)</span></div>
 
 
 
 <span class="nd">@GetTrainTargets</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Model</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_get_train_targets_Model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_train_targets_Model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train_targets</span>
 
     <span class="c1"># Note: Avoid using `get_output_transform` here since it creates a Module</span>
@@ -369,7 +369,7 @@
 
 
 <span class="nd">@GetTrainTargets</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">SingleTaskVariationalGP</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_get_train_targets_SingleTaskVariationalGP</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_train_targets_SingleTaskVariationalGP</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span>
@@ -385,7 +385,7 @@
 
 
 <span class="nd">@GetTrainTargets</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ModelList</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_get_train_targets_ModelList</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_train_targets_ModelList</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ModelList</span><span class="p">,</span> <span class="n">transformed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="o">...</span><span class="p">]:</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">get_train_targets</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">transformed</span><span class="o">=</span><span class="n">transformed</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">]</span>

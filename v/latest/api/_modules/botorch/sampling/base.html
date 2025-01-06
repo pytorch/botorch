@@ -31,15 +31,15 @@
 <span class="sd">The base class for sampler modules to be used with MC-evaluated acquisition functions.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">InputDataError</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputDataError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
 
 
 <span class="n">KWARGS_DEPRECATED_MSG</span> <span class="o">=</span> <span class="p">(</span>
@@ -54,7 +54,7 @@
 
 <div class="viewcode-block" id="MCSampler">
 <a class="viewcode-back" href="../../../sampling.html#botorch.sampling.base.MCSampler">[docs]</a>
-<span class="k">class</span> <span class="nc">MCSampler</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MCSampler</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for Samplers.</span>
 
 <span class="sd">    Subclasses must implement the `forward` method.</span>
@@ -66,7 +66,7 @@
 <span class="sd">        &gt;&gt;&gt; samples = sampler(posterior)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -91,7 +91,7 @@
 <div class="viewcode-block" id="MCSampler.forward">
 <a class="viewcode-back" href="../../../sampling.html#botorch.sampling.base.MCSampler.forward">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -103,7 +103,7 @@
         <span class="k">pass</span>  <span class="c1"># pragma no cover</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_get_batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the t-batch range of the posterior with an optional override.</span>
 
 <span class="sd">        In rare cases, e.g., in `qMultiStepLookahead`, we may want to override the</span>
@@ -120,7 +120,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_range_override</span>
         <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">batch_range</span>
 
-    <span class="k">def</span> <span class="nf">_get_collapsed_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_collapsed_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the shape of the base samples with the t-batches collapsed.</span>
 
 <span class="sd">        Args:</span>
@@ -140,7 +140,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">base_sample_shape</span>
 
-    <span class="k">def</span> <span class="nf">_get_extended_base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_extended_base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the shape of the base samples expected by the posterior.</span>
 
 <span class="sd">        Args:</span>
@@ -151,7 +151,7 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span>
 
-    <span class="k">def</span> <span class="nf">_update_base_samples</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">base_sampler</span><span class="p">:</span> <span class="n">MCSampler</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Update the sampler to use the original base samples for X_baseline.</span>
@@ -166,7 +166,7 @@
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not implement `_update_base_samples`."</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_instance_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_sampler</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_instance_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_sampler</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Check that `base_sampler` is an instance of `self.__class__`."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_sampler</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>

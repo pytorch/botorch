@@ -27,24 +27,24 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">InitVar</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">InitVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.probability.utils</span> <span class="kn">import</span> <span class="n">swap_along_dim_</span>
-<span class="kn">from</span> <span class="nn">linear_operator.utils.errors</span> <span class="kn">import</span> <span class="n">NotPSDError</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">LongTensor</span><span class="p">,</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">pad</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.probability.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">swap_along_dim_</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.utils.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotPSDError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">LongTensor</span><span class="p">,</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">pad</span>
 
 
 <div class="viewcode-block" id="block_matrix_concat">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.linalg.block_matrix_concat">[docs]</a>
-<span class="k">def</span> <span class="nf">block_matrix_concat</span><span class="p">(</span><span class="n">blocks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">block_matrix_concat</span><span class="p">(</span><span class="n">blocks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">broadcast_shapes</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">blocks</span><span class="p">)))</span>
     <span class="k">for</span> <span class="n">tensors</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">:</span>
@@ -59,7 +59,7 @@
 
 <div class="viewcode-block" id="augment_cholesky">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.linalg.augment_cholesky">[docs]</a>
-<span class="k">def</span> <span class="nf">augment_cholesky</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">augment_cholesky</span><span class="p">(</span>
     <span class="n">Laa</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">Kbb</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">Kba</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -104,14 +104,14 @@
 <div class="viewcode-block" id="PivotedCholesky">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.linalg.PivotedCholesky">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">PivotedCholesky</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PivotedCholesky</span><span class="p">:</span>
     <span class="n">step</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">tril</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="n">perm</span><span class="p">:</span> <span class="n">LongTensor</span>
     <span class="n">diag</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">validate_init</span><span class="p">:</span> <span class="n">InitVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validate_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">validate_init</span><span class="p">:</span>
             <span class="k">return</span>
 
@@ -132,7 +132,7 @@
                 <span class="sa">f</span><span class="s2">"`matrix` of shape `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tril</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">`."</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PivotedCholesky</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PivotedCholesky</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">PivotedCholesky</span><span class="p">(</span>
             <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>
             <span class="n">tril</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tril</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
@@ -142,7 +142,7 @@
 
 <div class="viewcode-block" id="PivotedCholesky.update_">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.linalg.PivotedCholesky.update_">[docs]</a>
-    <span class="k">def</span> <span class="nf">update_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Performs a single matrix decomposition step."""</span>
         <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span>
         <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tril</span>
@@ -164,7 +164,7 @@
 
 <div class="viewcode-block" id="PivotedCholesky.pivot_">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.linalg.PivotedCholesky.pivot_">[docs]</a>
-    <span class="k">def</span> <span class="nf">pivot_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pivot</span><span class="p">:</span> <span class="n">LongTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pivot_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pivot</span><span class="p">:</span> <span class="n">LongTensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tril</span><span class="o">.</span><span class="n">shape</span>
         <span class="k">if</span> <span class="n">pivot</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Argument `pivot` does to match with batch shape`."</span><span class="p">)</span>
@@ -214,7 +214,7 @@
 
 <div class="viewcode-block" id="PivotedCholesky.expand">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.linalg.PivotedCholesky.expand">[docs]</a>
-    <span class="k">def</span> <span class="nf">expand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">sizes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PivotedCholesky</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">expand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">sizes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PivotedCholesky</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">ndim</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"perm"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"diag"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"tril"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">src</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -225,7 +225,7 @@
 
 <div class="viewcode-block" id="PivotedCholesky.concat">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.linalg.PivotedCholesky.concat">[docs]</a>
-    <span class="k">def</span> <span class="nf">concat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">PivotedCholesky</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PivotedCholesky</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">concat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">PivotedCholesky</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PivotedCholesky</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">step</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot conncatenate decompositions at different steps."</span><span class="p">)</span>
 
@@ -244,7 +244,7 @@
 
 <div class="viewcode-block" id="PivotedCholesky.detach">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.linalg.PivotedCholesky.detach">[docs]</a>
-    <span class="k">def</span> <span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PivotedCholesky</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PivotedCholesky</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"tril"</span><span class="p">,</span> <span class="s2">"perm"</span><span class="p">,</span> <span class="s2">"diag"</span><span class="p">):</span>
             <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -255,7 +255,7 @@
 
 <div class="viewcode-block" id="PivotedCholesky.clone">
 <a class="viewcode-back" href="../../../../utils.html#botorch.utils.probability.linalg.PivotedCholesky.clone">[docs]</a>
-    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PivotedCholesky</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PivotedCholesky</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"tril"</span><span class="p">,</span> <span class="s2">"perm"</span><span class="p">,</span> <span class="s2">"diag"</span><span class="p">):</span>
             <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>

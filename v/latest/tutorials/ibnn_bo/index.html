@@ -89,24 +89,24 @@ where $F_\phi$ is a deterministic function based on the activation function $\ph
 <div class="prompt input_prompt">In [13]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">RBFKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">RBFKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
 
-<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">manual_seed</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">LogExpectedImprovement</span>
-<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.kernels</span> <span class="kn">import</span> <span class="n">InfiniteWidthBNNKernel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_samples</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">manual_seed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogExpectedImprovement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">InfiniteWidthBNNKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">Standardize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_sobol_samples</span>
 
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">'ignore'</span><span class="p">)</span>
 
@@ -135,7 +135,7 @@ where $F_\phi$ is a deterministic function based on the activation function $\ph
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">1111</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="n">x</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mf">0.15</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
 
@@ -215,7 +215,7 @@ where $F_\phi$ is a deterministic function based on the activation function $\ph
 <div class="prompt input_prompt">In [16]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">plot_posterior</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">n_draws</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plot_posterior</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">n_draws</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">true_y</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"True Objective"</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">"--"</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">train_x</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">train_y</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span> <span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Observations"</span><span class="p">)</span>
@@ -411,8 +411,8 @@ where $F_\phi$ is a deterministic function based on the activation function $\ph
 <div class="prompt input_prompt">In [21]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">MLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dims</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
@@ -422,10 +422,10 @@ where $F_\phi$ is a deterministic function based on the activation function $\ph
             <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">create_f</span><span class="p">(</span><span class="n">input_dims</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_f</span><span class="p">(</span><span class="n">input_dims</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
     <span class="c1"># create MLP with weights and biases sampled from N(0, 1)</span>
     <span class="k">with</span> <span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">(</span><span class="n">input_dims</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
@@ -433,7 +433,7 @@ where $F_\phi$ is a deterministic function based on the activation function $\ph
         <span class="n">params</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">vector_to_parameters</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
@@ -462,16 +462,16 @@ where $F_\phi$ is a deterministic function based on the activation function $\ph
 <div class="prompt input_prompt">In [22]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="n">ExpectedImprovement</span><span class="p">,</span> <span class="n">LogExpectedImprovement</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.analytic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExpectedImprovement</span><span class="p">,</span> <span class="n">LogExpectedImprovement</span>
 
-<span class="k">def</span> <span class="nf">generate_initial_data</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_initial_data</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">input_dims</span><span class="p">):</span>
     <span class="n">train_x</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
     <span class="n">train_x</span> <span class="o">=</span> <span class="n">train_x</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># remove batch dimension</span>
     <span class="n">train_y</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span>
 
 
-<span class="k">def</span> <span class="nf">gp_bo_loop</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">init_x</span><span class="p">,</span> <span class="n">init_y</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">n_iterations</span><span class="p">,</span> <span class="n">acqf_class</span><span class="p">,</span> <span class="n">optimize_hypers</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gp_bo_loop</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">init_x</span><span class="p">,</span> <span class="n">init_y</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">n_iterations</span><span class="p">,</span> <span class="n">acqf_class</span><span class="p">,</span> <span class="n">optimize_hypers</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="n">train_x</span> <span class="o">=</span> <span class="n">init_x</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
     <span class="n">train_y</span> <span class="o">=</span> <span class="n">init_y</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
 
@@ -516,7 +516,7 @@ where $F_\phi$ is a deterministic function based on the activation function $\ph
 <div class="prompt input_prompt">In [23]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="c1"># define kernels</span>
 <span class="n">ibnn_kernel</span> <span class="o">=</span> <span class="n">InfiniteWidthBNNKernel</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 <span class="n">ibnn_kernel</span><span class="o">.</span><span class="n">weight_var</span> <span class="o">=</span> <span class="mf">10.0</span>
@@ -552,8 +552,8 @@ where $F_\phi$ is a deterministic function based on the activation function $\ph
 <div class="prompt input_prompt">In [24]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib</span>
-<span class="k">def</span> <span class="nf">plot_cum_max</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_cum_max</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="n">cum_max</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cummax</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cum_max</span><span class="p">)),</span> <span class="n">cum_max</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 

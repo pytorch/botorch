@@ -39,28 +39,28 @@
 
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.base</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultiObjectiveAnalyticAcquisitionFunction</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Normal</span>
 
 
 <div class="viewcode-block" id="ExpectedHypervolumeImprovement">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">ExpectedHypervolumeImprovement</span><span class="p">(</span><span class="n">MultiObjectiveAnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExpectedHypervolumeImprovement</span><span class="p">(</span><span class="n">MultiObjectiveAnalyticAcquisitionFunction</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">ref_point</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
@@ -138,7 +138,7 @@
 
 <div class="viewcode-block" id="ExpectedHypervolumeImprovement.psi">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.psi">[docs]</a>
-    <span class="k">def</span> <span class="nf">psi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">psi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute Psi function.</span>
 
 <span class="sd">        For each cell i and outcome k:</span>
@@ -168,7 +168,7 @@
 
 <div class="viewcode-block" id="ExpectedHypervolumeImprovement.nu">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.nu">[docs]</a>
-    <span class="k">def</span> <span class="nf">nu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute Nu function.</span>
 
 <span class="sd">        For each cell i and outcome k:</span>
@@ -194,7 +194,7 @@
 <div class="viewcode-block" id="ExpectedHypervolumeImprovement.forward">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span>
             <span class="n">X</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">posterior_transform</span>
         <span class="p">)</span>

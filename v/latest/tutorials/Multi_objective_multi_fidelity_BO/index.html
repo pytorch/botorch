@@ -97,12 +97,12 @@ dimensions) problems, but in general NSGA-II will yield far better results.</p>
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span>
 
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 </pre></div>
 </div>
 </div>
@@ -142,7 +142,7 @@ dimensions) problems, but in general NSGA-II will yield far better results.</p>
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.test_functions.multi_objective_multi_fidelity</span> <span class="kn">import</span> <span class="n">MOMFBraninCurrin</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.test_functions.multi_objective_multi_fidelity</span><span class="w"> </span><span class="kn">import</span> <span class="n">MOMFBraninCurrin</span>
 
 <span class="n">BC</span> <span class="o">=</span> <span class="n">MOMFBraninCurrin</span><span class="p">(</span><span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
 <span class="n">dim_x</span> <span class="o">=</span> <span class="n">BC</span><span class="o">.</span><span class="n">dim</span>
@@ -194,10 +194,10 @@ dimensions) problems, but in general NSGA-II will yield far better results.</p>
 <div class="prompt input_prompt">In [4]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">exp</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">exp</span>
 
 
-<span class="k">def</span> <span class="nf">cost_func</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">cost_func</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A simple exponential cost function."""</span>
     <span class="n">exp_arg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">4.8</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
     <span class="n">val</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_arg</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
@@ -209,7 +209,7 @@ dimensions) problems, but in general NSGA-II will yield far better results.</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Max Cost: </span><span class="si">{</span><span class="n">cost_func</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">cost_callable</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">cost_callable</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Wrapper for the cost function that takes care of shaping</span>
 <span class="sd">    input and output arrays for interfacing with cost_func.</span>
 <span class="sd">    This is passed as a callable function to MOMF.</span>
@@ -252,23 +252,23 @@ The model is initialized with random points, where the fidelity is sampled from 
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">Standardize</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model_list_gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">Standardize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span><span class="w"> </span><span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">GammaPrior</span>
 
 
-<span class="k">def</span> <span class="nf">inv_transform</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">inv_transform</span><span class="p">(</span><span class="n">u</span><span class="p">):</span>
     <span class="c1"># define inverse transform to sample from the probability distribution with</span>
     <span class="c1"># PDF proportional to 1/(c(x))</span>
     <span class="c1"># u is a uniform(0,1) rv</span>
     <span class="k">return</span> <span class="mi">5</span> <span class="o">/</span> <span class="mi">24</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="o">-</span><span class="n">exp</span><span class="p">(</span><span class="mi">24</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="mi">24</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="n">u</span> <span class="o">-</span> <span class="n">u</span> <span class="o">-</span> <span class="n">exp</span><span class="p">(</span><span class="mi">24</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)))</span>
 
 
-<span class="k">def</span> <span class="nf">gen_init_data</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_init_data</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Generates the initial data. Sample fidelities inversely proportional to cost.</span>
 <span class="sd">    """</span>
@@ -298,7 +298,7 @@ The model is initialized with random points, where the fidelity is sampled from 
     <span class="k">return</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span>
 
 
-<span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">state_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">state_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Initializes a ModelList with Matern 5/2 Kernel and returns the model and its MLL.</span>
 
 <span class="sd">    Note: a batched model could also be used here.</span>
@@ -343,20 +343,20 @@ The model is initialized with random points, where the fidelity is sampled from 
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.multi_fidelity</span> <span class="kn">import</span> <span class="n">MOMF</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.multi_fidelity</span><span class="w"> </span><span class="kn">import</span> <span class="n">MOMF</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">unnormalize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">unnormalize</span>
 
 
 <span class="n">dim_y_momf</span> <span class="o">=</span> <span class="n">dim_y</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># Output Dimesnion for MOMF optimization</span>
 <span class="n">ref_point_momf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim_y_momf</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">fid_obj</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fid_obj</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    A Fidelity Objective that can be thought of as a trust objective.</span>
 <span class="sd">    Higher Fidelity simulations are rewarded as being more</span>
@@ -366,7 +366,7 @@ The model is initialized with random points, where the fidelity is sampled from 
     <span class="k">return</span> <span class="n">fid_obj</span>
 
 
-<span class="k">def</span> <span class="nf">get_objective_momf</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_objective_momf</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Wrapper around the Objective function to take care of fid_obj stacking"""</span>
     <span class="n">y</span> <span class="o">=</span> <span class="n">BC</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># The Branin-Currin is called</span>
     <span class="n">fid</span> <span class="o">=</span> <span class="n">fid_obj</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Getting the fidelity objective values</span>
@@ -376,7 +376,7 @@ The model is initialized with random points, where the fidelity is sampled from 
     <span class="k">return</span> <span class="n">y_out</span>
 
 
-<span class="k">def</span> <span class="nf">optimize_MOMF_and_get_obs</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_MOMF_and_get_obs</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">SingleTaskGP</span><span class="p">,</span>
     <span class="n">train_obj</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">SobolQMCNormalSampler</span><span class="p">,</span>
@@ -436,22 +436,22 @@ The model is initialized with random points, where the fidelity is sampled from 
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="kn">import</span> <span class="n">InverseCostWeightedUtility</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.fixed_feature</span> <span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.cost_aware</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseCostWeightedUtility</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.fixed_feature</span><span class="w"> </span><span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_get_hv_value_function</span><span class="p">,</span>
     <span class="n">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">project_to_target_fidelity</span>
-<span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">GenericDeterministicModel</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">project_to_target_fidelity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.deterministic</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenericDeterministicModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">NUM_INNER_MC_SAMPLES</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">32</span>
 <span class="n">NUM_PARETO</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">10</span>
 <span class="n">NUM_FANTASIES</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">8</span>
 
 
-<span class="k">def</span> <span class="nf">get_current_value</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_current_value</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">SingleTaskGP</span><span class="p">,</span>
     <span class="n">ref_point</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
@@ -500,7 +500,7 @@ The model is initialized with random points, where the fidelity is sampled from 
 <span class="n">project_d</span> <span class="o">=</span> <span class="n">dim_x</span>
 
 
-<span class="k">def</span> <span class="nf">project</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">project</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 
     <span class="k">return</span> <span class="n">project_to_target_fidelity</span><span class="p">(</span>
         <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
@@ -509,7 +509,7 @@ The model is initialized with random points, where the fidelity is sampled from 
     <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">optimize_HVKG_and_get_obs</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_HVKG_and_get_obs</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">SingleTaskGP</span><span class="p">,</span>
     <span class="n">ref_point</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="n">standard_bounds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
@@ -580,7 +580,7 @@ The model is initialized with random points, where the fidelity is sampled from 
 <div class="prompt input_prompt">In [8]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
 </pre></div>
 </div>
 </div>
@@ -764,25 +764,25 @@ Wall time: 4min 36s
 <div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.pareto</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.pareto</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_is_non_dominated_loop</span><span class="p">,</span>
     <span class="n">is_non_dominated</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="c1"># Note: These are the pymoo 0.6+ imports, if you happen to be stuck on</span>
     <span class="c1"># an older pymoo version you need to replace them with the ones below.</span>
-    <span class="kn">from</span> <span class="nn">pymoo.algorithms.moo.nsga2</span> <span class="kn">import</span> <span class="n">NSGA2</span>
-    <span class="kn">from</span> <span class="nn">pymoo.core.problem</span> <span class="kn">import</span> <span class="n">Problem</span>
-    <span class="kn">from</span> <span class="nn">pymoo.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
-    <span class="kn">from</span> <span class="nn">pymoo.termination.max_gen</span> <span class="kn">import</span> <span class="n">MaximumGenerationTermination</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pymoo.algorithms.moo.nsga2</span><span class="w"> </span><span class="kn">import</span> <span class="n">NSGA2</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pymoo.core.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pymoo.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pymoo.termination.max_gen</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaximumGenerationTermination</span>
 
     <span class="c1"># from pymoo.algorithms.nsga2 import NSGA2</span>
     <span class="c1"># from pymoo.model.problem import Problem</span>
     <span class="c1"># from pymoo.util.termination.max_gen import MaximumGenerationTermination</span>
 
-    <span class="k">def</span> <span class="nf">get_pareto</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_pareto</span><span class="p">(</span>
         <span class="n">model</span><span class="p">,</span>
         <span class="n">non_fidelity_indices</span><span class="p">,</span>
         <span class="n">project</span><span class="p">,</span>
@@ -797,8 +797,8 @@ Wall time: 4min 36s
         <span class="p">}</span>
         <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_fidelity_indices</span><span class="p">)</span>
 
-        <span class="k">class</span> <span class="nc">PosteriorMeanPymooProblem</span><span class="p">(</span><span class="n">Problem</span><span class="p">):</span>
-            <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">class</span><span class="w"> </span><span class="nc">PosteriorMeanPymooProblem</span><span class="p">(</span><span class="n">Problem</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
                 <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
                     <span class="n">n_var</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span>
                     <span class="n">n_obj</span><span class="o">=</span><span class="n">BC</span><span class="o">.</span><span class="n">num_objectives</span><span class="p">,</span>
@@ -807,7 +807,7 @@ Wall time: 4min 36s
                 <span class="bp">self</span><span class="o">.</span><span class="n">xl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">xu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
 
-            <span class="k">def</span> <span class="nf">_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
                 <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">is_mf_model</span><span class="p">:</span>
                     <span class="n">X</span> <span class="o">=</span> <span class="n">project</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
@@ -855,7 +855,7 @@ Wall time: 4min 36s
     <span class="n">NUM_DISCRETE_POINTS</span> <span class="o">=</span> <span class="mi">10</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">100000</span>
     <span class="n">CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">512</span>
 
-    <span class="k">def</span> <span class="nf">get_pareto</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_pareto</span><span class="p">(</span>
         <span class="n">model</span><span class="p">,</span>
         <span class="n">non_fidelity_indices</span><span class="p">,</span>
         <span class="n">project</span><span class="p">,</span>

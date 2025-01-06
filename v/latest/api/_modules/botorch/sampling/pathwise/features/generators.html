@@ -37,28 +37,28 @@
 <span class="sd">    arXiv preprint arXiv:1506.02785 (2015).</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.features.maps</span> <span class="kn">import</span> <span class="n">KernelFeatureMap</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.features.maps</span><span class="w"> </span><span class="kn">import</span> <span class="n">KernelFeatureMap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ChainedTransform</span><span class="p">,</span>
     <span class="n">FeatureSelector</span><span class="p">,</span>
     <span class="n">InverseLengthscaleTransform</span><span class="p">,</span>
     <span class="n">OutputscaleTransform</span><span class="p">,</span>
     <span class="n">SineCosineTransform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_normal_samples</span>
-<span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">kernels</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Size</span><span class="p">,</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Gamma</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_sobol_normal_samples</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">kernels</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Size</span><span class="p">,</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
 
 <span class="n">TKernelFeatureMapGenerator</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Kernel</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">KernelFeatureMap</span><span class="p">]</span>
 <span class="n">GenKernelFeatures</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="s2">"gen_kernel_features"</span><span class="p">)</span>
@@ -66,7 +66,7 @@
 
 <div class="viewcode-block" id="gen_kernel_features">
 <a class="viewcode-back" href="../../../../../sampling.html#botorch.sampling.pathwise.features.generators.gen_kernel_features">[docs]</a>
-<span class="k">def</span> <span class="nf">gen_kernel_features</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_kernel_features</span><span class="p">(</span>
     <span class="n">kernel</span><span class="p">:</span> <span class="n">kernels</span><span class="o">.</span><span class="n">Kernel</span><span class="p">,</span>
     <span class="n">num_inputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -91,7 +91,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_gen_fourier_features</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_fourier_features</span><span class="p">(</span>
     <span class="n">kernel</span><span class="p">:</span> <span class="n">kernels</span><span class="o">.</span><span class="n">Kernel</span><span class="p">,</span>
     <span class="n">weight_generator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Size</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span>
     <span class="n">num_inputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -138,13 +138,13 @@
 
 
 <span class="nd">@GenKernelFeatures</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">kernels</span><span class="o">.</span><span class="n">RBFKernel</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_gen_kernel_features_rbf</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_kernel_features_rbf</span><span class="p">(</span>
     <span class="n">kernel</span><span class="p">:</span> <span class="n">kernels</span><span class="o">.</span><span class="n">RBFKernel</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">num_inputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KernelFeatureMap</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">_weight_generator</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_weight_generator</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">shape</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
@@ -168,13 +168,13 @@
 
 
 <span class="nd">@GenKernelFeatures</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">kernels</span><span class="o">.</span><span class="n">MaternKernel</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_gen_kernel_features_matern</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_kernel_features_matern</span><span class="p">(</span>
     <span class="n">kernel</span><span class="p">:</span> <span class="n">kernels</span><span class="o">.</span><span class="n">MaternKernel</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">num_inputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KernelFeatureMap</span><span class="p">:</span>
-    <span class="k">def</span> <span class="nf">_weight_generator</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_weight_generator</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">shape</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
@@ -197,7 +197,7 @@
 
 
 <span class="nd">@GenKernelFeatures</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">kernels</span><span class="o">.</span><span class="n">ScaleKernel</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_gen_kernel_features_scale</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_kernel_features_scale</span><span class="p">(</span>
     <span class="n">kernel</span><span class="p">:</span> <span class="n">kernels</span><span class="o">.</span><span class="n">ScaleKernel</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">num_inputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>

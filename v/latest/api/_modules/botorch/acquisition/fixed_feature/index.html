@@ -32,21 +32,21 @@
 <span class="sd">This is useful e.g. for performing contextual optimization.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
-<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numbers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Number</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
 
 
 <div class="viewcode-block" id="get_dtype_of_sequence">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.fixed_feature.get_dtype_of_sequence">[docs]</a>
-<span class="k">def</span> <span class="nf">get_dtype_of_sequence</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_dtype_of_sequence</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Return torch.float32 if everything is single-precision and torch.float64</span>
 <span class="sd">    otherwise.</span>
@@ -54,7 +54,7 @@
 <span class="sd">    Numbers (non-tensors) are double-precision.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">_is_single</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_single</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">float32</span>
 
     <span class="n">all_single_precision</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_single</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">)</span>
@@ -64,14 +64,14 @@
 
 <div class="viewcode-block" id="get_device_of_sequence">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.fixed_feature.get_device_of_sequence">[docs]</a>
-<span class="k">def</span> <span class="nf">get_device_of_sequence</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_device_of_sequence</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    CPU if everything is on the CPU; Cuda otherwise.</span>
 
 <span class="sd">    Numbers (non-tensors) are considered to be on the CPU.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">_is_cuda</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_cuda</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">device</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span><span class="p">)</span>
 
     <span class="n">any_cuda</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">_is_cuda</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">)</span>
@@ -81,7 +81,7 @@
 
 <div class="viewcode-block" id="FixedFeatureAcquisitionFunction">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">FixedFeatureAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FixedFeatureAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A wrapper around AcquisitionFunctions to fix a subset of features.</span>
 
 <span class="sd">    Example:</span>
@@ -93,7 +93,7 @@
 <span class="sd">        &gt;&gt;&gt; qei = qEI_FF(test_X)  # d' = 3</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
         <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -172,7 +172,7 @@
 
 <div class="viewcode-block" id="FixedFeatureAcquisitionFunction.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate base acquisition function under the fixed features.</span>
 
 <span class="sd">        Args:</span>
@@ -188,7 +188,7 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Return the `X_pending` of the base acquisition function."""</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">X_pending</span>
@@ -199,14 +199,14 @@
             <span class="p">)</span>
 
     <span class="nd">@X_pending</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sets the `X_pending` of the base acquisition function."""</span>
         <span class="k">if</span> <span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_construct_X_full</span><span class="p">(</span><span class="n">X_pending</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="n">X_pending</span>
 
-    <span class="k">def</span> <span class="nf">_construct_X_full</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_construct_X_full</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Constructs the full input for the base acquisition function.</span>
 
 <span class="sd">        Args:</span>

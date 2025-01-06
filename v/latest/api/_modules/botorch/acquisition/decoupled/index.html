@@ -29,24 +29,24 @@
 
 <span class="sa">r</span><span class="sd">"""Abstract base module for decoupled acquisition functions."""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
-<span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">shape_to_str</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchWarning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">shape_to_str</span>
 
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">ModelList</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="DecoupledAcquisitionFunction">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">DecoupledAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DecoupledAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Abstract base class for decoupled acquisition functions.</span>
 <span class="sd">    A decoupled acquisition function where one may intend to</span>
@@ -75,7 +75,7 @@
 <span class="sd">    will be evaluated on all outcomes.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">ModelList</span><span class="p">,</span> <span class="n">X_evaluation_mask</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize.</span>
@@ -95,12 +95,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">X_pending</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">X_evaluation_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">X_evaluation_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the evaluation indices for the new candidate."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_evaluation_mask</span>
 
     <span class="nd">@X_evaluation_mask</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">X_evaluation_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_evaluation_mask</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">X_evaluation_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_evaluation_mask</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Set the evaluation indices for the new candidate."""</span>
         <span class="k">if</span> <span class="n">X_evaluation_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># TODO: Add batch support</span>
@@ -116,7 +116,7 @@
 
 <div class="viewcode-block" id="DecoupledAcquisitionFunction.set_X_pending">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.set_X_pending">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_X_pending</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending_evaluation_mask</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -165,7 +165,7 @@
 
 <div class="viewcode-block" id="DecoupledAcquisitionFunction.construct_evaluation_mask">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.decoupled.DecoupledAcquisitionFunction.construct_evaluation_mask">[docs]</a>
-    <span class="k">def</span> <span class="nf">construct_evaluation_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_evaluation_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct the boolean evaluation mask for X and X_pending</span>
 
 <span class="sd">        Args:</span>

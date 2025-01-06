@@ -31,19 +31,19 @@
 <span class="sd">Utility functions for constrained optimization.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">numpy.typing</span> <span class="k">as</span> <span class="nn">npt</span>
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">CandidateGenerationError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">Bounds</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CandidateGenerationError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">Bounds</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <span class="n">ScipyConstraintDict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span>
@@ -54,7 +54,7 @@
 
 <div class="viewcode-block" id="make_scipy_bounds">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_bounds">[docs]</a>
-<span class="k">def</span> <span class="nf">make_scipy_bounds</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_scipy_bounds</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">lower_bounds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">upper_bounds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -79,7 +79,7 @@
     <span class="k">if</span> <span class="n">lower_bounds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">upper_bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_expand</span><span class="p">(</span><span class="n">bounds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expand</span><span class="p">(</span><span class="n">bounds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">lower</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ebounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"-inf"</span> <span class="k">if</span> <span class="n">lower</span> <span class="k">else</span> <span class="s2">"inf"</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
@@ -96,7 +96,7 @@
 
 <div class="viewcode-block" id="make_scipy_linear_constraints">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_linear_constraints">[docs]</a>
-<span class="k">def</span> <span class="nf">make_scipy_linear_constraints</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_scipy_linear_constraints</span><span class="p">(</span>
     <span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">equality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -162,7 +162,7 @@
 
 <div class="viewcode-block" id="eval_lin_constraint">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.eval_lin_constraint">[docs]</a>
-<span class="k">def</span> <span class="nf">eval_lin_constraint</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">eval_lin_constraint</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">coeffs</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Evaluate a single linear constraint.</span>
@@ -182,7 +182,7 @@
 
 <div class="viewcode-block" id="lin_constraint_jac">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.lin_constraint_jac">[docs]</a>
-<span class="k">def</span> <span class="nf">lin_constraint_jac</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">lin_constraint_jac</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">coeffs</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Return the Jacobian associated with a linear constraint.</span>
@@ -203,7 +203,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_arrayify</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_arrayify</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Convert a torch.Tensor (any dtype or device) to a numpy (double) array.</span>
 
 <span class="sd">    Args:</span>
@@ -215,7 +215,7 @@
     <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">double</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">_validate_linear_constraints_shape_input</span><span class="p">(</span><span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_linear_constraints_shape_input</span><span class="p">(</span><span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Validate `shapeX` input to `_make_linear_constraints`.</span>
 
@@ -233,7 +233,7 @@
     <span class="k">return</span> <span class="n">shapeX</span>
 
 
-<span class="k">def</span> <span class="nf">_validate_linear_constraints_indices_input</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_linear_constraints_indices_input</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">indices</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
             <span class="s2">"Linear constraints supported only on individual candidates and "</span>
@@ -251,7 +251,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`indices` must be at least one-dimensional"</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_make_linear_constraints</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_linear_constraints</span><span class="p">(</span>
     <span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">coefficients</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -350,7 +350,7 @@
     <span class="k">return</span> <span class="n">constraints</span>
 
 
-<span class="k">def</span> <span class="nf">_make_nonlinear_constraints</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_nonlinear_constraints</span><span class="p">(</span>
     <span class="n">f_np_wrapper</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">is_intrapoint</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">shapeX</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ScipyConstraintDict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Create nonlinear constraints to be used by `scipy.minimize`.</span>
@@ -382,10 +382,10 @@
     <span class="n">b</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">shapeX</span>
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="k">def</span> <span class="nf">get_intrapoint_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_intrapoint_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
         <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">nlc</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">q</span><span class="p">])</span>
 
-    <span class="k">def</span> <span class="nf">get_interpoint_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_interpoint_constraint</span><span class="p">(</span><span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
         <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">nlc</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">b</span><span class="p">])</span>
 
     <span class="k">if</span> <span class="n">is_intrapoint</span><span class="p">:</span>
@@ -407,7 +407,7 @@
     <span class="k">return</span> <span class="n">constraints</span>
 
 
-<span class="k">def</span> <span class="nf">_generate_unfixed_nonlin_constraints</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_generate_unfixed_nonlin_constraints</span><span class="p">(</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">fixed_features</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -431,10 +431,10 @@
 
     <span class="n">values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">fixed_features</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_wrap_nonlin_constraint</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_wrap_nonlin_constraint</span><span class="p">(</span>
         <span class="n">constraint</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="k">def</span> <span class="nf">new_nonlin_constraint</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">new_nonlin_constraint</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
             <span class="n">ivalues</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">fixed_features</span><span class="p">))</span>
             <span class="n">X_perm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">ivalues</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">constraint</span><span class="p">(</span><span class="n">X_perm</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">selector</span><span class="p">])</span>
@@ -447,7 +447,7 @@
     <span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">_generate_unfixed_lin_constraints</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_generate_unfixed_lin_constraints</span><span class="p">(</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">fixed_features</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -509,7 +509,7 @@
     <span class="k">return</span> <span class="n">new_constraints</span>
 
 
-<span class="k">def</span> <span class="nf">_make_f_and_grad_nonlinear_inequality_constraints</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_f_and_grad_nonlinear_inequality_constraints</span><span class="p">(</span>
     <span class="n">f_np_wrapper</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">nlc</span><span class="p">:</span> <span class="n">Callable</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""</span>
@@ -522,20 +522,20 @@
 <span class="sd">    will result in three forward passes).</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">f_obj_and_grad</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f_obj_and_grad</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="n">obj</span><span class="p">,</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">f_np_wrapper</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="n">nlc</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">obj</span><span class="p">,</span> <span class="n">grad</span>
 
     <span class="n">cache</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"X"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"obj"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"grad"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">f_obj</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f_obj</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
         <span class="n">X_c</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">X_c</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">X_c</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
             <span class="n">cache</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
             <span class="n">cache</span><span class="p">[</span><span class="s2">"obj"</span><span class="p">],</span> <span class="n">cache</span><span class="p">[</span><span class="s2">"grad"</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_obj_and_grad</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="s2">"obj"</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">f_grad</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f_grad</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
         <span class="n">X_c</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">X_c</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">X_c</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
             <span class="n">cache</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -547,7 +547,7 @@
 
 <div class="viewcode-block" id="nonlinear_constraint_is_feasible">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.nonlinear_constraint_is_feasible">[docs]</a>
-<span class="k">def</span> <span class="nf">nonlinear_constraint_is_feasible</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">nonlinear_constraint_is_feasible</span><span class="p">(</span>
     <span class="n">nonlinear_inequality_constraint</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">is_intrapoint</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Checks if a nonlinear inequality constraint is fulfilled.</span>
@@ -565,7 +565,7 @@
 <span class="sd">        bool: True if the constraint is fulfilled, else False.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">check_x</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_x</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">nonlinear_inequality_constraint</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">NLC_TOL</span>
 
     <span class="k">for</span> <span class="n">x_</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
@@ -581,7 +581,7 @@
 
 <div class="viewcode-block" id="make_scipy_nonlinear_inequality_constraints">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.parameter_constraints.make_scipy_nonlinear_inequality_constraints">[docs]</a>
-<span class="k">def</span> <span class="nf">make_scipy_nonlinear_inequality_constraints</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_scipy_nonlinear_inequality_constraints</span><span class="p">(</span>
     <span class="n">nonlinear_inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]],</span>
     <span class="n">f_np_wrapper</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">x0</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>

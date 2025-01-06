@@ -40,14 +40,14 @@
 <span class="sd">    In International Conference on Machine Learning, 2024.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">sqrt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span><span class="p">,</span> <span class="n">sqrt</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">RBFKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">GaussianLikelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span><span class="p">,</span> <span class="n">LogNormalPrior</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">GreaterThan</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">RBFKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods.gaussian_likelihood</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.priors.torch_priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">GammaPrior</span><span class="p">,</span> <span class="n">LogNormalPrior</span>
 
 <span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-4</span>
 <span class="n">SQRT2</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -56,7 +56,7 @@
 
 <div class="viewcode-block" id="get_matern_kernel_with_gamma_prior">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior">[docs]</a>
-<span class="k">def</span> <span class="nf">get_matern_kernel_with_gamma_prior</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_matern_kernel_with_gamma_prior</span><span class="p">(</span>
     <span class="n">ard_num_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScaleKernel</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constructs the Scale-Matern kernel that is used by default by</span>
@@ -78,7 +78,7 @@
 
 <div class="viewcode-block" id="get_gaussian_likelihood_with_gamma_prior">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">[docs]</a>
-<span class="k">def</span> <span class="nf">get_gaussian_likelihood_with_gamma_prior</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_gaussian_likelihood_with_gamma_prior</span><span class="p">(</span>
     <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GaussianLikelihood</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constructs the GaussianLikelihood that is used by default by</span>
@@ -102,7 +102,7 @@
 
 <div class="viewcode-block" id="get_gaussian_likelihood_with_lognormal_prior">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_lognormal_prior">[docs]</a>
-<span class="k">def</span> <span class="nf">get_gaussian_likelihood_with_lognormal_prior</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_gaussian_likelihood_with_lognormal_prior</span><span class="p">(</span>
     <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GaussianLikelihood</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Return Gaussian likelihood with a LogNormal(-4.0, 1.0) prior.</span>
@@ -131,7 +131,7 @@
 
 <div class="viewcode-block" id="get_covar_module_with_dim_scaled_prior">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.utils.gpytorch_modules.get_covar_module_with_dim_scaled_prior">[docs]</a>
-<span class="k">def</span> <span class="nf">get_covar_module_with_dim_scaled_prior</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_covar_module_with_dim_scaled_prior</span><span class="p">(</span>
     <span class="n">ard_num_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">use_rbf_kernel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>

@@ -36,19 +36,19 @@
 
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.predictive_entropy_search</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.predictive_entropy_search</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qMultiObjectivePredictiveEntropySearch</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="qPredictiveEntropySearch">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch">[docs]</a>
-<span class="k">class</span> <span class="nc">qPredictiveEntropySearch</span><span class="p">(</span><span class="n">qMultiObjectivePredictiveEntropySearch</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qPredictiveEntropySearch</span><span class="p">(</span><span class="n">qMultiObjectivePredictiveEntropySearch</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The acquisition function for Predictive Entropy Search.</span>
 
 <span class="sd">    This acquisition function approximates the mutual information between the</span>
@@ -66,7 +66,7 @@
 <span class="sd">    (ii) The estimated acquisition value could be negative.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">optimal_inputs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -114,7 +114,7 @@
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.predictive_entropy_search.qPredictiveEntropySearch.forward">[docs]</a>
     <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qPredictiveEntropySearch on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>

@@ -39,44 +39,44 @@
 <span class="sd">    Learning, 2023.</span>
 <span class="sd">"""</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">OneShotAcquisitionFunction</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="kn">import</span> <span class="n">CostAwareUtility</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.decoupled</span> <span class="kn">import</span> <span class="n">DecoupledAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="n">ProjectedAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.base</span> <span class="kn">import</span> <span class="n">MultiObjectiveMCAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.monte_carlo</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.cost_aware</span><span class="w"> </span><span class="kn">import</span> <span class="n">CostAwareUtility</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.decoupled</span><span class="w"> </span><span class="kn">import</span> <span class="n">DecoupledAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.knowledge_gradient</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProjectedAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiObjectiveMCAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.objective</span> <span class="kn">import</span> <span class="n">MCMultiOutputObjective</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">NumericsWarning</span>
-<span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">PosteriorMeanModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.list_sampler</span> <span class="kn">import</span> <span class="n">ListSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.stochastic_samplers</span> <span class="kn">import</span> <span class="n">StochasticSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCMultiOutputObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericsWarning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.deterministic</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorMeanModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.list_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.stochastic_samplers</span><span class="w"> </span><span class="kn">import</span> <span class="n">StochasticSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="qHypervolumeKnowledgeGradient">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient">[docs]</a>
-<span class="k">class</span> <span class="nc">qHypervolumeKnowledgeGradient</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qHypervolumeKnowledgeGradient</span><span class="p">(</span>
     <span class="n">DecoupledAcquisitionFunction</span><span class="p">,</span>
     <span class="n">MultiObjectiveMCAcquisitionFunction</span><span class="p">,</span>
     <span class="n">OneShotAcquisitionFunction</span><span class="p">,</span>
@@ -97,7 +97,7 @@
 <span class="sd">    in `X` can be optimized in a "one-shot" fashion.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -192,7 +192,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_cost_sampler</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">cost_sampler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cost_sampler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cost_sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Note: Using the deepcopy here is essential. Removing this poses a</span>
             <span class="c1"># problem if the base model and the cost model have a different number</span>
@@ -208,7 +208,7 @@
 <div class="viewcode-block" id="qHypervolumeKnowledgeGradient.forward">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qKnowledgeGradient on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -298,7 +298,7 @@
 
 <div class="viewcode-block" id="qHypervolumeKnowledgeGradient.get_augmented_q_batch_size">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.get_augmented_q_batch_size">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimization.</span>
 
 <span class="sd">        Args:</span>
@@ -313,7 +313,7 @@
 
 <div class="viewcode-block" id="qHypervolumeKnowledgeGradient.extract_candidates">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qHypervolumeKnowledgeGradient.extract_candidates">[docs]</a>
-    <span class="k">def</span> <span class="nf">extract_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""We only return X as the set of candidates post-optimization.</span>
 
 <span class="sd">        Args:</span>
@@ -330,7 +330,7 @@
 
 <div class="viewcode-block" id="qMultiFidelityHypervolumeKnowledgeGradient">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient">[docs]</a>
-<span class="k">class</span> <span class="nc">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">(</span><span class="n">qHypervolumeKnowledgeGradient</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">(</span><span class="n">qHypervolumeKnowledgeGradient</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Batch Hypervolume Knowledge Gradient for multi-fidelity optimization.</span>
 
 <span class="sd">    See [Daulton2023hvkg]_ for details.</span>
@@ -342,7 +342,7 @@
 <span class="sd">    this can be changed into a custom multi-fidelity acquisition function.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -439,7 +439,7 @@
 <div class="viewcode-block" id="qMultiFidelityHypervolumeKnowledgeGradient.forward">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.hypervolume_knowledge_gradient.qMultiFidelityHypervolumeKnowledgeGradient.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qMultiFidelityKnowledgeGradient on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -531,7 +531,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_get_hv_value_function</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_hv_value_function</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCMultiOutputObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -579,7 +579,7 @@
         <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_split_hvkg_fantasy_points</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_hvkg_fantasy_points</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n_f</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_pareto</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Split a one-shot HV-KGoptimization input into actual and fantasy points</span>

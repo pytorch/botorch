@@ -36,45 +36,45 @@
 <span class="sd">    expensive black-box optimization, Engineering Optimization, 2013.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">ceil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">multi_objective</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.fixed_feature</span> <span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">monte_carlo</span><span class="p">,</span> <span class="n">multi_objective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.fixed_feature</span><span class="w"> </span><span class="kn">import</span> <span class="n">FixedFeatureAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.knowledge_gradient</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_get_value_function</span><span class="p">,</span>
     <span class="n">qKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_get_hv_value_function</span><span class="p">,</span>
     <span class="n">qHypervolumeKnowledgeGradient</span><span class="p">,</span>
     <span class="n">qMultiFidelityHypervolumeKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.warnings</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span>
     <span class="n">BotorchWarning</span><span class="p">,</span>
     <span class="n">SamplingWarning</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">fix_features</span><span class="p">,</span> <span class="n">get_X_baseline</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.pareto</span> <span class="kn">import</span> <span class="n">is_non_dominated</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">fix_features</span><span class="p">,</span> <span class="n">get_X_baseline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.pareto</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_non_dominated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">batched_multinomial</span><span class="p">,</span>
     <span class="n">draw_sobol_samples</span><span class="p">,</span>
     <span class="n">get_polytope_samples</span><span class="p">,</span>
     <span class="n">manual_seed</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">standardize</span><span class="p">,</span> <span class="n">unnormalize</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Normal</span>
-<span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">standardize</span><span class="p">,</span> <span class="n">unnormalize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Normal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.quasirandom</span><span class="w"> </span><span class="kn">import</span> <span class="n">SobolEngine</span>
 
 <span class="n">TGenInitialConditions</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span>
     <span class="p">[</span>
@@ -95,7 +95,7 @@
 
 <div class="viewcode-block" id="transform_constraints">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.transform_constraints">[docs]</a>
-<span class="k">def</span> <span class="nf">transform_constraints</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">transform_constraints</span><span class="p">(</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Transform constraints to sample from a d*q-dimensional space instead of a</span>
@@ -132,7 +132,7 @@
 
 <div class="viewcode-block" id="transform_intra_point_constraint">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.transform_intra_point_constraint">[docs]</a>
-<span class="k">def</span> <span class="nf">transform_intra_point_constraint</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">transform_intra_point_constraint</span><span class="p">(</span>
     <span class="n">constraint</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Transforms an intra-point/pointwise constraint from</span>
@@ -173,7 +173,7 @@
 
 <div class="viewcode-block" id="transform_inter_point_constraint">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.transform_inter_point_constraint">[docs]</a>
-<span class="k">def</span> <span class="nf">transform_inter_point_constraint</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">transform_inter_point_constraint</span><span class="p">(</span>
     <span class="n">constraint</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Transforms an inter-point constraint from</span>
@@ -211,7 +211,7 @@
 
 <div class="viewcode-block" id="sample_q_batches_from_polytope">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.sample_q_batches_from_polytope">[docs]</a>
-<span class="k">def</span> <span class="nf">sample_q_batches_from_polytope</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_q_batches_from_polytope</span><span class="p">(</span>
     <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -279,7 +279,7 @@
 
 <div class="viewcode-block" id="gen_batch_initial_conditions">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.gen_batch_initial_conditions">[docs]</a>
-<span class="k">def</span> <span class="nf">gen_batch_initial_conditions</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_batch_initial_conditions</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -508,7 +508,7 @@
 
 <div class="viewcode-block" id="gen_one_shot_kg_initial_conditions">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.gen_one_shot_kg_initial_conditions">[docs]</a>
-<span class="k">def</span> <span class="nf">gen_one_shot_kg_initial_conditions</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_one_shot_kg_initial_conditions</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">qKnowledgeGradient</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -602,7 +602,7 @@
         <span class="n">sampler</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">inner_sampler</span><span class="p">,</span>
         <span class="n">project</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"project"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
 
     <span class="n">fantasy_cands</span><span class="p">,</span> <span class="n">fantasy_vals</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">value_function</span><span class="p">,</span>
@@ -630,7 +630,7 @@
 
 <div class="viewcode-block" id="gen_one_shot_hvkg_initial_conditions">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.gen_one_shot_hvkg_initial_conditions">[docs]</a>
-<span class="k">def</span> <span class="nf">gen_one_shot_hvkg_initial_conditions</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_one_shot_hvkg_initial_conditions</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">qHypervolumeKnowledgeGradient</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -697,7 +697,7 @@
 <span class="sd">        &gt;&gt;&gt;     options={"frac_random": 0.25},</span>
 <span class="sd">        &gt;&gt;&gt; )</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
 
     <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="n">frac_random</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"frac_random"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
@@ -831,7 +831,7 @@
 
 <div class="viewcode-block" id="gen_value_function_initial_conditions">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.gen_value_function_initial_conditions">[docs]</a>
-<span class="k">def</span> <span class="nf">gen_value_function_initial_conditions</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_value_function_initial_conditions</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -909,7 +909,7 @@
         <span class="n">sampler</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"sampler"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
         <span class="n">project</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"project"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
 
     <span class="n">fantasy_cands</span><span class="p">,</span> <span class="n">fantasy_vals</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">value_function</span><span class="p">,</span>
@@ -970,7 +970,7 @@
 
 <div class="viewcode-block" id="initialize_q_batch">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.initialize_q_batch">[docs]</a>
-<span class="k">def</span> <span class="nf">initialize_q_batch</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize_q_batch</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">acq_vals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Heuristic for selecting initial conditions for candidate generation.</span>
@@ -1056,7 +1056,7 @@
 
 <div class="viewcode-block" id="initialize_q_batch_nonneg">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.initialize_q_batch_nonneg">[docs]</a>
-<span class="k">def</span> <span class="nf">initialize_q_batch_nonneg</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize_q_batch_nonneg</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">acq_vals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Heuristic for selecting initial conditions for non-neg. acquisition functions.</span>
@@ -1138,7 +1138,7 @@
 
 <div class="viewcode-block" id="initialize_q_batch_topn">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.initialize_q_batch_topn">[docs]</a>
-<span class="k">def</span> <span class="nf">initialize_q_batch_topn</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize_q_batch_topn</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">acq_vals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">largest</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Take the top `n` initial conditions for candidate generation.</span>
@@ -1191,7 +1191,7 @@
 
 <div class="viewcode-block" id="sample_points_around_best">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.sample_points_around_best">[docs]</a>
-<span class="k">def</span> <span class="nf">sample_points_around_best</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_points_around_best</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">n_discrete_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -1300,7 +1300,7 @@
 
 <div class="viewcode-block" id="sample_truncated_normal_perturbations">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.sample_truncated_normal_perturbations">[docs]</a>
-<span class="k">def</span> <span class="nf">sample_truncated_normal_perturbations</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_truncated_normal_perturbations</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">n_discrete_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -1354,7 +1354,7 @@
 
 <div class="viewcode-block" id="sample_perturbed_subset_dims">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.sample_perturbed_subset_dims">[docs]</a>
-<span class="k">def</span> <span class="nf">sample_perturbed_subset_dims</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_perturbed_subset_dims</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">n_discrete_points</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1433,7 +1433,7 @@
 
 <div class="viewcode-block" id="is_nonnegative">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.is_nonnegative">[docs]</a>
-<span class="k">def</span> <span class="nf">is_nonnegative</span><span class="p">(</span><span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_nonnegative</span><span class="p">(</span><span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Determine whether a given acquisition function is non-negative.</span>
 
 <span class="sd">    Args:</span>

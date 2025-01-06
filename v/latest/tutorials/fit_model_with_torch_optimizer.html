@@ -83,9 +83,9 @@
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
 <span class="c1"># use a GPU if available</span>
 <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
@@ -141,8 +141,8 @@
 <div class="prompt input_prompt">In [4]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">GreaterThan</span>
 
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
@@ -164,7 +164,7 @@
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
 
 <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">likelihood</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
 <span class="c1"># set mll and all submodules to the specified dtype and device</span>
@@ -191,7 +191,7 @@
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">SGD</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGD</span>
 
 <span class="n">optimizer</span> <span class="o">=</span> <span class="n">SGD</span><span class="p">([{</span><span class="s2">"params"</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()}],</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.025</span><span class="p">)</span>
 </pre></div>
@@ -287,7 +287,7 @@ Epoch 150/150 - Loss: 1.311 lengthscale: 0.317 noise: 0.318
 <div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
 <span class="o">%</span><span class="k">matplotlib</span> inline
 
@@ -338,7 +338,7 @@ Epoch 150/150 - Loss: 1.311 lengthscale: 0.317 noise: 0.318
 <div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">_get_and_fit_model</span><span class="p">(</span><span class="n">Xs</span><span class="p">,</span> <span class="n">Ys</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_get_and_fit_model</span><span class="p">(</span><span class="n">Xs</span><span class="p">,</span> <span class="n">Ys</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
     <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span> <span class="o">=</span> <span class="n">Xs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Ys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>

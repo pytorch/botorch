@@ -38,31 +38,31 @@
 
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.box_decompositions.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_expand_ref_point</span><span class="p">,</span>
     <span class="n">_pad_batch_pareto_frontier</span><span class="p">,</span>
     <span class="n">update_local_upper_bounds_incremental</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.pareto</span> <span class="kn">import</span> <span class="n">is_non_dominated</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.multi_objective.pareto</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_non_dominated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
 
 
 <div class="viewcode-block" id="BoxDecomposition">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition">[docs]</a>
-<span class="k">class</span> <span class="nc">BoxDecomposition</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BoxDecomposition</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""An abstract class for box decompositions.</span>
 
 <span class="sd">    Note: Internally, we store the negative reference point (minimization).</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sort</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sort</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Initialize BoxDecomposition.</span>
 
 <span class="sd">        Args:</span>
@@ -91,7 +91,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_neg_pareto_Y</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">pareto_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pareto_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""This returns the non-dominated set.</span>
 
 <span class="sd">        Returns:</span>
@@ -102,7 +102,7 @@
         <span class="k">raise</span> <span class="n">BotorchError</span><span class="p">(</span><span class="s2">"pareto_Y has not been initialized"</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ref_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ref_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the reference point.</span>
 
 <span class="sd">        Returns:</span>
@@ -111,7 +111,7 @@
         <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_neg_ref_point</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the raw outcomes.</span>
 
 <span class="sd">        Returns:</span>
@@ -121,7 +121,7 @@
             <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_neg_Y</span>
         <span class="k">raise</span> <span class="n">BotorchError</span><span class="p">(</span><span class="s2">"Y data has not been initialized"</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_compute_pareto_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_pareto_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neg_Y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">BotorchError</span><span class="p">(</span><span class="s2">"Y data has not been initialized"</span><span class="p">)</span>
         <span class="c1"># is_non_dominated assumes maximization</span>
@@ -146,7 +146,7 @@
             <span class="n">pareto_Y</span> <span class="o">=</span> <span class="n">pareto_Y</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">pareto_Y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])]</span>
         <span class="k">return</span> <span class="n">pareto_Y</span>
 
-    <span class="k">def</span> <span class="nf">_reset_pareto_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reset_pareto_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Update the non-dominated front.</span>
 
 <span class="sd">        Returns:</span>
@@ -163,7 +163,7 @@
 
 <div class="viewcode-block" id="BoxDecomposition.partition_space">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.partition_space">[docs]</a>
-    <span class="k">def</span> <span class="nf">partition_space</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">partition_space</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute box decomposition."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outcomes</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -174,12 +174,12 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_partition_space</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_partition_space_2d</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_partition_space_2d</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute box decomposition for 2 objectives."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">_partition_space</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_partition_space</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Partition the non-dominated space into disjoint hypercells.</span>
 
 <span class="sd">        This method supports an arbitrary number of outcomes, but is</span>
@@ -189,7 +189,7 @@
 <div class="viewcode-block" id="BoxDecomposition.get_hypercell_bounds">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.get_hypercell_bounds">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">get_hypercell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_hypercell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the bounds of each hypercell in the decomposition.</span>
 
 <span class="sd">        Returns:</span>
@@ -198,7 +198,7 @@
 <span class="sd">        """</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_update_neg_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_neg_Y</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Update the set of outcomes.</span>
 
 <span class="sd">        Returns:</span>
@@ -218,7 +218,7 @@
 
 <div class="viewcode-block" id="BoxDecomposition.update">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.update">[docs]</a>
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Update non-dominated front and decomposition.</span>
 
 <span class="sd">        By default, the partitioning is recomputed. Subclasses can override</span>
@@ -231,7 +231,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_outcomes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -248,7 +248,7 @@
 
 <div class="viewcode-block" id="BoxDecomposition.reset">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.reset">[docs]</a>
-    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Reset non-dominated front and decomposition."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_inputs</span><span class="p">()</span>
         <span class="n">is_new_pareto</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reset_pareto_Y</span><span class="p">()</span>
@@ -258,12 +258,12 @@
 
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">_compute_hypervolume_if_y_has_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_hypervolume_if_y_has_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Compute hypervolume for the case that there is data in self._neg_pareto_Y."""</span>
 
 <div class="viewcode-block" id="BoxDecomposition.compute_hypervolume">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.compute_hypervolume">[docs]</a>
-    <span class="k">def</span> <span class="nf">compute_hypervolume</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_hypervolume</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute hypervolume that is dominated by the Pareto Froniter.</span>
 
 <span class="sd">        Returns:</span>
@@ -286,7 +286,7 @@
 
 <div class="viewcode-block" id="FastPartitioning">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning">[docs]</a>
-<span class="k">class</span> <span class="nc">FastPartitioning</span><span class="p">(</span><span class="n">BoxDecomposition</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FastPartitioning</span><span class="p">(</span><span class="n">BoxDecomposition</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""A class for partitioning the (non-)dominated space into hyper-cells.</span>
 
 <span class="sd">    Note: this assumes maximization. Internally, it multiplies outcomes by -1</span>
@@ -298,7 +298,7 @@
 <span class="sd">    Pareto frontier.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">ref_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -312,7 +312,7 @@
 
 <div class="viewcode-block" id="FastPartitioning.update">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.update">[docs]</a>
-    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Update non-dominated front and decomposition.</span>
 
 <span class="sd">        Args:</span>
@@ -351,7 +351,7 @@
 
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">_get_single_cell</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_single_cell</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Set the partitioning to be a single cell in the case of no Pareto points.</span>
 
 <span class="sd">        This method should set self.hypercell_bounds</span>
@@ -360,14 +360,14 @@
 
 <div class="viewcode-block" id="FastPartitioning.partition_space">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.partition_space">[docs]</a>
-    <span class="k">def</span> <span class="nf">partition_space</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">partition_space</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neg_pareto_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_get_single_cell</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">partition_space</span><span class="p">()</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_partition_space</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_partition_space</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Partition the non-dominated space into disjoint hypercells.</span>
 
 <span class="sd">        This method supports an arbitrary number of outcomes, but is</span>
@@ -406,7 +406,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_get_partitioning</span><span class="p">()</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">_get_partitioning</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_partitioning</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute partitioning given local upper bounds for the minimization problem.</span>
 
 <span class="sd">        This method should set self.hypercell_bounds</span>
@@ -415,7 +415,7 @@
 
 <div class="viewcode-block" id="FastPartitioning.get_hypercell_bounds">
 <a class="viewcode-back" href="../../../../../utils.html#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.get_hypercell_bounds">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_hypercell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_hypercell_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Get the bounds of each hypercell in the decomposition.</span>
 
 <span class="sd">        Returns:</span>

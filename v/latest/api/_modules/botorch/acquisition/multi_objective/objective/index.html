@@ -27,22 +27,22 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">GenericMCObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span><span class="p">,</span> <span class="n">BotorchTensorDimensionError</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">apply_constraints</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenericMCObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchError</span><span class="p">,</span> <span class="n">BotorchTensorDimensionError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_constraints</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_indices</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="MCMultiOutputObjective">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective">[docs]</a>
-<span class="k">class</span> <span class="nc">MCMultiOutputObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MCMultiOutputObjective</span><span class="p">(</span><span class="n">MCAcquisitionObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Abstract base class for MC multi-output objectives.</span>
 
 <span class="sd">    Args:</span>
@@ -54,7 +54,7 @@
 <div class="viewcode-block" id="MCMultiOutputObjective.forward">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the multi-output objective on the samples.</span>
 
 <span class="sd">        Args:</span>
@@ -81,7 +81,7 @@
 
 <div class="viewcode-block" id="GenericMCMultiOutputObjective">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.GenericMCMultiOutputObjective">[docs]</a>
-<span class="k">class</span> <span class="nc">GenericMCMultiOutputObjective</span><span class="p">(</span><span class="n">GenericMCObjective</span><span class="p">,</span> <span class="n">MCMultiOutputObjective</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericMCMultiOutputObjective</span><span class="p">(</span><span class="n">GenericMCObjective</span><span class="p">,</span> <span class="n">MCMultiOutputObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Multi-output objective generated from a generic callable.</span>
 
 <span class="sd">    Allows to construct arbitrary MC-objective functions from a generic</span>
@@ -95,7 +95,7 @@
 
 <div class="viewcode-block" id="IdentityMCMultiOutputObjective">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective">[docs]</a>
-<span class="k">class</span> <span class="nc">IdentityMCMultiOutputObjective</span><span class="p">(</span><span class="n">MCMultiOutputObjective</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IdentityMCMultiOutputObjective</span><span class="p">(</span><span class="n">MCMultiOutputObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Trivial objective that returns the unaltered samples.</span>
 
 <span class="sd">    Example:</span>
@@ -104,7 +104,7 @@
 <span class="sd">        &gt;&gt;&gt; objective = identity_objective(samples)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">num_outcomes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize Objective.</span>
@@ -130,7 +130,7 @@
 
 <div class="viewcode-block" id="IdentityMCMultiOutputObjective.forward">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcomes"</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">samples</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcomes</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">samples</span><span class="o">.</span><span class="n">device</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">samples</span></div>
@@ -140,7 +140,7 @@
 
 <div class="viewcode-block" id="WeightedMCMultiOutputObjective">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective">[docs]</a>
-<span class="k">class</span> <span class="nc">WeightedMCMultiOutputObjective</span><span class="p">(</span><span class="n">IdentityMCMultiOutputObjective</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WeightedMCMultiOutputObjective</span><span class="p">(</span><span class="n">IdentityMCMultiOutputObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Objective that reweights samples by given weights vector.</span>
 
 <span class="sd">    Example:</span>
@@ -150,7 +150,7 @@
 <span class="sd">        &gt;&gt;&gt; objective = weighted_objective(samples)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -178,7 +178,7 @@
 
 <div class="viewcode-block" id="WeightedMCMultiOutputObjective.forward">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span></div>
 </div>
@@ -187,8 +187,8 @@
 
 <div class="viewcode-block" id="FeasibilityWeightedMCMultiOutputObjective">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.FeasibilityWeightedMCMultiOutputObjective">[docs]</a>
-<span class="k">class</span> <span class="nc">FeasibilityWeightedMCMultiOutputObjective</span><span class="p">(</span><span class="n">MCMultiOutputObjective</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FeasibilityWeightedMCMultiOutputObjective</span><span class="p">(</span><span class="n">MCMultiOutputObjective</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -224,13 +224,13 @@
         <span class="n">objective_idcs</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">constraint_idcs</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraint_idcs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># Import locally to avoid circular import.</span>
-            <span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">get_infeasible_cost</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_infeasible_cost</span>
 
             <span class="n">inf_cost</span> <span class="o">=</span> <span class="n">get_infeasible_cost</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="k">lambda</span> <span class="n">y</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">y</span>
             <span class="p">)[</span><span class="n">objective_idcs</span><span class="p">]</span>
 
-            <span class="k">def</span> <span class="nf">apply_feasibility_weights</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">apply_feasibility_weights</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">apply_constraints</span><span class="p">(</span>
                     <span class="n">obj</span><span class="o">=</span><span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">objective_idcs</span><span class="p">],</span>
                     <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="k">lambda</span> <span class="n">Y</span><span class="p">:</span> <span class="o">-</span><span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">constraint_idcs</span><span class="p">],</span>
@@ -250,7 +250,7 @@
 
 <div class="viewcode-block" id="FeasibilityWeightedMCMultiOutputObjective.forward">
 <a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.FeasibilityWeightedMCMultiOutputObjective.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">apply_feasibility_weights</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div>
 </div>
 

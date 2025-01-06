@@ -39,20 +39,20 @@
 <span class="sd">    ICLR 2022.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">SampleReducingMCAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">SampleReducingMCAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">concatenate_pending_points</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
 
 
 <div class="viewcode-block" id="PriorGuidedAcquisitionFunction">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">PriorGuidedAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PriorGuidedAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Class for weighting acquisition functions by a prior distribution.</span>
 
 <span class="sd">    Supports MC and batch acquisition functions via</span>
@@ -61,7 +61,7 @@
 <span class="sd">    See [Hvarfner2022]_ for details.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
         <span class="n">prior_module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
@@ -108,7 +108,7 @@
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.prior_guided.PriorGuidedAcquisitionFunction.forward">[docs]</a>
     <span class="nd">@concatenate_pending_points</span>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Compute the acquisition function weighted by the prior."""</span>
         <span class="c1"># batch_shape x q</span>
         <span class="n">prior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_module</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>

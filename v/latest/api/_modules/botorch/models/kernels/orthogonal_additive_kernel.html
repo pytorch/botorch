@@ -26,17 +26,17 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span>
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">Positive</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">Prior</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">Positive</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.module</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Prior</span>
 
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">Tensor</span>
 
 <span class="n">_positivity_constraint</span> <span class="o">=</span> <span class="n">Positive</span><span class="p">()</span>
 <span class="n">SECOND_ORDER_PRIOR_ERROR_MSG</span> <span class="o">=</span> <span class="p">(</span>
@@ -47,7 +47,7 @@
 
 <div class="viewcode-block" id="OrthogonalAdditiveKernel">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.orthogonal_additive_kernel.OrthogonalAdditiveKernel">[docs]</a>
-<span class="k">class</span> <span class="nc">OrthogonalAdditiveKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrthogonalAdditiveKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Orthogonal Additive Kernels (OAKs) were introduced in [Lu2022additive]_, though</span>
 <span class="sd">    only for the case of Gaussian base kernels with a Gaussian input data distribution.</span>
 
@@ -60,7 +60,7 @@
 <span class="sd">        Proceedings of the 39th International Conference on Machine Learning. Jul 2022.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">base_kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
         <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -160,7 +160,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">coeff_constraint</span> <span class="o">=</span> <span class="n">coeff_constraint</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
 
-    <span class="k">def</span> <span class="nf">k</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">k</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evaluates the kernel matrix base_kernel(x1, x2) on each input dimension</span>
 <span class="sd">        independently.</span>
 
@@ -174,17 +174,17 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_kernel</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">last_dim_is_batch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">offset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">offset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Returns the `batch_shape`-dim Tensor of zeroth-order coefficients."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coeff_constraint</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_offset</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">coeffs_1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coeffs_1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Returns the `batch_shape x d`-dim Tensor of first-order coefficients."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">coeff_constraint</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_coeffs_1</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">coeffs_2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coeffs_2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Returns the upper-triangular tensor of second-order coefficients.</span>
 
 <span class="sd">        NOTE: We only keep track of the upper triangular part of raw second order</span>
@@ -205,35 +205,35 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_set_coeffs_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_coeffs_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_coeffs_1</span><span class="p">)</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">raw_coeffs_1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coeff_constraint</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_set_coeffs_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_coeffs_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_coeffs_1</span><span class="p">)</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
         <span class="n">row_idcs</span><span class="p">,</span> <span class="n">col_idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">triu_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">row_idcs</span><span class="p">,</span> <span class="n">col_idcs</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_coeffs_2</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">raw_coeffs_2</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coeff_constraint</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_set_offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_offset</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">raw_offset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coeff_constraint</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
 
     <span class="nd">@coeffs_1</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">coeffs_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coeffs_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_coeffs_1</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
     <span class="nd">@coeffs_2</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">coeffs_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coeffs_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_coeffs_2</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
     <span class="nd">@offset</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_offset</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -282,7 +282,7 @@
 
         <span class="k">return</span> <span class="n">K</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">diag</span> <span class="k">else</span> <span class="n">K</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span>  <span class="c1"># poor man's diag (TODO)</span>
 
-    <span class="k">def</span> <span class="nf">_orthogonal_base_kernels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_orthogonal_base_kernels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evaluates the set of `d` orthogonalized base kernels on (x1, x2).</span>
 <span class="sd">        Note that even if the base kernel is positive, the orthogonalized versions</span>
 <span class="sd">        can - and usually do - take negative values.</span>
@@ -308,7 +308,7 @@
         <span class="n">K_ortho</span> <span class="o">=</span> <span class="p">(</span><span class="n">Kx1x2</span> <span class="o">-</span> <span class="n">Skx1</span> <span class="o">@</span> <span class="n">Skx2</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">to_dense</span><span class="p">()</span>  <span class="c1"># d x n x n</span>
         <span class="k">return</span> <span class="n">K_ortho</span>
 
-    <span class="k">def</span> <span class="nf">normalizer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalizer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Integrates the `d` orthogonalized base kernels over `[0, 1] x [0, 1]`.</span>
 <span class="sd">        NOTE: If the module is in train mode, this needs to re-compute the normalizer</span>
 <span class="sd">        each time because the underlying parameters might have changed.</span>
@@ -325,7 +325,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">leggauss</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">leggauss</span><span class="p">(</span>
     <span class="n">deg</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
     <span class="n">b</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
@@ -355,7 +355,7 @@
     <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span>
 
 
-<span class="k">def</span> <span class="nf">_check_hypercube</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_hypercube</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Raises a `ValueError` if an element `x` is not in [0, 1].</span>
 
 <span class="sd">    Args:</span>
@@ -366,7 +366,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s2">" is not in hypercube [0, 1]^d."</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_reverse_triu_indices</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_reverse_triu_indices</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Computes a list of indices which, upon indexing a `d * (d - 1) / 2 + 1`-dim</span>
 <span class="sd">    Tensor whose last element is zero, will lead to a vectorized representation of</span>
 <span class="sd">    an upper-triangular matrix, whose diagonal is set to zero and whose super-diagonal</span>
@@ -392,27 +392,27 @@
     <span class="k">return</span> <span class="n">indices</span>
 
 
-<span class="k">def</span> <span class="nf">_coeffs_1_param</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_coeffs_1_param</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">coeffs_1</span>
 
 
-<span class="k">def</span> <span class="nf">_coeffs_2_param</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_coeffs_2_param</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">coeffs_2</span>
 
 
-<span class="k">def</span> <span class="nf">_offset_param</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_offset_param</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">offset</span>
 
 
-<span class="k">def</span> <span class="nf">_coeffs_1_closure</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_coeffs_1_closure</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">_set_coeffs_1</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_coeffs_2_closure</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_coeffs_2_closure</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">_set_coeffs_2</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_offset_closure</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_offset_closure</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">_set_offset</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 </pre></div>
 </div>

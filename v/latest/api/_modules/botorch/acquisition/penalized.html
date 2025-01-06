@@ -31,27 +31,27 @@
 <span class="sd">Modules to add regularization to acquisition functions.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">GenericMCObjective</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.analytic</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenericMCObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="L2Penalty">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L2Penalty">[docs]</a>
-<span class="k">class</span> <span class="nc">L2Penalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">L2Penalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""L2 penalty class to be added to any arbitrary acquisition function</span>
 <span class="sd">    to construct a PenalizedAcquisitionFunction."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializing L2 regularization.</span>
 
 <span class="sd">        Args:</span>
@@ -63,7 +63,7 @@
 
 <div class="viewcode-block" id="L2Penalty.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L2Penalty.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            X: A "batch_shape x q x dim" representing the points to be evaluated.</span>
@@ -82,11 +82,11 @@
 
 <div class="viewcode-block" id="L1Penalty">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L1Penalty">[docs]</a>
-<span class="k">class</span> <span class="nc">L1Penalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">L1Penalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""L1 penalty class to be added to any arbitrary acquisition function</span>
 <span class="sd">    to construct a PenalizedAcquisitionFunction."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializing L1 regularization.</span>
 
 <span class="sd">        Args:</span>
@@ -98,7 +98,7 @@
 
 <div class="viewcode-block" id="L1Penalty.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L1Penalty.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            X: A "batch_shape x q x dim" representing the points to be evaluated.</span>
@@ -116,11 +116,11 @@
 
 <div class="viewcode-block" id="GaussianPenalty">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.GaussianPenalty">[docs]</a>
-<span class="k">class</span> <span class="nc">GaussianPenalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GaussianPenalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Gaussian penalty class to be added to any arbitrary acquisition function</span>
 <span class="sd">    to construct a PenalizedAcquisitionFunction."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializing Gaussian regularization.</span>
 
 <span class="sd">        Args:</span>
@@ -134,7 +134,7 @@
 
 <div class="viewcode-block" id="GaussianPenalty.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.GaussianPenalty.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            X: A "batch_shape x q x dim" representing the points to be evaluated.</span>
@@ -152,11 +152,11 @@
 
 <div class="viewcode-block" id="GroupLassoPenalty">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.GroupLassoPenalty">[docs]</a>
-<span class="k">class</span> <span class="nc">GroupLassoPenalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GroupLassoPenalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Group lasso penalty class to be added to any arbitrary acquisition function</span>
 <span class="sd">    to construct a PenalizedAcquisitionFunction."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializing Group-Lasso regularization.</span>
 
 <span class="sd">        Args:</span>
@@ -170,7 +170,7 @@
 
 <div class="viewcode-block" id="GroupLassoPenalty.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.GroupLassoPenalty.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        X should be batch_shape x 1 x dim tensor. Evaluation for q-batch is not</span>
 <span class="sd">        implemented yet.</span>
@@ -190,14 +190,14 @@
 
 <div class="viewcode-block" id="narrow_gaussian">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.narrow_gaussian">[docs]</a>
-<span class="k">def</span> <span class="nf">narrow_gaussian</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">narrow_gaussian</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="nnz_approx">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.nnz_approx">[docs]</a>
-<span class="k">def</span> <span class="nf">nnz_approx</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">nnz_approx</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Differentiable relaxation of ||X - target_point||_0</span>
 
 <span class="sd">    Args:</span>
@@ -214,10 +214,10 @@
 
 <div class="viewcode-block" id="L0Approximation">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L0Approximation">[docs]</a>
-<span class="k">class</span> <span class="nc">L0Approximation</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">L0Approximation</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Differentiable relaxation of the L0 norm using a Gaussian basis function."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializing L0 penalty with differentiable relaxation.</span>
 
 <span class="sd">        Args:</span>
@@ -229,18 +229,18 @@
         <span class="c1"># hyperparameter to control the differentiable relaxation in L0 norm function.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">nnz_approx</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">target_point</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_point</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="L0PenaltyApprox">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L0PenaltyApprox">[docs]</a>
-<span class="k">class</span> <span class="nc">L0PenaltyApprox</span><span class="p">(</span><span class="n">L0Approximation</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">L0PenaltyApprox</span><span class="p">(</span><span class="n">L0Approximation</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Differentiable relaxation of the L0 norm to be added to any arbitrary</span>
 <span class="sd">    acquisition function to construct a PenalizedAcquisitionFunction."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializing L0 penalty with differentiable relaxation.</span>
 
 <span class="sd">        Args:</span>
@@ -249,7 +249,7 @@
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_point</span><span class="o">=</span><span class="n">target_point</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            X: A "batch_shape x q x dim" representing the points to be evaluated.</span>
@@ -262,7 +262,7 @@
 
 <div class="viewcode-block" id="PenalizedAcquisitionFunction">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">PenalizedAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PenalizedAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome acquisition function regularized by the given penalty.</span>
 
 <span class="sd">    The usage is similar to:</span>
@@ -271,7 +271,7 @@
 <span class="sd">        acqf = PenalizedAcquisitionFunction(raw_acqf, penalty)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">raw_acqf</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
         <span class="n">penalty_func</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -291,19 +291,19 @@
 
 <div class="viewcode-block" id="PenalizedAcquisitionFunction.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">raw_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_acqf</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">penalty_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">penalty_func</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">raw_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization_parameter</span> <span class="o">*</span> <span class="n">penalty_term</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_acqf</span><span class="o">.</span><span class="n">X_pending</span>
 
 <div class="viewcode-block" id="PenalizedAcquisitionFunction.set_X_pending">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction.set_X_pending">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_acqf</span><span class="p">,</span> <span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_acqf</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -317,7 +317,7 @@
 
 <div class="viewcode-block" id="group_lasso_regularizer">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.group_lasso_regularizer">[docs]</a>
-<span class="k">def</span> <span class="nf">group_lasso_regularizer</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">group_lasso_regularizer</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Computes the group lasso regularization function for the given point.</span>
 
 <span class="sd">    Args:</span>
@@ -342,13 +342,13 @@
 
 <div class="viewcode-block" id="L1PenaltyObjective">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L1PenaltyObjective">[docs]</a>
-<span class="k">class</span> <span class="nc">L1PenaltyObjective</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">L1PenaltyObjective</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    L1 penalty objective class. An instance of this class can be added to any</span>
 <span class="sd">    arbitrary objective to construct a PenalizedMCObjective.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializing L1 penalty objective.</span>
 
 <span class="sd">        Args:</span>
@@ -360,7 +360,7 @@
 
 <div class="viewcode-block" id="L1PenaltyObjective.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L1PenaltyObjective.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            X: A "batch_shape x q x dim" representing the points to be evaluated.</span>
@@ -376,7 +376,7 @@
 
 <div class="viewcode-block" id="PenalizedMCObjective">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.PenalizedMCObjective">[docs]</a>
-<span class="k">class</span> <span class="nc">PenalizedMCObjective</span><span class="p">(</span><span class="n">GenericMCObjective</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PenalizedMCObjective</span><span class="p">(</span><span class="n">GenericMCObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Penalized MC objective.</span>
 
 <span class="sd">    Allows to construct a penalized MC-objective by adding a penalty term to</span>
@@ -399,7 +399,7 @@
 <span class="sd">                objective, l1_penalty_objective, regularization_parameter</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">objective</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span>
         <span class="n">penalty_objective</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
@@ -427,7 +427,7 @@
 
 <div class="viewcode-block" id="PenalizedMCObjective.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.PenalizedMCObjective.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the penalized objective on the samples.</span>
 
 <span class="sd">        Args:</span>
@@ -461,13 +461,13 @@
 
 <div class="viewcode-block" id="L0PenaltyApproxObjective">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L0PenaltyApproxObjective">[docs]</a>
-<span class="k">class</span> <span class="nc">L0PenaltyApproxObjective</span><span class="p">(</span><span class="n">L0Approximation</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">L0PenaltyApproxObjective</span><span class="p">(</span><span class="n">L0Approximation</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Differentiable relaxation of the L0 norm penalty objective class.</span>
 <span class="sd">    An instance of this class can be added to any arbitrary objective to</span>
 <span class="sd">    construct a PenalizedMCObjective.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initializing L0 penalty with differentiable relaxation.</span>
 
 <span class="sd">        Args:</span>
@@ -476,7 +476,7 @@
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">target_point</span><span class="o">=</span><span class="n">target_point</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            X: A "batch_shape x q x dim" representing the points to be evaluated.</span>

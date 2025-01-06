@@ -31,35 +31,35 @@
 <span class="sd">Methods for optimizing acquisition functions.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">dataclasses</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">OneShotAcquisitionFunction</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="n">qKnowledgeGradient</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.knowledge_gradient</span><span class="w"> </span><span class="kn">import</span> <span class="n">qKnowledgeGradient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.multi_objective.hypervolume_knowledge_gradient</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">qHypervolumeKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">InputDataError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">CandidateGenerationError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">OptimizationWarning</span>
-<span class="kn">from</span> <span class="nn">botorch.generation.gen</span> <span class="kn">import</span> <span class="n">gen_candidates_scipy</span><span class="p">,</span> <span class="n">TGenCandidates</span>
-<span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">logger</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.initializers</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputDataError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CandidateGenerationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationWarning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.generation.gen</span><span class="w"> </span><span class="kn">import</span> <span class="n">gen_candidates_scipy</span><span class="p">,</span> <span class="n">TGenCandidates</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.initializers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">gen_batch_initial_conditions</span><span class="p">,</span>
     <span class="n">gen_one_shot_hvkg_initial_conditions</span><span class="p">,</span>
     <span class="n">gen_one_shot_kg_initial_conditions</span><span class="p">,</span>
     <span class="n">TGenInitialConditions</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.stopping</span> <span class="kn">import</span> <span class="n">ExpMAStoppingCriterion</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.stopping</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExpMAStoppingCriterion</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">INIT_OPTION_KEYS</span> <span class="o">=</span> <span class="p">{</span>
     <span class="c1"># set of options for initialization that we should</span>
@@ -82,7 +82,7 @@
 <div class="viewcode-block" id="OptimizeAcqfInputs">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.OptimizeAcqfInputs">[docs]</a>
 <span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">OptimizeAcqfInputs</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OptimizeAcqfInputs</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Container for inputs to `optimize_acqf`.</span>
 
@@ -111,12 +111,12 @@
     <span class="n">ic_gen_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">full_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">full_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_full_tree</span> <span class="ow">or</span> <span class="p">(</span>
             <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">)</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span>
         <span class="p">):</span>
@@ -190,7 +190,7 @@
 
 <div class="viewcode-block" id="OptimizeAcqfInputs.get_ic_generator">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.OptimizeAcqfInputs.get_ic_generator">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_ic_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TGenInitialConditions</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_ic_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TGenInitialConditions</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ic_generator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ic_generator</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">qKnowledgeGradient</span><span class="p">):</span>
@@ -202,7 +202,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_optimize_acqf_all_features_fixed</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_optimize_acqf_all_features_fixed</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">fixed_features</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
@@ -224,7 +224,7 @@
     <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">acq_value</span>
 
 
-<span class="k">def</span> <span class="nf">_validate_sequential_inputs</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_sequential_inputs</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="c1"># Validate that constraints across the q-dim and</span>
     <span class="c1"># self.sequential are not present together.</span>
     <span class="n">const_err_message</span> <span class="o">=</span> <span class="p">(</span>
@@ -270,7 +270,7 @@
         <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_optimize_acqf_sequential_q</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_optimize_acqf_sequential_q</span><span class="p">(</span>
     <span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""</span>
@@ -314,7 +314,7 @@
     <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">acq_value_list</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_combine_initial_conditions</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_combine_initial_conditions</span><span class="p">(</span>
     <span class="n">provided_initial_conditions</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">generated_initial_conditions</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
@@ -336,7 +336,7 @@
         <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_optimize_acqf_batch</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_optimize_acqf_batch</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
     <span class="n">options</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
 
     <span class="n">required_num_restarts</span> <span class="o">=</span> <span class="n">opt_inputs</span><span class="o">.</span><span class="n">num_restarts</span>
@@ -379,7 +379,7 @@
         <span class="p">),</span>
     <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_optimize_batch_candidates</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="ne">Warning</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_optimize_batch_candidates</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="ne">Warning</span><span class="p">]]:</span>
         <span class="n">batch_candidates_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">batch_acq_values_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">batched_ics</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">batch_limit</span><span class="p">)</span>
@@ -507,7 +507,7 @@
 
 <div class="viewcode-block" id="optimize_acqf">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf">[docs]</a>
-<span class="k">def</span> <span class="nf">optimize_acqf</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_acqf</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -659,7 +659,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_optimize_acqf</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_optimize_acqf</span><span class="p">(</span><span class="n">opt_inputs</span><span class="p">:</span> <span class="n">OptimizeAcqfInputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
     <span class="c1"># Handle the trivial case when all features are fixed</span>
     <span class="k">if</span> <span class="p">(</span>
         <span class="n">opt_inputs</span><span class="o">.</span><span class="n">fixed_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -682,7 +682,7 @@
 
 <div class="viewcode-block" id="optimize_acqf_cyclic">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_cyclic">[docs]</a>
-<span class="k">def</span> <span class="nf">optimize_acqf_cyclic</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_acqf_cyclic</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -823,7 +823,7 @@
 
 <div class="viewcode-block" id="optimize_acqf_list">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_list">[docs]</a>
-<span class="k">def</span> <span class="nf">optimize_acqf_list</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_acqf_list</span><span class="p">(</span>
     <span class="n">acq_function_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -960,7 +960,7 @@
 
 <div class="viewcode-block" id="optimize_acqf_mixed">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_mixed">[docs]</a>
-<span class="k">def</span> <span class="nf">optimize_acqf_mixed</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_acqf_mixed</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1178,7 +1178,7 @@
 
 <div class="viewcode-block" id="optimize_acqf_discrete">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_discrete">[docs]</a>
-<span class="k">def</span> <span class="nf">optimize_acqf_discrete</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_acqf_discrete</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">choices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1286,13 +1286,13 @@
 
 
 
-<span class="k">def</span> <span class="nf">_split_batch_eval_acqf</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_batch_eval_acqf</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">max_batch_size</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">acq_function</span><span class="p">(</span><span class="n">X_</span><span class="p">)</span> <span class="k">for</span> <span class="n">X_</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">max_batch_size</span><span class="p">)])</span>
 
 
-<span class="k">def</span> <span class="nf">_generate_neighbors</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_generate_neighbors</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">discrete_choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
     <span class="n">X_avoid</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1311,7 +1311,7 @@
     <span class="k">return</span> <span class="n">X_loc</span>
 
 
-<span class="k">def</span> <span class="nf">_filter_infeasible</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_filter_infeasible</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">inequality_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Remove all points from `X` that don't satisfy the constraints."""</span>
@@ -1321,12 +1321,12 @@
     <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">is_feasible</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">_filter_invalid</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X_avoid</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_filter_invalid</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X_avoid</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Remove all occurences of `X_avoid` from `X`."""</span>
     <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="o">~</span><span class="p">(</span><span class="n">X</span> <span class="o">==</span> <span class="n">X_avoid</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)]</span>
 
 
-<span class="k">def</span> <span class="nf">_gen_batch_initial_conditions_local_search</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_batch_initial_conditions_local_search</span><span class="p">(</span>
     <span class="n">discrete_choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
     <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">X_avoid</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1353,7 +1353,7 @@
     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to generate at least </span><span class="si">{</span><span class="n">min_points</span><span class="si">}</span><span class="s2"> initial conditions"</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_gen_starting_points_local_search</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_gen_starting_points_local_search</span><span class="p">(</span>
     <span class="n">discrete_choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
     <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -1407,7 +1407,7 @@
 
 <div class="viewcode-block" id="optimize_acqf_discrete_local_search">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_discrete_local_search">[docs]</a>
-<span class="k">def</span> <span class="nf">optimize_acqf_discrete_local_search</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_acqf_discrete_local_search</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">discrete_choices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>

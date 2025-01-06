@@ -36,16 +36,16 @@
 <span class="sd">multi-fidelity Bayesian Optimization.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.models.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicModel</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.deterministic</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeterministicModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="AffineFidelityCostModel">
 <a class="viewcode-back" href="../../../models.html#botorch.models.cost.AffineFidelityCostModel">[docs]</a>
-<span class="k">class</span> <span class="nc">AffineFidelityCostModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AffineFidelityCostModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Deterministic, affine cost model operating on fidelity parameters.</span>
 
 <span class="sd">    For each (q-batch) element of a candidate set `X`, this module computes a</span>
@@ -66,7 +66,7 @@
 <span class="sd">        &gt;&gt;&gt; cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fidelity_weights</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">fixed_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
@@ -91,7 +91,7 @@
 
 <div class="viewcode-block" id="AffineFidelityCostModel.forward">
 <a class="viewcode-back" href="../../../models.html#botorch.models.cost.AffineFidelityCostModel.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost on a candidate set X.</span>
 
 <span class="sd">        Computes a cost of the form</span>
@@ -117,14 +117,14 @@
 
 <div class="viewcode-block" id="FixedCostModel">
 <a class="viewcode-back" href="../../../models.html#botorch.models.cost.FixedCostModel">[docs]</a>
-<span class="k">class</span> <span class="nc">FixedCostModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FixedCostModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Deterministic, fixed cost model.</span>
 
 <span class="sd">    For each (q-batch) element of a candidate set `X`, this module computes a</span>
 <span class="sd">    fixed cost per objective.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fixed_cost</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -139,7 +139,7 @@
 
 <div class="viewcode-block" id="FixedCostModel.forward">
 <a class="viewcode-back" href="../../../models.html#botorch.models.cost.FixedCostModel.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the cost on a candidate set X.</span>
 
 <span class="sd">        Computes the fixed cost of evaluating each objective for each element</span>

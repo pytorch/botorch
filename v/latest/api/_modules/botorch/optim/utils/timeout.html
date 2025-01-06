@@ -27,21 +27,21 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">numpy.typing</span> <span class="k">as</span> <span class="nn">npt</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">OptimizationTimeoutError</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">optimize</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationTimeoutError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize</span>
 
 
 <div class="viewcode-block" id="minimize_with_timeout">
 <a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.timeout.minimize_with_timeout">[docs]</a>
-<span class="k">def</span> <span class="nf">minimize_with_timeout</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">minimize_with_timeout</span><span class="p">(</span>
     <span class="n">fun</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">x0</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span>
     <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
@@ -70,7 +70,7 @@
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
         <span class="n">callback_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"num_iterations"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>  <span class="c1"># update from withing callback below</span>
 
-        <span class="k">def</span> <span class="nf">timeout_callback</span><span class="p">(</span><span class="n">xk</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">timeout_callback</span><span class="p">(</span><span class="n">xk</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
             <span class="n">runtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
             <span class="n">callback_data</span><span class="p">[</span><span class="s2">"num_iterations"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">runtime</span> <span class="o">&gt;</span> <span class="n">timeout_sec</span><span class="p">:</span>
@@ -87,7 +87,7 @@
 
         <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"trust-constr"</span><span class="p">:</span>  <span class="c1"># special signature</span>
 
-            <span class="k">def</span> <span class="nf">wrapped_callback</span><span class="p">(</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_callback</span><span class="p">(</span>
                 <span class="n">xk</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">optimize</span><span class="o">.</span><span class="n">OptimizeResult</span>
             <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
                 <span class="c1"># order here is important to make sure base callback gets executed</span>
@@ -95,7 +95,7 @@
 
         <span class="k">else</span><span class="p">:</span>
 
-            <span class="k">def</span> <span class="nf">wrapped_callback</span><span class="p">(</span><span class="n">xk</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_callback</span><span class="p">(</span><span class="n">xk</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">timeout_callback</span><span class="p">(</span><span class="n">xk</span><span class="o">=</span><span class="n">xk</span><span class="p">)</span>
                 <span class="n">callback</span><span class="p">(</span><span class="n">xk</span><span class="p">)</span>
 

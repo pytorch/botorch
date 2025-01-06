@@ -88,7 +88,7 @@
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">plotly.io</span> <span class="k">as</span> <span class="nn">pio</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">plotly.io</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pio</span>
 
 <span class="c1"># Ax uses Plotly to produce interactive plots. These are great for viewing and analysis,</span>
 <span class="c1"># though they also lead to large file sizes, which is not ideal for files living in GH.</span>
@@ -104,19 +104,19 @@
 <div class="prompt input_prompt">In [2]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.monte_carlo</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
-<span class="k">class</span> <span class="nc">qScalarizedUpperConfidenceBound</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qScalarizedUpperConfidenceBound</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">beta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -133,7 +133,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">weights</span><span class="p">))</span>
 
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evaluate scalarized qUCB on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
@@ -244,12 +244,12 @@
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.utils</span> <span class="kn">import</span> <span class="n">standardize</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">standardize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
 
 
 <span class="c1"># generate synthetic data</span>
@@ -326,11 +326,11 @@
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
 
 
-<span class="k">class</span> <span class="nc">ScalarizedUpperConfidenceBound</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScalarizedUpperConfidenceBound</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">beta</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -345,7 +345,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">weights</span><span class="p">))</span>
 
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evaluate the Upper Confidence Bound on the candidate set X using scalarization</span>
 
 <span class="sd">        Args:</span>
@@ -464,14 +464,14 @@
 <div class="prompt input_prompt">In [10]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
 
-<span class="kn">from</span> <span class="nn">botorch.acquisition.input_constructors</span> <span class="kn">import</span> <span class="n">acqf_input_constructor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.input_constructors</span><span class="w"> </span><span class="kn">import</span> <span class="n">acqf_input_constructor</span>
 
 
 <span class="nd">@acqf_input_constructor</span><span class="p">(</span><span class="n">ScalarizedUpperConfidenceBound</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">construct_inputs_scalarized_ucb</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs_scalarized_ucb</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
     <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
@@ -499,8 +499,8 @@
 <div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ax.modelbridge.generation_strategy</span> <span class="kn">import</span> <span class="n">GenerationStep</span><span class="p">,</span> <span class="n">GenerationStrategy</span>
-<span class="kn">from</span> <span class="nn">ax.modelbridge.registry</span> <span class="kn">import</span> <span class="n">Models</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ax.modelbridge.generation_strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerationStep</span><span class="p">,</span> <span class="n">GenerationStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ax.modelbridge.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">Models</span>
 
 
 <span class="n">gs</span> <span class="o">=</span> <span class="n">GenerationStrategy</span><span class="p">(</span>
@@ -542,9 +542,9 @@
 <div class="prompt input_prompt">In [12]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ax.service.ax_client</span> <span class="kn">import</span> <span class="n">AxClient</span>
-<span class="kn">from</span> <span class="nn">ax.service.utils.instantiation</span> <span class="kn">import</span> <span class="n">ObjectiveProperties</span>
-<span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">BraninCurrin</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ax.service.ax_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AxClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ax.service.utils.instantiation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ObjectiveProperties</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.test_functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraninCurrin</span>
 
 
 <span class="c1"># Initialize the client - AxClient offers a convenient API to control the experiment</span>
@@ -571,7 +571,7 @@
 <span class="n">branincurrin</span> <span class="o">=</span> <span class="n">BraninCurrin</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"x</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]])</span>
     <span class="n">bc_eval</span> <span class="o">=</span> <span class="n">branincurrin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
     <span class="c1"># In our case, standard error is 0, since we are computing a synthetic function.</span>
@@ -939,9 +939,9 @@
 <div class="prompt input_prompt">In [15]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ax.plot.pareto_frontier</span> <span class="kn">import</span> <span class="n">plot_pareto_frontier</span>
-<span class="kn">from</span> <span class="nn">ax.plot.pareto_utils</span> <span class="kn">import</span> <span class="n">compute_posterior_pareto_frontier</span>
-<span class="kn">from</span> <span class="nn">ax.utils.notebook.plotting</span> <span class="kn">import</span> <span class="n">render</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ax.plot.pareto_frontier</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_pareto_frontier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ax.plot.pareto_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_posterior_pareto_frontier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ax.utils.notebook.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span>
 
 
 <span class="n">objectives</span> <span class="o">=</span> <span class="n">ax_client</span><span class="o">.</span><span class="n">experiment</span><span class="o">.</span><span class="n">optimization_config</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">objectives</span>
@@ -980,8 +980,8 @@
 <div class="prompt input_prompt">In [16]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">ScalarizedPosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="n">UpperConfidenceBound</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScalarizedPosteriorTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.analytic</span><span class="w"> </span><span class="kn">import</span> <span class="n">UpperConfidenceBound</span>
 
 <span class="n">pt</span> <span class="o">=</span> <span class="n">ScalarizedPosteriorTransform</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]))</span>
 <span class="n">SUCB</span> <span class="o">=</span> <span class="n">UpperConfidenceBound</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">posterior_transform</span><span class="o">=</span><span class="n">pt</span><span class="p">)</span>

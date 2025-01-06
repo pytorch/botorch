@@ -97,25 +97,25 @@
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 
-<span class="kn">import</span> <span class="nn">gpytorch.settings</span> <span class="k">as</span> <span class="nn">gpt_settings</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">qExpectedImprovement</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">GenericMCObjective</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">HigherOrderGP</span><span class="p">,</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.higher_order_gp</span> <span class="kn">import</span> <span class="n">FlattenedStandardize</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms</span> <span class="kn">import</span> <span class="n">Normalize</span><span class="p">,</span> <span class="n">Standardize</span>
-<span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll_torch</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">linear_operator.settings</span> <span class="kn">import</span> <span class="n">_fast_solves</span>
-<span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gpytorch.settings</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpt_settings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">qExpectedImprovement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenericMCObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">HigherOrderGP</span><span class="p">,</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.higher_order_gp</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlattenedStandardize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">Normalize</span><span class="p">,</span> <span class="n">Standardize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_gpytorch_mll_torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">IIDNormalSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">_fast_solves</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Adam</span>
 
 <span class="o">%</span><span class="k">matplotlib</span> inline
 
@@ -208,7 +208,7 @@ with the cheap to evaluate, differentiable function given by $g(y):= \sum_{(s,t)
 <div class="prompt input_prompt">In [4]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">env_cfun</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">env_cfun</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">tau</span><span class="p">):</span>
     <span class="n">c1</span> <span class="o">=</span> <span class="n">M</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">D</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
     <span class="n">exp1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">s</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">/</span> <span class="n">D</span> <span class="o">/</span> <span class="n">t</span><span class="p">)</span>
     <span class="n">term1</span> <span class="o">=</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">exp1</span>
@@ -241,12 +241,12 @@ with the cheap to evaluate, differentiable function given by $g(y):= \sum_{(s,t)
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">gen_rand_points</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">gen_rand_points</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
     <span class="n">points_nlzd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">points_nlzd</span>
 
 
-<span class="k">def</span> <span class="nf">optimize_ei</span><span class="p">(</span><span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_ei</span><span class="p">(</span><span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
     <span class="n">cands_nlzd</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span><span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">cands_nlzd</span>
 </pre></div>
@@ -266,7 +266,7 @@ with the cheap to evaluate, differentiable function given by $g(y):= \sum_{(s,t)
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">prepare_data</span><span class="p">(</span><span class="n">s_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">t_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">prepare_data</span><span class="p">(</span><span class="n">s_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">t_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"---- Running the environmental problem with "</span><span class="p">,</span> <span class="n">s_size</span><span class="p">,</span> <span class="n">t_size</span><span class="p">,</span> <span class="s2">" ----"</span><span class="p">)</span>
     <span class="c1"># X = [M, D, L, tau]</span>
     <span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
@@ -293,12 +293,12 @@ with the cheap to evaluate, differentiable function given by $g(y):= \sum_{(s,t)
     <span class="n">Sgrid</span><span class="p">,</span> <span class="n">Tgrid</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>
 
     <span class="c1"># X = [M, D, L, tau]</span>
-    <span class="k">def</span> <span class="nf">c_batched</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">c_batched</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">env_cfun</span><span class="p">(</span><span class="n">Sgrid</span><span class="p">,</span> <span class="n">Tgrid</span><span class="p">,</span> <span class="o">*</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">X</span><span class="p">])</span>
 
     <span class="n">c_true</span> <span class="o">=</span> <span class="n">env_cfun</span><span class="p">(</span><span class="n">Sgrid</span><span class="p">,</span> <span class="n">Tgrid</span><span class="p">,</span> <span class="n">M0</span><span class="p">,</span> <span class="n">D0</span><span class="p">,</span> <span class="n">L0</span><span class="p">,</span> <span class="n">tau0</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">neq_sum_quared_diff</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">neq_sum_quared_diff</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># unsqueeze</span>
         <span class="k">if</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span><span class="n">s_size</span> <span class="o">*</span> <span class="n">t_size</span><span class="p">):</span>
             <span class="n">samples</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">s_size</span><span class="p">,</span> <span class="n">t_size</span><span class="p">)</span>

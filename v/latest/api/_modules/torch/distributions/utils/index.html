@@ -22,13 +22,13 @@
 <div class="body" role="main">
 <h1>Source code for torch.distributions.utils</h1><div class="highlight"><pre>
 <span></span><span class="c1"># mypy: allow-untyped-defs</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">update_wrapper</span>
-<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">update_wrapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numbers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
-<span class="kn">from</span> <span class="nn">torch.overrides</span> <span class="kn">import</span> <span class="n">is_tensor_like</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.overrides</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_tensor_like</span>
 
 
 <span class="n">euler_constant</span> <span class="o">=</span> <span class="mf">0.57721566490153286060</span>  <span class="c1"># Euler Mascheroni Constant</span>
@@ -44,7 +44,7 @@
 <span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">broadcast_all</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">broadcast_all</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Given a list of values (possibly containing numbers), returns a list where each</span>
 <span class="sd">    value is broadcasted based on the following rules:</span>
@@ -78,7 +78,7 @@
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">broadcast_tensors</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_standard_normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_standard_normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">_C</span><span class="o">.</span><span class="n">_get_tracing_state</span><span class="p">():</span>
         <span class="c1"># [JIT WORKAROUND] lack of support for .normal_()</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
@@ -88,7 +88,7 @@
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">normal_</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">_sum_rightmost</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_sum_rightmost</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Sum out ``dim`` many rightmost dimensions of a given tensor.</span>
 
@@ -102,7 +102,7 @@
     <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">required_shape</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">logits_to_probs</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">is_binary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">logits_to_probs</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">is_binary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Converts a tensor of logits into probabilities. Note that for the</span>
 <span class="sd">    binary case, each value denotes log odds, whereas for the</span>
@@ -114,7 +114,7 @@
     <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">clamp_probs</span><span class="p">(</span><span class="n">probs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">clamp_probs</span><span class="p">(</span><span class="n">probs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Clamps the probabilities to be in the open interval `(0, 1)`.</span>
 
 <span class="sd">    The probabilities would be clamped between `eps` and `1 - eps`,</span>
@@ -140,7 +140,7 @@
     <span class="k">return</span> <span class="n">probs</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eps</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">probs_to_logits</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">is_binary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">probs_to_logits</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="n">is_binary</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Converts a tensor of probabilities into logits. For the binary case,</span>
 <span class="sd">    this denotes the probability of occurrence of the event indexed by `1`.</span>
@@ -153,7 +153,7 @@
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">ps_clamped</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">lazy_property</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">lazy_property</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Used as a decorator for lazy loading of class attributes. This uses a</span>
 <span class="sd">    non-data descriptor that calls the wrapped method to compute the property on</span>
@@ -161,11 +161,11 @@
 <span class="sd">    attribute.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wrapped</span> <span class="o">=</span> <span class="n">wrapped</span>
         <span class="n">update_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">)</span>  <span class="c1"># type:ignore[arg-type]</span>
 
-    <span class="k">def</span> <span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">obj_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">obj_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">_lazy_property_and_property</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wrapped</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">enable_grad</span><span class="p">():</span>
@@ -174,18 +174,18 @@
         <span class="k">return</span> <span class="n">value</span>
 
 
-<span class="k">class</span> <span class="nc">_lazy_property_and_property</span><span class="p">(</span><span class="n">lazy_property</span><span class="p">,</span> <span class="nb">property</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_lazy_property_and_property</span><span class="p">(</span><span class="n">lazy_property</span><span class="p">,</span> <span class="nb">property</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""We want lazy properties to look like multiple things.</span>
 
 <span class="sd">    * property when Sphinx autodoc looks</span>
 <span class="sd">    * lazy_property when Distribution validate_args looks</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">):</span>
         <span class="nb">property</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">tril_matrix_to_vec</span><span class="p">(</span><span class="n">mat</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">diag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">tril_matrix_to_vec</span><span class="p">(</span><span class="n">mat</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">diag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Convert a `D x D` matrix or a batch of matrices into a (batched) vector</span>
 <span class="sd">    which comprises of lower triangular elements from the matrix in row order.</span>
@@ -199,7 +199,7 @@
     <span class="k">return</span> <span class="n">vec</span>
 
 
-<span class="k">def</span> <span class="nf">vec_to_tril_matrix</span><span class="p">(</span><span class="n">vec</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">diag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">vec_to_tril_matrix</span><span class="p">(</span><span class="n">vec</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">diag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Convert a vector or a batch of vectors into a batched `D x D`</span>
 <span class="sd">    lower triangular matrix containing elements from the vector in row order.</span>

@@ -29,31 +29,31 @@
 
 <span class="sa">r</span><span class="sd">"""Core abstractions and generic optimizers."""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
-<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">auto</span><span class="p">,</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
-<span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">maxsize</span>
-<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">monotonic</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">auto</span><span class="p">,</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">count</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sys</span><span class="w"> </span><span class="kn">import</span> <span class="n">maxsize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">monotonic</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">numpy.typing</span> <span class="k">as</span> <span class="nn">npt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
 
-<span class="kn">from</span> <span class="nn">botorch.optim.closures</span> <span class="kn">import</span> <span class="n">NdarrayOptimizationClosure</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.utils.numpy_utils</span> <span class="kn">import</span> <span class="n">get_bounds_as_ndarray</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.utils.timeout</span> <span class="kn">import</span> <span class="n">minimize_with_timeout</span>
-<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">asarray</span><span class="p">,</span> <span class="n">float64</span> <span class="k">as</span> <span class="n">np_float64</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.optim.adam</span> <span class="kn">import</span> <span class="n">Adam</span>
-<span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.closures</span><span class="w"> </span><span class="kn">import</span> <span class="n">NdarrayOptimizationClosure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.utils.numpy_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_bounds_as_ndarray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.utils.timeout</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize_with_timeout</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">asarray</span><span class="p">,</span> <span class="n">float64</span> <span class="k">as</span> <span class="n">np_float64</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.adam</span><span class="w"> </span><span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">torch.optim.lr_scheduler</span> <span class="kn">import</span> <span class="n">LRScheduler</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.lr_scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">LRScheduler</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-    <span class="kn">from</span> <span class="nn">torch.optim.lr_scheduler</span> <span class="kn">import</span> <span class="n">_LRScheduler</span> <span class="k">as</span> <span class="n">LRScheduler</span>  <span class="c1"># pragma: no cover</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.lr_scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">_LRScheduler</span> <span class="k">as</span> <span class="n">LRScheduler</span>  <span class="c1"># pragma: no cover</span>
 
 
 <span class="n">_LBFGSB_MAXITER_MAXFUN_REGEX</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>  <span class="c1"># regex for maxiter and maxfun messages</span>
@@ -65,7 +65,7 @@
 
 <div class="viewcode-block" id="OptimizationStatus">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.core.OptimizationStatus">[docs]</a>
-<span class="k">class</span> <span class="nc">OptimizationStatus</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OptimizationStatus</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
     <span class="n">RUNNING</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># incomplete</span>
     <span class="n">SUCCESS</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># optimizer converged</span>
     <span class="n">FAILURE</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># terminated abnormally</span>
@@ -76,7 +76,7 @@
 <div class="viewcode-block" id="OptimizationResult">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.core.OptimizationResult">[docs]</a>
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">OptimizationResult</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OptimizationResult</span><span class="p">:</span>
     <span class="n">step</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">fval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span>
     <span class="n">status</span><span class="p">:</span> <span class="n">OptimizationStatus</span>
@@ -87,7 +87,7 @@
 
 <div class="viewcode-block" id="scipy_minimize">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.core.scipy_minimize">[docs]</a>
-<span class="k">def</span> <span class="nf">scipy_minimize</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scipy_minimize</span><span class="p">(</span>
     <span class="n">closure</span><span class="p">:</span> <span class="p">(</span>
         <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]]</span>
         <span class="o">|</span> <span class="n">NdarrayOptimizationClosure</span>
@@ -133,7 +133,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">call_counter</span> <span class="o">=</span> <span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># callbacks are typically made at the end of each iter</span>
 
-        <span class="k">def</span> <span class="nf">wrapped_callback</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_callback</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">):</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">OptimizationResult</span><span class="p">(</span>
                 <span class="n">step</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="n">call_counter</span><span class="p">),</span>
                 <span class="n">fval</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">wrapped_closure</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
@@ -178,7 +178,7 @@
 
 <div class="viewcode-block" id="torch_minimize">
 <a class="viewcode-back" href="../../../optim.html#botorch.optim.core.torch_minimize">[docs]</a>
-<span class="k">def</span> <span class="nf">torch_minimize</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">torch_minimize</span><span class="p">(</span>
     <span class="n">closure</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]],</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
     <span class="n">bounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>

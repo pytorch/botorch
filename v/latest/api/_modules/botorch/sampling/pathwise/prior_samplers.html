@@ -27,31 +27,31 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">from</span> <span class="nn">botorch.models.approximate_gp</span> <span class="kn">import</span> <span class="n">ApproximateGPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.features</span> <span class="kn">import</span> <span class="n">gen_kernel_features</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.features.generators</span> <span class="kn">import</span> <span class="n">TKernelFeatureMapGenerator</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.paths</span> <span class="kn">import</span> <span class="n">GeneralizedLinearPath</span><span class="p">,</span> <span class="n">PathList</span><span class="p">,</span> <span class="n">SamplePath</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.pathwise.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.approximate_gp</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApproximateGPyTorchModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model_list_gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">gen_kernel_features</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.features.generators</span><span class="w"> </span><span class="kn">import</span> <span class="n">TKernelFeatureMapGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneralizedLinearPath</span><span class="p">,</span> <span class="n">PathList</span><span class="p">,</span> <span class="n">SamplePath</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.pathwise.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_input_transform</span><span class="p">,</span>
     <span class="n">get_output_transform</span><span class="p">,</span>
     <span class="n">get_train_inputs</span><span class="p">,</span>
     <span class="n">TInputTransform</span><span class="p">,</span>
     <span class="n">TOutputTransform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_normal_samples</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">ApproximateGP</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="n">GP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.variational</span> <span class="kn">import</span> <span class="n">_VariationalStrategy</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Size</span><span class="p">,</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">draw_sobol_normal_samples</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApproximateGP</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="n">GP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.variational</span><span class="w"> </span><span class="kn">import</span> <span class="n">_VariationalStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Size</span><span class="p">,</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
 
 <span class="n">TPathwisePriorSampler</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">GP</span><span class="p">,</span> <span class="n">Size</span><span class="p">],</span> <span class="n">SamplePath</span><span class="p">]</span>
 <span class="n">DrawKernelFeaturePaths</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="s2">"draw_kernel_feature_paths"</span><span class="p">)</span>
@@ -59,7 +59,7 @@
 
 <div class="viewcode-block" id="draw_kernel_feature_paths">
 <a class="viewcode-back" href="../../../../sampling.html#botorch.sampling.pathwise.prior_samplers.draw_kernel_feature_paths">[docs]</a>
-<span class="k">def</span> <span class="nf">draw_kernel_feature_paths</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">draw_kernel_feature_paths</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">GP</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneralizedLinearPath</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Draws functions from a Bayesian-linear-model-based approximation to a GP prior.</span>
@@ -77,7 +77,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_draw_kernel_feature_paths_fallback</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_draw_kernel_feature_paths_fallback</span><span class="p">(</span>
     <span class="n">num_inputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">mean_module</span><span class="p">:</span> <span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">covar_module</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
@@ -119,7 +119,7 @@
 
 
 <span class="nd">@DrawKernelFeaturePaths</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_draw_kernel_feature_paths_ExactGP</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_draw_kernel_feature_paths_ExactGP</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneralizedLinearPath</span><span class="p">:</span>
     <span class="p">(</span><span class="n">train_X</span><span class="p">,)</span> <span class="o">=</span> <span class="n">get_train_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">transformed</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -134,7 +134,7 @@
 
 
 <span class="nd">@DrawKernelFeaturePaths</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ModelListGP</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_draw_kernel_feature_paths_list</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_draw_kernel_feature_paths_list</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ModelListGP</span><span class="p">,</span>
     <span class="n">join</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -144,7 +144,7 @@
 
 
 <span class="nd">@DrawKernelFeaturePaths</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ApproximateGPyTorchModel</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_draw_kernel_feature_paths_ApproximateGPyTorchModel</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_draw_kernel_feature_paths_ApproximateGPyTorchModel</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ApproximateGPyTorchModel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneralizedLinearPath</span><span class="p">:</span>
     <span class="p">(</span><span class="n">train_X</span><span class="p">,)</span> <span class="o">=</span> <span class="n">get_train_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">transformed</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -158,14 +158,14 @@
 
 
 <span class="nd">@DrawKernelFeaturePaths</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ApproximateGP</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_draw_kernel_feature_paths_ApproximateGP</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_draw_kernel_feature_paths_ApproximateGP</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ApproximateGP</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneralizedLinearPath</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">DrawKernelFeaturePaths</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">variational_strategy</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <span class="nd">@DrawKernelFeaturePaths</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">ApproximateGP</span><span class="p">,</span> <span class="n">_VariationalStrategy</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_draw_kernel_feature_paths_ApproximateGP_fallback</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_draw_kernel_feature_paths_ApproximateGP_fallback</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ApproximateGP</span><span class="p">,</span>
     <span class="n">_</span><span class="p">:</span> <span class="n">_VariationalStrategy</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>

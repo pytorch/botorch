@@ -29,22 +29,22 @@
 
 <span class="sa">r</span><span class="sd">"""Utilities for maximizing acquisition functions."""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Mapping</span>
-<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">ModelListGPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchWarning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelListGPyTorchModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="columnwise_clamp">
 <a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.acquisition_utils.columnwise_clamp">[docs]</a>
-<span class="k">def</span> <span class="nf">columnwise_clamp</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">columnwise_clamp</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">lower</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">upper</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -91,7 +91,7 @@
 
 <div class="viewcode-block" id="fix_features">
 <a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.acquisition_utils.fix_features">[docs]</a>
-<span class="k">def</span> <span class="nf">fix_features</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fix_features</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Fix feature values in a Tensor.</span>
@@ -124,7 +124,7 @@
 
 <div class="viewcode-block" id="get_X_baseline">
 <a class="viewcode-back" href="../../../../optim.html#botorch.optim.utils.acquisition_utils.get_X_baseline">[docs]</a>
-<span class="k">def</span> <span class="nf">get_X_baseline</span><span class="p">(</span><span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_X_baseline</span><span class="p">(</span><span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Extract X_baseline from an acquisition function.</span>
 
 <span class="sd">    This tries to find the baseline set of points. First, this checks if the</span>

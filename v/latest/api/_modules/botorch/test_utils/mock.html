@@ -32,27 +32,27 @@
 
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Generator</span>
-<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span><span class="p">,</span> <span class="n">ExitStack</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">mock</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span><span class="p">,</span> <span class="n">ExitStack</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">unittest</span><span class="w"> </span><span class="kn">import</span> <span class="n">mock</span>
 
-<span class="kn">from</span> <span class="nn">botorch.optim.initializers</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.initializers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">gen_batch_initial_conditions</span><span class="p">,</span>
     <span class="n">gen_one_shot_kg_initial_conditions</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.utils.timeout</span> <span class="kn">import</span> <span class="n">minimize_with_timeout</span>
-<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">OptimizeResult</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim.utils.timeout</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize_with_timeout</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizeResult</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="mock_optimize_context_manager">
 <a class="viewcode-back" href="../../../test_utils.html#botorch.test_utils.mock.mock_optimize_context_manager">[docs]</a>
 <span class="nd">@contextmanager</span>
-<span class="k">def</span> <span class="nf">mock_optimize_context_manager</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mock_optimize_context_manager</span><span class="p">(</span>
     <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""A context manager that uses mocks to speed up optimization for testing.</span>
@@ -63,20 +63,20 @@
 <span class="sd">            USE RESPONSIBLY.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">one_iteration_minimize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizeResult</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">one_iteration_minimize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizeResult</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"options"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"options"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"options"</span><span class="p">][</span><span class="s2">"maxiter"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">minimize_with_timeout</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">minimal_gen_ics</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">minimal_gen_ics</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"num_restarts"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"raw_samples"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
 
         <span class="k">return</span> <span class="n">gen_batch_initial_conditions</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">minimal_gen_os_ics</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">minimal_gen_os_ics</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"num_restarts"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">"raw_samples"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
 
@@ -148,12 +148,12 @@
 
 <div class="viewcode-block" id="mock_optimize">
 <a class="viewcode-back" href="../../../test_utils.html#botorch.test_utils.mock.mock_optimize">[docs]</a>
-<span class="k">def</span> <span class="nf">mock_optimize</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mock_optimize</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Wraps `f` in `mock_optimize_context_manager` for use as a decorator."""</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
     <span class="c1"># pyre-fixme[3]: Return type must be annotated.</span>
-    <span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">mock_optimize_context_manager</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 

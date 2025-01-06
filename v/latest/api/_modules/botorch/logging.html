@@ -27,14 +27,14 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
 <span class="n">LOG_LEVEL_DEFAULT</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span>
 
 
-<span class="k">def</span> <span class="nf">_get_logger</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_logger</span><span class="p">(</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"botorch"</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">LOG_LEVEL_DEFAULT</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Gets a default botorch logger</span>
@@ -62,7 +62,7 @@
 
 <div class="viewcode-block" id="shape_to_str">
 <a class="viewcode-back" href="../../logging.html#botorch.logging.shape_to_str">[docs]</a>
-<span class="k">def</span> <span class="nf">shape_to_str</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">shape_to_str</span><span class="p">(</span><span class="n">shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="s1">' x '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">shape</span><span class="p">)</span><span class="si">}</span><span class="s2">`"</span></div>
 
 

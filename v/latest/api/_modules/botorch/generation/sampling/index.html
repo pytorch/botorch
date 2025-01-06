@@ -37,37 +37,37 @@
 <span class="sd">q-acquisition functions we evaluate the joint value of the q-batch).</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">IdentityMCObjective</span><span class="p">,</span>
     <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
     <span class="n">PosteriorTransform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.generation.utils</span> <span class="kn">import</span> <span class="n">_flip_sub_unique</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.generation.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_flip_sub_unique</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 
-<span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">MultiTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">batched_multinomial</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">standardize</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model_list_gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelListGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.multitask</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">batched_multinomial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">standardize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
 
 
 <div class="viewcode-block" id="SamplingStrategy">
 <a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.SamplingStrategy">[docs]</a>
-<span class="k">class</span> <span class="nc">SamplingStrategy</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SamplingStrategy</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Abstract base class for sampling-based generation strategies."""</span>
 
 <div class="viewcode-block" id="SamplingStrategy.forward">
 <a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.SamplingStrategy.forward">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample according to the SamplingStrategy.</span>
 
 <span class="sd">        Args:</span>
@@ -87,7 +87,7 @@
 
 <div class="viewcode-block" id="MaxPosteriorSampling">
 <a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling">[docs]</a>
-<span class="k">class</span> <span class="nc">MaxPosteriorSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaxPosteriorSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample from a set of points according to their max posterior value.</span>
 
 <span class="sd">    Example:</span>
@@ -96,7 +96,7 @@
 <span class="sd">        &gt;&gt;&gt; sampled_X = MPS(X, num_samples=5)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -120,7 +120,7 @@
 
 <div class="viewcode-block" id="MaxPosteriorSampling.forward">
 <a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the model posterior.</span>
@@ -147,7 +147,7 @@
 
 <div class="viewcode-block" id="MaxPosteriorSampling.maximize_samples">
 <a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.MaxPosteriorSampling.maximize_samples">[docs]</a>
-    <span class="k">def</span> <span class="nf">maximize_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">maximize_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># num_samples x batch_shape x N</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">replacement</span><span class="p">:</span>
             <span class="c1"># if we allow replacement then things are simple(r)</span>
@@ -194,7 +194,7 @@
 
 <div class="viewcode-block" id="BoltzmannSampling">
 <a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.BoltzmannSampling">[docs]</a>
-<span class="k">class</span> <span class="nc">BoltzmannSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BoltzmannSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Sample from a set of points according to a tempered acquisition value.</span>
 
 <span class="sd">    Given an acquisition function `acq_func`, this sampling strategies draws</span>
@@ -215,7 +215,7 @@
 <span class="sd">        &gt;&gt;&gt; sampled_X = BMUCB(X, num_samples=5)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">acq_func</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">replacement</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Boltzmann Acquisition Value Sampling.</span>
@@ -234,7 +234,7 @@
 
 <div class="viewcode-block" id="BoltzmannSampling.forward">
 <a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.BoltzmannSampling.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from a tempered value of the acquisition function value.</span>
 
 <span class="sd">        Args:</span>
@@ -267,7 +267,7 @@
 
 <div class="viewcode-block" id="ConstrainedMaxPosteriorSampling">
 <a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling">[docs]</a>
-<span class="k">class</span> <span class="nc">ConstrainedMaxPosteriorSampling</span><span class="p">(</span><span class="n">MaxPosteriorSampling</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstrainedMaxPosteriorSampling</span><span class="p">(</span><span class="n">MaxPosteriorSampling</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained max posterior sampling.</span>
 
 <span class="sd">    Posterior sampling where we try to maximize an objective function while</span>
@@ -285,7 +285,7 @@
 <span class="sd">        &gt;&gt;&gt; sampled_X = CMPS(X, num_samples=5)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">constraint_model</span><span class="p">:</span> <span class="n">ModelListGP</span> <span class="o">|</span> <span class="n">MultiTaskGP</span><span class="p">,</span>
@@ -321,7 +321,7 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">constraint_model</span> <span class="o">=</span> <span class="n">constraint_model</span>
 
-    <span class="k">def</span> <span class="nf">_convert_samples_to_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y_samples</span><span class="p">,</span> <span class="n">C_samples</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_convert_samples_to_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y_samples</span><span class="p">,</span> <span class="n">C_samples</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Convert the objective and constraint samples into a score.</span>
 
 <span class="sd">        The logic is as follows:</span>
@@ -359,7 +359,7 @@
 
 <div class="viewcode-block" id="ConstrainedMaxPosteriorSampling.forward">
 <a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.ConstrainedMaxPosteriorSampling.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the model posterior.</span>

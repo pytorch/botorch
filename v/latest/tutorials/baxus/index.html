@@ -88,28 +88,28 @@ The tutorial is purposefully similar to the <a href="https://botorch.org/tutoria
 <div class="prompt input_prompt">In [1]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 
-<span class="kn">import</span> <span class="nn">botorch</span>
-<span class="kn">import</span> <span class="nn">gpytorch</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Interval</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">GaussianLikelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">botorch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gpytorch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interval</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.quasirandom</span><span class="w"> </span><span class="kn">import</span> <span class="n">SobolEngine</span>
 
-<span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="n">LogExpectedImprovement</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">ModelFittingError</span>
-<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
-<span class="kn">from</span> <span class="nn">botorch.generation</span> <span class="kn">import</span> <span class="n">MaxPosteriorSampling</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
-<span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">Branin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.analytic</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogExpectedImprovement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelFittingError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_gpytorch_mll</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.generation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaxPosteriorSampling</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize_acqf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.test_functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Branin</span>
 
 <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Running on </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -156,7 +156,7 @@ The tutorial is purposefully similar to the <a href="https://botorch.org/tutoria
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">branin</span> <span class="o">=</span> <span class="n">Branin</span><span class="p">(</span><span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">branin_emb</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">branin_emb</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""x is assumed to be in [-1, 1]^D"""</span>
     <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">branin</span><span class="o">.</span><span class="n">bounds</span>
     <span class="k">return</span> <span class="n">branin</span><span class="p">(</span><span class="n">lb</span> <span class="o">+</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
@@ -196,7 +196,7 @@ In contrast to TuRBO, the failure tolerance depends on the target dimensionality
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">BaxusState</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaxusState</span><span class="p">:</span>
     <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">eval_budget</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">new_bins_on_split</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
@@ -213,7 +213,7 @@ In contrast to TuRBO, the failure tolerance depends on the target dimensionality
     <span class="n">best_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span>
     <span class="n">restart_triggered</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">n_splits</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_bins_on_split</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">d_init</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span>
@@ -226,7 +226,7 @@ In contrast to TuRBO, the failure tolerance depends on the target dimensionality
         <span class="bp">self</span><span class="o">.</span><span class="n">n_splits</span> <span class="o">=</span> <span class="n">n_splits</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">split_budget</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">split_budget</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">round</span><span class="p">(</span>
             <span class="o">-</span><span class="mi">1</span>
             <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_bins_on_split</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_budget</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span><span class="p">)</span>
@@ -234,7 +234,7 @@ In contrast to TuRBO, the failure tolerance depends on the target dimensionality
         <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">failure_tolerance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">failure_tolerance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span>
         <span class="n">k</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length_min</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_init</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))</span>
@@ -242,7 +242,7 @@ In contrast to TuRBO, the failure tolerance depends on the target dimensionality
         <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_dim</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">split_budget</span> <span class="o">/</span> <span class="n">k</span><span class="p">)))</span>
 
 
-<span class="k">def</span> <span class="nf">update_state</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">Y_next</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_state</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">Y_next</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">Y_next</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">state</span><span class="o">.</span><span class="n">best_value</span> <span class="o">+</span> <span class="mf">1e-3</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">fabs</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">best_value</span><span class="p">):</span>
         <span class="n">state</span><span class="o">.</span><span class="n">success_counter</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">state</span><span class="o">.</span><span class="n">failure_counter</span> <span class="o">=</span> <span class="mi">0</span>
@@ -279,7 +279,7 @@ We create the embedding matrix that is used to project points from the target to
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">embedding_matrix</span><span class="p">(</span><span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">embedding_matrix</span><span class="p">(</span><span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
     <span class="k">if</span> <span class="p">(</span>
         <span class="n">target_dim</span> <span class="o">&gt;=</span> <span class="n">input_dim</span>
     <span class="p">):</span>  <span class="c1"># return identity matrix if target size greater than input size</span>
@@ -339,7 +339,7 @@ We create the embedding matrix that is used to project points from the target to
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">increase_embedding_and_observations</span><span class="p">(</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">increase_embedding_and_observations</span><span class="p">(</span>
     <span class="n">S</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">n_new_bins</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
     <span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">S</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="s2">"Observations don't lie in row space of S"</span>
@@ -496,7 +496,7 @@ tensor([[66, 38, 66, 66, 38, 38],
 <div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_initial_points</span><span class="p">(</span><span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_pts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_initial_points</span><span class="p">(</span><span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_pts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="n">sobol</span> <span class="o">=</span> <span class="n">SobolEngine</span><span class="p">(</span><span class="n">dimension</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">scramble</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
     <span class="n">X_init</span> <span class="o">=</span> <span class="p">(</span>
         <span class="mi">2</span> <span class="o">*</span> <span class="n">sobol</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_pts</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
@@ -521,7 +521,7 @@ tensor([[66, 38, 66, 66, 38, 38],
 <div class="prompt input_prompt">In [10]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">create_candidate</span><span class="p">(</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">create_candidate</span><span class="p">(</span>
     <span class="n">state</span><span class="p">,</span>
     <span class="n">model</span><span class="p">,</span>  <span class="c1"># GP model</span>
     <span class="n">X</span><span class="p">,</span>  <span class="c1"># Evaluated points on the domain [-1, 1]^d</span>

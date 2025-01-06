@@ -31,25 +31,25 @@
 <span class="sd">Some basic data transformation helpers.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.safe_math</span> <span class="kn">import</span> <span class="n">logmeanexp</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.safe_math</span><span class="w"> </span><span class="kn">import</span> <span class="n">logmeanexp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-    <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-    <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 
 
 <div class="viewcode-block" id="standardize">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.standardize">[docs]</a>
-<span class="k">def</span> <span class="nf">standardize</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">standardize</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Standardizes (zero mean, unit variance) a tensor by dim=-2.</span>
 
 <span class="sd">    If the tensor is single-dimensional, simply standardizes the tensor.</span>
@@ -73,7 +73,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_update_constant_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_update_constant_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""If the lower and upper bounds are identical for a dimension, set</span>
 <span class="sd">    the upper bound to lower bound + 1.</span>
 
@@ -94,7 +94,7 @@
 
 <div class="viewcode-block" id="normalize">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize">[docs]</a>
-<span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">update_constant_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">update_constant_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Min-max normalize X w.r.t. the provided bounds.</span>
 
 <span class="sd">    Args:</span>
@@ -127,7 +127,7 @@
 
 <div class="viewcode-block" id="unnormalize">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.unnormalize">[docs]</a>
-<span class="k">def</span> <span class="nf">unnormalize</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">unnormalize</span><span class="p">(</span>
     <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">update_constant_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Un-normalizes X w.r.t. the provided bounds.</span>
@@ -163,7 +163,7 @@
 
 <div class="viewcode-block" id="normalize_indices">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize_indices">[docs]</a>
-<span class="k">def</span> <span class="nf">normalize_indices</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_indices</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalize a list of indices to ensure that they are positive.</span>
 
 <span class="sd">    Args:</span>
@@ -188,7 +188,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_verify_output_shape</span><span class="p">(</span><span class="n">acqf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_verify_output_shape</span><span class="p">(</span><span class="n">acqf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Performs the output shape checks for `t_batch_mode_transform`. Output shape checks</span>
 <span class="sd">    help in catching the errors due to AcquisitionFunction arguments with erroneous</span>
@@ -241,7 +241,7 @@
 
 <div class="viewcode-block" id="is_fully_bayesian">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.is_fully_bayesian">[docs]</a>
-<span class="k">def</span> <span class="nf">is_fully_bayesian</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_fully_bayesian</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Check if at least one model is a fully Bayesian model.</span>
 
 <span class="sd">    Args:</span>
@@ -250,7 +250,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">       True if at least one model is a fully Bayesian model.</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">ModelList</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelList</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelList</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">is_fully_bayesian</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">)</span>
@@ -260,7 +260,7 @@
 
 <div class="viewcode-block" id="is_ensemble">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.is_ensemble">[docs]</a>
-<span class="k">def</span> <span class="nf">is_ensemble</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_ensemble</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Check if at least one model is an ensemble model.</span>
 
 <span class="sd">    Args:</span>
@@ -269,7 +269,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">       True if at least one model is an ensemble model.</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">ModelList</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelList</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelList</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">is_ensemble</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">models</span><span class="p">)</span>
@@ -279,7 +279,7 @@
 
 <div class="viewcode-block" id="t_batch_mode_transform">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.t_batch_mode_transform">[docs]</a>
-<span class="k">def</span> <span class="nf">t_batch_mode_transform</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">t_batch_mode_transform</span><span class="p">(</span>
     <span class="n">expected_q</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">assert_output_shape</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span>
@@ -315,11 +315,11 @@
 <span class="sd">        &gt;&gt;&gt;         ...</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span>
         <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="nd">@wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
-        <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">decorated</span><span class="p">(</span>
             <span class="n">acqf</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
         <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="c1"># Allow using acquisition functions for other inputs (e.g. lists of strings)</span>
@@ -365,7 +365,7 @@
 
 <div class="viewcode-block" id="concatenate_pending_points">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.concatenate_pending_points">[docs]</a>
-<span class="k">def</span> <span class="nf">concatenate_pending_points</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">concatenate_pending_points</span><span class="p">(</span>
     <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Decorator concatenating X_pending into an acquisition function's argument.</span>
@@ -384,7 +384,7 @@
 <span class="sd">    """</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorated</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">match_batch_shape</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">X_pending</span><span class="p">,</span> <span class="n">X</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -395,7 +395,7 @@
 
 <div class="viewcode-block" id="match_batch_shape">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.match_batch_shape">[docs]</a>
-<span class="k">def</span> <span class="nf">match_batch_shape</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">match_batch_shape</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Matches the batch dimension of a tensor to that of another tensor.</span>
 
 <span class="sd">    Args:</span>
@@ -424,7 +424,7 @@
 
 <div class="viewcode-block" id="convert_to_target_pre_hook">
 <a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.convert_to_target_pre_hook">[docs]</a>
-<span class="k">def</span> <span class="nf">convert_to_target_pre_hook</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_to_target_pre_hook</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""</span>
     <span class="n">module</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span></div>
 

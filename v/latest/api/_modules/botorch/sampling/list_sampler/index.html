@@ -31,20 +31,20 @@
 <span class="sd">A `SamplerList` for sampling from a `PosteriorList`.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors.posterior_list</span> <span class="kn">import</span> <span class="n">PosteriorList</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.posterior_list</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleList</span>
 
 
 <div class="viewcode-block" id="ListSampler">
 <a class="viewcode-back" href="../../../sampling.html#botorch.sampling.list_sampler.ListSampler">[docs]</a>
-<span class="k">class</span> <span class="nc">ListSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">samplers</span><span class="p">:</span> <span class="n">MCSampler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ListSampler</span><span class="p">(</span><span class="n">MCSampler</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">samplers</span><span class="p">:</span> <span class="n">MCSampler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""A list of samplers for sampling from a `PosteriorList`.</span>
 
 <span class="sd">        Args:</span>
@@ -55,7 +55,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">samplers</span> <span class="o">=</span> <span class="n">ModuleList</span><span class="p">(</span><span class="n">samplers</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_samplers</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">_validate_samplers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_samplers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Checks that the samplers share the same sample shape."""</span>
         <span class="n">sample_shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">sample_shape</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">samplers</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">sample_shapes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">ss</span> <span class="k">for</span> <span class="n">ss</span> <span class="ow">in</span> <span class="n">sample_shapes</span><span class="p">):</span>
@@ -64,14 +64,14 @@
             <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""The sample shape of the underlying samplers."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_samplers</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">samplers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sample_shape</span>
 
 <div class="viewcode-block" id="ListSampler.forward">
 <a class="viewcode-back" href="../../../sampling.html#botorch.sampling.list_sampler.ListSampler.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">PosteriorList</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">PosteriorList</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Samples from the posteriors and concatenates the samples.</span>
 
 <span class="sd">        Args:</span>
@@ -86,7 +86,7 @@
         <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_reshape_and_cat</span><span class="p">(</span><span class="n">tensors</span><span class="o">=</span><span class="n">samples_list</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_update_base_samples</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_base_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">PosteriorList</span><span class="p">,</span> <span class="n">base_sampler</span><span class="p">:</span> <span class="n">ListSampler</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Update the sampler to use the original base samples for X_baseline.</span>

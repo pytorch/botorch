@@ -32,36 +32,36 @@
 <span class="sd">Monte-Carlo sampling.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
-<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">nullcontext</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">nullcontext</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">legacy_ei_numerics_warning</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.constants</span> <span class="kn">import</span> <span class="n">get_constants_like</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.probability</span> <span class="kn">import</span> <span class="n">MVNXPB</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.probability.utils</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">legacy_ei_numerics_warning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPyTorchModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_constants_like</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.probability</span><span class="w"> </span><span class="kn">import</span> <span class="n">MVNXPB</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.probability.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">compute_log_prob_feas_from_bounds</span><span class="p">,</span>
     <span class="n">log_ndtr</span> <span class="k">as</span> <span class="n">log_Phi</span><span class="p">,</span>
     <span class="n">log_phi</span><span class="p">,</span>
     <span class="n">ndtr</span> <span class="k">as</span> <span class="n">Phi</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.safe_math</span> <span class="kn">import</span> <span class="n">log1mexp</span><span class="p">,</span> <span class="n">logmeanexp</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">convert_to_target_pre_hook</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">pad</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.safe_math</span><span class="w"> </span><span class="kn">import</span> <span class="n">log1mexp</span><span class="p">,</span> <span class="n">logmeanexp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_to_target_pre_hook</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods.gaussian_likelihood</span><span class="w"> </span><span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">pad</span>
 
 <span class="c1"># the following two numbers are needed for _log_ei_helper</span>
 <span class="n">_neg_inv_sqrt2</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">2</span><span class="o">**-</span><span class="mf">0.5</span><span class="p">)</span>
@@ -70,10 +70,10 @@
 
 <div class="viewcode-block" id="AnalyticAcquisitionFunction">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction">[docs]</a>
-<span class="k">class</span> <span class="nc">AnalyticAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnalyticAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Base class for analytic acquisition functions."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -102,13 +102,13 @@
 
 <div class="viewcode-block" id="AnalyticAcquisitionFunction.set_X_pending">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction.set_X_pending">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
             <span class="s2">"Analytic acquisition functions do not account for X_pending yet."</span>
         <span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_mean_and_sigma</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mean_and_sigma</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">compute_sigma</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">min_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Computes the first and second moments of the model posterior.</span>
@@ -138,7 +138,7 @@
 
 <div class="viewcode-block" id="LogProbabilityOfImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogProbabilityOfImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">LogProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Log Probability of Improvement.</span>
 
 <span class="sd">    Logarithm of the probability of improvement over the current best observed value,</span>
@@ -162,7 +162,7 @@
 
     <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -187,7 +187,7 @@
 <div class="viewcode-block" id="LogProbabilityOfImprovement.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogProbabilityOfImprovement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the Log Probability of Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -206,7 +206,7 @@
 
 <div class="viewcode-block" id="ProbabilityOfImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ProbabilityOfImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">ProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Probability of Improvement.</span>
 
 <span class="sd">    Probability of improvement over the current best observed value, computed</span>
@@ -222,7 +222,7 @@
 <span class="sd">        &gt;&gt;&gt; pi = PI(test_X)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -247,7 +247,7 @@
 <div class="viewcode-block" id="ProbabilityOfImprovement.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ProbabilityOfImprovement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the Probability of Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -266,7 +266,7 @@
 
 <div class="viewcode-block" id="qAnalyticProbabilityOfImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">qAnalyticProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">qAnalyticProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Approximate, single-outcome batch Probability of Improvement using MVNXPB.</span>
 
 <span class="sd">    This implementation uses MVNXPB, a bivariate conditioning algorithm for</span>
@@ -276,7 +276,7 @@
 <span class="sd">    X = (x_1,...,x_q)`, where `P(Y &lt; best_f)` is estimated using MVNXPB.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -303,7 +303,7 @@
 <div class="viewcode-block" id="qAnalyticProbabilityOfImprovement.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.qAnalyticProbabilityOfImprovement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evaluate approximate qPI on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -335,7 +335,7 @@
 
 <div class="viewcode-block" id="ExpectedImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ExpectedImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">ExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Expected Improvement (analytic).</span>
 
 <span class="sd">    Computes classic Expected Improvement over the current best observed value,</span>
@@ -359,7 +359,7 @@
 <span class="sd">    numerics. See https://arxiv.org/abs/2310.20708 for details.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -385,7 +385,7 @@
 <div class="viewcode-block" id="ExpectedImprovement.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ExpectedImprovement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -407,7 +407,7 @@
 
 <div class="viewcode-block" id="LogExpectedImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogExpectedImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">LogExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Log Expected Improvement (analytic).</span>
 
 <span class="sd">    Computes the logarithm of the classic Expected Improvement acquisition function, in</span>
@@ -429,7 +429,7 @@
 
     <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -454,7 +454,7 @@
 <div class="viewcode-block" id="LogExpectedImprovement.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogExpectedImprovement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate logarithm of Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -476,7 +476,7 @@
 
 <div class="viewcode-block" id="LogConstrainedExpectedImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogConstrainedExpectedImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">LogConstrainedExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogConstrainedExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Log Constrained Expected Improvement (feasibility-weighted).</span>
 
 <span class="sd">    Computes the logarithm of the analytic expected improvement for a Normal posterior</span>
@@ -504,7 +504,7 @@
 
     <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -537,7 +537,7 @@
 <div class="viewcode-block" id="LogConstrainedExpectedImprovement.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogConstrainedExpectedImprovement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate Constrained Log Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -561,7 +561,7 @@
 
 <div class="viewcode-block" id="ConstrainedExpectedImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">ConstrainedExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstrainedExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Constrained Expected Improvement (feasibility-weighted).</span>
 
 <span class="sd">    Computes the analytic expected improvement for a Normal posterior</span>
@@ -588,7 +588,7 @@
 <span class="sd">    improved numerics. See https://arxiv.org/abs/2310.20708 for details.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -622,7 +622,7 @@
 <div class="viewcode-block" id="ConstrainedExpectedImprovement.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate Constrained Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -646,7 +646,7 @@
 
 <div class="viewcode-block" id="LogNoisyExpectedImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogNoisyExpectedImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">LogNoisyExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogNoisyExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Log Noisy Expected Improvement (via fantasies).</span>
 
 <span class="sd">    This computes Log Noisy Expected Improvement by averaging over the Expected</span>
@@ -672,7 +672,7 @@
 
     <span class="n">_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">,</span>
         <span class="n">X_observed</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -694,7 +694,7 @@
 <span class="sd">        """</span>
         <span class="n">_check_noisy_ei_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="c1"># Sample fantasies.</span>
-        <span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
 
         <span class="c1"># Drop gradients from model.posterior if X_observed does not require gradients</span>
         <span class="c1"># as otherwise, gradients of the GP's kernel's hyper-parameters are tracked</span>
@@ -716,7 +716,7 @@
 <div class="viewcode-block" id="LogNoisyExpectedImprovement.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.LogNoisyExpectedImprovement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate logarithm of the mean Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -738,7 +738,7 @@
 
 <div class="viewcode-block" id="NoisyExpectedImprovement">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.NoisyExpectedImprovement">[docs]</a>
-<span class="k">class</span> <span class="nc">NoisyExpectedImprovement</span><span class="p">(</span><span class="n">ExpectedImprovement</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NoisyExpectedImprovement</span><span class="p">(</span><span class="n">ExpectedImprovement</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Noisy Expected Improvement (via fantasies).</span>
 
 <span class="sd">    This computes Noisy Expected Improvement by averaging over the Expected</span>
@@ -763,7 +763,7 @@
 <span class="sd">    improved numerics. See https://arxiv.org/abs/2310.20708 for details.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">,</span>
         <span class="n">X_observed</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -785,7 +785,7 @@
         <span class="n">_check_noisy_ei_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="n">legacy_ei_numerics_warning</span><span class="p">(</span><span class="n">legacy_name</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="c1"># Sample fantasies.</span>
-        <span class="kn">from</span> <span class="nn">botorch.sampling.normal</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.sampling.normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
 
         <span class="c1"># Drop gradients from model.posterior if X_observed does not require gradients</span>
         <span class="c1"># as otherwise, gradients of the GP's kernel's hyper-parameters are tracked</span>
@@ -806,7 +806,7 @@
 <div class="viewcode-block" id="NoisyExpectedImprovement.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.NoisyExpectedImprovement.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate Expected Improvement on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -826,7 +826,7 @@
 
 <div class="viewcode-block" id="UpperConfidenceBound">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.UpperConfidenceBound">[docs]</a>
-<span class="k">class</span> <span class="nc">UpperConfidenceBound</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UpperConfidenceBound</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Upper Confidence Bound (UCB).</span>
 
 <span class="sd">    Analytic upper confidence bound that comprises of the posterior mean plus an</span>
@@ -843,7 +843,7 @@
 <span class="sd">        &gt;&gt;&gt; ucb = UCB(test_X)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -869,7 +869,7 @@
 <div class="viewcode-block" id="UpperConfidenceBound.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.UpperConfidenceBound.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the Upper Confidence Bound on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -887,7 +887,7 @@
 
 <div class="viewcode-block" id="PosteriorMean">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorMean">[docs]</a>
-<span class="k">class</span> <span class="nc">PosteriorMean</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PosteriorMean</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Posterior Mean.</span>
 
 <span class="sd">    Only supports the case of q=1. Requires the model's posterior to have a</span>
@@ -899,7 +899,7 @@
 <span class="sd">        &gt;&gt;&gt; pm = PM(test_X)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -924,7 +924,7 @@
 <div class="viewcode-block" id="PosteriorMean.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorMean.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the posterior mean on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -942,14 +942,14 @@
 
 <div class="viewcode-block" id="ScalarizedPosteriorMean">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ScalarizedPosteriorMean">[docs]</a>
-<span class="k">class</span> <span class="nc">ScalarizedPosteriorMean</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScalarizedPosteriorMean</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Scalarized Posterior Mean.</span>
 
 <span class="sd">    This acquisition function returns a scalarized (across the q-batch)</span>
 <span class="sd">    posterior mean given a vector of weights.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -971,7 +971,7 @@
 <div class="viewcode-block" id="ScalarizedPosteriorMean.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ScalarizedPosteriorMean.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the scalarized posterior mean on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -989,7 +989,7 @@
 
 <div class="viewcode-block" id="PosteriorStandardDeviation">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorStandardDeviation">[docs]</a>
-<span class="k">class</span> <span class="nc">PosteriorStandardDeviation</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PosteriorStandardDeviation</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Single-outcome Posterior Standard Deviation.</span>
 
 <span class="sd">    An acquisition function for pure exploration.</span>
@@ -1018,7 +1018,7 @@
 <span class="sd">        0.16341639895667773</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1044,7 +1044,7 @@
 <div class="viewcode-block" id="PosteriorStandardDeviation.forward">
 <a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorStandardDeviation.forward">[docs]</a>
     <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate the posterior standard deviation on the candidate set X.</span>
 
 <span class="sd">        Args:</span>
@@ -1063,7 +1063,7 @@
 <span class="c1"># --------------- Helper functions for analytic acquisition functions. ---------------</span>
 
 
-<span class="k">def</span> <span class="nf">_scaled_improvement</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_scaled_improvement</span><span class="p">(</span>
     <span class="n">mean</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">best_f</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Returns `u = (mean - best_f) / sigma`, -u if maximize == True."""</span>
@@ -1071,14 +1071,14 @@
     <span class="k">return</span> <span class="n">u</span> <span class="k">if</span> <span class="n">maximize</span> <span class="k">else</span> <span class="o">-</span><span class="n">u</span>
 
 
-<span class="k">def</span> <span class="nf">_ei_helper</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ei_helper</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Computes phi(u) + u * Phi(u), where phi and Phi are the standard normal</span>
 <span class="sd">    pdf and cdf, respectively. This is used to compute Expected Improvement.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">phi</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">+</span> <span class="n">u</span> <span class="o">*</span> <span class="n">Phi</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_log_ei_helper</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_ei_helper</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Accurately computes log(phi(u) + u * Phi(u)) in a differentiable manner for u in</span>
 <span class="sd">    [-10^100, 10^100] in double precision, and [-10^20, 10^20] in single precision.</span>
 <span class="sd">    Beyond these intervals, a basic squaring of u can lead to floating point overflow.</span>
@@ -1129,7 +1129,7 @@
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">u</span> <span class="o">&gt;</span> <span class="n">bound</span><span class="p">,</span> <span class="n">log_ei_upper</span><span class="p">,</span> <span class="n">log_ei_lower</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_log_abs_u_Phi_div_phi</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_abs_u_Phi_div_phi</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Computes log(abs(u) * Phi(u) / phi(u)), where phi and Phi are the normal pdf</span>
 <span class="sd">    and cdf, respectively. The function is valid for u &lt; 0.</span>
 
@@ -1159,7 +1159,7 @@
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">erfcx</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">u</span><span class="p">)</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">abs</span><span class="p">())</span> <span class="o">+</span> <span class="n">b</span>
 
 
-<span class="k">def</span> <span class="nf">_check_noisy_ei_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_noisy_ei_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">"Only single-output `SingleTaskGP` models with known observation noise "</span>
         <span class="s2">"are currently supported for fantasy-based NEI &amp; LogNEI."</span>
@@ -1174,7 +1174,7 @@
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2"> Model has </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span><span class="si">}</span><span class="s2"> outputs."</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_get_noiseless_fantasy_model</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_noiseless_fantasy_model</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">SingleTaskGP</span><span class="p">,</span> <span class="n">batch_X_observed</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y_fantasized</span><span class="p">:</span> <span class="n">Tensor</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SingleTaskGP</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Construct a fantasy model from a fitted model and provided fantasies.</span>
@@ -1240,7 +1240,7 @@
     <span class="k">return</span> <span class="n">fantasy_model</span>
 
 
-<span class="k">def</span> <span class="nf">_preprocess_constraint_bounds</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_preprocess_constraint_bounds</span><span class="p">(</span>
     <span class="n">acqf</span><span class="p">:</span> <span class="n">LogConstrainedExpectedImprovement</span> <span class="o">|</span> <span class="n">ConstrainedExpectedImprovement</span><span class="p">,</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1285,7 +1285,7 @@
         <span class="n">acqf</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">tensor</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">))</span>
 
 
-<span class="k">def</span> <span class="nf">_compute_log_prob_feas</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_log_prob_feas</span><span class="p">(</span>
     <span class="n">acqf</span><span class="p">:</span> <span class="n">LogConstrainedExpectedImprovement</span> <span class="o">|</span> <span class="n">ConstrainedExpectedImprovement</span><span class="p">,</span>
     <span class="n">means</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">sigmas</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>

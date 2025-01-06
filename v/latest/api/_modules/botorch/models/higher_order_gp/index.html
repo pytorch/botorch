@@ -35,58 +35,58 @@
 <span class="sd">    Proceedings of Machine Learning Research, volume 89, Apr 2019.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ExitStack</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExitStack</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">FantasizeMixin</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
-<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span><span class="p">,</span> <span class="n">Standardize</span>
-<span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">gpt_posterior_settings</span>
-<span class="kn">from</span> <span class="nn">botorch.models.utils.assorted</span> <span class="kn">import</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span>
-<span class="kn">from</span> <span class="nn">botorch.models.utils.gpytorch_modules</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">FantasizeMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.input</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutcomeTransform</span><span class="p">,</span> <span class="n">Standardize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">gpt_posterior_settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils.assorted</span><span class="w"> </span><span class="kn">import</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils.gpytorch_modules</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_covar_module_with_dim_scaled_prior</span><span class="p">,</span>
     <span class="n">get_gaussian_likelihood_with_lognormal_prior</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GPyTorchPosterior</span><span class="p">,</span>
     <span class="n">HigherOrderGPPosterior</span><span class="p">,</span>
     <span class="n">TransformedPosterior</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.types</span> <span class="kn">import</span> <span class="n">_DefaultType</span><span class="p">,</span> <span class="n">DEFAULT</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">Likelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">ExactGP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">MultivariateNormalPrior</span>
-<span class="kn">from</span> <span class="nn">gpytorch.settings</span> <span class="kn">import</span> <span class="n">fast_pred_var</span><span class="p">,</span> <span class="n">skip_posterior_variances</span>
-<span class="kn">from</span> <span class="nn">linear_operator.operators</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">_DefaultType</span><span class="p">,</span> <span class="n">DEFAULT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods</span><span class="w"> </span><span class="kn">import</span> <span class="n">Likelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.priors.torch_priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultivariateNormalPrior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">fast_pred_var</span><span class="p">,</span> <span class="n">skip_posterior_variances</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.operators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BatchRepeatLinearOperator</span><span class="p">,</span>
     <span class="n">DiagLinearOperator</span><span class="p">,</span>
     <span class="n">KroneckerProductLinearOperator</span><span class="p">,</span>
     <span class="n">LinearOperator</span><span class="p">,</span>
     <span class="n">ZeroLinearOperator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">linear_operator.settings</span> <span class="kn">import</span> <span class="n">_fast_solves</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">ParameterList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">_fast_solves</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleList</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">ParameterList</span>
 
 
 <div class="viewcode-block" id="FlattenedStandardize">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize">[docs]</a>
-<span class="k">class</span> <span class="nc">FlattenedStandardize</span><span class="p">(</span><span class="n">Standardize</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FlattenedStandardize</span><span class="p">(</span><span class="n">Standardize</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Standardize outcomes in a structured multi-output settings by reshaping the</span>
 <span class="sd">    batched output dimensions to be a vector. Specifically, an output dimension</span>
 <span class="sd">    of [a x b x c] will be squeezed to be a vector of [a * b * c].</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">output_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
         <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -107,17 +107,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span> <span class="o">=</span> <span class="n">output_shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
 
-    <span class="k">def</span> <span class="nf">_squeeze_to_single_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tsr</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_squeeze_to_single_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tsr</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">dim_ct</span> <span class="o">=</span> <span class="n">tsr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">tsr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">tsr</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="n">dim_ct</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_return_to_output_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tsr</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_return_to_output_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tsr</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">tsr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">tsr</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_shape</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span>
 
 <div class="viewcode-block" id="FlattenedStandardize.forward">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_squeeze_to_single_output</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
@@ -136,7 +136,7 @@
 
 <div class="viewcode-block" id="FlattenedStandardize.untransform">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize.untransform">[docs]</a>
-    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_squeeze_to_single_output</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
@@ -153,7 +153,7 @@
 
 <div class="viewcode-block" id="FlattenedStandardize.untransform_posterior">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize.untransform_posterior">[docs]</a>
-    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">HigherOrderGPPosterior</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
         <span class="c1"># TODO: return a HigherOrderGPPosterior once rescaling constant</span>
@@ -177,7 +177,7 @@
 
 <div class="viewcode-block" id="HigherOrderGP">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP">[docs]</a>
-<span class="k">class</span> <span class="nc">HigherOrderGP</span><span class="p">(</span><span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HigherOrderGP</span><span class="p">(</span><span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">,</span> <span class="n">FantasizeMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    A model for high-dimensional output regression.</span>
 
@@ -211,7 +211,7 @@
 <span class="sd">        &gt;&gt;&gt; samples = model.posterior(test_X).rsample()</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -316,7 +316,7 @@
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
 
-    <span class="k">def</span> <span class="nf">_initialize_latents</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_latents</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">latent_init</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">num_latent_dims</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
@@ -384,7 +384,7 @@
 
 <div class="viewcode-block" id="HigherOrderGP.forward">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.forward">[docs]</a>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
             <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
@@ -419,7 +419,7 @@
 
 <div class="viewcode-block" id="HigherOrderGP.get_fantasy_model">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.get_fantasy_model">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_fantasy_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_fantasy_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="c1"># we need to squeeze the targets in order to preserve the shaping</span>
         <span class="n">inputs_batch_dims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
         <span class="n">target_shape</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
@@ -432,7 +432,7 @@
 
 <div class="viewcode-block" id="HigherOrderGP.condition_on_observations">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.condition_on_observations">[docs]</a>
-    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HigherOrderGP</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
@@ -482,7 +482,7 @@
 
 <div class="viewcode-block" id="HigherOrderGP.posterior">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.posterior">[docs]</a>
-    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">output_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -594,7 +594,7 @@
 
 <div class="viewcode-block" id="HigherOrderGP.make_posterior_variances">
 <a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.make_posterior_variances">[docs]</a>
-    <span class="k">def</span> <span class="nf">make_posterior_variances</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_posterior_variances</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">joint_covariance_matrix</span><span class="p">:</span> <span class="n">LinearOperator</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""</span>
