@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 from collections.abc import Callable
 
 from typing import Any
@@ -15,7 +17,7 @@ from botorch.acquisition import AcquisitionFunction
 from botorch.generation.gen import TGenCandidates
 from botorch.optim.homotopy import Homotopy
 from botorch.optim.initializers import TGenInitialConditions
-from botorch.optim.optimize import optimize_acqf
+from botorch.optim.optimize import optimize_acqf, optimize_acqf_mixed
 from torch import Tensor
 
 
@@ -67,14 +69,13 @@ def optimize_acqf_homotopy(
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
     nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None = None,
     fixed_features: dict[int, float] | None = None,
+    fixed_features_list: list[dict[int, float]] | None = None,
     post_processing_func: Callable[[Tensor], Tensor] | None = None,
     batch_initial_conditions: Tensor | None = None,
     gen_candidates: TGenCandidates | None = None,
-    sequential: bool = False,
     *,
     ic_generator: TGenInitialConditions | None = None,
     timeout_sec: float | None = None,
-    return_full_tree: bool = False,
     retry_on_optimization_warning: bool = True,
     **ic_gen_kwargs: Any,
 ) -> tuple[Tensor, Tensor]:
@@ -129,6 +130,10 @@ def optimize_acqf_homotopy(
             `options`.
         fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
+        fixed_features_list: A list of maps `{feature_index: value}`. The i-th
+            item represents the fixed_feature for the i-th optimization. If
+            `fixed_features_list` is provided, `optimize_acqf_mixed` is invoked.
+            All indices (`feature_index`) should be non-negative.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -140,36 +145,56 @@ def optimize_acqf_homotopy(
             and a dictionary of options, but refer to the documentation of specific
             generation functions (e.g gen_candidates_scipy and gen_candidates_torch)
             for method-specific inputs. Default: `gen_candidates_scipy`
-        sequential: If False, uses joint optimization, otherwise uses sequential
-            optimization.
         ic_generator: Function for generating initial conditions. Not needed when
             `batch_initial_conditions` are provided. Defaults to
             `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition
             functions and `gen_batch_initial_conditions` otherwise. Must be specified
             for nonlinear inequality constraints.
         timeout_sec: Max amount of time optimization can run for.
-        return_full_tree: Return the full tree of optimizers of the previous
-            iteration.
         retry_on_optimization_warning: Whether to retry candidate generation with a new
             set of initial conditions when it fails with an `OptimizationWarning`.
         ic_gen_kwargs: Additional keyword arguments passed to function specified by
             `ic_generator`
     """
+    if fixed_features and fixed_features_list:
+        raise ValueError(
+            "Either `fixed_feature` or `fixed_features_list` can be provided, not both."
+        )
+
+    if fixed_features:
+        message = (
+            "The `fixed_features` argument is deprecated, "
+            "use `fixed_features_list` instead."
+        )
+        warnings.warn(
+            message,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     shared_optimize_acqf_kwargs = {
         "num_restarts": num_restarts,
         "inequality_constraints": inequality_constraints,
         "equality_constraints": equality_constraints,
         "nonlinear_inequality_constraints": nonlinear_inequality_constraints,
-        "fixed_features": fixed_features,
         "return_best_only": False,  # False to make n_restarts persist through homotopy.
         "gen_candidates": gen_candidates,
-        "sequential": sequential,
         "ic_generator": ic_generator,
         "timeout_sec": timeout_sec,
-        "return_full_tree": return_full_tree,
         "retry_on_optimization_warning": retry_on_optimization_warning,
         **ic_gen_kwargs,
     }
+
+    if fixed_features_list and len(fixed_features_list) > 1:
+        optimization_fn = optimize_acqf_mixed
+        fixed_features_kwargs = {"fixed_features_list": fixed_features_list}
+    else:
+        optimization_fn = optimize_acqf
+        fixed_features_kwargs = {
+            "fixed_features": fixed_features_list[0]
+            if fixed_features_list
+            else fixed_features
+        }
 
     candidate_list, acq_value_list = [], []
     if q > 1:
@@ -181,15 +206,17 @@ def optimize_acqf_homotopy(
         homotopy.restart()
 
         while not homotopy.should_stop:
-            candidates, acq_values = optimize_acqf(
+            candidates, acq_values = optimization_fn(
                 acq_function=acq_function,
                 bounds=bounds,
                 q=1,
                 options=options,
                 batch_initial_conditions=candidates,
                 raw_samples=q_raw_samples,
+                **fixed_features_kwargs,
                 **shared_optimize_acqf_kwargs,
             )
+
             homotopy.step()
 
             # Set raw_samples to None such that pruned restarts are not repopulated
@@ -204,13 +231,14 @@ def optimize_acqf_homotopy(
             ).unsqueeze(1)
 
         # Optimize one more time with the final options
-        candidates, acq_values = optimize_acqf(
+        candidates, acq_values = optimization_fn(
             acq_function=acq_function,
             bounds=bounds,
             q=1,
             options=final_options,
             raw_samples=q_raw_samples,
             batch_initial_conditions=candidates,
+            **fixed_features_kwargs,
             **shared_optimize_acqf_kwargs,
         )
 

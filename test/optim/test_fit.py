@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+import re
 from unittest.mock import MagicMock, patch
 from warnings import catch_warnings
 
@@ -19,6 +20,11 @@ from botorch.utils.context_managers import module_rollback_ctx, TensorCheckpoint
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from scipy.optimize import OptimizeResult
+
+MAX_ITER_MSG_REGEX = re.compile(
+    # Note that the message changed with scipy 1.15, hence the different matching here.
+    "TOTAL NO. (of|OF) ITERATIONS REACHED LIMIT"
+)
 
 
 class TestFitGPyTorchMLLScipy(BotorchTestCase):
@@ -63,7 +69,8 @@ class TestFitGPyTorchMLLScipy(BotorchTestCase):
             )
 
             # Test maxiter warning message
-            self.assertTrue(any("TOTAL NO. of" in str(w.message) for w in ws))
+
+            self.assertTrue(any(MAX_ITER_MSG_REGEX.search(str(w.message)) for w in ws))
             self.assertTrue(
                 any(issubclass(w.category, OptimizationWarning) for w in ws)
             )
@@ -71,7 +78,9 @@ class TestFitGPyTorchMLLScipy(BotorchTestCase):
             # Test iteration tracking
             self.assertIsInstance(result, OptimizationResult)
             self.assertLessEqual(result.step, options["maxiter"])
-            self.assertEqual(sum(1 for w in ws if "TOTAL NO. of" in str(w.message)), 1)
+            self.assertEqual(
+                sum(1 for w in ws if MAX_ITER_MSG_REGEX.search(str(w.message))), 1
+            )
 
         # Test that user provided bounds are respected
         with self.subTest("bounds"), module_rollback_ctx(mll, checkpoint=ckpt):

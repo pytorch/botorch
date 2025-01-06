@@ -15,6 +15,8 @@ from collections.abc import Callable
 from functools import partial
 
 import torch
+from gpytorch.constraints import Interval
+
 from torch import Tensor
 
 
@@ -96,3 +98,48 @@ def get_monotonicity_constraints(
     if descending:
         A = -A
     return A, b
+
+
+class NonTransformedInterval(Interval):
+    """Modification of the GPyTorch interval class that does not apply transformations.
+
+    This is generally useful, and it is a requirement for the sparse parameters of the
+    Relevance Pursuit model [Ament2024pursuit]_, since it is not possible to achieve
+    exact zeros with the sigmoid transformations that are applied by default in the
+    GPyTorch Interval class. The variant implemented here does not apply transformations
+    to the parameters, instead passing the bounds constraint to the scipy L-BFGS
+    optimizer. This allows for the expression of exact zeros for sparse optimization
+    algorithms.
+
+    NOTE: On a high level, the cleanest solution for this would be to separate out the
+    1) definition and book-keeping of parameter constraints on the one hand, and
+    2) the re-parameterization of the variables with some monotonic transformation,
+    since the two steps are orthogonal, but this would require refactoring GPyTorch.
+    """
+
+    def __init__(
+        self,
+        lower_bound: float | Tensor,
+        upper_bound: float | Tensor,
+        initial_value: float | Tensor | None = None,
+    ):
+        """Constructor of the NonTransformedInterval class.
+
+        Args:
+            lower_bound: The lower bound of the interval.
+            upper_bound: The upper bound of the interval.
+            initial_value: The initial value of the parameter.
+        """
+        super().__init__(
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            transform=None,
+            inv_transform=None,
+            initial_value=initial_value,
+        )
+
+    def transform(self, tensor: Tensor) -> Tensor:
+        return tensor
+
+    def inverse_transform(self, transformed_tensor: Tensor) -> Tensor:
+        return transformed_tensor

@@ -6,13 +6,13 @@
 
 import torch
 from botorch.test_functions.base import BaseTestProblem, ConstrainedBaseTestProblem
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, TestCorruptedProblemsMixin
 from torch import Tensor
 
 
 class DummyTestProblem(BaseTestProblem):
     dim = 2
-    _bounds = [(0, 1), (2, 3)]
+    _bounds = [(0.0, 1.0), (2.0, 3.0)]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         return -X.pow(2).sum(dim=-1)
@@ -56,3 +56,26 @@ class TestBaseTestProblems(BotorchTestCase):
             feas = problem.is_feasible(X=X)
             self.assertFalse(feas[0].item())
             self.assertTrue(feas[1].item())
+
+
+class TestSeedingMixin(TestCorruptedProblemsMixin):
+    def test_seed_iteration(self) -> None:
+        problem = self.rosenbrock_problem
+
+        self.assertTrue(problem.has_seeds)
+        self.assertIsNone(problem.seed)  # increment_seed needs to be called first
+        problem.increment_seed()
+        self.assertEqual(problem.seed, 1)
+        problem.increment_seed()
+        self.assertEqual(problem.seed, 2)
+        with self.assertRaises(StopIteration):
+            problem.increment_seed()
+
+
+class TestCorruptedTestProblem(TestCorruptedProblemsMixin):
+    def test_basic_rosenbrock(self) -> None:
+        problem = self.rosenbrock_problem
+        x = torch.rand(5, 1)
+        result = problem(x)
+        # the outlier_generator sets corruptions to 1
+        self.assertTrue((result == 1).all())

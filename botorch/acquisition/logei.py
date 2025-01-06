@@ -468,9 +468,13 @@ class qLogNoisyExpectedImprovement(
         if not self._cache_root:
             samples_full = super().get_posterior_samples(posterior)
             obj_full = self.objective(samples_full, X=X_full)
+            # Calculate the positive index for splitting the samples & objective values.
+            split_dim = len(obj_full.shape) - 1
             # assigning baseline buffers so `best_f` can be computed in _sample_forward
-            self.baseline_samples, samples = samples_full.split([n_baseline, q], dim=-2)
-            self.baseline_obj, obj = obj_full.split([n_baseline, q], dim=-1)
+            self.baseline_samples, samples = samples_full.split(
+                [n_baseline, q], dim=split_dim
+            )
+            self.baseline_obj, obj = obj_full.split([n_baseline, q], dim=split_dim)
             return samples, obj
 
         # handle one-to-many input transforms

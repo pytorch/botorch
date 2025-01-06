@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+import re
 import warnings
 from unittest import mock
 
@@ -225,13 +226,14 @@ class TestGenCandidates(TestBaseCandidateGeneration):
     def test_gen_candidates_scipy_warns_opt_failure(self):
         with warnings.catch_warnings(record=True) as ws:
             self.test_gen_candidates(options={"maxls": 1})
-        expected_msg = (
+        expected_msg = re.compile(
+            # The message changed with scipy 1.15, hence the different matching here.
             "Optimization failed within `scipy.optimize.minimize` with status 2"
-            " and message ABNORMAL_TERMINATION_IN_LNSRCH."
+            " and message ABNORMAL(|_TERMINATION_IN_LNSRCH)."
         )
         expected_warning_raised = any(
             issubclass(w.category, OptimizationWarning)
-            and expected_msg in str(w.message)
+            and expected_msg.search(str(w.message))
             for w in ws
         )
         self.assertTrue(expected_warning_raised)

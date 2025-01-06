@@ -66,17 +66,18 @@ def _update_constant_bounds(bounds: Tensor) -> Tensor:
     return bounds
 
 
-def normalize(X: Tensor, bounds: Tensor) -> Tensor:
+def normalize(X: Tensor, bounds: Tensor, update_constant_bounds: bool = True) -> Tensor:
     r"""Min-max normalize X w.r.t. the provided bounds.
-
-    NOTE: If the upper and lower bounds are identical for a dimension, that dimension
-    will not be scaled. Such dimensions will only be shifted as
-    `new_X[..., i] = X[..., i] - bounds[0, i]`. This avoids division by zero issues.
 
     Args:
         X: `... x d` tensor of data
         bounds: `2 x d` tensor of lower and upper bounds for each of the X's d
             columns.
+        update_constant_bounds: If `True`, update the constant bounds in order to
+            avoid division by zero issues. When the upper and lower bounds are
+            identical for a dimension, that dimension will not be scaled. Such
+            dimensions will only be shifted as
+            `new_X[..., i] = X[..., i] - bounds[0, i]`.
 
     Returns:
         A `... x d`-dim tensor of normalized data, given by
@@ -89,21 +90,27 @@ def normalize(X: Tensor, bounds: Tensor) -> Tensor:
         >>> bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])
         >>> X_normalized = normalize(X, bounds)
     """
-    bounds = _update_constant_bounds(bounds=bounds)
+    bounds = (
+        _update_constant_bounds(bounds=bounds) if update_constant_bounds else bounds
+    )
     return (X - bounds[0]) / (bounds[1] - bounds[0])
 
 
-def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
+def unnormalize(
+    X: Tensor, bounds: Tensor, update_constant_bounds: bool = True
+) -> Tensor:
     r"""Un-normalizes X w.r.t. the provided bounds.
-
-    NOTE: If the upper and lower bounds are identical for a dimension, that dimension
-    will not be scaled. Such dimensions will only be shifted as
-    `new_X[..., i] = X[..., i] + bounds[0, i]`, matching the behavior of `normalize`.
 
     Args:
         X: `... x d` tensor of data
         bounds: `2 x d` tensor of lower and upper bounds for each of the X's d
             columns.
+        update_constant_bounds: If `True`, update the constant bounds in order to
+            avoid division by zero issues. When the upper and lower bounds are
+            identical for a dimension, that dimension will not be scaled. Such
+            dimensions will only be shifted as
+            `new_X[..., i] = X[..., i] + bounds[0, i]`. This is the inverse of
+            the behavior of `normalize` when `update_constant_bounds=True`.
 
     Returns:
         A `... x d`-dim tensor of unnormalized data, given by
@@ -116,7 +123,9 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
         >>> bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])
         >>> X = unnormalize(X_normalized, bounds)
     """
-    bounds = _update_constant_bounds(bounds=bounds)
+    bounds = (
+        _update_constant_bounds(bounds=bounds) if update_constant_bounds else bounds
+    )
     return X * (bounds[1] - bounds[0]) + bounds[0]
 
 

@@ -27,7 +27,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy
 import torch
-from botorch.exceptions.errors import BotorchError
+from botorch.exceptions.errors import BotorchError, InfeasibilityError
 from botorch.exceptions.warnings import UserInputWarning
 from botorch.sampling.qmc import NormalQMCEngine
 from botorch.utils.transforms import unnormalize
@@ -98,14 +98,12 @@ def draw_sobol_samples(
     batch_shape = batch_shape or torch.Size()
     batch_size = int(torch.prod(torch.tensor(batch_shape)))
     d = bounds.shape[-1]
-    lower = bounds[0]
-    rng = bounds[1] - bounds[0]
     sobol_engine = SobolEngine(q * d, scramble=True, seed=seed)
-    samples_raw = sobol_engine.draw(batch_size * n, dtype=lower.dtype)
-    samples_raw = samples_raw.view(*batch_shape, n, q, d).to(device=lower.device)
+    samples_raw = sobol_engine.draw(batch_size * n, dtype=bounds.dtype)
+    samples_raw = samples_raw.view(*batch_shape, n, q, d).to(device=bounds.device)
     if batch_shape != torch.Size():
         samples_raw = samples_raw.permute(-3, *range(len(batch_shape)), -2, -1)
-    return lower + rng * samples_raw
+    return unnormalize(samples_raw, bounds, update_constant_bounds=False)
 
 
 def draw_sobol_normal_samples(
@@ -251,7 +249,7 @@ def sample_polytope(
     """
     # Check that starting point satisfies the constraints.
     if not ((slack := A @ x0 - b) <= 0).all():
-        raise ValueError(
+        raise InfeasibilityError(
             f"Starting point does not satisfy the constraints. Inputs: {A=},"
             f"{b=}, {x0=}, A@x0-b={slack}."
         )
@@ -444,7 +442,7 @@ def find_interior_point(
         )
 
     if result.status == 2:
-        raise ValueError(
+        raise InfeasibilityError(
             "No feasible point found. Constraint polytope appears empty. "
             + "Check your constraints."
         )
@@ -526,7 +524,7 @@ class PolytopeSampler(ABC):
             if self.feasible(interior_point):
                 self.x0 = interior_point
             else:
-                raise ValueError("The given input point is not feasible.")
+                raise InfeasibilityError("The given input point is not feasible.")
         else:
             self.x0 = self.find_interior_point()
 

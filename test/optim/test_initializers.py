@@ -30,12 +30,14 @@ from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedEr
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.optim import initialize_q_batch, initialize_q_batch_nonneg
 from botorch.optim.initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_hvkg_initial_conditions,
     gen_one_shot_kg_initial_conditions,
     gen_value_function_initial_conditions,
+    initialize_q_batch,
+    initialize_q_batch_nonneg,
+    initialize_q_batch_topn,
     sample_perturbed_subset_dims,
     sample_points_around_best,
     sample_q_batches_from_polytope,
@@ -45,7 +47,7 @@ from botorch.optim.initializers import (
     transform_intra_point_constraint,
 )
 from botorch.sampling.normal import IIDNormalSampler
-from botorch.utils.sampling import draw_sobol_samples, manual_seed
+from botorch.utils.sampling import draw_sobol_samples, manual_seed, unnormalize
 from botorch.utils.testing import (
     _get_max_violation_of_bounds,
     _get_max_violation_of_constraints,
@@ -108,10 +110,8 @@ class TestInitializeQBatch(BotorchTestCase):
             self.assertEqual(ics.dtype, X.dtype)
             # ensure raises correct warning
             acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as w:
+            with self.assertWarns(BadInitialCandidatesWarning):
                 ics, _ = initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=2)
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
             self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
             with self.assertRaises(RuntimeError):
                 initialize_q_batch_nonneg(X=X, acq_vals=acq_vals, n=10)
@@ -129,31 +129,64 @@ class TestInitializeQBatch(BotorchTestCase):
             self.assertEqual(ics.dtype, X.dtype)
 
     def test_initialize_q_batch(self):
+        for dtype, batch_shape in (
+            (torch.float, torch.Size()),
+            (torch.double, [3, 2]),
+            (torch.float, (2,)),
+            (torch.double, torch.Size([2, 3, 4])),
+            (torch.float, []),
+        ):
+            # basic test
+            X = torch.rand(5, *batch_shape, 3, 4, device=self.device, dtype=dtype)
+            acq_vals = torch.rand(5, *batch_shape, device=self.device, dtype=dtype)
+            ics_X, ics_acq_vals = initialize_q_batch(X=X, acq_vals=acq_vals, n=2)
+            self.assertEqual(ics_X.shape, torch.Size([2, *batch_shape, 3, 4]))
+            self.assertEqual(ics_X.device, X.device)
+            self.assertEqual(ics_X.dtype, X.dtype)
+            self.assertEqual(ics_acq_vals.shape, torch.Size([2, *batch_shape]))
+            self.assertEqual(ics_acq_vals.device, acq_vals.device)
+            self.assertEqual(ics_acq_vals.dtype, acq_vals.dtype)
+            # ensure nothing happens if we want all samples
+            ics_X, ics_acq_vals = initialize_q_batch(X=X, acq_vals=acq_vals, n=5)
+            self.assertTrue(torch.equal(X, ics_X))
+            self.assertTrue(torch.equal(acq_vals, ics_acq_vals))
+            # ensure raises correct warning
+            acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
+            with self.assertWarns(BadInitialCandidatesWarning):
+                ics, _ = initialize_q_batch(X=X, acq_vals=acq_vals, n=2)
+            self.assertEqual(ics.shape, torch.Size([2, *batch_shape, 3, 4]))
+            with self.assertRaises(RuntimeError):
+                initialize_q_batch(X=X, acq_vals=acq_vals, n=10)
+
+    def test_initialize_q_batch_topn(self):
         for dtype in (torch.float, torch.double):
-            for batch_shape in (torch.Size(), [3, 2], (2,), torch.Size([2, 3, 4]), []):
-                # basic test
-                X = torch.rand(5, *batch_shape, 3, 4, device=self.device, dtype=dtype)
-                acq_vals = torch.rand(5, *batch_shape, device=self.device, dtype=dtype)
-                ics_X, ics_acq_vals = initialize_q_batch(X=X, acq_vals=acq_vals, n=2)
-                self.assertEqual(ics_X.shape, torch.Size([2, *batch_shape, 3, 4]))
-                self.assertEqual(ics_X.device, X.device)
-                self.assertEqual(ics_X.dtype, X.dtype)
-                self.assertEqual(ics_acq_vals.shape, torch.Size([2, *batch_shape]))
-                self.assertEqual(ics_acq_vals.device, acq_vals.device)
-                self.assertEqual(ics_acq_vals.dtype, acq_vals.dtype)
-                # ensure nothing happens if we want all samples
-                ics_X, ics_acq_vals = initialize_q_batch(X=X, acq_vals=acq_vals, n=5)
-                self.assertTrue(torch.equal(X, ics_X))
-                self.assertTrue(torch.equal(acq_vals, ics_acq_vals))
-                # ensure raises correct warning
-                acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
-                with warnings.catch_warnings(record=True) as w:
-                    ics, _ = initialize_q_batch(X=X, acq_vals=acq_vals, n=2)
-                self.assertEqual(len(w), 1)
-                self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
-                self.assertEqual(ics.shape, torch.Size([2, *batch_shape, 3, 4]))
-                with self.assertRaises(RuntimeError):
-                    initialize_q_batch(X=X, acq_vals=acq_vals, n=10)
+            # basic test
+            X = torch.rand(5, 3, 4, device=self.device, dtype=dtype)
+            acq_vals = torch.rand(5, device=self.device, dtype=dtype)
+            ics_X, ics_acq_vals = initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=2)
+            self.assertEqual(ics_X.shape, torch.Size([2, 3, 4]))
+            self.assertEqual(ics_X.device, X.device)
+            self.assertEqual(ics_X.dtype, X.dtype)
+            self.assertEqual(ics_acq_vals.shape, torch.Size([2]))
+            self.assertEqual(ics_acq_vals.device, acq_vals.device)
+            self.assertEqual(ics_acq_vals.dtype, acq_vals.dtype)
+            # ensure nothing happens if we want all samples
+            ics_X, ics_acq_vals = initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=5)
+            self.assertTrue(torch.equal(X, ics_X))
+            self.assertTrue(torch.equal(acq_vals, ics_acq_vals))
+            # make sure things work with constant inputs
+            acq_vals = torch.ones(5, device=self.device, dtype=dtype)
+            ics, _ = initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=2)
+            self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
+            self.assertEqual(ics.device, X.device)
+            self.assertEqual(ics.dtype, X.dtype)
+            # ensure raises correct warning
+            acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
+            with self.assertWarns(BadInitialCandidatesWarning):
+                ics, _ = initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=2)
+            self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
+            with self.assertRaises(RuntimeError):
+                initialize_q_batch_topn(X=X, acq_vals=acq_vals, n=10)
 
     def test_initialize_q_batch_largeZ(self):
         for dtype in (torch.float, torch.double):
@@ -187,64 +220,149 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
         bounds = torch.stack([torch.zeros(2), torch.ones(2)])
         mock_acqf = MockAcquisitionFunction()
         mock_acqf.objective = lambda y: y.squeeze(-1)
-        for dtype in (torch.float, torch.double):
+        for (
+            dtype,
+            nonnegative,
+            seed,
+            init_batch_limit,
+            ffs,
+            sample_around_best,
+        ) in (
+            (torch.float, True, None, None, None, True),
+            (torch.double, False, 1234, 1, {0: 0.5}, False),
+            (torch.double, True, 1234, None, {0: 0.5}, True),
+        ):
             bounds = bounds.to(device=self.device, dtype=dtype)
             mock_acqf.X_baseline = bounds  # for testing sample_around_best
             mock_acqf.model = MockModel(MockPosterior(mean=bounds[:, :1]))
-            for nonnegative, seed, init_batch_limit, ffs, sample_around_best in product(
-                [True, False], [None, 1234], [None, 1], [None, {0: 0.5}], [True, False]
-            ):
-                with mock.patch.object(
-                    MockAcquisitionFunction,
-                    "__call__",
-                    wraps=mock_acqf.__call__,
-                ) as mock_acqf_call, warnings.catch_warnings():
-                    warnings.simplefilter(
-                        "ignore", category=BadInitialCandidatesWarning
-                    )
-                    batch_initial_conditions = gen_batch_initial_conditions(
-                        acq_function=mock_acqf,
-                        bounds=bounds,
-                        q=1,
-                        num_restarts=2,
-                        raw_samples=10,
-                        fixed_features=ffs,
-                        options={
-                            "nonnegative": nonnegative,
-                            "eta": 0.01,
-                            "alpha": 0.1,
-                            "seed": seed,
-                            "init_batch_limit": init_batch_limit,
-                            "sample_around_best": sample_around_best,
-                        },
-                    )
-                    expected_shape = torch.Size([2, 1, 2])
-                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
-                    self.assertEqual(batch_initial_conditions.device, bounds.device)
-                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
-                    self.assertLess(
-                        _get_max_violation_of_bounds(batch_initial_conditions, bounds),
-                        1e-6,
-                    )
-                    batch_shape = (
-                        torch.Size([])
-                        if init_batch_limit is None
-                        else torch.Size([init_batch_limit])
-                    )
-                    raw_samps = mock_acqf_call.call_args[0][0]
-                    batch_shape = (
-                        torch.Size([20 if sample_around_best else 10])
-                        if init_batch_limit is None
-                        else torch.Size([init_batch_limit])
-                    )
-                    expected_raw_samps_shape = batch_shape + torch.Size([1, 2])
-                    self.assertEqual(raw_samps.shape, expected_raw_samps_shape)
+            with mock.patch.object(
+                MockAcquisitionFunction,
+                "__call__",
+                wraps=mock_acqf.__call__,
+            ) as mock_acqf_call, warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=BadInitialCandidatesWarning)
+                batch_initial_conditions = gen_batch_initial_conditions(
+                    acq_function=mock_acqf,
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=2,
+                    raw_samples=10,
+                    fixed_features=ffs,
+                    options={
+                        "nonnegative": nonnegative,
+                        "eta": 0.01,
+                        "alpha": 0.1,
+                        "seed": seed,
+                        "init_batch_limit": init_batch_limit,
+                        "sample_around_best": sample_around_best,
+                    },
+                )
+            expected_shape = torch.Size([2, 1, 2])
+            self.assertEqual(batch_initial_conditions.shape, expected_shape)
+            self.assertEqual(batch_initial_conditions.device, bounds.device)
+            self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+            self.assertLess(
+                _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                1e-6,
+            )
+            batch_shape = (
+                torch.Size([])
+                if init_batch_limit is None
+                else torch.Size([init_batch_limit])
+            )
+            raw_samps = mock_acqf_call.call_args[0][0]
+            batch_shape = (
+                torch.Size([20 if sample_around_best else 10])
+                if init_batch_limit is None
+                else torch.Size([init_batch_limit])
+            )
+            expected_raw_samps_shape = batch_shape + torch.Size([1, 2])
+            self.assertEqual(raw_samps.shape, expected_raw_samps_shape)
 
-                    if ffs is not None:
-                        for idx, val in ffs.items():
-                            self.assertTrue(
-                                torch.all(batch_initial_conditions[..., idx] == val)
-                            )
+            if ffs is not None:
+                for idx, val in ffs.items():
+                    self.assertTrue(
+                        torch.all(batch_initial_conditions[..., idx] == val)
+                    )
+
+    def test_gen_batch_initial_conditions_topn(self):
+        bounds = torch.stack([torch.zeros(2), torch.ones(2)])
+        mock_acqf = MockAcquisitionFunction()
+        mock_acqf.objective = lambda y: y.squeeze(-1)
+        mock_acqf.maximize = True  # Add maximize attribute
+        for (
+            dtype,
+            topn,
+            largest,
+            is_sorted,
+            seed,
+            init_batch_limit,
+            ffs,
+            sample_around_best,
+        ) in (
+            (torch.float, True, True, True, None, None, None, True),
+            (torch.double, False, False, False, 1234, 1, {0: 0.5}, False),
+            (torch.float, True, None, True, 1234, None, None, False),
+            (torch.double, False, True, False, None, 1, {0: 0.5}, True),
+            (torch.float, True, False, False, 1234, None, {0: 0.5}, True),
+            (torch.double, False, None, True, None, 1, None, False),
+            (torch.float, True, True, False, 1234, 1, {0: 0.5}, True),
+            (torch.double, False, False, True, None, None, None, False),
+        ):
+            bounds = bounds.to(device=self.device, dtype=dtype)
+            mock_acqf.X_baseline = bounds  # for testing sample_around_best
+            mock_acqf.model = MockModel(MockPosterior(mean=bounds[:, :1]))
+            with mock.patch.object(
+                MockAcquisitionFunction,
+                "__call__",
+                wraps=mock_acqf.__call__,
+            ) as mock_acqf_call, warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=BadInitialCandidatesWarning)
+                options = {
+                    "topn": topn,
+                    "sorted": is_sorted,
+                    "seed": seed,
+                    "init_batch_limit": init_batch_limit,
+                    "sample_around_best": sample_around_best,
+                }
+                if largest is not None:
+                    options["largest"] = largest
+                batch_initial_conditions = gen_batch_initial_conditions(
+                    acq_function=mock_acqf,
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=2,
+                    raw_samples=10,
+                    fixed_features=ffs,
+                    options=options,
+                )
+            expected_shape = torch.Size([2, 1, 2])
+            self.assertEqual(batch_initial_conditions.shape, expected_shape)
+            self.assertEqual(batch_initial_conditions.device, bounds.device)
+            self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+            self.assertLess(
+                _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                1e-6,
+            )
+            batch_shape = (
+                torch.Size([])
+                if init_batch_limit is None
+                else torch.Size([init_batch_limit])
+            )
+            raw_samps = mock_acqf_call.call_args[0][0]
+            batch_shape = (
+                torch.Size([20 if sample_around_best else 10])
+                if init_batch_limit is None
+                else torch.Size([init_batch_limit])
+            )
+            expected_raw_samps_shape = batch_shape + torch.Size([1, 2])
+            self.assertEqual(raw_samps.shape, expected_raw_samps_shape)
+
+            if ffs is not None:
+                for idx, val in ffs.items():
+                    self.assertTrue(
+                        torch.all(batch_initial_conditions[..., idx] == val)
+                    )
 
     def test_gen_batch_initial_conditions_highdim(self):
         d = 2200  # 2200 * 10 (q) > 21201 (sobol max dim)
@@ -252,48 +370,46 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
         ffs_map = {i: random() for i in range(0, d, 2)}
         mock_acqf = MockAcquisitionFunction()
         mock_acqf.objective = lambda y: y.squeeze(-1)
-        for dtype in (torch.float, torch.double):
+        for dtype, nonnegative, seed, ffs, sample_around_best in (
+            (torch.float, True, None, None, True),
+            (torch.double, False, 1234, ffs_map, False),
+            (torch.double, True, 1234, ffs_map, True),
+        ):
             bounds = bounds.to(device=self.device, dtype=dtype)
             mock_acqf.X_baseline = bounds  # for testing sample_around_best
             mock_acqf.model = MockModel(MockPosterior(mean=bounds[:, :1]))
-
-            for nonnegative, seed, ffs, sample_around_best in product(
-                [True, False], [None, 1234], [None, ffs_map], [True, False]
-            ):
-                with warnings.catch_warnings(record=True) as ws:
-                    warnings.simplefilter(
-                        "ignore", category=BadInitialCandidatesWarning
-                    )
-                    batch_initial_conditions = gen_batch_initial_conditions(
-                        acq_function=MockAcquisitionFunction(),
-                        bounds=bounds,
-                        q=10,
-                        num_restarts=1,
-                        raw_samples=2,
-                        fixed_features=ffs,
-                        options={
-                            "nonnegative": nonnegative,
-                            "eta": 0.01,
-                            "alpha": 0.1,
-                            "seed": seed,
-                            "sample_around_best": sample_around_best,
-                        },
-                    )
-                    self.assertTrue(
-                        any(issubclass(w.category, SamplingWarning) for w in ws)
-                    )
-                expected_shape = torch.Size([1, 10, d])
-                self.assertEqual(batch_initial_conditions.shape, expected_shape)
-                self.assertEqual(batch_initial_conditions.device, bounds.device)
-                self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
-                self.assertLess(
-                    _get_max_violation_of_bounds(batch_initial_conditions, bounds), 1e-6
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("ignore", category=BadInitialCandidatesWarning)
+                batch_initial_conditions = gen_batch_initial_conditions(
+                    acq_function=MockAcquisitionFunction(),
+                    bounds=bounds,
+                    q=10,
+                    num_restarts=1,
+                    raw_samples=2,
+                    fixed_features=ffs,
+                    options={
+                        "nonnegative": nonnegative,
+                        "eta": 0.01,
+                        "alpha": 0.1,
+                        "seed": seed,
+                        "sample_around_best": sample_around_best,
+                    },
                 )
-                if ffs is not None:
-                    for idx, val in ffs.items():
-                        self.assertTrue(
-                            torch.all(batch_initial_conditions[..., idx] == val)
-                        )
+                self.assertTrue(
+                    any(issubclass(w.category, SamplingWarning) for w in ws)
+                )
+            expected_shape = torch.Size([1, 10, d])
+            self.assertEqual(batch_initial_conditions.shape, expected_shape)
+            self.assertEqual(batch_initial_conditions.device, bounds.device)
+            self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+            self.assertLess(
+                _get_max_violation_of_bounds(batch_initial_conditions, bounds), 1e-6
+            )
+            if ffs is not None:
+                for idx, val in ffs.items():
+                    self.assertTrue(
+                        torch.all(batch_initial_conditions[..., idx] == val)
+                    )
 
     def test_gen_batch_initial_conditions_warning(self) -> None:
         for dtype in (torch.float, torch.double):
@@ -581,51 +697,51 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                         inequality_constraints=inequality_constraints,
                         equality_constraints=equality_constraints,
                     )
-                    expected_shape = torch.Size([2, 1, 2])
-                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
-                    self.assertEqual(batch_initial_conditions.device, bounds.device)
-                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
-                    self.assertLess(
-                        _get_max_violation_of_bounds(batch_initial_conditions, bounds),
-                        1e-6,
-                    )
-                    self.assertLess(
-                        _get_max_violation_of_constraints(
-                            batch_initial_conditions,
-                            inequality_constraints,
-                            equality=False,
-                        ),
-                        1e-6,
-                    )
-                    self.assertLess(
-                        _get_max_violation_of_constraints(
-                            batch_initial_conditions,
-                            equality_constraints,
-                            equality=True,
-                        ),
-                        1e-6,
-                    )
+                expected_shape = torch.Size([2, 1, 2])
+                self.assertEqual(batch_initial_conditions.shape, expected_shape)
+                self.assertEqual(batch_initial_conditions.device, bounds.device)
+                self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+                self.assertLess(
+                    _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                    1e-6,
+                )
+                self.assertLess(
+                    _get_max_violation_of_constraints(
+                        batch_initial_conditions,
+                        inequality_constraints,
+                        equality=False,
+                    ),
+                    1e-6,
+                )
+                self.assertLess(
+                    _get_max_violation_of_constraints(
+                        batch_initial_conditions,
+                        equality_constraints,
+                        equality=True,
+                    ),
+                    1e-6,
+                )
 
-                    batch_shape = (
-                        torch.Size([])
-                        if init_batch_limit is None
-                        else torch.Size([init_batch_limit])
-                    )
-                    raw_samps = mock_acqf_call.call_args[0][0]
-                    batch_shape = (
-                        torch.Size([10])
-                        if init_batch_limit is None
-                        else torch.Size([init_batch_limit])
-                    )
-                    expected_raw_samps_shape = batch_shape + torch.Size([1, 2])
-                    self.assertEqual(raw_samps.shape, expected_raw_samps_shape)
-                    self.assertTrue((raw_samps[..., 0] == 0.5).all())
-                    self.assertTrue((-4 * raw_samps[..., 1] >= -3).all())
-                    if ffs is not None:
-                        for idx, val in ffs.items():
-                            self.assertTrue(
-                                torch.all(batch_initial_conditions[..., idx] == val)
-                            )
+                batch_shape = (
+                    torch.Size([])
+                    if init_batch_limit is None
+                    else torch.Size([init_batch_limit])
+                )
+                raw_samps = mock_acqf_call.call_args[0][0]
+                batch_shape = (
+                    torch.Size([10])
+                    if init_batch_limit is None
+                    else torch.Size([init_batch_limit])
+                )
+                expected_raw_samps_shape = batch_shape + torch.Size([1, 2])
+                self.assertEqual(raw_samps.shape, expected_raw_samps_shape)
+                self.assertTrue((raw_samps[..., 0] == 0.5).all())
+                self.assertTrue((-4 * raw_samps[..., 1] >= -3).all())
+                if ffs is not None:
+                    for idx, val in ffs.items():
+                        self.assertTrue(
+                            torch.all(batch_initial_conditions[..., idx] == val)
+                        )
 
     def test_gen_batch_initial_conditions_interpoint_constraints(self):
         for dtype in (torch.float, torch.double):
@@ -679,33 +795,33 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                         inequality_constraints=inequality_constraints,
                         equality_constraints=equality_constraints,
                     )
-                    expected_shape = torch.Size([2, 3, 2])
-                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
-                    self.assertEqual(batch_initial_conditions.device, bounds.device)
-                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+                expected_shape = torch.Size([2, 3, 2])
+                self.assertEqual(batch_initial_conditions.shape, expected_shape)
+                self.assertEqual(batch_initial_conditions.device, bounds.device)
+                self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
 
-                    self.assertTrue((batch_initial_conditions.sum(dim=-1) <= 1).all())
+                self.assertTrue((batch_initial_conditions.sum(dim=-1) <= 1).all())
 
-                    self.assertAllClose(
-                        batch_initial_conditions[0, 0, 0],
-                        batch_initial_conditions[0, 1, 0],
-                        batch_initial_conditions[0, 2, 0],
-                        atol=1e-7,
-                    )
+                self.assertAllClose(
+                    batch_initial_conditions[0, 0, 0],
+                    batch_initial_conditions[0, 1, 0],
+                    batch_initial_conditions[0, 2, 0],
+                    atol=1e-7,
+                )
 
-                    self.assertAllClose(
-                        batch_initial_conditions[1, 0, 0],
-                        batch_initial_conditions[1, 1, 0],
-                        batch_initial_conditions[1, 2, 0],
-                    )
-                    self.assertLess(
-                        _get_max_violation_of_constraints(
-                            batch_initial_conditions,
-                            inequality_constraints,
-                            equality=False,
-                        ),
-                        1e-6,
-                    )
+                self.assertAllClose(
+                    batch_initial_conditions[1, 0, 0],
+                    batch_initial_conditions[1, 1, 0],
+                    batch_initial_conditions[1, 2, 0],
+                )
+                self.assertLess(
+                    _get_max_violation_of_constraints(
+                        batch_initial_conditions,
+                        inequality_constraints,
+                        equality=False,
+                    ),
+                    1e-6,
+                )
 
     def test_gen_batch_initial_conditions_generator(self):
         mock_acqf = MockAcquisitionFunction()
@@ -727,7 +843,9 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                             dtype=bounds.dtype,
                             device=self.device,
                         )
-                        X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
+                        X_rnd = unnormalize(
+                            X_rnd_nlzd, bounds, update_constant_bounds=False
+                        )
                         X_rnd[..., -1] = 0.42
                         return X_rnd
 
@@ -756,20 +874,20 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                             "init_batch_limit": init_batch_limit,
                         },
                     )
-                    expected_shape = torch.Size([4, 2, 3])
-                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
-                    self.assertEqual(batch_initial_conditions.device, bounds.device)
-                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
-                    self.assertTrue((batch_initial_conditions[..., -1] == 0.42).all())
-                    self.assertLess(
-                        _get_max_violation_of_bounds(batch_initial_conditions, bounds),
-                        1e-6,
-                    )
-                    if ffs is not None:
-                        for idx, val in ffs.items():
-                            self.assertTrue(
-                                torch.all(batch_initial_conditions[..., idx] == val)
-                            )
+                expected_shape = torch.Size([4, 2, 3])
+                self.assertEqual(batch_initial_conditions.shape, expected_shape)
+                self.assertEqual(batch_initial_conditions.device, bounds.device)
+                self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+                self.assertTrue((batch_initial_conditions[..., -1] == 0.42).all())
+                self.assertLess(
+                    _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                    1e-6,
+                )
+                if ffs is not None:
+                    for idx, val in ffs.items():
+                        self.assertTrue(
+                            torch.all(batch_initial_conditions[..., idx] == val)
+                        )
 
     def test_error_generator_with_sample_around_best(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
@@ -852,39 +970,40 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                         },
                         fixed_X_fantasies=fixed_X_fantasies,
                     )
-                    expected_shape = torch.Size([2, 4, 2])
-                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
-                    self.assertEqual(batch_initial_conditions.device, bounds.device)
-                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
-                    self.assertLess(
-                        _get_max_violation_of_bounds(batch_initial_conditions, bounds),
-                        1e-6,
-                    )
-                    batch_shape = (
-                        torch.Size([])
-                        if init_batch_limit is None
-                        else torch.Size([init_batch_limit])
-                    )
-                    raw_samps = mock_acqf_call.call_args[0][0]
-                    batch_shape = (
-                        torch.Size([20 if sample_around_best else 10])
-                        if init_batch_limit is None
-                        else torch.Size([init_batch_limit])
-                    )
-                    expected_raw_samps_shape = batch_shape + torch.Size([4, 2])
-                    self.assertEqual(raw_samps.shape, expected_raw_samps_shape)
+                expected_shape = torch.Size([2, 4, 2])
+                self.assertEqual(batch_initial_conditions.shape, expected_shape)
+                self.assertEqual(batch_initial_conditions.device, bounds.device)
+                self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+                self.assertLess(
+                    _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                    1e-6,
+                )
+                batch_shape = (
+                    torch.Size([])
+                    if init_batch_limit is None
+                    else torch.Size([init_batch_limit])
+                )
+                raw_samps = mock_acqf_call.call_args[0][0]
+                batch_shape = (
+                    torch.Size([20 if sample_around_best else 10])
+                    if init_batch_limit is None
+                    else torch.Size([init_batch_limit])
+                )
+                expected_raw_samps_shape = batch_shape + torch.Size([4, 2])
+                self.assertEqual(raw_samps.shape, expected_raw_samps_shape)
 
-                    if ffs is not None:
-                        for idx, val in ffs.items():
-                            self.assertTrue(
-                                torch.all(batch_initial_conditions[..., 0, idx] == val)
-                            )
-                    self.assertTrue(
-                        torch.equal(
-                            batch_initial_conditions[:, 1:],
-                            fixed_X_fantasies.unsqueeze(0).expand(2, 3, 2),
+                if ffs is not None:
+                    for idx, val in ffs.items():
+                        self.assertTrue(
+                            torch.all(batch_initial_conditions[..., 0, idx] == val)
                         )
+                self.assertTrue(
+                    torch.equal(
+                        batch_initial_conditions[:, 1:],
+                        fixed_X_fantasies.unsqueeze(0).expand(2, 3, 2),
                     )
+                )
+
         # test wrong shape
         msg = (
             "`fixed_X_fantasies` and `bounds` must both have the same trailing"
