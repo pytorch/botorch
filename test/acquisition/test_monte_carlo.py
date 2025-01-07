@@ -1012,35 +1012,44 @@ class TestQLowerConfidenceBound(TestQUpperConfidenceBound):
 
 class TestQPosteriorStandardDeviation(BotorchTestCase):
     def test_q_pstd(self):
+        n_samples = 128
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 1 x 1 x 1
-            samples = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
-            mm = MockModel(MockPosterior(samples=samples))
+            torch.manual_seed(0)
+            samples = torch.randn(n_samples, 1, 1, 1, device=self.device, dtype=dtype)
+            std = samples.std(dim=0, correction=0).item()
+            mm = MockModel(
+                MockPosterior(samples=samples, base_shape=torch.Size([1, 1, 1]))
+            )
             # X is `q x d` = 1 x 1. X is a dummy and unused b/c of mocking
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
 
             # basic test
-            sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
+            sampler = IIDNormalSampler(sample_shape=torch.Size([n_samples]))
             acqf = qPosteriorStandardDeviation(model=mm, sampler=sampler)
             res = acqf(X)
-            self.assertEqual(res.item(), 0.0)
+            self.assertAllClose(res.item(), std, rtol=0.02, atol=0)
 
             # basic test
-            sampler = IIDNormalSampler(sample_shape=torch.Size([2]), seed=12345)
+            sampler = IIDNormalSampler(sample_shape=torch.Size([n_samples]), seed=12345)
             acqf = qPosteriorStandardDeviation(model=mm, sampler=sampler)
             res = acqf(X)
-            self.assertEqual(res.item(), 0.0)
-            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
+            self.assertAllClose(res.item(), std, rtol=0.02, atol=0)
+            self.assertEqual(
+                acqf.sampler.base_samples.shape, torch.Size([n_samples, 1, 1, 1])
+            )
             bs = acqf.sampler.base_samples.clone()
             res = acqf(X)
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
             # basic test, qmc
-            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
+            sampler = SobolQMCNormalSampler(sample_shape=torch.Size([n_samples]))
             acqf = qPosteriorStandardDeviation(model=mm, sampler=sampler)
             res = acqf(X)
-            self.assertEqual(res.item(), 0.0)
-            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
+            self.assertAllClose(res.item(), std, rtol=0.02, atol=0)
+            self.assertEqual(
+                acqf.sampler.base_samples.shape, torch.Size([n_samples, 1, 1, 1])
+            )
             bs = acqf.sampler.base_samples.clone()
             acqf(X)
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
@@ -1052,7 +1061,8 @@ class TestQPosteriorStandardDeviation(BotorchTestCase):
             self.assertIsNone(acqf.X_pending)
             acqf.set_X_pending(X)
             self.assertEqual(acqf.X_pending, X)
-            mm._posterior._samples = mm._posterior._samples.expand(1, 2, 1)
+            mm._posterior._base_shape = torch.Size([1, 2, 1])
+            mm._posterior._samples = mm._posterior._samples.expand(n_samples, 1, 2, 1)
             res = acqf(X)
             X2 = torch.zeros(
                 1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
