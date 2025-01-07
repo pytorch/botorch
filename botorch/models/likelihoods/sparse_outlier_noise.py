@@ -454,7 +454,8 @@ class SparseOutlierNoise(Noise, RelevancePursuitMixin):
         mll.train()  # NOTE: this changes model.train_inputs to be unnormalized.
         X, Y = mll.model.train_inputs[0], mll.model.train_targets
         F = mll.model(X)
-        L = mll.likelihood(F, X)
+        TX = mll.model.transform_inputs(X)
+        L = mll.likelihood(F, TX)  # likelihood expects transformed inputs
         S = L.covariance_matrix  # (Kernel Matrix + Noise Matrix)
 
         # NOTE: The following computation is mathematically equivalent to the formula
