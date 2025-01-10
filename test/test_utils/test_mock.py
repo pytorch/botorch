@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import re
 import warnings
 from unittest.mock import patch
 
@@ -24,6 +25,12 @@ from botorch.optim.optimize_mixed import (
 )
 from botorch.test_utils.mock import mock_optimize, mock_optimize_context_manager
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
+
+
+MAX_ITER_MSG = re.compile(
+    # Note that the message changed with scipy 1.15, hence the different matching here.
+    "TOTAL NO. (of|OF) ITERATIONS REACHED LIMIT"
+)
 
 
 class SinAcqusitionFunction(MockAcquisitionFunction):
@@ -56,9 +63,7 @@ class TestMock(BotorchTestCase):
 
             with mock_optimize_context_manager():
                 result = scipy_minimize(closure=closure, parameters={"x": x})
-            self.assertEqual(
-                result.message, "STOP: TOTAL NO. of ITERATIONS REACHED LIMIT"
-            )
+            self.assertTrue(MAX_ITER_MSG.search(result.message))
 
         with self.subTest("optimize_acqf"):
             with mock_optimize_context_manager():
