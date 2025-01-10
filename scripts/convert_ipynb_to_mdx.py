@@ -12,12 +12,11 @@ import shutil
 import subprocess
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import mdformat
 import nbformat
 import pandas as pd
-from lxml import etree  # pyre-ignore
 from nbformat.notebooknode import NotebookNode
 
 SCRIPTS_DIR = Path(__file__).parent.resolve()
@@ -642,9 +641,11 @@ def prioritize_dtypes(
             associated with the cell output having Plotly information in it or not.
     """
     cell_output_dtypes = [
-        list(cell_output["data"].keys())
-        if "data" in cell_output
-        else [cell_output["output_type"]]
+        (
+            list(cell_output["data"].keys())
+            if "data" in cell_output
+            else [cell_output["output_type"]]
+        )
         for cell_output in cell_outputs
     ]
     prioritized_cell_output_dtypes = [
