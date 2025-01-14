@@ -18,7 +18,7 @@ body:
     id: repro
     attributes:
       label: Please provide a minimal, reproducible example of the unexpected behavior.
-      description: Follow [these guidelines](https://stackoverflow.com/help/minimal-reproducible-example) for writing your example.
+      description: Follow [these guidelines](https://stackoverflow.com/help/minimal-reproducible-example) for writing your example. Please ensure that the provided example is complete & runnable, including with dummy data if necessary.
     validations:
       required: true
   - type: textarea
