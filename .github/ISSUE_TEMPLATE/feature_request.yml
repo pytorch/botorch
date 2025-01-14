@@ -34,8 +34,8 @@ body:
       label: Pull Request
       description: Are you willing to open a pull request implementing this feature? (See [Contributing to BoTorch](https://github.com/pytorch/botorch/blob/main/CONTRIBUTING.md))
       options:
-        - Yes
-        - No
+        - "Yes"
+        - "No"
   - type: checkboxes
     id: terms
     attributes:
