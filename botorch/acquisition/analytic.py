@@ -1116,7 +1116,7 @@ def _get_noiseless_fantasy_model(
         # Not transforming Yvar because 1e-7 is already close to 0 and it is a
         # relative, not absolute, value.
         Y_fantasized, _ = outcome_transform(
-            Y_fantasized.unsqueeze(-1), Yvar.unsqueeze(-1)
+            Y_fantasized.unsqueeze(-1), Yvar.unsqueeze(-1), X=batch_X_observed
         )
         Y_fantasized = Y_fantasized.squeeze(-1)
     input_transform = getattr(model, "input_transform", None)

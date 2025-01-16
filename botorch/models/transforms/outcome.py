@@ -42,7 +42,7 @@ class OutcomeTransform(Module, ABC):
 
     @abstractmethod
     def forward(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Transform the outcomes in a model's training targets
 
@@ -50,6 +50,7 @@ class OutcomeTransform(Module, ABC):
             Y: A `batch_shape x n x m`-dim tensor of training targets.
             Yvar: A `batch_shape x n x m`-dim tensor of observation noises
                 associated with the training targets (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
 
         Returns:
             A two-tuple with the transformed outcomes:
@@ -77,7 +78,7 @@ class OutcomeTransform(Module, ABC):
         )
 
     def untransform(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Un-transform previously transformed outcomes
 
@@ -85,6 +86,7 @@ class OutcomeTransform(Module, ABC):
             Y: A `batch_shape x n x m`-dim tensor of transfomred training targets.
             Yvar: A `batch_shape x n x m`-dim tensor of transformed observation
                 noises associated with the training targets (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
 
         Returns:
             A two-tuple with the un-transformed outcomes:
@@ -106,7 +108,9 @@ class OutcomeTransform(Module, ABC):
         """
         return False
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(
+        self, posterior: Posterior, X: Tensor | None = None
+    ) -> Posterior:
         r"""Un-transform a posterior.
 
         Posteriors with `_is_linear=True` should return a `GPyTorchPosterior` when
@@ -115,6 +119,7 @@ class OutcomeTransform(Module, ABC):
 
         Args:
             posterior: A posterior in the transformed space.
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
 
         Returns:
             The un-transformed posterior.
@@ -139,7 +144,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
         super().__init__(OrderedDict(transforms))
 
     def forward(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Transform the outcomes in a model's training targets
 
@@ -147,6 +152,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
             Y: A `batch_shape x n x m`-dim tensor of training targets.
             Yvar: A `batch_shape x n x m`-dim tensor of observation noises
                 associated with the training targets (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
 
         Returns:
             A two-tuple with the transformed outcomes:
@@ -155,7 +161,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
             - The transformed observation noise (if applicable).
         """
         for tf in self.values():
-            Y, Yvar = tf.forward(Y, Yvar)
+            Y, Yvar = tf.forward(Y=Y, Yvar=Yvar, X=X)
         return Y, Yvar
 
     def subset_output(self, idcs: list[int]) -> OutcomeTransform:
@@ -172,7 +178,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
         )
 
     def untransform(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Un-transform previously transformed outcomes
 
@@ -180,6 +186,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
             Y: A `batch_shape x n x m`-dim tensor of transfomred training targets.
             Yvar: A `batch_shape x n x m`-dim tensor of transformed observation
                 noises associated with the training targets (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
 
         Returns:
             A two-tuple with the un-transformed outcomes:
@@ -188,7 +195,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
             - The un-transformed observation noise (if applicable).
         """
         for tf in reversed(self.values()):
-            Y, Yvar = tf.untransform(Y, Yvar)
+            Y, Yvar = tf.untransform(Y=Y, Yvar=Yvar, X=X)
         return Y, Yvar
 
     @property
@@ -199,17 +206,20 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
         """
         return all(octf._is_linear for octf in self.values())
 
-    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+    def untransform_posterior(
+        self, posterior: Posterior, X: Tensor | None = None
+    ) -> Posterior:
         r"""Un-transform a posterior
 
         Args:
             posterior: A posterior in the transformed space.
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
 
         Returns:
             The un-transformed posterior.
         """
         for tf in reversed(self.values()):
-            posterior = tf.untransform_posterior(posterior)
+            posterior = tf.untransform_posterior(posterior, X=X)
         return posterior
 
 
@@ -250,7 +260,7 @@ class Standardize(OutcomeTransform):
         self._min_stdv = min_stdv
 
     def forward(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Standardize outcomes.
 
@@ -262,6 +272,9 @@ class Standardize(OutcomeTransform):
             Y: A `batch_shape x n x m`-dim tensor of training targets.
             Yvar: A `batch_shape x n x m`-dim tensor of observation noises
                 associated with the training targets (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
+                This argument is not used by this transform, but it is used by
+                its subclass, `StratifiedStandardize`.
 
         Returns:
             A two-tuple with the transformed outcomes:
@@ -339,7 +352,7 @@ class Standardize(OutcomeTransform):
         return new_tf
 
     def untransform(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Un-standardize outcomes.
 
@@ -347,6 +360,9 @@ class Standardize(OutcomeTransform):
             Y: A `batch_shape x n x m`-dim tensor of standardized targets.
             Yvar: A `batch_shape x n x m`-dim tensor of standardized observation
                 noises associated with the targets (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).
+                This argument is not used by this transform, but it is used by
+                its subclass, `StratifiedStandardize`.
 
         Returns:
             A two-tuple with the un-standardized outcomes:
@@ -370,12 +386,15 @@ class Standardize(OutcomeTransform):
         return True
 
     def untransform_posterior(
-        self, posterior: Posterior
+        self, posterior: Posterior, X: Tensor | None = None
     ) -> GPyTorchPosterior | TransformedPosterior:
         r"""Un-standardize the posterior.
 
         Args:
             posterior: A posterior in the standardized space.
+            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).
+                This argument is not used by this transform, but it is used by
+                its subclass, `StratifiedStandardize`.
 
         Returns:
             The un-standardized posterior. If the input posterior is a
@@ -487,7 +506,7 @@ class Log(OutcomeTransform):
         return new_tf
 
     def forward(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Log-transform outcomes.
 
@@ -495,6 +514,8 @@ class Log(OutcomeTransform):
             Y: A `batch_shape x n x m`-dim tensor of training targets.
             Yvar: A `batch_shape x n x m`-dim tensor of observation noises
                 associated with the training targets (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
+                This argument is not used by this transform.
 
         Returns:
             A two-tuple with the transformed outcomes:
@@ -520,7 +541,7 @@ class Log(OutcomeTransform):
         return Y_tf, Yvar
 
     def untransform(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Un-transform log-transformed outcomes
 
@@ -529,6 +550,8 @@ class Log(OutcomeTransform):
             Yvar: A `batch_shape x n x m`-dim tensor of log- transformed
                 observation noises associated with the training targets
                 (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).
+                This argument is not used by this transform.
 
         Returns:
             A two-tuple with the un-transformed outcomes:
@@ -553,11 +576,15 @@ class Log(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
+    def untransform_posterior(
+        self, posterior: Posterior, X: Tensor | None = None
+    ) -> TransformedPosterior:
         r"""Un-transform the log-transformed posterior.
 
         Args:
             posterior: A posterior in the log-transformed space.
+            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).
+                This argument is not used by this transform.
 
         Returns:
             The un-transformed posterior.
@@ -616,7 +643,7 @@ class Power(OutcomeTransform):
         return new_tf
 
     def forward(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Power-transform outcomes.
 
@@ -624,6 +651,8 @@ class Power(OutcomeTransform):
             Y: A `batch_shape x n x m`-dim tensor of training targets.
             Yvar: A `batch_shape x n x m`-dim tensor of observation noises
                 associated with the training targets (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
+                This argument is not used by this transform.
 
         Returns:
             A two-tuple with the transformed outcomes:
@@ -649,7 +678,7 @@ class Power(OutcomeTransform):
         return Y_tf, Yvar
 
     def untransform(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Un-transform power-transformed outcomes
 
@@ -658,6 +687,8 @@ class Power(OutcomeTransform):
             Yvar: A `batch_shape x n x m`-dim tensor of power-transformed
                 observation noises associated with the training targets
                 (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).
+                This argument is not used by this transform.
 
         Returns:
             A two-tuple with the un-transformed outcomes:
@@ -682,11 +713,15 @@ class Power(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
+    def untransform_posterior(
+        self, posterior: Posterior, X: Tensor | None = None
+    ) -> TransformedPosterior:
         r"""Un-transform the power-transformed posterior.
 
         Args:
             posterior: A posterior in the power-transformed space.
+            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).
+                This argument is not used by this transform.
 
         Returns:
             The un-transformed posterior.
@@ -741,7 +776,7 @@ class Bilog(OutcomeTransform):
         return new_tf
 
     def forward(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Bilog-transform outcomes.
 
@@ -749,6 +784,8 @@ class Bilog(OutcomeTransform):
             Y: A `batch_shape x n x m`-dim tensor of training targets.
             Yvar: A `batch_shape x n x m`-dim tensor of observation noises
                 associated with the training targets (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
+                This argument is not used by this transform.
 
         Returns:
             A two-tuple with the transformed outcomes:
@@ -773,7 +810,7 @@ class Bilog(OutcomeTransform):
         return Y_tf, Yvar
 
     def untransform(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Un-transform bilog-transformed outcomes
 
@@ -782,6 +819,8 @@ class Bilog(OutcomeTransform):
             Yvar: A `batch_shape x n x m`-dim tensor of bilog-transformed
                 observation noises associated with the training targets
                 (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).
+                This argument is not used by this transform.
 
         Returns:
             A two-tuple with the un-transformed outcomes:
@@ -806,11 +845,15 @@ class Bilog(OutcomeTransform):
             )
         return Y_utf, Yvar
 
-    def untransform_posterior(self, posterior: Posterior) -> TransformedPosterior:
+    def untransform_posterior(
+        self, posterior: Posterior, X: Tensor | None = None
+    ) -> TransformedPosterior:
         r"""Un-transform the bilog-transformed posterior.
 
         Args:
             posterior: A posterior in the bilog-transformed space.
+            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).
+                This argument is not used by this transform.
 
         Returns:
             The un-transformed posterior.

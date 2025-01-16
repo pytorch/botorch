@@ -172,7 +172,7 @@ class ApproximateGPyTorchModel(GPyTorchModel):
 
         posterior = GPyTorchPosterior(distribution=dist)
         if hasattr(self, "outcome_transform"):
-            posterior = self.outcome_transform.untransform_posterior(posterior)
+            posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
         if posterior_transform is not None:
             posterior = posterior_transform(posterior)
         return posterior
@@ -397,7 +397,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
                     UserInputWarning,
                     stacklevel=3,
                 )
-                train_Y, _ = outcome_transform(train_Y)
+                train_Y, _ = outcome_transform(train_Y, X=transformed_X)
             self._validate_tensor_args(X=transformed_X, Y=train_Y)
             validate_input_scaling(train_X=transformed_X, train_Y=train_Y)
             if train_Y.shape[-1] != num_outputs:
