@@ -91,7 +91,7 @@ class FlattenedStandardize(Standardize):
         return out
 
     def forward(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         Y = self._squeeze_to_single_output(Y)
         if Yvar is not None:
@@ -107,13 +107,13 @@ class FlattenedStandardize(Standardize):
         return Y_out, Yvar_out
 
     def untransform(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         Y = self._squeeze_to_single_output(Y)
         if Yvar is not None:
             Yvar = self._squeeze_to_single_output(Yvar)
 
-        Y, Yvar = super().untransform(Y, Yvar)
+        Y, Yvar = super().untransform(Y=Y, Yvar=Yvar, X=X)
 
         Y = self._return_to_output_shape(Y)
         if Yvar is not None:
@@ -121,7 +121,7 @@ class FlattenedStandardize(Standardize):
         return Y, Yvar
 
     def untransform_posterior(
-        self, posterior: HigherOrderGPPosterior
+        self, posterior: HigherOrderGPPosterior, X: Tensor | None = None
     ) -> TransformedPosterior:
         # TODO: return a HigherOrderGPPosterior once rescaling constant
         # muls * LinearOperators won't force a dense decomposition rather than a
@@ -227,7 +227,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                     output_shape=train_Y.shape[-num_output_dims:],
                     batch_shape=batch_shape,
                 )
-            train_Y, _ = outcome_transform(train_Y)
+            train_Y, _ = outcome_transform(train_Y, X=train_X)
 
         self._aug_batch_shape = batch_shape
         self._num_dimensions = num_output_dims + 1
@@ -416,7 +416,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         """
         if hasattr(self, "outcome_transform"):
             # we need to apply transforms before shifting batch indices around
-            Y, noise = self.outcome_transform(Y=Y, Yvar=noise)
+            Y, noise = self.outcome_transform(Y=Y, Yvar=noise, X=X)
         # Do not check shapes when fantasizing as they are not expected to match.
         if fantasize_flag.off():
             self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
@@ -540,7 +540,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 num_outputs=self._num_outputs,
             )
             if hasattr(self, "outcome_transform"):
-                posterior = self.outcome_transform.untransform_posterior(posterior)
+                posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
             return posterior
 
     def make_posterior_variances(

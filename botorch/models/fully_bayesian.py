@@ -373,7 +373,9 @@ class SaasFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
-            train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
+            train_Y, train_Yvar = outcome_transform(
+                Y=train_Y, Yvar=train_Yvar, X=transformed_X
+            )
         self._validate_tensor_args(X=transformed_X, Y=train_Y)
         validate_input_scaling(
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
