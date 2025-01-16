@@ -1,0 +1,46 @@
+name: 🚀 Feature Request
+description: Request a feature or improvement to BoTorch.
+labels: ["enhancement"]
+title: "[FEATURE REQUEST]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to request a feature! We strive to make BoTorch a useful and rich library for our users.
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Provide a detailed description of the problem you would like to solve via this new feature or improvement.
+    validations:
+      required: true
+  - type: textarea
+    id: pitch
+    attributes:
+      label: Describe the solution you'd like to see implemented in BoTorch.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe any alternatives you've considered to the above solution.
+  - type: textarea
+    id: related
+    attributes:
+      label: Is this related to an existing issue in BoTorch or another repository? If so please include links to those Issues here.
+  - type: dropdown
+    id: pull-request
+    attributes:
+      label: Pull Request
+      description: Are you willing to open a pull request implementing this feature? (See [Contributing to BoTorch](https://github.com/pytorch/botorch/blob/main/CONTRIBUTING.md))
+      options:
+        - "Yes"
+        - "No"
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow BoTorch's [Code of Conduct](https://github.com/pytorch/botorch/blob/main/CODE_OF_CONDUCT.md).
+      options:
+        - label: I agree to follow BoTorch's Code of Conduct
+          required: true
