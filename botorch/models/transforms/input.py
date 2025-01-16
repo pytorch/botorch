@@ -614,7 +614,7 @@ class AffineInputTransform(ReversibleInputTransform):
 
 
 class Normalize(AffineInputTransform):
-    r"""Normalize the inputs to the unit cube.
+    r"""Normalize the inputs have unit range and be centered at 0.5 (by default).
 
     If no explicit bounds are provided this module is stateful: If in train mode,
     calling `forward` updates the module state (i.e. the normalizing bounds). If
@@ -635,6 +635,7 @@ class Normalize(AffineInputTransform):
         min_range: float = 1e-8,
         learn_bounds: bool | None = None,
         almost_zero: float = 1e-12,
+        center: float = 0.5,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
 
@@ -662,6 +663,7 @@ class Normalize(AffineInputTransform):
                 NOTE: This only applies if `learn_bounds=True`.
             learn_bounds: Whether to learn the bounds in train mode. Defaults
                 to False if bounds are provided, otherwise defaults to True.
+            center: The center of the range for each parameter. Default: 0.5.
 
         Example:
             >>> t = Normalize(d=2)
@@ -704,10 +706,11 @@ class Normalize(AffineInputTransform):
                     "will not be updated and the transform will be a no-op.",
                     UserInputWarning,
                 )
+        self.center = center
         super().__init__(
             d=d,
             coefficient=coefficient,
-            offset=offset,
+            offset=offset + (0.5 - center) * coefficient,
             indices=indices,
             batch_shape=batch_shape,
             transform_on_train=transform_on_train,
@@ -745,7 +748,10 @@ class Normalize(AffineInputTransform):
         coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - offset
         almost_zero = coefficient < self.min_range
         self._coefficient = torch.where(almost_zero, 1.0, coefficient)
-        self._offset = torch.where(almost_zero, 0.0, offset)
+        self._offset = (
+            torch.where(almost_zero, 0.0, offset)
+            + (0.5 - self.center) * self._coefficient
+        )
 
     def get_init_args(self) -> dict[str, Any]:
         r"""Get the arguments necessary to construct an exact copy of the transform."""

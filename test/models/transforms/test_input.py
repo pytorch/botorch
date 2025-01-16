@@ -7,6 +7,7 @@
 import itertools
 from abc import ABC
 from copy import deepcopy
+from itertools import product
 from random import randint
 
 import torch
@@ -259,17 +260,19 @@ class TestInputTransforms(BotorchTestCase):
                 nlz(X)
 
             # basic usage
-            for batch_shape in (torch.Size(), torch.Size([3])):
+            for batch_shape, center in product(
+                (torch.Size(), torch.Size([3])), [0.5, 0.0]
+            ):
                 # learned bounds
-                nlz = Normalize(d=2, batch_shape=batch_shape)
+                nlz = Normalize(d=2, batch_shape=batch_shape, center=center)
                 X = torch.randn(*batch_shape, 4, 2, device=self.device, dtype=dtype)
                 for _X in (torch.stack((X, X)), X):  # check batch_shape is obeyed
                     X_nlzd = nlz(_X)
                     self.assertEqual(nlz.mins.shape, batch_shape + (1, X.shape[-1]))
                     self.assertEqual(nlz.ranges.shape, batch_shape + (1, X.shape[-1]))
 
-                self.assertEqual(X_nlzd.min().item(), 0.0)
-                self.assertEqual(X_nlzd.max().item(), 1.0)
+                self.assertAllClose(X_nlzd.min().item(), center - 0.5)
+                self.assertAllClose(X_nlzd.max().item(), center + 0.5)
 
                 nlz.eval()
                 X_unnlzd = nlz.untransform(X_nlzd)
@@ -278,6 +281,9 @@ class TestInputTransforms(BotorchTestCase):
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
                 )
+                coeff = expected_bounds[..., 1, :] - expected_bounds[..., 0, :]
+                expected_bounds[..., 0, :] += (0.5 - center) * coeff
+                expected_bounds[..., 1, :] = expected_bounds[..., 0, :] + coeff
                 atol = 1e-6 if dtype is torch.float32 else 1e-12
                 rtol = 1e-4 if dtype is torch.float32 else 1e-8
                 self.assertAllClose(nlz.bounds, expected_bounds, atol=atol, rtol=rtol)
