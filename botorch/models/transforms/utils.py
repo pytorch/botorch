@@ -141,3 +141,20 @@ def interaction_features(X: Tensor) -> Tensor:
     dim = X.shape[-1]
     row_idcs, col_idcs = torch.triu_indices(dim, dim, offset=1)
     return (X.unsqueeze(-1) @ X.unsqueeze(-2))[..., row_idcs, col_idcs].unsqueeze(-2)
+
+
+def nanstd(X: Tensor, dim: int, keepdim: bool = False) -> Tensor:
+    """Computes the standard deviation of the input, ignoring NaNs.
+
+    Args:
+        X: A `batch_shape x n x d`-dim tensor of inputs.
+        dim: The dimension along which to compute the standard deviation.
+        keepdim: If True, the dimension along which the standard deviation is
+            compute is kept.
+    """
+    n = (~torch.isnan(X)).sum(dim=dim)
+    return (
+        (X - X.nanmean(dim=dim, keepdim=True)).pow(2).nanmean(dim=dim, keepdim=keepdim)
+        * n
+        / (n - 1)
+    ).sqrt()
