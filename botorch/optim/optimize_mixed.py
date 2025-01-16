@@ -526,8 +526,6 @@ def continuous_step(
     """
     bounds = opt_inputs.bounds
     options = opt_inputs.options or {}
-    if (current_x < bounds[0]).any() or (current_x > bounds[1]).any():
-        raise ValueError("continuous_step requires current_x to be within bounds.")
     if len(discrete_dims) == len(current_x):  # nothing continuous to optimize
         with torch.no_grad():
             return current_x, opt_inputs.acq_function(current_x.unsqueeze(0))
