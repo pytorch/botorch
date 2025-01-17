@@ -1775,32 +1775,6 @@ Apr 2010.</p>
 High-Dimensional Outputs. <a class="reference external" href="https://arxiv.org/abs/2106.12997">https://arxiv.org/abs/2106.12997</a>, Jun 2021.</p>
 </div>
 </div>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.models.multitask.get_task_value_remapping">
-<span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">get_task_value_remapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#get_task_value_remapping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.get_task_value_remapping" title="Link to this definition">¶</a></dt>
-<dd><p>Construct an mapping of discrete task values to contiguous int-valued floats.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>task_values</strong> (<em>Tensor</em>) – A sorted long-valued tensor of task values.</p></li>
-<li><p><strong>dtype</strong> (<em>dtype</em>) – The dtype of the model inputs (e.g. <cite>X</cite>), which the new
-task values should have mapped to (e.g. float, double).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tensor of shape <cite>task_values.max() + 1</cite> that maps task values
-to new task values. The indexing operation <cite>mapper[task_value]</cite>
-will produce a tensor of new task values, of the same shape as
-the original. The elements of the <cite>mapper</cite> tensor that do not
-appear in the original <cite>task_values</cite> are mapped to <cite>nan</cite>. The
-return value will be <cite>None</cite>, when the task values are contiguous
-integers starting from zero.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Tensor</em> | None</p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.MultiTaskGP">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">MultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_tasks=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform=&lt;class</span> <span class="pre">'botorch.utils.types.DEFAULT'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Link to this definition">¶</a></dt>
@@ -2093,7 +2067,7 @@ standardization (if lower, only de-mean the data).</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.higher_order_gp.FlattenedStandardize.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#FlattenedStandardize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#FlattenedStandardize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Standardize outcomes.</p>
 <p>If the module is in train mode, this updates the module state (i.e. the
 mean/std normalizing constants). If the module is in eval mode, simply
@@ -2104,6 +2078,9 @@ applies the normalization using the module state.</p>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).
+This argument is not used by this transform, but it is used by
+its subclass, <cite>StratifiedStandardize</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2120,7 +2097,7 @@ associated with the training targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.higher_order_gp.FlattenedStandardize.untransform">
-<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#FlattenedStandardize.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.untransform" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#FlattenedStandardize.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.untransform" title="Link to this definition">¶</a></dt>
 <dd><p>Un-standardize outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2128,6 +2105,9 @@ associated with the training targets (if applicable).</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized observation
 noises associated with the targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs (if applicable).
+This argument is not used by this transform, but it is used by
+its subclass, <cite>StratifiedStandardize</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -2144,11 +2124,16 @@ noises associated with the targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.higher_order_gp.FlattenedStandardize.untransform_posterior">
-<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#FlattenedStandardize.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.untransform_posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#FlattenedStandardize.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.untransform_posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Un-standardize the posterior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior" title="botorch.posteriors.higher_order.HigherOrderGPPosterior"><em>HigherOrderGPPosterior</em></a>) – A posterior in the standardized space.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior" title="botorch.posteriors.higher_order.HigherOrderGPPosterior"><em>HigherOrderGPPosterior</em></a>) – A posterior in the standardized space.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs (if applicable).
+This argument is not used by this transform, but it is used by
+its subclass, <cite>StratifiedStandardize</cite>.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The un-standardized posterior. If the input posterior is a
@@ -2381,7 +2366,7 @@ standardization (if lower, only de-mean the data).</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.latent_kronecker_gp.MinMaxStandardize.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/latent_kronecker_gp.html#MinMaxStandardize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.latent_kronecker_gp.MinMaxStandardize.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/latent_kronecker_gp.html#MinMaxStandardize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.latent_kronecker_gp.MinMaxStandardize.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Standardize outcomes.</p>
 <p>If the module is in train mode, this updates the module state (i.e. the
 mean/std normalizing constants). If the module is in eval mode, simply
@@ -2392,6 +2377,7 @@ applies the normalization using the module state.</p>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5361,7 +5347,7 @@ International Conference on Artificial Intelligence and Statistics. PMLR, 2021,
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.OutcomeTransform.forward">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.forward" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Transform the outcomes in a model’s training targets</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5369,6 +5355,7 @@ International Conference on Artificial Intelligence and Statistics. PMLR, 2021,
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5403,7 +5390,7 @@ in the <cite>subset_model</cite> functionality.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.OutcomeTransform.untransform">
-<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.untransform" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.untransform" title="Link to this definition">¶</a></dt>
 <dd><p>Un-transform previously transformed outcomes</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5411,6 +5398,7 @@ in the <cite>subset_model</cite> functionality.</p>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of transfomred training targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of transformed observation
 noises associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5427,14 +5415,17 @@ noises associated with the training targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.OutcomeTransform.untransform_posterior">
-<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.untransform_posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.untransform_posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Un-transform a posterior.</p>
 <p>Posteriors with <cite>_is_linear=True</cite> should return a <cite>GPyTorchPosterior</cite> when
 <cite>posterior</cite> is a <cite>GPyTorchPosterior</cite>. Posteriors with <cite>_is_linear=False</cite>
 likely return a <cite>TransformedPosterior</cite> instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the transformed space.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the transformed space.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The un-transformed posterior.</p>
@@ -5460,7 +5451,7 @@ transforms on the module.</p>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.ChainedOutcomeTransform.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#ChainedOutcomeTransform.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#ChainedOutcomeTransform.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Transform the outcomes in a model’s training targets</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5468,6 +5459,7 @@ transforms on the module.</p>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5500,7 +5492,7 @@ associated with the training targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform">
-<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#ChainedOutcomeTransform.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#ChainedOutcomeTransform.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform" title="Link to this definition">¶</a></dt>
 <dd><p>Un-transform previously transformed outcomes</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5508,6 +5500,7 @@ associated with the training targets (if applicable).</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of transfomred training targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of transformed observation
 noises associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5524,11 +5517,14 @@ noises associated with the training targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior">
-<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#ChainedOutcomeTransform.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#ChainedOutcomeTransform.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Un-transform a posterior</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the transformed space.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the transformed space.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The un-transformed posterior.</p>
@@ -5564,7 +5560,7 @@ standardization (if lower, only de-mean the data).</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Standardize.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Standardize outcomes.</p>
 <p>If the module is in train mode, this updates the module state (i.e. the
 mean/std normalizing constants). If the module is in eval mode, simply
@@ -5575,6 +5571,9 @@ applies the normalization using the module state.</p>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).
+This argument is not used by this transform, but it is used by
+its subclass, <cite>StratifiedStandardize</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5607,7 +5606,7 @@ associated with the training targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Standardize.untransform">
-<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.untransform" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.untransform" title="Link to this definition">¶</a></dt>
 <dd><p>Un-standardize outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5615,6 +5614,9 @@ associated with the training targets (if applicable).</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized observation
 noises associated with the targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs (if applicable).
+This argument is not used by this transform, but it is used by
+its subclass, <cite>StratifiedStandardize</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5631,11 +5633,131 @@ noises associated with the targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Standardize.untransform_posterior">
-<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.untransform_posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.untransform_posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Un-standardize the posterior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the standardized space.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the standardized space.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs (if applicable).
+This argument is not used by this transform, but it is used by
+its subclass, <cite>StratifiedStandardize</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The un-standardized posterior. If the input posterior is a
+<cite>GPyTorchPosterior</cite>, return a <cite>GPyTorchPosterior</cite>. Otherwise, return a
+<cite>TransformedPosterior</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>GPyTorchPosterior</em></a> | <a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior"><em>TransformedPosterior</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.transforms.outcome.StratifiedStandardize">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.outcome.</span></span><span class="sig-name descname"><span class="pre">StratifiedStandardize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stratification_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_stdv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#StratifiedStandardize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.StratifiedStandardize" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.outcome.Standardize" title="botorch.models.transforms.outcome.Standardize"><code class="xref py py-class docutils literal notranslate"><span class="pre">Standardize</span></code></a></p>
+<p>Standardize outcomes (zero mean, unit variance) along stratification dimension.</p>
+<p>This module is stateful: If in train mode, calling forward updates the
+module state (i.e. the mean/std normalizing constants). If in eval mode,
+calling forward simply applies the standardization using the current module
+state.</p>
+<p>Standardize outcomes (zero mean, unit variance) along stratification dim.</p>
+<p>Note: This currenlty only supports single output models
+(including multi-task models that have a single output).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task_values</strong> (<em>Tensor</em>) – <cite>t</cite>-dim tensor of task values.</p></li>
+<li><p><strong>stratification_idx</strong> (<em>int</em>) – The index of the stratification dimension.</p></li>
+<li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch_shape of the training targets.</p></li>
+<li><p><strong>min_stddv</strong> – The minimum standard deviation for which to perform
+standardization (if lower, only de-mean the data).</p></li>
+<li><p><strong>min_stdv</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.outcome.StratifiedStandardize.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#StratifiedStandardize.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.StratifiedStandardize.forward" title="Link to this definition">¶</a></dt>
+<dd><p>Standardize outcomes.</p>
+<p>If the module is in train mode, this updates the module state (i.e. the
+mean/std normalizing constants). If the module is in eval mode, simply
+applies the normalization using the module state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of input parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The transformed outcome observations.</p></li>
+<li><p>The transformed observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A two-tuple with the transformed outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.outcome.StratifiedStandardize.subset_output">
+<span class="sig-name descname"><span class="pre">subset_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idcs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#StratifiedStandardize.subset_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.StratifiedStandardize.subset_output" title="Link to this definition">¶</a></dt>
+<dd><p>Subset the transform along the output dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the transform to.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The current outcome transform, subset to the specified output indices.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.outcome.StratifiedStandardize.untransform">
+<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#StratifiedStandardize.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.StratifiedStandardize.untransform" title="Link to this definition">¶</a></dt>
+<dd><p>Un-standardize outcomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized targets.</p></li>
+<li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized observation
+noises associated with the targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of input parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The un-standardized outcome observations.</p></li>
+<li><p>The un-standardized observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A two-tuple with the un-standardized outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.transforms.outcome.StratifiedStandardize.untransform_posterior">
+<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#StratifiedStandardize.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.StratifiedStandardize.untransform_posterior" title="Link to this definition">¶</a></dt>
+<dd><p>Un-standardize the posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the standardized space.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The un-standardized posterior. If the input posterior is a
@@ -5681,7 +5803,7 @@ outputs will be standardized.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Log.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Log.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Log.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Log.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Log.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Log-transform outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5689,6 +5811,8 @@ outputs will be standardized.</p>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).
+This argument is not used by this transform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5705,7 +5829,7 @@ associated with the training targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Log.untransform">
-<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Log.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Log.untransform" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Log.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Log.untransform" title="Link to this definition">¶</a></dt>
 <dd><p>Un-transform log-transformed outcomes</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5714,6 +5838,8 @@ associated with the training targets (if applicable).</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of log- transformed
 observation noises associated with the training targets
 (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs (if applicable).
+This argument is not used by this transform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5730,11 +5856,15 @@ observation noises associated with the training targets
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Log.untransform_posterior">
-<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Log.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Log.untransform_posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Log.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Log.untransform_posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Un-transform the log-transformed posterior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the log-transformed space.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the log-transformed space.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs (if applicable).
+This argument is not used by this transform.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The un-transformed posterior.</p>
@@ -5781,7 +5911,7 @@ outputs will be standardized.</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Power.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Power.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Power.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Power.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Power.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Power-transform outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5789,6 +5919,8 @@ outputs will be standardized.</p></li>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).
+This argument is not used by this transform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5805,7 +5937,7 @@ associated with the training targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Power.untransform">
-<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Power.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Power.untransform" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Power.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Power.untransform" title="Link to this definition">¶</a></dt>
 <dd><p>Un-transform power-transformed outcomes</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5814,6 +5946,8 @@ associated with the training targets (if applicable).</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of power-transformed
 observation noises associated with the training targets
 (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs (if applicable).
+This argument is not used by this transform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5830,11 +5964,15 @@ observation noises associated with the training targets
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Power.untransform_posterior">
-<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Power.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Power.untransform_posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Power.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Power.untransform_posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Un-transform the power-transformed posterior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the power-transformed space.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the power-transformed space.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs (if applicable).
+This argument is not used by this transform.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The un-transformed posterior.</p>
@@ -5877,7 +6015,7 @@ outputs will be transformed.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Bilog.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Bilog.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Bilog.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Bilog-transform outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5885,6 +6023,8 @@ outputs will be transformed.</p>
 <li><p><strong>Y</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
 associated with the training targets (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of training inputs (if applicable).
+This argument is not used by this transform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5901,7 +6041,7 @@ associated with the training targets (if applicable).</p></li>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Bilog.untransform">
-<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Bilog.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog.untransform" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Bilog.untransform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog.untransform" title="Link to this definition">¶</a></dt>
 <dd><p>Un-transform bilog-transformed outcomes</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -5910,6 +6050,8 @@ associated with the training targets (if applicable).</p></li>
 <li><p><strong>Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x m</cite>-dim tensor of bilog-transformed
 observation noises associated with the training targets
 (if applicable).</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs (if applicable).
+This argument is not used by this transform.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -5926,11 +6068,15 @@ observation noises associated with the training targets
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.Bilog.untransform_posterior">
-<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Bilog.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog.untransform_posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">untransform_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Bilog.untransform_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Bilog.untransform_posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Un-transform the bilog-transformed posterior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the bilog-transformed space.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – A posterior in the bilog-transformed space.</p></li>
+<li><p><strong>X</strong> (<em>Tensor</em><em> | </em><em>None</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs (if applicable).
+This argument is not used by this transform.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The un-transformed posterior.</p>
@@ -7228,6 +7374,24 @@ is <cite>input_batch_shape</cite> against <cite>batch_shape</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.transforms.utils.nanstd">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.utils.</span></span><span class="sig-name descname"><span class="pre">nanstd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepdim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/utils.html#nanstd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.utils.nanstd" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the standard deviation of the input, ignoring NaNs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>Tensor</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – The dimension along which to compute the standard deviation.</p></li>
+<li><p><strong>keepdim</strong> (<em>bool</em>) – If True, the dimension along which the standard deviation is
+compute is kept.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 </section>
 <section id="utilities">
@@ -7808,6 +7972,32 @@ new_indices: new index of each original item in X, a tensor of size X.shape[-2]<
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>state</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.models.utils.assorted.get_task_value_remapping">
+<span class="sig-prename descclassname"><span class="pre">botorch.models.utils.assorted.</span></span><span class="sig-name descname"><span class="pre">get_task_value_remapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils/assorted.html#get_task_value_remapping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.assorted.get_task_value_remapping" title="Link to this definition">¶</a></dt>
+<dd><p>Construct an mapping of discrete task values to contiguous int-valued floats.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task_values</strong> (<em>Tensor</em>) – A sorted long-valued tensor of task values.</p></li>
+<li><p><strong>dtype</strong> (<em>dtype</em>) – The dtype of the model inputs (e.g. <cite>X</cite>), which the new
+task values should have mapped to (e.g. float, double).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tensor of shape <cite>task_values.max() + 1</cite> that maps task values
+to new task values. The indexing operation <cite>mapper[task_value]</cite>
+will produce a tensor of new task values, of the same shape as
+the original. The elements of the <cite>mapper</cite> tensor that do not
+appear in the original <cite>task_values</cite> are mapped to <cite>nan</cite>. The
+return value will be <cite>None</cite>, when the task values are contiguous
+integers starting from zero.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em> | None</p>
 </dd>
 </dl>
 </dd></dl>

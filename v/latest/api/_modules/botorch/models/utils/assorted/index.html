@@ -453,6 +453,43 @@
 
     <span class="n">_state</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
 
+
+
+<div class="viewcode-block" id="get_task_value_remapping">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.utils.assorted.get_task_value_remapping">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_task_value_remapping</span><span class="p">(</span><span class="n">task_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Construct an mapping of discrete task values to contiguous int-valued floats.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        task_values: A sorted long-valued tensor of task values.</span>
+<span class="sd">        dtype: The dtype of the model inputs (e.g. `X`), which the new</span>
+<span class="sd">            task values should have mapped to (e.g. float, double).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tensor of shape `task_values.max() + 1` that maps task values</span>
+<span class="sd">        to new task values. The indexing operation `mapper[task_value]`</span>
+<span class="sd">        will produce a tensor of new task values, of the same shape as</span>
+<span class="sd">        the original. The elements of the `mapper` tensor that do not</span>
+<span class="sd">        appear in the original `task_values` are mapped to `nan`. The</span>
+<span class="sd">        return value will be `None`, when the task values are contiguous</span>
+<span class="sd">        integers starting from zero.</span>
+<span class="sd">    """</span>
+    <span class="n">task_range</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">task_values</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">task_values</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">task_values</span><span class="o">.</span><span class="n">device</span>
+    <span class="p">)</span>
+    <span class="n">mapper</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">task_values</span><span class="p">,</span> <span class="n">task_range</span><span class="p">):</span>
+        <span class="c1"># Create a tensor that maps task values to new task values.</span>
+        <span class="c1"># The number of tasks should be small, so this should be quite efficient.</span>
+        <span class="n">mapper</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+            <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">task_values</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,),</span>
+            <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">task_values</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">mapper</span><span class="p">[</span><span class="n">task_values</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_range</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mapper</span></div>
+
 </pre></div>
 </div>
 </div>

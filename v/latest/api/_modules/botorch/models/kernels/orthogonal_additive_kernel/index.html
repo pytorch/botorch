@@ -362,7 +362,8 @@
 <span class="sd">        x: Tensor to be checked.</span>
 <span class="sd">        name: Name of the Tensor for the error message.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+    <span class="n">tolerance</span> <span class="o">=</span> <span class="mf">1e-6</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">tolerance</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">tolerance</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s2">" is not in hypercube [0, 1]^d."</span><span class="p">)</span>
 
 

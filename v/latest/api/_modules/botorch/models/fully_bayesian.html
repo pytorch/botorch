@@ -449,7 +449,9 @@
                 <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
+            <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span>
+                <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">transformed_X</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
         <span class="n">validate_input_scaling</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span>

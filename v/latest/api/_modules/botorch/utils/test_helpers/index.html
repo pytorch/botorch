@@ -334,7 +334,7 @@
     <span class="c1"># variance according to that transform.</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">pvar_exp</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span>
-            <span class="n">Y</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">pvar_exp</span><span class="p">),</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">pvar_exp</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">pvar_exp</span><span class="p">),</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">pvar_exp</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">pvar_exp</span></div>

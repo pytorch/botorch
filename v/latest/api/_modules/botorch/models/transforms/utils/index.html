@@ -185,6 +185,26 @@
     <span class="n">row_idcs</span><span class="p">,</span> <span class="n">col_idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">triu_indices</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">@</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))[</span><span class="o">...</span><span class="p">,</span> <span class="n">row_idcs</span><span class="p">,</span> <span class="n">col_idcs</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span></div>
 
+
+
+<div class="viewcode-block" id="nanstd">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.nanstd">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nanstd</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">keepdim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Computes the standard deviation of the input, ignoring NaNs.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `batch_shape x n x d`-dim tensor of inputs.</span>
+<span class="sd">        dim: The dimension along which to compute the standard deviation.</span>
+<span class="sd">        keepdim: If True, the dimension along which the standard deviation is</span>
+<span class="sd">            compute is kept.</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="p">(</span><span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">X</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">X</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">)</span>
+        <span class="o">*</span> <span class="n">n</span>
+        <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span></div>
+
 </pre></div>
 </div>
 </div>

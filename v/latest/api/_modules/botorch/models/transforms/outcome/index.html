@@ -50,9 +50,11 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">nanstd</span><span class="p">,</span>
     <span class="n">norm_to_lognorm_mean</span><span class="p">,</span>
     <span class="n">norm_to_lognorm_variance</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils.assorted</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_task_value_remapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">TransformedPosterior</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_indices</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.operators</span><span class="w"> </span><span class="kn">import</span> <span class="n">CholLinearOperator</span><span class="p">,</span> <span class="n">DiagLinearOperator</span>
@@ -69,7 +71,7 @@
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.forward">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the outcomes in a model's training targets</span>
 
@@ -77,6 +79,7 @@
 <span class="sd">            Y: A `batch_shape x n x m`-dim tensor of training targets.</span>
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of observation noises</span>
 <span class="sd">                associated with the training targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the transformed outcomes:</span>
@@ -110,7 +113,7 @@
 <div class="viewcode-block" id="OutcomeTransform.untransform">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.untransform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">untransform</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform previously transformed outcomes</span>
 
@@ -118,6 +121,7 @@
 <span class="sd">            Y: A `batch_shape x n x m`-dim tensor of transfomred training targets.</span>
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of transformed observation</span>
 <span class="sd">                noises associated with the training targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the un-transformed outcomes:</span>
@@ -142,7 +146,9 @@
 
 <div class="viewcode-block" id="OutcomeTransform.untransform_posterior">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.untransform_posterior">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform a posterior.</span>
 
 <span class="sd">        Posteriors with `_is_linear=True` should return a `GPyTorchPosterior` when</span>
@@ -151,6 +157,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: A posterior in the transformed space.</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The un-transformed posterior.</span>
@@ -181,7 +188,7 @@
 <div class="viewcode-block" id="ChainedOutcomeTransform.forward">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Transform the outcomes in a model's training targets</span>
 
@@ -189,6 +196,7 @@
 <span class="sd">            Y: A `batch_shape x n x m`-dim tensor of training targets.</span>
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of observation noises</span>
 <span class="sd">                associated with the training targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the transformed outcomes:</span>
@@ -197,7 +205,7 @@
 <span class="sd">            - The transformed observation noise (if applicable).</span>
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">)</span>
+            <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span></div>
 
 
@@ -220,7 +228,7 @@
 <div class="viewcode-block" id="ChainedOutcomeTransform.untransform">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">untransform</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform previously transformed outcomes</span>
 
@@ -228,6 +236,7 @@
 <span class="sd">            Y: A `batch_shape x n x m`-dim tensor of transfomred training targets.</span>
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of transformed observation</span>
 <span class="sd">                noises associated with the training targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the un-transformed outcomes:</span>
@@ -236,7 +245,7 @@
 <span class="sd">            - The un-transformed observation noise (if applicable).</span>
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-            <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">)</span>
+            <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span></div>
 
 
@@ -250,17 +259,20 @@
 
 <div class="viewcode-block" id="ChainedOutcomeTransform.untransform_posterior">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform a posterior</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: A posterior in the transformed space.</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The un-transformed posterior.</span>
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-            <span class="n">posterior</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+            <span class="n">posterior</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">posterior</span></div>
 </div>
 
@@ -304,10 +316,50 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_min_stdv</span> <span class="o">=</span> <span class="n">min_stdv</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_per_input_means_stdvs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">include_stdvs_sq</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get per-input means and stdvs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of input parameters.</span>
+<span class="sd">            include_stdvs_sq: Whether to include the stdvs squared.</span>
+<span class="sd">                This parameter is not used by this method</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A three-tuple with the  means and stdvs:</span>
+
+<span class="sd">            - The per-input means.</span>
+<span class="sd">            - The per-input stdvs.</span>
+<span class="sd">            - The per-input stdvs squared.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_training_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validate training inputs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Y: A `batch_shape x n x m`-dim tensor of training targets.</span>
+<span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of observation noises.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Expected Y.shape[:-2] to be </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span><span class="si">}</span><span class="s2">, matching "</span>
+                <span class="sa">f</span><span class="s2">"the `batch_shape` argument to `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">`, but got "</span>
+                <span class="sa">f</span><span class="s2">"Y.shape[:-2]=</span><span class="si">{</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Can't standardize with no observations. </span><span class="si">{</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_m</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Wrong output dimension. Y.size(-1) is </span><span class="si">{</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">; expected "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_m</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
+
 <div class="viewcode-block" id="Standardize.forward">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Standardize outcomes.</span>
 
@@ -319,6 +371,9 @@
 <span class="sd">            Y: A `batch_shape x n x m`-dim tensor of training targets.</span>
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of observation noises</span>
 <span class="sd">                associated with the training targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform, but it is used by</span>
+<span class="sd">                its subclass, `StratifiedStandardize`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the transformed outcomes:</span>
@@ -327,21 +382,8 @@
 <span class="sd">            - The transformed observation noise (if applicable).</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Expected Y.shape[:-2] to be </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span><span class="si">}</span><span class="s2">, matching "</span>
-                    <span class="s2">"the `batch_shape` argument to `Standardize`, but got "</span>
-                    <span class="sa">f</span><span class="s2">"Y.shape[:-2]=</span><span class="si">{</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_m</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Wrong output dimension. Y.size(-1) is </span><span class="si">{</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">; expected "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_m</span><span class="si">}</span><span class="s2">."</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Can't standardize with no observations. </span><span class="si">{</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">."</span><span class="p">)</span>
-
-            <span class="k">elif</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_training_inputs</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">stdvs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
                     <span class="p">(</span><span class="o">*</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span>
                 <span class="p">)</span>
@@ -357,9 +399,12 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span> <span class="o">=</span> <span class="n">stdvs</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span> <span class="o">=</span> <span class="n">stdvs</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_is_trained</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="n">Y_tf</span> <span class="o">=</span> <span class="p">(</span><span class="n">Y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span>
-        <span class="n">Yvar_tf</span> <span class="o">=</span> <span class="n">Yvar</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span> <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">include_stdvs_sq</span> <span class="o">=</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">means</span><span class="p">,</span> <span class="n">stdvs</span><span class="p">,</span> <span class="n">stdvs_sq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_per_input_means_stdvs</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">include_stdvs_sq</span><span class="o">=</span><span class="n">include_stdvs_sq</span>
+        <span class="p">)</span>
+        <span class="n">Y_tf</span> <span class="o">=</span> <span class="p">(</span><span class="n">Y</span> <span class="o">-</span> <span class="n">means</span><span class="p">)</span> <span class="o">/</span> <span class="n">stdvs</span>
+        <span class="n">Yvar_tf</span> <span class="o">=</span> <span class="n">Yvar</span> <span class="o">/</span> <span class="n">stdvs_sq</span> <span class="k">if</span> <span class="n">include_stdvs_sq</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">Y_tf</span><span class="p">,</span> <span class="n">Yvar_tf</span></div>
 
 
@@ -402,7 +447,7 @@
 <div class="viewcode-block" id="Standardize.untransform">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.untransform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">untransform</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-standardize outcomes.</span>
 
@@ -410,6 +455,9 @@
 <span class="sd">            Y: A `batch_shape x n x m`-dim tensor of standardized targets.</span>
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of standardized observation</span>
 <span class="sd">                noises associated with the targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform, but it is used by</span>
+<span class="sd">                its subclass, `StratifiedStandardize`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the un-standardized outcomes:</span>
@@ -423,9 +471,12 @@
                 <span class="s2">"(e.g. `transform(Y)`) before calling `untransform`, since "</span>
                 <span class="s2">"means and standard deviations need to be computed."</span>
             <span class="p">)</span>
-
-        <span class="n">Y_utf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span> <span class="o">*</span> <span class="n">Y</span>
-        <span class="n">Yvar_utf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span> <span class="o">*</span> <span class="n">Yvar</span> <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">include_stdvs_sq</span> <span class="o">=</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">means</span><span class="p">,</span> <span class="n">stdvs</span><span class="p">,</span> <span class="n">stdvs_sq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_per_input_means_stdvs</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">include_stdvs_sq</span><span class="o">=</span><span class="n">include_stdvs_sq</span>
+        <span class="p">)</span>
+        <span class="n">Y_utf</span> <span class="o">=</span> <span class="n">means</span> <span class="o">+</span> <span class="n">stdvs</span> <span class="o">*</span> <span class="n">Y</span>
+        <span class="n">Yvar_utf</span> <span class="o">=</span> <span class="n">stdvs_sq</span> <span class="o">*</span> <span class="n">Yvar</span> <span class="k">if</span> <span class="n">include_stdvs_sq</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">Y_utf</span><span class="p">,</span> <span class="n">Yvar_utf</span></div>
 
 
@@ -436,12 +487,15 @@
 <div class="viewcode-block" id="Standardize.untransform_posterior">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.untransform_posterior">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span> <span class="o">|</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-standardize the posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: A posterior in the standardized space.</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform, but it is used by</span>
+<span class="sd">                its subclass, `StratifiedStandardize`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The un-standardized posterior. If the input posterior is a</span>
@@ -480,8 +534,9 @@
             <span class="p">)</span>
         <span class="c1"># GPyTorchPosterior (TODO: Should we Lazy-evaluate the mean here as well?)</span>
         <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span>
-        <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span>
-        <span class="n">scale_fac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span>
+        <span class="n">offset</span><span class="p">,</span> <span class="n">scale_fac</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_per_input_means_stdvs</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">include_stdvs_sq</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
             <span class="n">mean_tf</span> <span class="o">=</span> <span class="n">offset</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">scale_fac</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">mvn</span><span class="o">.</span><span class="n">mean</span>
             <span class="n">scale_fac</span> <span class="o">=</span> <span class="n">scale_fac</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand_as</span><span class="p">(</span><span class="n">mean_tf</span><span class="p">)</span>
@@ -496,7 +551,6 @@
 
         <span class="k">if</span> <span class="p">(</span>
             <span class="ow">not</span> <span class="n">mvn</span><span class="o">.</span><span class="n">islazy</span>
-            <span class="c1"># TODO: Figure out attribute namming weirdness here</span>
             <span class="ow">or</span> <span class="n">mvn</span><span class="o">.</span><span class="n">_MultivariateNormal__unbroadcasted_scale_tril</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">):</span>
             <span class="c1"># if already computed, we can save a lot of time using scale_tril</span>
@@ -510,6 +564,212 @@
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"interleaved"</span><span class="p">:</span> <span class="n">mvn</span><span class="o">.</span><span class="n">_interleaved</span><span class="p">}</span> <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_is_mt</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="n">mvn_tf</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">mean_tf</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="o">=</span><span class="n">covar_tf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn_tf</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="StratifiedStandardize">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.StratifiedStandardize">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StratifiedStandardize</span><span class="p">(</span><span class="n">Standardize</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Standardize outcomes (zero mean, unit variance) along stratification dimension.</span>
+
+<span class="sd">    This module is stateful: If in train mode, calling forward updates the</span>
+<span class="sd">    module state (i.e. the mean/std normalizing constants). If in eval mode,</span>
+<span class="sd">    calling forward simply applies the standardization using the current module</span>
+<span class="sd">    state.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">stratification_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(),</span>  <span class="c1"># noqa: B008</span>
+        <span class="n">min_stdv</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
+        <span class="c1"># dtype: torch.dtype = torch.double,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Standardize outcomes (zero mean, unit variance) along stratification dim.</span>
+
+<span class="sd">        Note: This currenlty only supports single output models</span>
+<span class="sd">        (including multi-task models that have a single output).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task_values: `t`-dim tensor of task values.</span>
+<span class="sd">            stratification_idx: The index of the stratification dimension.</span>
+<span class="sd">            batch_shape: The batch_shape of the training targets.</span>
+<span class="sd">            min_stddv: The minimum standard deviation for which to perform</span>
+<span class="sd">                standardization (if lower, only de-mean the data).</span>
+<span class="sd">        """</span>
+        <span class="n">OutcomeTransform</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stratification_idx</span> <span class="o">=</span> <span class="n">stratification_idx</span>
+        <span class="n">task_values</span> <span class="o">=</span> <span class="n">task_values</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="nb">sorted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strata_mapping</span> <span class="o">=</span> <span class="n">get_task_value_remapping</span><span class="p">(</span><span class="n">task_values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strata_mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">strata_mapping</span> <span class="o">=</span> <span class="n">task_values</span>
+        <span class="n">n_strata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strata_mapping</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_min_stdv</span> <span class="o">=</span> <span class="n">min_stdv</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"means"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">n_strata</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"stdvs"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">n_strata</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_stdvs_sq"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">n_strata</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"_is_trained"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_m</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># TODO: support multiple outputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="StratifiedStandardize.forward">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.StratifiedStandardize.forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Standardize outcomes.</span>
+
+<span class="sd">        If the module is in train mode, this updates the module state (i.e. the</span>
+<span class="sd">        mean/std normalizing constants). If the module is in eval mode, simply</span>
+<span class="sd">        applies the normalization using the module state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Y: A `batch_shape x n x m`-dim tensor of training targets.</span>
+<span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of observation noises</span>
+<span class="sd">                associated with the training targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of input parameters.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A two-tuple with the transformed outcomes:</span>
+
+<span class="sd">            - The transformed outcome observations.</span>
+<span class="sd">            - The transformed observation noise (if applicable).</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"X is required for StratifiedStandardize."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_training_inputs</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">means</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">strata</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stratification_idx</span><span class="p">]</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+            <span class="n">unique_strata</span> <span class="o">=</span> <span class="n">strata</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">unique_strata</span><span class="p">:</span>
+                <span class="n">mapped_strata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strata_mapping</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">strata</span> <span class="o">!=</span> <span class="n">s</span>
+                <span class="n">Y_strata</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+                <span class="n">Y_strata</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
+                <span class="n">stdvs</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">Y_strata</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+                    <span class="k">else</span> <span class="n">nanstd</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">Y_strata</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">stdvs</span> <span class="o">=</span> <span class="n">stdvs</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                    <span class="n">stdvs</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_stdv</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">stdvs</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">means</span> <span class="o">=</span> <span class="n">Y_strata</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">mapped_strata</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">means</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">mapped_strata</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">stdvs</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">mapped_strata</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">stdvs</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_is_trained</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">training</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">tf_Y</span><span class="p">,</span> <span class="n">tf_Yvar</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="o">=</span> <span class="n">training</span>
+        <span class="k">return</span> <span class="n">tf_Y</span><span class="p">,</span> <span class="n">tf_Yvar</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_per_input_means_stdvs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">include_stdvs_sq</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Get per-input means and stdvs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of input parameters.</span>
+<span class="sd">            include_stdvs_sq: Whether to include the stdvs squared.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A three-tuple with the per-input means and stdvs:</span>
+
+<span class="sd">            - The per-input means.</span>
+<span class="sd">            - The per-input stdvs.</span>
+<span class="sd">            - The per-input stdvs squared.</span>
+<span class="sd">        """</span>
+        <span class="n">strata</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stratification_idx</span><span class="p">]</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+        <span class="n">mapped_strata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strata_mapping</span><span class="p">[</span><span class="n">strata</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># get means and stdvs for each strata</span>
+        <span class="n">n_extra_batch_dims</span> <span class="o">=</span> <span class="n">mapped_strata</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span><span class="p">)</span>
+        <span class="n">expand_shape</span> <span class="o">=</span> <span class="n">mapped_strata</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="n">n_extra_batch_dims</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+            <span class="nb">input</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expand_shape</span><span class="p">),</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">mapped_strata</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">stdvs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+            <span class="nb">input</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expand_shape</span><span class="p">),</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">mapped_strata</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_stdvs_sq</span><span class="p">:</span>
+            <span class="n">stdvs_sq</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+                <span class="nb">input</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expand_shape</span><span class="p">),</span>
+                <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">mapped_strata</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">stdvs_sq</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">means</span><span class="p">,</span> <span class="n">stdvs</span><span class="p">,</span> <span class="n">stdvs_sq</span>
+
+<div class="viewcode-block" id="StratifiedStandardize.subset_output">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.StratifiedStandardize.subset_output">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idcs: The output indices to subset the transform to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current outcome transform, subset to the specified output indices.</span>
+<span class="sd">        """</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+<div class="viewcode-block" id="StratifiedStandardize.untransform">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.StratifiedStandardize.untransform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">untransform</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-standardize outcomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Y: A `batch_shape x n x m`-dim tensor of standardized targets.</span>
+<span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of standardized observation</span>
+<span class="sd">                noises associated with the targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of input parameters.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A two-tuple with the un-standardized outcomes:</span>
+
+<span class="sd">            - The un-standardized outcome observations.</span>
+<span class="sd">            - The un-standardized observation noise (if applicable).</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"X is required for StratifiedStandardize."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StratifiedStandardize.untransform_posterior">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.StratifiedStandardize.untransform_posterior">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span> <span class="o">|</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-standardize the posterior.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            posterior: A posterior in the standardized space.</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The un-standardized posterior. If the input posterior is a</span>
+<span class="sd">            `GPyTorchPosterior`, return a `GPyTorchPosterior`. Otherwise, return a</span>
+<span class="sd">            `TransformedPosterior`.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"X is required for StratifiedStandardize."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span></div>
 </div>
 
 
@@ -562,7 +822,7 @@
 <div class="viewcode-block" id="Log.forward">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Log-transform outcomes.</span>
 
@@ -570,6 +830,8 @@
 <span class="sd">            Y: A `batch_shape x n x m`-dim tensor of training targets.</span>
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of observation noises</span>
 <span class="sd">                associated with the training targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the transformed outcomes:</span>
@@ -598,7 +860,7 @@
 <div class="viewcode-block" id="Log.untransform">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.untransform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">untransform</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform log-transformed outcomes</span>
 
@@ -607,6 +869,8 @@
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of log- transformed</span>
 <span class="sd">                observation noises associated with the training targets</span>
 <span class="sd">                (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the un-transformed outcomes:</span>
@@ -634,11 +898,15 @@
 
 <div class="viewcode-block" id="Log.untransform_posterior">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.untransform_posterior">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform the log-transformed posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: A posterior in the log-transformed space.</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The un-transformed posterior.</span>
@@ -706,7 +974,7 @@
 <div class="viewcode-block" id="Power.forward">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Power-transform outcomes.</span>
 
@@ -714,6 +982,8 @@
 <span class="sd">            Y: A `batch_shape x n x m`-dim tensor of training targets.</span>
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of observation noises</span>
 <span class="sd">                associated with the training targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the transformed outcomes:</span>
@@ -742,7 +1012,7 @@
 <div class="viewcode-block" id="Power.untransform">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.untransform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">untransform</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform power-transformed outcomes</span>
 
@@ -751,6 +1021,8 @@
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of power-transformed</span>
 <span class="sd">                observation noises associated with the training targets</span>
 <span class="sd">                (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the un-transformed outcomes:</span>
@@ -778,11 +1050,15 @@
 
 <div class="viewcode-block" id="Power.untransform_posterior">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.untransform_posterior">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform the power-transformed posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: A posterior in the power-transformed space.</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The un-transformed posterior.</span>
@@ -846,7 +1122,7 @@
 <div class="viewcode-block" id="Bilog.forward">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Bilog-transform outcomes.</span>
 
@@ -854,6 +1130,8 @@
 <span class="sd">            Y: A `batch_shape x n x m`-dim tensor of training targets.</span>
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of observation noises</span>
 <span class="sd">                associated with the training targets (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the transformed outcomes:</span>
@@ -881,7 +1159,7 @@
 <div class="viewcode-block" id="Bilog.untransform">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.untransform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">untransform</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform bilog-transformed outcomes</span>
 
@@ -890,6 +1168,8 @@
 <span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of bilog-transformed</span>
 <span class="sd">                observation noises associated with the training targets</span>
 <span class="sd">                (if applicable).</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-tuple with the un-transformed outcomes:</span>
@@ -917,11 +1197,15 @@
 
 <div class="viewcode-block" id="Bilog.untransform_posterior">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Bilog.untransform_posterior">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">untransform_posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformedPosterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Un-transform the bilog-transformed posterior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: A posterior in the bilog-transformed space.</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs (if applicable).</span>
+<span class="sd">                This argument is not used by this transform.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The un-transformed posterior.</span>
