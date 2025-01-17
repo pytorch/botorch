@@ -1466,7 +1466,11 @@ def optimize_acqf_discrete_local_search(
                 if len(X_loc) == 0:
                     break
                 with torch.no_grad():
-                    acqval_loc = acq_function(X_loc.unsqueeze(1))
+                    acqval_loc = _split_batch_eval_acqf(
+                        acq_function=acq_function,
+                        X=X_loc.unsqueeze(1),
+                        max_batch_size=max_batch_size,
+                    )
                 # break if no neighbor is better than the current point (local optimum)
                 if acqval_loc.max() <= curr_acqval:
                     break
