@@ -705,7 +705,7 @@
 <div class="viewcode-block" id="Normalize">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Normalize</span><span class="p">(</span><span class="n">AffineInputTransform</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Normalize the inputs have unit range and be centered at 0.5 (by default).</span>
 
 <span class="sd">    If no explicit bounds are provided this module is stateful: If in train mode,</span>
 <span class="sd">    calling `forward` updates the module state (i.e. the normalizing bounds). If</span>
@@ -726,6 +726,7 @@
         <span class="n">min_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
         <span class="n">learn_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">almost_zero</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
+        <span class="n">center</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
 
@@ -753,6 +754,7 @@
 <span class="sd">                NOTE: This only applies if `learn_bounds=True`.</span>
 <span class="sd">            learn_bounds: Whether to learn the bounds in train mode. Defaults</span>
 <span class="sd">                to False if bounds are provided, otherwise defaults to True.</span>
+<span class="sd">            center: The center of the range for each parameter. Default: 0.5.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; t = Normalize(d=2)</span>
@@ -795,10 +797,11 @@
                     <span class="s2">"will not be updated and the transform will be a no-op."</span><span class="p">,</span>
                     <span class="n">UserInputWarning</span><span class="p">,</span>
                 <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">center</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
             <span class="n">coefficient</span><span class="o">=</span><span class="n">coefficient</span><span class="p">,</span>
-            <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">offset</span> <span class="o">+</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span> <span class="o">*</span> <span class="n">coefficient</span><span class="p">,</span>
             <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span>
             <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
             <span class="n">transform_on_train</span><span class="o">=</span><span class="n">transform_on_train</span><span class="p">,</span>
@@ -836,7 +839,10 @@
         <span class="n">coefficient</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">reduce_dims</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">offset</span>
         <span class="n">almost_zero</span> <span class="o">=</span> <span class="n">coefficient</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_range</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_coefficient</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">almost_zero</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">coefficient</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">almost_zero</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">almost_zero</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+            <span class="o">+</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coefficient</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="Normalize.get_init_args">
 <a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize.get_init_args">[docs]</a>

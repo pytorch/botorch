@@ -1512,7 +1512,11 @@
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_loc</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="k">break</span>
                 <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-                    <span class="n">acqval_loc</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span><span class="n">X_loc</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+                    <span class="n">acqval_loc</span> <span class="o">=</span> <span class="n">_split_batch_eval_acqf</span><span class="p">(</span>
+                        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+                        <span class="n">X</span><span class="o">=</span><span class="n">X_loc</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                        <span class="n">max_batch_size</span><span class="o">=</span><span class="n">max_batch_size</span><span class="p">,</span>
+                    <span class="p">)</span>
                 <span class="c1"># break if no neighbor is better than the current point (local optimum)</span>
                 <span class="k">if</span> <span class="n">acqval_loc</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">curr_acqval</span><span class="p">:</span>
                     <span class="k">break</span>
