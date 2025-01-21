@@ -93,6 +93,12 @@ class TestSampleUtils(BotorchTestCase):
             self.assertTrue(torch.all(samples <= bounds[1]))
             self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.dtype, dtype)
+            if seed is not None:
+                # Check that seed reproduces the same samples.
+                samples2 = draw_sobol_samples(
+                    bounds=bounds, n=n, q=q, batch_shape=batch_shape, seed=seed
+                )
+                self.assertTrue(torch.equal(samples, samples2))
 
     def test_sample_simplex(self):
         for d, n, qmc, seed, dtype in itertools.product(
@@ -107,6 +113,12 @@ class TestSampleUtils(BotorchTestCase):
             self.assertTrue(torch.max((samples.sum(dim=-1) - 1).abs()) < 1e-5)
             self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.dtype, dtype)
+            if seed is not None:
+                # Check that seed reproduces the same samples.
+                samples2 = sample_simplex(
+                    d=d, n=n, qmc=qmc, seed=seed, device=self.device, dtype=dtype
+                )
+                self.assertTrue(torch.equal(samples, samples2))
 
     def test_sample_hypersphere(self):
         for d, n, qmc, seed, dtype in itertools.product(
@@ -119,6 +131,12 @@ class TestSampleUtils(BotorchTestCase):
             self.assertTrue(torch.max((samples.pow(2).sum(dim=-1) - 1).abs()) < 1e-5)
             self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.dtype, dtype)
+            if seed is not None:
+                # Check that seed reproduces the same samples.
+                samples2 = sample_hypersphere(
+                    d=d, n=n, qmc=qmc, seed=seed, device=self.device, dtype=dtype
+                )
+                self.assertTrue(torch.equal(samples, samples2))
 
     def test_batched_multinomial(self):
         num_categories = 5
