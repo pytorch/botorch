@@ -1071,6 +1071,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
 
     def __init__(
         self,
+        d: int,
         indices: list[int],
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -1080,6 +1081,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         concentration1_prior: Prior | None = None,
         concentration0_prior: Prior | None = None,
         batch_shape: torch.Size | None = None,
+        bounds: Tensor | None = None,
     ) -> None:
         r"""Initialize transform.
 
@@ -1102,6 +1104,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
                 parameters for each batch of inputs. This should match the input batch
                 shape of the model (i.e., `train_X.shape[:-2]`).
                 NOTE: This is only supported for single-output models.
+            bounds: A `2 x d`-dim tensor of lower and upper bounds for the inputs.
         """
         super().__init__()
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
@@ -1112,6 +1115,9 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         self.batch_shape = batch_shape or torch.Size([])
         self._X_min = eps
         self._X_range = 1 - 2 * eps
+        self._normalize = Normalize(
+            d=d, indices=indices, bounds=bounds, batch_shape=self.batch_shape
+        )
         if len(self.batch_shape) > 0:
             # Note: this follows the gpytorch shape convention for lengthscales
             # There is ongoing discussion about the extra `1`.
@@ -1156,6 +1162,26 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         self.initialize(**{f"concentration{i}": value})
 
     @subset_transform
+    def _warp_transform(self, X: Tensor) -> Tensor:
+        r"""Warp the inputs through the Kumaraswamy CDF.
+
+        Args:
+            X: A `input_batch_shape x (batch_shape) x n x d`-dim tensor of inputs.
+                batch_shape here can either be self.batch_shape or 1's such that
+                it is broadcastable with self.batch_shape if self.batch_shape is set.
+
+        Returns:
+            A `input_batch_shape x (batch_shape) x n x d`-dim tensor
+                of transformed inputs.
+        """
+        return self._k.cdf(
+            torch.clamp(
+                X * self._X_range + self._X_min,
+                self._X_min,
+                1.0 - self._X_min,
+            )
+        )
+
     def _transform(self, X: Tensor) -> Tensor:
         r"""Warp the inputs through the Kumaraswamy CDF.
 
@@ -1168,16 +1194,11 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             A `input_batch_shape x (batch_shape) x n x d`-dim tensor of transformed
                 inputs.
         """
+        # Normalize to unit cube
+        X = self._normalize(X=X)
         # normalize to [eps, 1-eps], IDEA: could use Normalize and ChainedTransform.
-        return self._k.cdf(
-            torch.clamp(
-                X * self._X_range + self._X_min,
-                self._X_min,
-                1.0 - self._X_min,
-            )
-        )
+        return self._warp_transform(X=X)
 
-    @subset_transform
     def _untransform(self, X: Tensor) -> Tensor:
         r"""Warp the inputs through the Kumaraswamy inverse CDF.
 
@@ -1194,6 +1215,20 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
                     "The right most batch dims of X must match self.batch_shape: "
                     f"({self.batch_shape})."
                 )
+        untransformed_X = self._warp_untransform(X=X)
+        return self._normalize.untransform(X=untransformed_X)
+
+    @subset_transform
+    def _warp_untransform(self, X: Tensor) -> Tensor:
+        r"""Warp the inputs through the Kumaraswamy inverse CDF.
+
+        Args:
+            X: A `input_batch_shape x batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `input_batch_shape x batch_shape x n x d`-dim tensor of transformed
+                inputs.
+        """
         # unnormalize from [eps, 1-eps] to [0,1]
         return ((self._k.icdf(X) - self._X_min) / self._X_range).clamp(0.0, 1.0)
 
