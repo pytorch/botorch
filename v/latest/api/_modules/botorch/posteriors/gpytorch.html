@@ -70,7 +70,7 @@
 <span class="sd">                MultitaskMultivariateNormal (multi-output case).</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">distribution</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">mvn</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
@@ -264,7 +264,7 @@
 <span class="sd">    """</span>
     <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
     <span class="n">q</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
-    <span class="n">_validate_scalarize_inputs</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+    <span class="n">_validate_scalarize_inputs</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="n">m</span><span class="p">)</span>
     <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
     <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">distribution</span>
     <span class="n">cov</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span> <span class="k">if</span> <span class="n">mvn</span><span class="o">.</span><span class="n">islazy</span> <span class="k">else</span> <span class="n">mvn</span><span class="o">.</span><span class="n">covariance_matrix</span>
