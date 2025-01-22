@@ -362,14 +362,11 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
         )
 
         bounds = opt_inputs.bounds
-        gen_kwargs: dict[str, Any] = {
-            "lower_bounds": None if bounds[0].isinf().all() else bounds[0],
-            "upper_bounds": None if bounds[1].isinf().all() else bounds[1],
-            "options": {k: v for k, v in options.items() if k not in INIT_OPTION_KEYS},
-            "fixed_features": opt_inputs.fixed_features,
-            "timeout_sec": timeout_sec,
-        }
+        lower_bounds = None if bounds[0].isinf().all() else bounds[0]
+        upper_bounds = None if bounds[1].isinf().all() else bounds[1]
+        gen_options = {k: v for k, v in options.items() if k not in INIT_OPTION_KEYS}
 
+        gen_kwargs = {}
         for constraint_name in [
             "inequality_constraints",
             "equality_constraints",
@@ -386,7 +383,14 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
                     batch_candidates_curr,
                     batch_acq_values_curr,
                 ) = opt_inputs.gen_candidates(
-                    batched_ics_, opt_inputs.acq_function, **gen_kwargs
+                    batched_ics_,
+                    opt_inputs.acq_function,
+                    lower_bounds=lower_bounds,
+                    upper_bounds=upper_bounds,
+                    options=gen_options,
+                    fixed_features=opt_inputs.fixed_features,
+                    timeout_sec=timeout_sec,
+                    **gen_kwargs,
                 )
             opt_warnings += ws
             batch_candidates_list.append(batch_candidates_curr)
@@ -624,7 +628,7 @@ def optimize_acqf(
         retry_on_optimization_warning=retry_on_optimization_warning,
         ic_gen_kwargs=ic_gen_kwargs,
     )
-    return _optimize_acqf(opt_acqf_inputs)
+    return _optimize_acqf(opt_inputs=opt_acqf_inputs)
 
 
 def _optimize_acqf(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor]:

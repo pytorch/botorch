@@ -45,7 +45,7 @@ class GPyTorchPosterior(TorchPosterior):
                 MultitaskMultivariateNormal (multi-output case).
         """
         super().__init__(distribution=distribution)
-        self._is_mt = isinstance(distribution, MultitaskMultivariateNormal)
+        self._is_mt: bool = isinstance(distribution, MultitaskMultivariateNormal)
 
     @property
     def mvn(self) -> MultivariateNormal:
@@ -224,7 +224,7 @@ def scalarize_posterior_gpytorch(
     """
     mean = posterior.mean
     q, m = mean.shape[-2:]
-    _validate_scalarize_inputs(weights, m)
+    _validate_scalarize_inputs(weights=weights, m=m)
     batch_shape = mean.shape[:-2]
     mvn = posterior.distribution
     cov = mvn.lazy_covariance_matrix if mvn.islazy else mvn.covariance_matrix
