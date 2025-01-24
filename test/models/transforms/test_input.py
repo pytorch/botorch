@@ -1064,10 +1064,10 @@ class TestInputTransforms(BotorchTestCase):
                     X, batch_shape=warp_tf.batch_shape
                 )
                 expected_X_tf[..., indices] = k.cdf(
-                    expected_X_tf[..., indices] * warp_tf._X_range + warp_tf._X_min
+                    expected_X_tf[..., indices] * (1 - 2 * warp_tf._eps) + warp_tf._eps
                 )
 
-                self.assertTrue(torch.equal(expected_X_tf, X_tf))
+                self.assertAllClose(expected_X_tf, X_tf, **tols)
 
                 # test untransform
                 untransformed_X = warp_tf.untransform(X_tf)
