@@ -24,7 +24,7 @@
 # 
 # [1] [J. Snoek, K. Swersky, R. S. Zemel, R. P. Adams. Input Warping for Bayesian Optimization of Non-Stationary Functions. Proceedings of the 31st International Conference on Machine Learning, PMLR 32(2):1674-1682, 2014.](http://proceedings.mlr.press/v32/snoek14.pdf)
 
-# In[1]:
+# In[2]:
 
 
 import os
@@ -40,7 +40,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 # 
 # First, we define the sample parameters for the sigmoid functions that transform the respective inputs.
 
-# In[2]:
+# In[3]:
 
 
 from torch.distributions import Kumaraswamy
@@ -64,7 +64,7 @@ ax.set_xlabel("Raw Value", **fontdict)
 ax.set_ylabel("Transformed Value", **fontdict)
 
 
-# In[3]:
+# In[4]:
 
 
 from botorch.test_functions import Hartmann
@@ -83,7 +83,7 @@ def obj(X):
 # 
 # We observe the objectives with additive Gaussian noise with a standard deviation of 0.05.
 
-# In[4]:
+# In[5]:
 
 
 from botorch.models import SingleTaskGP
@@ -110,21 +110,23 @@ train_obj = exact_obj + NOISE_SE * torch.randn_like(exact_obj)
 # #### Input warping and model initialization
 # We initialize the `Warp` input transformation and pass it a `SingleTaskGP` to model the noiseless objective. The `Warp` object is a `torch.nn.Module` that contains the concentration parameters and applies the warping function in the `Model`'s `forward` pass.
 
-# In[5]:
+# In[6]:
 
 
 from botorch.models.transforms.input import Warp
 from gpytorch.priors.torch_priors import LogNormalPrior
 
 
-def initialize_model(train_x, train_obj):
+def initialize_model(train_x, train_obj, bounds):
     # initialize input_warping transformation
     warp_tf = Warp(
+        d=train_x.shape[-1],
         indices=list(range(train_x.shape[-1])),
         # use a prior with median at 1.
         # when a=1 and b=1, the Kumaraswamy CDF is the identity function
         concentration1_prior=LogNormalPrior(0.0, 0.75**0.5),
         concentration0_prior=LogNormalPrior(0.0, 0.75**0.5),
+        bounds=bounds,
     )
     # define the model for objective
     model = SingleTaskGP(
@@ -140,7 +142,7 @@ def initialize_model(train_x, train_obj):
 # #### Define a helper function that performs the essential BO step
 # The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use sequential $q=1$ optimization. A simple initialization heuristic is used to select the 20 restart initial locations from a set of 512 random points. 
 
-# In[6]:
+# In[7]:
 
 
 from botorch.optim import optimize_acqf
@@ -176,7 +178,7 @@ def optimize_acqf_and_get_observation(acq_func):
 # 
 # We do `N_BATCH=50` rounds of optimization.
 
-# In[7]:
+# In[8]:
 
 
 from botorch import fit_gpytorch_mll
@@ -193,7 +195,7 @@ N_BATCH = 50 if not SMOKE_TEST else 5
 torch.manual_seed(0)
 
 best_observed = [best_observed_value]
-mll, model = initialize_model(train_x, train_obj)
+mll, model = initialize_model(train_x, train_obj, bounds)
 
 # run N_BATCH rounds of BayesOpt after the initial random batch
 for iteration in range(1, N_BATCH + 1):
@@ -213,7 +215,7 @@ for iteration in range(1, N_BATCH + 1):
     best_value = obj(train_x).max().item()
     best_observed.append(best_value)
 
-    mll, model = initialize_model(train_x, train_obj)
+    mll, model = initialize_model(train_x, train_obj, bounds)
 
     print(".", end="")
 
@@ -221,7 +223,7 @@ for iteration in range(1, N_BATCH + 1):
 # #### Plot the results
 # The plot below shows the log regret at each step of the optimization for each of the algorithms.
 
-# In[8]:
+# In[9]:
 
 
 import numpy as np

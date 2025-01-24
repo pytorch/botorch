@@ -1186,6 +1186,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
+        <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
         <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -1195,6 +1196,7 @@
         <span class="n">concentration1_prior</span><span class="p">:</span> <span class="n">Prior</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">concentration0_prior</span><span class="p">:</span> <span class="n">Prior</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize transform.</span>
 
@@ -1217,6 +1219,7 @@
 <span class="sd">                parameters for each batch of inputs. This should match the input batch</span>
 <span class="sd">                shape of the model (i.e., `train_X.shape[:-2]`).</span>
 <span class="sd">                NOTE: This is only supported for single-output models.</span>
+<span class="sd">            bounds: A `2 x d`-dim tensor of lower and upper bounds for the inputs.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"indices"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
@@ -1227,6 +1230,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span> <span class="o">=</span> <span class="n">eps</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_X_range</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span>
+            <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># Note: this follows the gpytorch shape convention for lengthscales</span>
             <span class="c1"># There is ongoing discussion about the extra `1`.</span>
@@ -1271,6 +1277,26 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">"concentration</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">value</span><span class="p">})</span>
 
     <span class="nd">@subset_transform</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_warp_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Warp the inputs through the Kumaraswamy CDF.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `input_batch_shape x (batch_shape) x n x d`-dim tensor of inputs.</span>
+<span class="sd">                batch_shape here can either be self.batch_shape or 1's such that</span>
+<span class="sd">                it is broadcastable with self.batch_shape if self.batch_shape is set.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `input_batch_shape x (batch_shape) x n x d`-dim tensor</span>
+<span class="sd">                of transformed inputs.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_k</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span>
+                <span class="n">X</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_range</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">,</span>
+                <span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Warp the inputs through the Kumaraswamy CDF.</span>
 
@@ -1283,16 +1309,11 @@
 <span class="sd">            A `input_batch_shape x (batch_shape) x n x d`-dim tensor of transformed</span>
 <span class="sd">                inputs.</span>
 <span class="sd">        """</span>
+        <span class="c1"># Normalize to unit cube</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="c1"># normalize to [eps, 1-eps], IDEA: could use Normalize and ChainedTransform.</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_k</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span>
-                <span class="n">X</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_range</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">,</span>
-                <span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_warp_transform</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
 
-    <span class="nd">@subset_transform</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Warp the inputs through the Kumaraswamy inverse CDF.</span>
 
@@ -1309,6 +1330,20 @@
                     <span class="s2">"The right most batch dims of X must match self.batch_shape: "</span>
                     <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="si">}</span><span class="s2">)."</span>
                 <span class="p">)</span>
+        <span class="n">untransformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_warp_untransform</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">untransformed_X</span><span class="p">)</span>
+
+    <span class="nd">@subset_transform</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_warp_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Warp the inputs through the Kumaraswamy inverse CDF.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `input_batch_shape x batch_shape x n x d`-dim tensor of inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `input_batch_shape x batch_shape x n x d`-dim tensor of transformed</span>
+<span class="sd">                inputs.</span>
+<span class="sd">        """</span>
         <span class="c1"># unnormalize from [eps, 1-eps] to [0,1]</span>
         <span class="k">return</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_k</span><span class="o">.</span><span class="n">icdf</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_range</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 
