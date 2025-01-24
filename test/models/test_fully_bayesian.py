@@ -43,6 +43,8 @@ from botorch.acquisition.utils import prune_inferior_points
 from botorch.models import ModelList, ModelListGP
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.fully_bayesian import (
+    FullyBayesianLinearSingleTaskGP,
+    LinearPyroModel,
     MCMC_DIM,
     MIN_INFERRED_NOISE_LEVEL,
     PyroModel,
@@ -50,6 +52,7 @@ from botorch.models.fully_bayesian import (
     SaasPyroModel,
 )
 from botorch.models.transforms import Normalize, Standardize
+from botorch.models.transforms.input import ChainedInputTransform, Warp
 from botorch.posteriors.fully_bayesian import (
     batched_bisect,
     FullyBayesianPosterior,
@@ -64,6 +67,7 @@ from botorch.utils.safe_math import logmeanexp
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.kernels.linear_kernel import LinearKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean
 from linear_operator.operators import to_linear_operator
@@ -72,22 +76,6 @@ from pyro.ops.integrator import (
     potential_grad,
     register_exception_handler,
 )
-
-
-EXPECTED_KEYS = [
-    "mean_module.raw_constant",
-    "covar_module.raw_outputscale",
-    "covar_module.base_kernel.raw_lengthscale",
-    "covar_module.base_kernel.raw_lengthscale_constraint.lower_bound",
-    "covar_module.base_kernel.raw_lengthscale_constraint.upper_bound",
-    "covar_module.raw_outputscale_constraint.lower_bound",
-    "covar_module.raw_outputscale_constraint.upper_bound",
-]
-EXPECTED_KEYS_NOISE = EXPECTED_KEYS + [
-    "likelihood.noise_covar.raw_noise",
-    "likelihood.noise_covar.raw_noise_constraint.lower_bound",
-    "likelihood.noise_covar.raw_noise_constraint.upper_bound",
-]
 
 
 class CustomPyroModel(PyroModel):
@@ -101,19 +89,49 @@ class CustomPyroModel(PyroModel):
         pass
 
 
-class TestFullyBayesianSingleTaskGP(BotorchTestCase):
+class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
+    model_cls = SaasFullyBayesianSingleTaskGP
+    pyro_model_cls = SaasPyroModel
+    model_kwargs = {}
+
+    @property
+    def expected_keys(self):
+        return [
+            "mean_module.raw_constant",
+            "covar_module.raw_outputscale",
+            "covar_module.base_kernel.raw_lengthscale",
+            "covar_module.base_kernel.raw_lengthscale_constraint.lower_bound",
+            "covar_module.base_kernel.raw_lengthscale_constraint.upper_bound",
+            "covar_module.raw_outputscale_constraint.lower_bound",
+            "covar_module.raw_outputscale_constraint.upper_bound",
+        ]
+
+    @property
+    def expected_keys_noise(self):
+        return self.expected_keys + [
+            "likelihood.noise_covar.raw_noise",
+            "likelihood.noise_covar.raw_noise_constraint.lower_bound",
+            "likelihood.noise_covar.raw_noise_constraint.upper_bound",
+        ]
+
+    def _test_f(self, X):
+        return torch.sin(X[:, :1])
+
     def _get_data_and_model(self, infer_noise: bool, **tkwargs):
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.rand(10, 4, **tkwargs)
-            train_Y = torch.sin(train_X[:, :1])
+            train_Y = self._test_f(X=train_X)
             train_Yvar = (
                 None
                 if infer_noise
                 else torch.arange(0.1, 1.1, 0.1, **tkwargs).unsqueeze(-1)
             )
-            model = SaasFullyBayesianSingleTaskGP(
-                train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar
+            model = self.model_cls(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Yvar=train_Yvar,
+                **self.model_kwargs,
             )
         return train_X, train_Y, train_Yvar, model
 
@@ -158,33 +176,38 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             ValueError,
             "Expected train_X to have shape n x d and train_Y to have shape n x 1",
         ):
-            SaasFullyBayesianSingleTaskGP(
-                train_X=torch.rand(10, 4, **tkwargs), train_Y=torch.randn(10, **tkwargs)
+            self.model_cls(
+                train_X=torch.rand(10, 4, **tkwargs),
+                train_Y=torch.randn(10, **tkwargs),
+                **self.model_kwargs,
             )
         with self.assertRaisesRegex(
             ValueError,
             "Expected train_X to have shape n x d and train_Y to have shape n x 1",
         ):
-            SaasFullyBayesianSingleTaskGP(
+            self.model_cls(
                 train_X=torch.rand(10, 4, **tkwargs),
                 train_Y=torch.randn(12, 1, **tkwargs),
+                **self.model_kwargs,
             )
         with self.assertRaisesRegex(
             ValueError,
             "Expected train_X to have shape n x d and train_Y to have shape n x 1",
         ):
-            SaasFullyBayesianSingleTaskGP(
+            self.model_cls(
                 train_X=torch.rand(10, **tkwargs),
                 train_Y=torch.randn(10, 1, **tkwargs),
+                **self.model_kwargs,
             )
         with self.assertRaisesRegex(
             ValueError,
             "Expected train_Yvar to be None or have the same shape as train_Y",
         ):
-            SaasFullyBayesianSingleTaskGP(
+            self.model_cls(
                 train_X=torch.rand(10, 4, **tkwargs),
                 train_Y=torch.randn(10, 1, **tkwargs),
                 train_Yvar=torch.rand(10, **tkwargs),
+                **self.model_kwargs,
             )
         train_X, train_Y, train_Yvar, model = self._get_data_and_model(
             infer_noise=True, **tkwargs
@@ -196,8 +219,12 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
         )
         with self.assertRaisesRegex(RuntimeError, not_fitted_error_msg):
             model.num_mcmc_samples
-        with self.assertRaisesRegex(RuntimeError, not_fitted_error_msg):
-            model.median_lengthscale
+        if self.model_cls is SaasFullyBayesianSingleTaskGP:
+            with self.assertRaisesRegex(RuntimeError, not_fitted_error_msg):
+                model.median_lengthscale
+        else:
+            with self.assertRaisesRegex(RuntimeError, not_fitted_error_msg):
+                model.median_weight_variance
         with self.assertRaisesRegex(RuntimeError, not_fitted_error_msg):
             model.forward(torch.rand(1, 4, **tkwargs))
         with self.assertRaisesRegex(RuntimeError, not_fitted_error_msg):
@@ -217,7 +244,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             self.assertIsNone(model.mean_module)
             self.assertIsNone(model.covar_module)
             self.assertIsNone(model.likelihood)
-            self.assertIsInstance(model.pyro_model, SaasPyroModel)
+            self.assertIsInstance(model.pyro_model, self.pyro_model_cls)
             self.assertAllClose(train_X, model.pyro_model.train_X)
             self.assertAllClose(train_Y, model.pyro_model.train_Y)
             if infer_noise:
@@ -239,12 +266,34 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertEqual(model._aug_batch_shape, torch.Size([3, 2]))
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertEqual(model.mean_module.raw_constant.shape, model.batch_shape)
-            self.assertIsInstance(model.covar_module, ScaleKernel)
-            self.assertEqual(model.covar_module.outputscale.shape, model.batch_shape)
-            self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
-            self.assertEqual(
-                model.covar_module.base_kernel.lengthscale.shape, torch.Size([3, 1, d])
-            )
+            if self.model_cls == SaasFullyBayesianSingleTaskGP:
+                self.assertIsInstance(model.covar_module, ScaleKernel)
+                self.assertEqual(
+                    model.covar_module.outputscale.shape, model.batch_shape
+                )
+                self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
+                self.assertEqual(
+                    model.covar_module.base_kernel.lengthscale.shape,
+                    torch.Size([3, 1, d]),
+                )
+            else:
+                self.assertIsInstance(model.covar_module, LinearKernel)
+                self.assertEqual(
+                    model.covar_module.variance.shape, torch.Size([3, 1, d])
+                )
+                if self.model_kwargs.get("use_input_warping"):
+                    self.assertIsInstance(model.input_transform, ChainedInputTransform)
+                    tfs = list(model.input_transform.values())
+                    warp = tfs[0]
+                    self.assertIsInstance(warp, Warp)
+                    for c in (warp.concentration0, warp.concentration0):
+                        self.assertEqual(
+                            c.shape,
+                            torch.Size([3, 1, d]),
+                        )
+                    self.assertIsInstance(tfs[1], Normalize)
+                else:
+                    self.assertIsInstance(model.input_transform, Normalize)
             self.assertIsInstance(
                 model.likelihood,
                 GaussianLikelihood if infer_noise else FixedNoiseGaussianLikelihood,
@@ -353,12 +402,16 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 ModelList(model, model2).posterior(test_X).mean
 
             # Check properties
-            median_lengthscale = model.median_lengthscale
-            self.assertEqual(median_lengthscale.shape, torch.Size([4]))
+            if self.model_cls is SaasFullyBayesianSingleTaskGP:
+                median_lengthscale = model.median_lengthscale
+                self.assertEqual(median_lengthscale.shape, torch.Size([4]))
+            else:
+                median_weight_variance = model.median_weight_variance
+                self.assertEqual(median_weight_variance.shape, torch.Size([4]))
             self.assertEqual(model.num_mcmc_samples, 3)
 
             # Check the keys in the state dict
-            true_keys = EXPECTED_KEYS_NOISE if infer_noise else EXPECTED_KEYS
+            true_keys = self.expected_keys_noise if infer_noise else self.expected_keys
             self.assertEqual(set(model.state_dict().keys()), set(true_keys))
 
             for i in range(2):  # Test loading via state dict
@@ -388,9 +441,10 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             self.assertIsNone(model.likelihood)
 
     def test_empty(self):
-        model = SaasFullyBayesianSingleTaskGP(
+        model = self.model_cls(
             train_X=torch.rand(0, 3),
             train_Y=torch.rand(0, 1),
+            **self.model_kwargs,
         )
         fit_fully_bayesian_model_nuts(
             model, warmup_steps=2, num_samples=6, thinning=3, disable_progbar=True
@@ -411,12 +465,13 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             # Fit without transforms
             with torch.random.fork_rng():
                 torch.manual_seed(0)
-                gp1 = SaasFullyBayesianSingleTaskGP(
+                gp1 = self.model_cls(
                     train_X=(train_X - lb) / (ub - lb),
                     train_Y=(train_Y - mu) / sigma,
                     train_Yvar=(
                         train_Yvar / sigma**2 if train_Yvar is not None else train_Yvar
                     ),
+                    **self.model_kwargs,
                 )
                 fit_fully_bayesian_model_nuts(
                     gp1, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
@@ -428,12 +483,13 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             # Fit with transforms
             with torch.random.fork_rng():
                 torch.manual_seed(0)
-                gp2 = SaasFullyBayesianSingleTaskGP(
+                gp2 = self.model_cls(
                     train_X=train_X,
                     train_Y=train_Y,
                     train_Yvar=train_Yvar,
                     input_transform=Normalize(d=train_X.shape[-1]),
                     outcome_transform=Standardize(m=1),
+                    **self.model_kwargs,
                 )
                 fit_fully_bayesian_model_nuts(
                     gp2, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
@@ -443,6 +499,21 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
 
             self.assertAllClose(pred_mean1, pred_mean2)
             self.assertAllClose(pred_var1, pred_var2)
+
+            # check the transforms
+            if self.model_cls is SaasFullyBayesianSingleTaskGP:
+                self.assertIsInstance(gp2.input_transform, Normalize)
+            else:
+                self.assertIsInstance(gp2.input_transform, ChainedInputTransform)
+                tf_iter = iter(gp2.input_transform.values())
+                tf = next(tf_iter)
+                self.assertIsInstance(tf, Normalize)
+                if self.model_kwargs["use_input_warping"]:
+                    tf = next(tf_iter)
+                    self.assertIsInstance(tf, Warp)
+                tf = next(tf_iter)
+                self.assertIsInstance(tf, Normalize)
+                self.assertEqual(tf.center, 0.0)
 
     def test_acquisition_functions(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
@@ -598,16 +669,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             model.load_mcmc_samples(mcmc_samples)
 
             self.assertAllClose(
-                model.covar_module.base_kernel.lengthscale,
-                mcmc_samples["lengthscale"],
-            )
-            self.assertAllClose(
-                model.covar_module.outputscale,
-                mcmc_samples["outputscale"],
-            )
-            self.assertAllClose(
-                model.mean_module.raw_constant.data,
-                mcmc_samples["mean"],
+                model.mean_module.raw_constant.data, mcmc_samples["mean"]
             )
             if infer_noise:
                 self.assertAllClose(
@@ -618,6 +680,23 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                     model.likelihood.noise_covar.noise,
                     train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL).squeeze(-1).repeat(3, 1),
                 )
+
+            if self.model_cls is SaasFullyBayesianSingleTaskGP:
+                self.assertAllClose(
+                    model.covar_module.base_kernel.lengthscale,
+                    mcmc_samples["lengthscale"],
+                )
+                self.assertAllClose(
+                    model.covar_module.outputscale, mcmc_samples["outputscale"]
+                )
+            else:
+                self.assertAllClose(
+                    model.covar_module.variance, mcmc_samples["weight_variance"]
+                )
+                if self.model_kwargs.get("use_input_warping", False):
+                    warp = list(model.input_transform.values())[0]
+                    self.assertAllClose(warp.concentration0, mcmc_samples["c0"])
+                    self.assertAllClose(warp.concentration1, mcmc_samples["c1"])
 
     def test_construct_inputs(self):
         for infer_noise, dtype in itertools.product(
@@ -647,11 +726,12 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             train_X, train_Y, train_Yvar, _ = self._get_unnormalized_data(
                 infer_noise=infer_noise, **tkwargs
             )
-            model = SaasFullyBayesianSingleTaskGP(
+            model = self.model_cls(
                 train_X=train_X,
                 train_Y=train_Y,
                 train_Yvar=train_Yvar,
                 pyro_model=CustomPyroModel(),
+                **self.model_kwargs,
             )
             with self.assertRaisesRegex(
                 NotImplementedError, "load_state_dict only works for SaasPyroModel"
@@ -668,13 +748,14 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                     train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
                 )
             # Use transforms
-            model = SaasFullyBayesianSingleTaskGP(
+            model = self.model_cls(
                 train_X=train_X,
                 train_Y=train_Y,
                 train_Yvar=train_Yvar,
                 input_transform=Normalize(d=train_X.shape[-1]),
                 outcome_transform=Standardize(m=1),
                 pyro_model=CustomPyroModel(),
+                **self.model_kwargs,
             )
             self.assertIsInstance(model.pyro_model, CustomPyroModel)
             lb, ub = train_X.min(dim=0).values, train_X.max(dim=0).values
@@ -712,10 +793,11 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 infer_noise=infer_noise,
                 **tkwargs,
             )
-            model = SaasFullyBayesianSingleTaskGP(
+            model = self.model_cls(
                 train_X=train_X,
                 train_Y=train_Y,
                 train_Yvar=train_Yvar,
+                **self.model_kwargs,
             )
             mcmc_samples = self._get_mcmc_samples(
                 num_samples=num_models,
@@ -748,10 +830,11 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
             # condition on identical sets of data (i.e. one set) for all models
             # i.e, with no batch shape. This infers the batch shape.
             cond_X_nobatch, cond_Y_nobatch = cond_X[0], cond_Y[0]
-            model = SaasFullyBayesianSingleTaskGP(
+            model = self.model_cls(
                 train_X=train_X,
                 train_Y=train_Y,
                 train_Yvar=train_Yvar,
+                **self.model_kwargs,
             )
             mcmc_samples = self._get_mcmc_samples(
                 num_samples=num_models,
@@ -781,7 +864,7 @@ class TestFullyBayesianSingleTaskGP(BotorchTestCase):
                 torch.Size([num_models, num_train + num_cond, num_dims]),
             )
 
-            # test repeated conditining
+            # test repeated conditioning
             repeat_cond_X = cond_X + 5
             repeat_cond_model = cond_model.condition_on_observations(
                 repeat_cond_X, cond_Y, noise=cond_Yvar
@@ -914,3 +997,73 @@ class TestPyroCatchNumericalErrors(BotorchTestCase):
 
         with self.assertRaisesRegex(RuntimeError, "bar"):
             potential_grad(potential_fn_rterr_bar, z)
+
+
+class TestFullyBayesianLinearSingleTaskGP(TestSaasFullyBayesianSingleTaskGP):
+    model_cls = FullyBayesianLinearSingleTaskGP
+    pyro_model_cls = LinearPyroModel
+    model_kwargs = {"use_input_warping": False}
+
+    def _test_f(self, X):
+        return X.sum(dim=-1, keepdim=True)
+
+    @property
+    def expected_keys(self):
+        expected_keys = [
+            "mean_module.raw_constant",
+            "covar_module.raw_variance",
+            "covar_module.raw_variance_constraint.lower_bound",
+            "covar_module.raw_variance_constraint.upper_bound",
+        ]
+        if self.model_kwargs["use_input_warping"]:
+            expected_keys.extend(
+                [
+                    "input_transform.warp.concentration1_constraint.upper_bound",
+                    "input_transform.warp.concentration0",
+                    "input_transform.warp.concentration1_constraint.lower_bound",
+                    "input_transform.normalize._coefficient",
+                    "input_transform.warp._normalize._coefficient",
+                    "input_transform.warp.concentration0_constraint.upper_bound",
+                    "input_transform.normalize._offset",
+                    "input_transform.warp._normalize.indices",
+                    "input_transform.warp.concentration0_constraint.lower_bound",
+                    "input_transform.warp.concentration1",
+                    "input_transform.warp._normalize._offset",
+                    "input_transform.warp.indices",
+                ]
+            )
+        else:
+            expected_keys.extend(
+                ["input_transform._offset", "input_transform._coefficient"]
+            )
+        return expected_keys
+
+    def _get_mcmc_samples(
+        self,
+        num_samples: int,
+        dim: int,
+        infer_noise: bool,
+        **tkwargs,
+    ):
+        mcmc_samples = {
+            "weight_variance": torch.rand(num_samples, 1, dim, **tkwargs),
+            "mean": torch.randn(num_samples, **tkwargs),
+        }
+        if infer_noise:
+            mcmc_samples["noise"] = torch.rand(num_samples, 1, **tkwargs)
+        if self.model_kwargs["use_input_warping"]:
+            for k in ("c0", "c1"):
+                mcmc_samples[k] = torch.rand(num_samples, 1, dim, **tkwargs)
+        return mcmc_samples
+
+    def test_custom_pyro_model(self):
+        # custom pyro models are not supported by FullyBayesianLinearSingleTaskGP
+        pass
+
+    def test_empty(self):
+        # TODO: support empty models with LinearKernels
+        pass
+
+
+class TestFullyBayesianLinearWarpingSingleTaskGP(TestFullyBayesianLinearSingleTaskGP):
+    model_kwargs = {"use_input_warping": True}

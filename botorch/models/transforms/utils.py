@@ -117,12 +117,12 @@ def subset_transform(transform):
     r"""Decorator of an input transform function to separate out indexing logic."""
 
     @wraps(transform)
-    def f(self, X: Tensor) -> Tensor:
+    def f(self, X: Tensor, **kwargs) -> Tensor:
         if not hasattr(self, "indices") or self.indices is None:
-            return transform(self, X)
+            return transform(self, X, **kwargs)
         has_shape = hasattr(self, "batch_shape")
         Y = expand_and_copy_tensor(X, self.batch_shape) if has_shape else X.clone()
-        Y[..., self.indices] = transform(self, X[..., self.indices])
+        Y[..., self.indices] = transform(self, X[..., self.indices], **kwargs)
         return Y
 
     return f
@@ -158,3 +158,52 @@ def nanstd(X: Tensor, dim: int, keepdim: bool = False) -> Tensor:
         * n
         / (n - 1)
     ).sqrt()
+
+
+def kumaraswamy_warp(X: Tensor, c0: Tensor, c1: Tensor, eps: float = 1e-8) -> Tensor:
+    """Warp inputs through a Kumaraswamy CDF.
+
+    This assumes that X is contained within the unit cube. This first
+    normalizes inputs to [eps, 1-eps]^d (to ensure that no values are 0 or 1)
+    and then applies passes those inputs through a Kumaraswamy CDF.
+
+    Args:
+        X: A `batch_shape x n x d`-dim tensor of inputs.
+        c0: A `d`-dim tensor of the concentration0 parameter for the
+            Kumaraswamy distribution.
+        c1: A `d`-dim tensor of the concentration1 parameter for the
+            Kumaraswamy distribution.
+        eps: A small value that is used to ensure inputs are not 0 or 1.
+
+    Returns:
+        A `batch_shape x n x d`-dim tensor of warped inputs.
+    """
+    X_range = 1 - 2 * eps
+    X = torch.clamp(X * X_range + eps, eps, 1.0 - eps)
+    return 1 - torch.pow((1 - torch.pow(X, c1)), c0)
+
+
+def inv_kumaraswamy_warp(
+    X: Tensor, c0: Tensor, c1: Tensor, eps: float = 1e-8
+) -> Tensor:
+    """Map warped inputs through an inverse Kumaraswamy CDF.
+
+    This takes warped inputs (X) and transforms those via an inverse
+    Kumaraswamy CDF. This then unnormalizes the inputs using bounds of
+    [eps, 1-eps]^d and ensures that the values are within [0, 1]^d.
+
+    Args:
+        X: A `batch_shape x n x d`-dim tensor of inputs.
+        c0: A `d`-dim tensor of the concentration0 parameter for the
+            Kumaraswamy distribution.
+        c1: A `d`-dim tensor of the concentration1 parameter for the
+            Kumaraswamy distribution.
+        eps: A small value that is used to ensure inputs are not 0 or 1.
+
+    Returns:
+        A `batch_shape x n x d`-dim tensor of untransformed inputs.
+    """
+    X_range = 1 - 2 * eps
+    # unnormalize from [eps, 1-eps] to [0,1]
+    untf_X = (1 - (1 - X).pow(1 / c0)).pow(1 / c1)
+    return ((untf_X - eps) / X_range).clamp(0.0, 1.0)

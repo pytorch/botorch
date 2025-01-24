@@ -26,14 +26,18 @@ import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import UserInputWarning
-from botorch.models.transforms.utils import interaction_features, subset_transform
+from botorch.models.transforms.utils import (
+    interaction_features,
+    inv_kumaraswamy_warp,
+    kumaraswamy_warp,
+    subset_transform,
+)
 from botorch.models.utils import fantasize
 from botorch.utils.rounding import approximate_round, OneHotArgmaxSTE, RoundSTE
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
 from gpytorch.priors import Prior
 from torch import LongTensor, nn, Tensor
-from torch.distributions import Kumaraswamy
 from torch.nn import Module, ModuleDict
 from torch.nn.functional import one_hot
 
@@ -1113,11 +1117,11 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
         self.batch_shape = batch_shape or torch.Size([])
-        self._X_min = eps
-        self._X_range = 1 - 2 * eps
-        self._normalize = Normalize(
-            d=d, indices=indices, bounds=bounds, batch_shape=self.batch_shape
-        )
+        self._eps = eps
+        # Note: we don't pass batch shape here and assume that the
+        # bounds apply to all batch dims (if batch dims are present).
+        # The warping function can add a batch dim if needed.
+        self._normalize = Normalize(d=d, indices=indices, bounds=bounds)
         if len(self.batch_shape) > 0:
             # Note: this follows the gpytorch shape convention for lengthscales
             # There is ongoing discussion about the extra `1`.
@@ -1174,12 +1178,8 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             A `input_batch_shape x (batch_shape) x n x d`-dim tensor
                 of transformed inputs.
         """
-        return self._k.cdf(
-            torch.clamp(
-                X * self._X_range + self._X_min,
-                self._X_min,
-                1.0 - self._X_min,
-            )
+        return kumaraswamy_warp(
+            X=X, c0=self.concentration0, c1=self.concentration1, eps=self._eps
         )
 
     def _transform(self, X: Tensor) -> Tensor:
@@ -1229,15 +1229,8 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             A `input_batch_shape x batch_shape x n x d`-dim tensor of transformed
                 inputs.
         """
-        # unnormalize from [eps, 1-eps] to [0,1]
-        return ((self._k.icdf(X) - self._X_min) / self._X_range).clamp(0.0, 1.0)
-
-    @property
-    def _k(self) -> Kumaraswamy:
-        """Returns a Kumaraswamy distribution with the concentration parameters."""
-        return Kumaraswamy(
-            concentration1=self.concentration1,
-            concentration0=self.concentration0,
+        return inv_kumaraswamy_warp(
+            X=X, c0=self.concentration0, c1=self.concentration1, eps=self._eps
         )
 
 
