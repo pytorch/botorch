@@ -41,8 +41,11 @@ from torch.nn import Module
 from torch.nn.functional import one_hot
 
 
-def get_test_warp(indices, **kwargs):
-    warp_tf = Warp(indices=indices, **kwargs)
+def get_test_warp(d, indices, bounds=None, **kwargs):
+    if bounds is None:
+        bounds = torch.zeros(2, d)
+        bounds[1] = 1
+    warp_tf = Warp(d=d, indices=indices, bounds=bounds, **kwargs)
     c0 = torch.tensor([1.0, 2.0])[: len(indices)]
     c1 = torch.tensor([2.0, 3.0])[: len(indices)]
     batch_shape = kwargs.get("batch_shape", torch.Size([]))
@@ -1031,12 +1034,17 @@ class TestInputTransforms(BotorchTestCase):
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             eps = 1e-6 if dtype == torch.double else 1e-5
+            if dtype == torch.float32:
+                # defaults are 1e-5, 1e-8
+                tols = {"rtol": 2e-5, "atol": 8e-8}
+            else:
+                tols = {}
 
             # basic init
             indices = [0, 2]
-            warp_tf = get_test_warp(indices, batch_shape=warp_batch_shape, eps=eps).to(
-                **tkwargs
-            )
+            warp_tf = get_test_warp(
+                d=3, indices=indices, batch_shape=warp_batch_shape, eps=eps
+            ).to(**tkwargs)
             self.assertTrue(warp_tf.training)
 
             k = Kumaraswamy(warp_tf.concentration1, warp_tf.concentration0)
@@ -1049,17 +1057,17 @@ class TestInputTransforms(BotorchTestCase):
             X = X.unsqueeze(-3) if len(warp_batch_shape) > 0 else X
             with torch.no_grad():
                 warp_tf = get_test_warp(
-                    indices=indices, batch_shape=warp_batch_shape, eps=eps
+                    d=3, indices=indices, batch_shape=warp_batch_shape, eps=eps
                 ).to(**tkwargs)
                 X_tf = warp_tf(X)
                 expected_X_tf = expand_and_copy_tensor(
                     X, batch_shape=warp_tf.batch_shape
                 )
                 expected_X_tf[..., indices] = k.cdf(
-                    expected_X_tf[..., indices] * warp_tf._X_range + warp_tf._X_min
+                    expected_X_tf[..., indices] * (1 - 2 * warp_tf._eps) + warp_tf._eps
                 )
 
-                self.assertTrue(torch.equal(expected_X_tf, X_tf))
+                self.assertAllClose(expected_X_tf, X_tf, **tols)
 
                 # test untransform
                 untransformed_X = warp_tf.untransform(X_tf)
@@ -1077,7 +1085,8 @@ class TestInputTransforms(BotorchTestCase):
 
                 # test no transform on eval
                 warp_tf = get_test_warp(
-                    indices,
+                    d=3,
+                    indices=indices,
                     transform_on_eval=False,
                     batch_shape=warp_batch_shape,
                     eps=eps,
@@ -1090,6 +1099,7 @@ class TestInputTransforms(BotorchTestCase):
 
                 # test no transform on train
                 warp_tf = get_test_warp(
+                    d=3,
                     indices=indices,
                     transform_on_train=False,
                     batch_shape=warp_batch_shape,
@@ -1103,6 +1113,7 @@ class TestInputTransforms(BotorchTestCase):
 
                 # test equals
                 warp_tf2 = get_test_warp(
+                    d=3,
                     indices=indices,
                     transform_on_train=False,
                     batch_shape=warp_batch_shape,
@@ -1111,11 +1122,12 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertTrue(warp_tf.equals(warp_tf2))
                 # test different transform_on_train
                 warp_tf2 = get_test_warp(
-                    indices=indices, batch_shape=warp_batch_shape, eps=eps
+                    d=3, indices=indices, batch_shape=warp_batch_shape, eps=eps
                 )
                 self.assertFalse(warp_tf.equals(warp_tf2))
                 # test different indices
                 warp_tf2 = get_test_warp(
+                    d=3,
                     indices=[0, 1],
                     transform_on_train=False,
                     batch_shape=warp_batch_shape,
@@ -1137,6 +1149,7 @@ class TestInputTransforms(BotorchTestCase):
                 prior0 = LogNormalPrior(0.0, 0.75).to(**tkwargs)
                 prior1 = LogNormalPrior(0.0, 0.5).to(**tkwargs)
                 warp_tf = get_test_warp(
+                    d=3,
                     indices=[0, 1],
                     concentration0_prior=prior0,
                     concentration1_prior=prior1,
@@ -1148,11 +1161,23 @@ class TestInputTransforms(BotorchTestCase):
                     self.assertIsInstance(p, LogNormalPrior)
                     self.assertEqual(p.base_dist.scale, 0.75 if i == 0 else 0.5)
 
+                # test non-unit cube bounds
+                warp_tf = get_test_warp(
+                    d=3,
+                    indices=[0, 2],
+                    eps=eps,
+                    batch_shape=warp_batch_shape,
+                    bounds=torch.tensor([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]], **tkwargs),
+                ).to(**tkwargs)
+                X[..., indices] += 1
+                X_tf = warp_tf(X)
+                self.assertAllClose(expected_X_tf, X_tf, **tols)
+
             # test gradients
             X = 1 + 5 * torch.rand(*batch_shape, 4, 3, **tkwargs)
             X = X.unsqueeze(-3) if len(warp_batch_shape) > 0 else X
             warp_tf = get_test_warp(
-                indices=indices, batch_shape=warp_batch_shape, eps=eps
+                d=3, indices=indices, batch_shape=warp_batch_shape, eps=eps
             ).to(**tkwargs)
             X_tf = warp_tf(X)
             X_tf.sum().backward()

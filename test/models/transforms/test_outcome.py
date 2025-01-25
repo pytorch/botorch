@@ -6,6 +6,7 @@
 
 import itertools
 from copy import deepcopy
+from random import randint
 
 import torch
 from botorch.models.transforms.outcome import (
@@ -24,6 +25,7 @@ from botorch.models.transforms.utils import (
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
+from gpytorch.settings import min_variance
 from linear_operator.operators import (
     BlockDiagLinearOperator,
     DenseLinearOperator,
@@ -368,9 +370,12 @@ class TestOutcomeTransforms(BotorchTestCase):
 
     def test_stratified_standardize(self):
         n = 5
+        seed = randint(0, 100)
+        torch.manual_seed(seed)
         for dtype, batch_shape in itertools.product(
             (torch.float, torch.double), (torch.Size([]), torch.Size([3]))
         ):
+            torch.manual_seed(seed)
             X = torch.rand(*batch_shape, n, 2, dtype=dtype, device=self.device)
             X[..., -1] = torch.tensor([0, 1, 0, 1, 0], dtype=dtype, device=self.device)
             Y = torch.randn(*batch_shape, n, 1, dtype=dtype, device=self.device)
@@ -389,38 +394,29 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y1 = Y[mask1].view(*batch_shape, -1, 1)
             Yvar1 = Yvar[mask1].view(*batch_shape, -1, 1)
             X1 = X[mask1].view(*batch_shape, -1, 1)
-            tf0 = Standardize(
-                m=1,
-                batch_shape=batch_shape,
-            )
+            tf0 = Standardize(m=1, batch_shape=batch_shape)
             tf_Y0, tf_Yvar0 = tf0(Y=Y0, Yvar=Yvar0, X=X0)
-            tf1 = Standardize(
-                m=1,
-                batch_shape=batch_shape,
-            )
+            tf1 = Standardize(m=1, batch_shape=batch_shape)
             tf_Y1, tf_Yvar1 = tf1(Y=Y1, Yvar=Yvar1, X=X1)
             # check that stratified means are expected
-            self.assertTrue(torch.allclose(strata_tf.means[..., :1, :], tf0.means))
-            self.assertTrue(torch.allclose(strata_tf.means[..., 1:, :], tf1.means))
-            self.assertTrue(torch.allclose(strata_tf.stdvs[..., :1, :], tf0.stdvs))
-            self.assertTrue(torch.allclose(strata_tf.stdvs[..., 1:, :], tf1.stdvs))
+            self.assertAllClose(strata_tf.means[..., :1, :], tf0.means)
+            self.assertAllClose(strata_tf.means[..., 1:, :], tf1.means)
+            self.assertAllClose(strata_tf.stdvs[..., :1, :], tf0.stdvs)
+            self.assertAllClose(strata_tf.stdvs[..., 1:, :], tf1.stdvs)
             # check the transformed values
-            self.assertTrue(
-                torch.allclose(tf_Y0, tf_Y[mask0].view(*batch_shape, -1, 1))
-            )
-            self.assertTrue(
-                torch.allclose(tf_Y1, tf_Y[mask1].view(*batch_shape, -1, 1))
-            )
-            self.assertTrue(
-                torch.allclose(tf_Yvar0, tf_Yvar[mask0].view(*batch_shape, -1, 1))
-            )
-            self.assertTrue(
-                torch.allclose(tf_Yvar1, tf_Yvar[mask1].view(*batch_shape, -1, 1))
-            )
+            self.assertAllClose(tf_Y0, tf_Y[mask0].view(*batch_shape, -1, 1))
+            self.assertAllClose(tf_Y1, tf_Y[mask1].view(*batch_shape, -1, 1))
+            self.assertAllClose(tf_Yvar0, tf_Yvar[mask0].view(*batch_shape, -1, 1))
+            self.assertAllClose(tf_Yvar1, tf_Yvar[mask1].view(*batch_shape, -1, 1))
             untf_Y, untf_Yvar = strata_tf.untransform(Y=tf_Y, Yvar=tf_Yvar, X=X)
             # test untransform
-            self.assertTrue(torch.allclose(Y, untf_Y))
-            self.assertTrue(torch.allclose(Yvar, untf_Yvar))
+            if dtype == torch.float32:
+                # defaults are 1e-5, 1e-8
+                tols = {"rtol": 2e-5, "atol": 8e-8}
+            else:
+                tols = {}
+            self.assertAllClose(Y, untf_Y, **tols)
+            self.assertAllClose(Yvar, untf_Yvar)
 
             # test untransform_posterior
             for lazy in (True, False):
@@ -434,14 +430,23 @@ class TestOutcomeTransforms(BotorchTestCase):
                 )
                 p_utf = strata_tf.untransform_posterior(posterior, X=X)
                 self.assertEqual(p_utf.device.type, self.device.type)
-                self.assertTrue(p_utf.dtype == dtype)
+                self.assertEqual(p_utf.dtype, dtype)
                 strata_means, strata_stdvs, _ = strata_tf._get_per_input_means_stdvs(
                     X=X, include_stdvs_sq=False
                 )
                 mean_expected = strata_means + strata_stdvs * posterior.mean
-                variance_expected = strata_stdvs**2 * posterior.variance
+                expected_raw_variance = (strata_stdvs**2 * posterior.variance).squeeze()
                 self.assertAllClose(p_utf.mean, mean_expected)
-                self.assertAllClose(p_utf.variance, variance_expected)
+                # The variance will be clamped to a minimum (typically 1e-6), so
+                # check both the raw values and clamped values
+                raw_variance = p_utf.mvn.lazy_covariance_matrix.diagonal(
+                    dim1=-1, dim2=2
+                )
+                self.assertAllClose(raw_variance, expected_raw_variance)
+                expected_clamped_variance = expected_raw_variance.clamp(
+                    min=min_variance.value(dtype=raw_variance.dtype)
+                ).unsqueeze(-1)
+                self.assertAllClose(p_utf.variance, expected_clamped_variance)
                 samples = p_utf.rsample()
                 self.assertEqual(samples.shape, torch.Size([1]) + shape)
                 samples = p_utf.rsample(sample_shape=torch.Size([4]))
