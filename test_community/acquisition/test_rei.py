@@ -39,7 +39,7 @@ class TestLogRegionalExpectedImprovement(BotorchTestCase):
         mm = MockModel(MockPosterior(mean=mean, variance=variance))
 
         # basic test
-        X_dev = torch.empty(1, 1, device=self.device, dtype=dtype)
+        X_dev = torch.rand(1, 1, device=self.device, dtype=dtype)
         module = LogRegionalExpectedImprovement(model=mm, best_f=0.0, X_dev=X_dev)
         X = torch.empty(1, 1, device=self.device, dtype=dtype)
         log_rei = module(X)
@@ -47,7 +47,7 @@ class TestLogRegionalExpectedImprovement(BotorchTestCase):
         self.assertAllClose(log_rei, rei_expected.log(), atol=1e-4)
 
         # test maximize
-        X_dev = torch.empty(1, 1, device=self.device, dtype=dtype)
+        X_dev = torch.rand(1, 1, device=self.device, dtype=dtype)
         module = LogRegionalExpectedImprovement(
             model=mm, best_f=0.0, X_dev=X_dev, maximize=False
         )
@@ -92,6 +92,8 @@ class TestLogRegionalExpectedImprovement(BotorchTestCase):
         X = torch.rand(1, 2, device=self.device, dtype=dtype)
         rei_expected = torch.tensor([0.6910], device=self.device, dtype=dtype)
         self.assertAllClose(log_rei(X), rei_expected.log(), atol=1e-4)
+
+        assert False
 
 
 class TestQRegionalExpectedImprovement(BotorchTestCase):
