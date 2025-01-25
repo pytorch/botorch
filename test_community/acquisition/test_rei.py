@@ -93,8 +93,6 @@ class TestLogRegionalExpectedImprovement(BotorchTestCase):
         rei_expected = torch.tensor([0.6910], device=self.device, dtype=dtype)
         self.assertAllClose(log_rei(X), rei_expected.log(), atol=1e-4)
 
-        assert False
-
 
 class TestQRegionalExpectedImprovement(BotorchTestCase):
     def test_q_regional_expected_improvement(self):
