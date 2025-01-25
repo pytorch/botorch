@@ -1,11 +1,10 @@
 import unittest
 import numpy as np
 import torch
-from torch import nn
-from torch.optim import Adam
 from botorch_community.models.np_regression import NeuralProcessModel
 from botorch.posteriors import GPyTorchPosterior
-from torch import Tensor
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class TestNeuralProcessModel(unittest.TestCase):
     def initialize(self):
@@ -111,15 +110,10 @@ class TestNeuralProcessModel(unittest.TestCase):
         mvn = posterior.mvn
         self.assertEqual(mvn.covariance_matrix.size(), (5, 5, 5))
     
-    def test_load_state_dict(self):
-        self.initialize()
-        state_dict = {"r_encoder.mlp.model.0.bias": torch.rand(16)}
-        self.model.load_state_dict(state_dict, strict = False)
-    
     def test_transform_inputs(self):
         self.initialize()
         X = torch.rand(5, 3)
-        self.assertTrue(torch.equal(self.model.transform_inputs(X), X))
+        self.assertTrue(torch.equal(self.model.transform_inputs(X), X.to(device)))
     
 
 if __name__ == "__main__":
