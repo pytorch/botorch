@@ -157,12 +157,12 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""Decorator of an input transform function to separate out indexing logic."""</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">transform</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"indices"</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">has_shape</span> <span class="o">=</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"batch_shape"</span><span class="p">)</span>
         <span class="n">Y</span> <span class="o">=</span> <span class="n">expand_and_copy_tensor</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="k">if</span> <span class="n">has_shape</span> <span class="k">else</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-        <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">])</span>
+        <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Y</span>
 
     <span class="k">return</span> <span class="n">f</span></div>
@@ -204,6 +204,61 @@
         <span class="o">*</span> <span class="n">n</span>
         <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="kumaraswamy_warp">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.kumaraswamy_warp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">kumaraswamy_warp</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">c0</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Warp inputs through a Kumaraswamy CDF.</span>
+
+<span class="sd">    This assumes that X is contained within the unit cube. This first</span>
+<span class="sd">    normalizes inputs to [eps, 1-eps]^d (to ensure that no values are 0 or 1)</span>
+<span class="sd">    and then applies passes those inputs through a Kumaraswamy CDF.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `batch_shape x n x d`-dim tensor of inputs.</span>
+<span class="sd">        c0: A `d`-dim tensor of the concentration0 parameter for the</span>
+<span class="sd">            Kumaraswamy distribution.</span>
+<span class="sd">        c1: A `d`-dim tensor of the concentration1 parameter for the</span>
+<span class="sd">            Kumaraswamy distribution.</span>
+<span class="sd">        eps: A small value that is used to ensure inputs are not 0 or 1.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `batch_shape x n x d`-dim tensor of warped inputs.</span>
+<span class="sd">    """</span>
+    <span class="n">X_range</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="n">X_range</span> <span class="o">+</span> <span class="n">eps</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">eps</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">pow</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">c1</span><span class="p">)),</span> <span class="n">c0</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="inv_kumaraswamy_warp">
+<a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.inv_kumaraswamy_warp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">inv_kumaraswamy_warp</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">c0</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Map warped inputs through an inverse Kumaraswamy CDF.</span>
+
+<span class="sd">    This takes warped inputs (X) and transforms those via an inverse</span>
+<span class="sd">    Kumaraswamy CDF. This then unnormalizes the inputs using bounds of</span>
+<span class="sd">    [eps, 1-eps]^d and ensures that the values are within [0, 1]^d.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `batch_shape x n x d`-dim tensor of inputs.</span>
+<span class="sd">        c0: A `d`-dim tensor of the concentration0 parameter for the</span>
+<span class="sd">            Kumaraswamy distribution.</span>
+<span class="sd">        c1: A `d`-dim tensor of the concentration1 parameter for the</span>
+<span class="sd">            Kumaraswamy distribution.</span>
+<span class="sd">        eps: A small value that is used to ensure inputs are not 0 or 1.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `batch_shape x n x d`-dim tensor of untransformed inputs.</span>
+<span class="sd">    """</span>
+    <span class="n">X_range</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span>
+    <span class="c1"># unnormalize from [eps, 1-eps] to [0,1]</span>
+    <span class="n">untf_X</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">c0</span><span class="p">))</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">c1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">untf_X</span> <span class="o">-</span> <span class="n">eps</span><span class="p">)</span> <span class="o">/</span> <span class="n">X_range</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span></div>
 
 </pre></div>
 </div>

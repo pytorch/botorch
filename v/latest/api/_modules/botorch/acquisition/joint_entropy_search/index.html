@@ -52,7 +52,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">MCSamplerMixin</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorTransform</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.fully_bayesian</span><span class="w"> </span><span class="kn">import</span> <span class="n">SaasFullyBayesianSingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.fully_bayesian</span><span class="w"> </span><span class="kn">import</span> <span class="n">FullyBayesianSingleTaskGP</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_no_nans</span><span class="p">,</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils.gpytorch_modules</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span>
@@ -149,7 +149,7 @@
         <span class="c1"># and the optimal outputs have shapes num_optima x [num_models if FB] x 1 x 1</span>
         <span class="c1"># The third dimension equaling 1 is required to get one optimum per model,</span>
         <span class="c1"># which raises a BotorchTensorDimensionWarning.</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">SaasFullyBayesianSingleTaskGP</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">FullyBayesianSingleTaskGP</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">FULLY_BAYESIAN_ERROR_MSG</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>

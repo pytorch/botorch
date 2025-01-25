@@ -54,7 +54,7 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
@@ -62,14 +62,22 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition.objective</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorTransform</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.input</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.input</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ChainedInputTransform</span><span class="p">,</span>
+    <span class="n">InputTransform</span><span class="p">,</span>
+    <span class="n">Normalize</span><span class="p">,</span>
+    <span class="n">Warp</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutcomeTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">kumaraswamy_warp</span><span class="p">,</span> <span class="n">subset_transform</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_input_scaling</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils.gpytorch_modules</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors.fully_bayesian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianMixturePosterior</span><span class="p">,</span> <span class="n">MCMC_DIM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.containers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchContainer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">SupervisedDataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.distributions.multivariate_normal</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearKernel</span><span class="p">,</span> <span class="n">MaternKernel</span><span class="p">,</span> <span class="n">ScaleKernel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.kernels.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">dist</span><span class="p">,</span> <span class="n">Kernel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods.gaussian_likelihood</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">,</span>
@@ -81,7 +89,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.models.exact_gp</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactGP</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyro.ops.integrator</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_exception_handler</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
-
 
 <span class="n">_sqrt5</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 
@@ -107,6 +114,15 @@
     <span class="n">dist</span> <span class="o">=</span> <span class="n">compute_dists</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">lengthscale</span><span class="o">=</span><span class="n">lengthscale</span><span class="p">)</span>
     <span class="n">sqrt5_dist</span> <span class="o">=</span> <span class="n">_sqrt5</span> <span class="o">*</span> <span class="n">dist</span>
     <span class="k">return</span> <span class="n">sqrt5_dist</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">/</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="n">dist</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">sqrt5_dist</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="linear_kernel">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.linear_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">linear_kernel</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">weight_variance</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Linear kernel."""</span>
+    <span class="n">Xw</span> <span class="o">=</span> <span class="n">X</span> <span class="o">*</span> <span class="n">weight_variance</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">Xw</span> <span class="o">@</span> <span class="n">Xw</span><span class="o">.</span><span class="n">t</span><span class="p">()</span></div>
 
 
 
@@ -158,7 +174,8 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span> <span class="o">=</span> <span class="n">train_X</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_Y</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="PyroModel.sample">
@@ -187,6 +204,35 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Mean</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Likelihood</span><span class="p">]:</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+
+
+<div class="viewcode-block" id="PyroModel.sample_noise">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel.sample_noise">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample the noise variance."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">+</span> <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+                <span class="s2">"noise"</span><span class="p">,</span>
+                <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span></div>
+
+
+<div class="viewcode-block" id="PyroModel.sample_mean">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.PyroModel.sample_mean">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample the mean constant."""</span>
+        <span class="k">return</span> <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="s2">"mean"</span><span class="p">,</span>
+            <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
 </div>
 
 
@@ -206,15 +252,6 @@
 <span class="sd">    `SaasPyroModel` unless they want to customize its attributes (such as</span>
 <span class="sd">    `covar_module`).</span>
 <span class="sd">    """</span>
-
-<div class="viewcode-block" id="SaasPyroModel.set_inputs">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasPyroModel.set_inputs">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_inputs</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_inputs</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
-
 
 <div class="viewcode-block" id="SaasPyroModel.sample">
 <a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasPyroModel.sample">[docs]</a>
@@ -257,35 +294,6 @@
                 <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">rate</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
             <span class="p">),</span>
         <span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="SaasPyroModel.sample_mean">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasPyroModel.sample_mean">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">sample_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample the mean constant."""</span>
-        <span class="k">return</span> <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
-            <span class="s2">"mean"</span><span class="p">,</span>
-            <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
-                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-            <span class="p">),</span>
-        <span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="SaasPyroModel.sample_noise">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasPyroModel.sample_noise">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">sample_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample the noise variance."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">+</span> <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
-                <span class="s2">"noise"</span><span class="p">,</span>
-                <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Gamma</span><span class="p">(</span>
-                    <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-                    <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span></div>
 
 
 <div class="viewcode-block" id="SaasPyroModel.sample_lengthscale">
@@ -385,16 +393,221 @@
 
 
 
-<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SaasFullyBayesianSingleTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""A fully Bayesian single-task GP model with the SAAS prior.</span>
+<div class="viewcode-block" id="LinearPyroModel">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.LinearPyroModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LinearPyroModel</span><span class="p">(</span><span class="n">PyroModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Implementation of a Bayesian Linear pyro model.</span>
+
+<span class="sd">    `LinearPyroModel` is not a standard BoTorch model; instead, it is used as</span>
+<span class="sd">    an input to `FullyBayesianLinearSingleTaskGP`. It is used as a default keyword</span>
+<span class="sd">    argument, and end users are not likely to need to instantiate or modify a</span>
+<span class="sd">    `LinearPyroModel` unless they want to customize its attributes (such as</span>
+<span class="sd">    `covar_module`).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">use_input_warping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">indices_to_warp</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-7</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize the LinearPyroModel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            use_input_warping: If True, use input warping.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_input_warping</span> <span class="o">=</span> <span class="n">use_input_warping</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">=</span> <span class="n">indices_to_warp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eps</span> <span class="o">=</span> <span class="n">eps</span>
+
+<div class="viewcode-block" id="LinearPyroModel.warp">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.LinearPyroModel.warp">[docs]</a>
+    <span class="nd">@subset_transform</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">warp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">c0</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Warp the input."""</span>
+        <span class="k">return</span> <span class="n">kumaraswamy_warp</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">c0</span><span class="o">=</span><span class="n">c0</span><span class="p">,</span> <span class="n">c1</span><span class="o">=</span><span class="n">c1</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_eps</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LinearPyroModel.sample">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.LinearPyroModel.sample">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample from the model."""</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_mean</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">weight_variance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_weight_variance</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_input_warping</span><span class="p">:</span>
+            <span class="n">c0</span><span class="p">,</span> <span class="n">c1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_concentrations</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+            <span class="c1"># unnormalize X from [0, 1] to [eps, 1-eps]</span>
+            <span class="n">X_tf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">warp</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="p">,</span> <span class="n">c0</span><span class="o">=</span><span class="n">c0</span><span class="p">,</span> <span class="n">c1</span><span class="o">=</span><span class="n">c1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">X_tf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span>
+        <span class="n">X_tf</span> <span class="o">=</span> <span class="n">X_tf</span> <span class="o">-</span> <span class="mf">0.5</span>  <span class="c1"># center transformed data at 0 (for linear model)</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="n">linear_kernel</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X_tf</span><span class="p">,</span> <span class="n">weight_variance</span><span class="o">=</span><span class="n">weight_variance</span><span class="p">)</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_noise</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="n">K</span> <span class="o">+</span> <span class="n">noise</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="s2">"Y"</span><span class="p">,</span>
+            <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">MultivariateNormal</span><span class="p">(</span>
+                <span class="n">loc</span><span class="o">=</span><span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">covariance_matrix</span><span class="o">=</span><span class="n">K</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">obs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LinearPyroModel.sample_weight_variance">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.LinearPyroModel.sample_weight_variance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_weight_variance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample the weight variance.</span>
+
+<span class="sd">        This is a hierarchical prior is a half-Cauchy prior on the prior weight</span>
+<span class="sd">        covariance, which is diagonal with different values for each input</span>
+<span class="sd">        dimension. The prior samples a global level of sparsity (tau) and which</span>
+<span class="sd">        scales the HalfCauchy prior on the weight variance. Since the weight prior</span>
+<span class="sd">        is centered at zero, a prior variance of 0, would correspond to the</span>
+<span class="sd">        dimension being irrelevant. This choice of prior is motivated by Saas</span>
+<span class="sd">        priors.</span>
+<span class="sd">        """</span>
+        <span class="n">tau_sq</span> <span class="o">=</span> <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="s2">"tau_sq"</span><span class="p">,</span>
+            <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="n">weight_variance_sq</span> <span class="o">=</span> <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="s2">"_weight_variance_sq"</span><span class="p">,</span>
+            <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">HalfCauchy</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pyro</span><span class="o">.</span><span class="n">deterministic</span><span class="p">(</span>
+            <span class="s2">"weight_variance"</span><span class="p">,</span> <span class="p">(</span><span class="n">tau_sq</span> <span class="o">*</span> <span class="n">weight_variance_sq</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LinearPyroModel.postprocess_mcmc_samples">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.LinearPyroModel.postprocess_mcmc_samples">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">postprocess_mcmc_samples</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Post-process the MCMC samples.</span>
+
+<span class="sd">        This computes the true weight variance and removes tausq (global shrinkage).</span>
+<span class="sd">        """</span>
+        <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"weight_variance"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"tau_sq"</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"_weight_variance_sq"</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"tau_sq"</span><span class="p">],</span> <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"_weight_variance_sq"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">mcmc_samples</span></div>
+
+
+<div class="viewcode-block" id="LinearPyroModel.sample_concentrations">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.LinearPyroModel.sample_concentrations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_concentrations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Sample concentrations for input warping.</span>
+
+<span class="sd">        The prior has a mean value of 1 for each concentration and is very</span>
+<span class="sd">        concentrated around the mean.</span>
+<span class="sd">        """</span>
+        <span class="n">c0</span> <span class="o">=</span> <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="s2">"c0"</span><span class="p">,</span>
+            <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.1</span><span class="o">**</span><span class="mf">0.5</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">pyro</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="s2">"c1"</span><span class="p">,</span>
+            <span class="n">pyro</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">LogNormal</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.1</span><span class="o">**</span><span class="mf">0.5</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">c0</span><span class="p">,</span> <span class="n">c1</span></div>
+
+
+<div class="viewcode-block" id="LinearPyroModel.load_mcmc_samples">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.LinearPyroModel.load_mcmc_samples">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_mcmc_samples</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Mean</span><span class="p">,</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Likelihood</span><span class="p">,</span> <span class="n">InputTransform</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Load the MCMC samples into their corresponding modules."""</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"device"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">dtype</span><span class="p">}</span>
+        <span class="n">num_mcmc_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"weight_variance"</span><span class="p">])</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_mcmc_samples</span><span class="p">])</span>
+
+        <span class="n">mean_module</span> <span class="o">=</span> <span class="n">ConstantMean</span><span class="p">(</span><span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">covar_module</span> <span class="o">=</span> <span class="n">LinearKernel</span><span class="p">(</span>
+            <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+            <span class="n">ard_num_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">input_tf</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span>
+            <span class="n">d</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">center</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="c1"># batch shape passed here when using input warping</span>
+            <span class="c1"># which is applied first and adds a batch dimension</span>
+            <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_input_warping</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([]),</span>
+        <span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_input_warping</span><span class="p">:</span>
+            <span class="n">warping_function</span> <span class="o">=</span> <span class="n">Warp</span><span class="p">(</span>
+                <span class="n">d</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ard_num_dims</span><span class="p">,</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+                <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span>
+                <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+            <span class="n">warping_function</span><span class="o">.</span><span class="n">concentration0</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">reshape_and_detach</span><span class="p">(</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">warping_function</span><span class="o">.</span><span class="n">concentration0</span><span class="p">,</span>
+                <span class="n">new_value</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"c0"</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">warping_function</span><span class="o">.</span><span class="n">concentration1</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">reshape_and_detach</span><span class="p">(</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">warping_function</span><span class="o">.</span><span class="n">concentration1</span><span class="p">,</span>
+                <span class="n">new_value</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"c1"</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">input_tf</span> <span class="o">=</span> <span class="n">ChainedInputTransform</span><span class="p">(</span><span class="n">warp</span><span class="o">=</span><span class="n">warping_function</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="n">input_tf</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">likelihood</span> <span class="o">=</span> <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">(</span>
+                <span class="c1"># Reshape to shape `num_mcmc_samples x N`</span>
+                <span class="n">noise</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                    <span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_Yvar</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+                <span class="n">noise_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span><span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">),</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+            <span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span> <span class="o">=</span> <span class="n">reshape_and_detach</span><span class="p">(</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span><span class="p">,</span>
+                <span class="n">new_value</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"noise"</span><span class="p">]</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="n">covar_module</span><span class="o">.</span><span class="n">variance</span> <span class="o">=</span> <span class="n">reshape_and_detach</span><span class="p">(</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">covar_module</span><span class="o">.</span><span class="n">variance</span><span class="p">,</span>
+            <span class="n">new_value</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"weight_variance"</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">mean_module</span><span class="o">.</span><span class="n">constant</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">reshape_and_detach</span><span class="p">(</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">mean_module</span><span class="o">.</span><span class="n">constant</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">new_value</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"mean"</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">mean_module</span><span class="p">,</span> <span class="n">covar_module</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">,</span> <span class="n">input_tf</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FullyBayesianSingleTaskGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianSingleTaskGP">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FullyBayesianSingleTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""An abstract fully Bayesian single-task GP model.</span>
 
 <span class="sd">    This model assumes that the inputs have been normalized to [0, 1]^d and that</span>
 <span class="sd">    the output has been standardized to have zero mean and unit variance. You can</span>
 <span class="sd">    either normalize and standardize the data before constructing the model or use</span>
-<span class="sd">    an `input_transform` and `outcome_transform`. The SAAS model [Eriksson2021saasbo]_</span>
-<span class="sd">    with a Matern-5/2 kernel is used by default.</span>
+<span class="sd">    an `input_transform` and `outcome_transform`.</span>
 
 <span class="sd">    You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it</span>
 <span class="sd">    isn't compatible with `fit_gpytorch_mll`.</span>
@@ -429,7 +642,7 @@
 <span class="sd">                `.posterior` on the model will be on the original scale).</span>
 <span class="sd">            input_transform: An input transform that is applied in the model's</span>
 <span class="sd">                forward pass.</span>
-<span class="sd">            pyro_model: Optional `PyroModel`, defaults to `SaasPyroModel`.</span>
+<span class="sd">            pyro_model: The pyro model.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
             <span class="n">train_X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span>
@@ -488,17 +701,9 @@
             <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">median_lengthscale</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Median lengthscales across the MCMC samples."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
-        <span class="n">lengthscale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">lengthscale</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">num_mcmc_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Number of MCMC samples in the model."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">outputscale</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
@@ -515,8 +720,8 @@
             <span class="n">aug_batch_shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">aug_batch_shape</span>
 
-<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.train">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.train">[docs]</a>
+<div class="viewcode-block" id="FullyBayesianSingleTaskGP.train">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianSingleTaskGP.train">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Puts the model in `train` mode."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
@@ -526,8 +731,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.load_mcmc_samples">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.load_mcmc_samples">[docs]</a>
+<div class="viewcode-block" id="FullyBayesianSingleTaskGP.load_mcmc_samples">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianSingleTaskGP.load_mcmc_samples">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_mcmc_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Load the MCMC hyperparameter samples into the model.</span>
 
@@ -541,46 +746,8 @@
         <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.load_state_dict">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.load_state_dict">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">"""Custom logic for loading the state dict.</span>
-
-<span class="sd">        The standard approach of calling `load_state_dict` currently doesn't play well</span>
-<span class="sd">        with the `SaasFullyBayesianSingleTaskGP` since the `mean_module`, `covar_module`</span>
-<span class="sd">        and `likelihood` aren't initialized until the model has been fitted. The reason</span>
-<span class="sd">        for this is that we don't know the number of MCMC samples until NUTS is called.</span>
-<span class="sd">        Given the state dict, we can initialize a new model with some dummy samples and</span>
-<span class="sd">        then load the state dict into this model. This currently only works for a</span>
-<span class="sd">        `SaasPyroModel` and supporting more Pyro models likely requires moving the model</span>
-<span class="sd">        construction logic into the Pyro model itself.</span>
-<span class="sd">        """</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="p">,</span> <span class="n">SaasPyroModel</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"load_state_dict only works for SaasPyroModel"</span><span class="p">)</span>
-        <span class="n">raw_mean</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"mean_module.raw_constant"</span><span class="p">]</span>
-        <span class="n">num_mcmc_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_mean</span><span class="p">)</span>
-        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"device"</span><span class="p">:</span> <span class="n">raw_mean</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">:</span> <span class="n">raw_mean</span><span class="o">.</span><span class="n">dtype</span><span class="p">}</span>
-        <span class="c1"># Load some dummy samples</span>
-        <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"mean"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-            <span class="s2">"lengthscale"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-            <span class="s2">"outputscale"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-        <span class="p">}</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"noise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
-        <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span>
-        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span>
-        <span class="c1"># Load the actual samples from the state dict</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="o">=</span><span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.forward">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.forward">[docs]</a>
+<div class="viewcode-block" id="FullyBayesianSingleTaskGP.forward">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianSingleTaskGP.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Unlike in other classes' `forward` methods, there is no `if self.training`</span>
@@ -595,8 +762,8 @@
 
 
     <span class="c1"># pyre-ignore[14]: Inconsistent override</span>
-<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.posterior">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.posterior">[docs]</a>
+<div class="viewcode-block" id="FullyBayesianSingleTaskGP.posterior">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianSingleTaskGP.posterior">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -637,8 +804,8 @@
         <span class="k">return</span> <span class="n">posterior</span></div>
 
 
-<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.condition_on_observations">
-<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.condition_on_observations">[docs]</a>
+<div class="viewcode-block" id="FullyBayesianSingleTaskGP.condition_on_observations">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianSingleTaskGP.condition_on_observations">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">:</span>
@@ -672,6 +839,240 @@
             <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
 
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SaasFullyBayesianSingleTaskGP</span><span class="p">(</span><span class="n">FullyBayesianSingleTaskGP</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A fully Bayesian single-task GP model with the SAAS prior.</span>
+
+<span class="sd">    This model assumes that the inputs have been normalized to [0, 1]^d and that</span>
+<span class="sd">    the output has been standardized to have zero mean and unit variance. You can</span>
+<span class="sd">    either normalize and standardize the data before constructing the model or use</span>
+<span class="sd">    an `input_transform` and `outcome_transform`. The SAAS model [Eriksson2021saasbo]_</span>
+<span class="sd">    with a Matern-5/2 kernel is used by default.</span>
+
+<span class="sd">    You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it</span>
+<span class="sd">    isn't compatible with `fit_gpytorch_mll`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; saas_gp = SaasFullyBayesianSingleTaskGP(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; fit_fully_bayesian_model_nuts(saas_gp)</span>
+<span class="sd">        &gt;&gt;&gt; posterior = saas_gp.posterior(test_X)</span>
+<span class="sd">    """</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_mcmc_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Number of MCMC samples in the model."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">outputscale</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">median_lengthscale</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Median lengthscales across the MCMC samples."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
+        <span class="n">lengthscale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">base_kernel</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">lengthscale</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.load_state_dict">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.load_state_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Custom logic for loading the state dict.</span>
+
+<span class="sd">        The standard approach of calling `load_state_dict` currently doesn't play well</span>
+<span class="sd">        with the `SaasFullyBayesianSingleTaskGP` since the `mean_module`, `covar_module`</span>
+<span class="sd">        and `likelihood` aren't initialized until the model has been fitted. The reason</span>
+<span class="sd">        for this is that we don't know the number of MCMC samples until NUTS is called.</span>
+<span class="sd">        Given the state dict, we can initialize a new model with some dummy samples and</span>
+<span class="sd">        then load the state dict into this model. This currently only works for a</span>
+<span class="sd">        `SaasPyroModel` and supporting more Pyro models likely requires moving the model</span>
+<span class="sd">        construction logic into the Pyro model itself.</span>
+<span class="sd">        """</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="p">,</span> <span class="n">SaasPyroModel</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"load_state_dict only works for SaasPyroModel"</span><span class="p">)</span>
+        <span class="n">raw_mean</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"mean_module.raw_constant"</span><span class="p">]</span>
+        <span class="n">num_mcmc_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_mean</span><span class="p">)</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"device"</span><span class="p">:</span> <span class="n">raw_mean</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">:</span> <span class="n">raw_mean</span><span class="o">.</span><span class="n">dtype</span><span class="p">}</span>
+        <span class="c1"># Load some dummy samples</span>
+        <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"mean"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="s2">"lengthscale"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="s2">"outputscale"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"noise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span>
+        <span class="c1"># Load the actual samples from the state dict</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="o">=</span><span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FullyBayesianLinearSingleTaskGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianLinearSingleTaskGP">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FullyBayesianLinearSingleTaskGP</span><span class="p">(</span><span class="n">FullyBayesianSingleTaskGP</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A fully Bayesian single-task GP model with a linear kernel.</span>
+
+<span class="sd">    This model assumes that the inputs have been normalized to [0, 1]^d and that</span>
+<span class="sd">    the output has been standardized to have zero mean and unit variance. You can</span>
+<span class="sd">    either normalize and standardize the data before constructing the model or use</span>
+<span class="sd">    an `input_transform` and `outcome_transform`.</span>
+
+<span class="sd">    You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it</span>
+<span class="sd">    isn't compatible with `fit_gpytorch_mll`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; gp = FullyBayesianLinearSingleTaskGP(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; fit_fully_bayesian_model_nuts(gp)</span>
+<span class="sd">        &gt;&gt;&gt; posterior = gp.posterior(test_X)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">OutcomeTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">InputTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_input_warping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">indices_to_warp</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Initialize the fully Bayesian single-task GP model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            train_X: Training inputs (n x d)</span>
+<span class="sd">            train_Y: Training targets (n x 1)</span>
+<span class="sd">            train_Yvar: Observed noise variance (n x 1). Inferred if None.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
+<span class="sd">                training data during instantiation and to the posterior during</span>
+<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
+<span class="sd">                `.posterior` on the model will be on the original scale).</span>
+<span class="sd">            input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass.</span>
+<span class="sd">            use_input_warping: A boolean indicating whether to use input warping.</span>
+<span class="sd">            indices_to_warp: An optional list of indices to warp. The default</span>
+<span class="sd">                is to warp all inputs.</span>
+<span class="sd">        """</span>
+        <span class="n">pyro_model</span> <span class="o">=</span> <span class="n">LinearPyroModel</span><span class="p">(</span>
+            <span class="n">use_input_warping</span><span class="o">=</span><span class="n">use_input_warping</span><span class="p">,</span> <span class="n">indices_to_warp</span><span class="o">=</span><span class="n">indices_to_warp</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
+            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
+            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
+            <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+            <span class="n">pyro_model</span><span class="o">=</span><span class="n">pyro_model</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_mcmc_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Number of MCMC samples in the model."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">median_weight_variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Median weight variance across the MCMC samples."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_if_fitted</span><span class="p">()</span>
+        <span class="n">weight_variance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">weight_variance</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FullyBayesianLinearSingleTaskGP.load_mcmc_samples">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianLinearSingleTaskGP.load_mcmc_samples">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_mcmc_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mcmc_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Load the MCMC hyperparameter samples into the model.</span>
+
+<span class="sd">        This method will be called by `fit_fully_bayesian_model_nuts` when the model</span>
+<span class="sd">        has been fitted in order to create a batched SingleTaskGP model.</span>
+<span class="sd">        """</span>
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">input_transform</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">):</span>
+            <span class="n">tfs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_transform</span><span class="p">,</span> <span class="n">ChainedInputTransform</span><span class="p">):</span>
+                <span class="n">tfs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">input_transform</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">tfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_transform</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">ChainedInputTransform</span><span class="p">(</span>
+                <span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">"tf</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">tf</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tf</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tfs</span><span class="p">)}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span></div>
+
+
+<div class="viewcode-block" id="FullyBayesianLinearSingleTaskGP.load_state_dict">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianLinearSingleTaskGP.load_state_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Custom logic for loading the state dict.</span>
+
+<span class="sd">        The standard approach of calling `load_state_dict` currently doesn't play well</span>
+<span class="sd">        with the `FullyBayesianLinearSingleTaskGP` since the `mean_module`,</span>
+<span class="sd">        `covar_module` and `likelihood` aren't initialized until the model has been</span>
+<span class="sd">        fitted. The reason for this is that we don't know the number of MCMC samples</span>
+<span class="sd">        until NUTS is called. Given the state dict, we can initialize a new model with</span>
+<span class="sd">        some dummy samples andthen load the state dict into this model. This currently</span>
+<span class="sd">        only works for a `LinearPyroModel` and supporting more Pyro models likely</span>
+<span class="sd">        requires moving the model construction logic into the Pyro model itself.</span>
+<span class="sd">        """</span>
+        <span class="n">weight_variance</span> <span class="o">=</span> <span class="n">state_dict</span><span class="p">[</span><span class="s2">"covar_module.raw_variance"</span><span class="p">]</span>
+        <span class="n">num_mcmc_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">weight_variance</span><span class="p">)</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"device"</span><span class="p">:</span> <span class="n">weight_variance</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">:</span> <span class="n">weight_variance</span><span class="o">.</span><span class="n">dtype</span><span class="p">}</span>
+        <span class="c1"># Load some dummy samples</span>
+        <span class="c1"># deal with c0 c1</span>
+        <span class="n">mcmc_samples</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"mean"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+            <span class="s2">"weight_variance"</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">use_input_warping</span><span class="p">:</span>
+            <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"c0"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+            <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"c1"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="o">.</span><span class="n">train_Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mcmc_samples</span><span class="p">[</span><span class="s2">"noise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_mcmc_samples</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_mcmc_samples</span><span class="p">(</span><span class="n">mcmc_samples</span><span class="o">=</span><span class="n">mcmc_samples</span><span class="p">)</span>
+        <span class="c1"># Load the actual samples from the state dict</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="o">=</span><span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FullyBayesianLinearSingleTaskGP.construct_inputs">
+<a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianLinearSingleTaskGP.construct_inputs">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">construct_inputs</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">training_data</span><span class="p">:</span> <span class="n">SupervisedDataset</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">use_input_warping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">indices_to_warp</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BotorchContainer</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            training_data: A `SupervisedDataset`, with attributes `train_X`,</span>
+<span class="sd">                `train_Y`, and, optionally, `train_Yvar`.</span>
+<span class="sd">            use_input_warping: A boolean indicating whether to use input warping.</span>
+<span class="sd">            indices_to_warp: An optional list of indices to warp. The default</span>
+<span class="sd">                is to warp all inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict of keyword arguments that can be used to initialize a</span>
+<span class="sd">            `FullyBayesianLinearSingleTaskGP`, with keys `train_X`, `train_Y`,</span>
+<span class="sd">            `use_input_warping`, `indices_to_warp`, and, optionally, `train_Yvar`.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="o">**</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">),</span>
+            <span class="s2">"use_input_warping"</span><span class="p">:</span> <span class="n">use_input_warping</span><span class="p">,</span>
+            <span class="s2">"indices_to_warp"</span><span class="p">:</span> <span class="n">indices_to_warp</span><span class="p">,</span>
+        <span class="p">}</span></div>
 </div>
 
 </pre></div>

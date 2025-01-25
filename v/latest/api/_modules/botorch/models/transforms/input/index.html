@@ -49,14 +49,18 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">UserInputWarning</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">interaction_features</span><span class="p">,</span> <span class="n">subset_transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">interaction_features</span><span class="p">,</span>
+    <span class="n">inv_kumaraswamy_warp</span><span class="p">,</span>
+    <span class="n">kumaraswamy_warp</span><span class="p">,</span>
+    <span class="n">subset_transform</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">fantasize</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.rounding</span><span class="w"> </span><span class="kn">import</span> <span class="n">approximate_round</span><span class="p">,</span> <span class="n">OneHotArgmaxSTE</span><span class="p">,</span> <span class="n">RoundSTE</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span> <span class="k">as</span> <span class="n">GPyTorchModule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">GreaterThan</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Prior</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">LongTensor</span><span class="p">,</span> <span class="n">nn</span><span class="p">,</span> <span class="n">Tensor</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kumaraswamy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">one_hot</span>
 
@@ -1228,11 +1232,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_fantasize</span> <span class="o">=</span> <span class="n">transform_on_fantasize</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="o">=</span> <span class="n">reverse</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span> <span class="o">=</span> <span class="n">eps</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_X_range</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span>
-            <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eps</span> <span class="o">=</span> <span class="n">eps</span>
+        <span class="c1"># Note: we don't pass batch shape here and assume that the</span>
+        <span class="c1"># bounds apply to all batch dims (if batch dims are present).</span>
+        <span class="c1"># The warping function can add a batch dim if needed.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_normalize</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># Note: this follows the gpytorch shape convention for lengthscales</span>
             <span class="c1"># There is ongoing discussion about the extra `1`.</span>
@@ -1289,12 +1293,8 @@
 <span class="sd">            A `input_batch_shape x (batch_shape) x n x d`-dim tensor</span>
 <span class="sd">                of transformed inputs.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_k</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span>
-                <span class="n">X</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_range</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">,</span>
-                <span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">,</span>
-            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">kumaraswamy_warp</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">c0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">concentration0</span><span class="p">,</span> <span class="n">c1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">concentration1</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_eps</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -1344,15 +1344,8 @@
 <span class="sd">            A `input_batch_shape x batch_shape x n x d`-dim tensor of transformed</span>
 <span class="sd">                inputs.</span>
 <span class="sd">        """</span>
-        <span class="c1"># unnormalize from [eps, 1-eps] to [0,1]</span>
-        <span class="k">return</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_k</span><span class="o">.</span><span class="n">icdf</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_min</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_X_range</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_k</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kumaraswamy</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Returns a Kumaraswamy distribution with the concentration parameters."""</span>
-        <span class="k">return</span> <span class="n">Kumaraswamy</span><span class="p">(</span>
-            <span class="n">concentration1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">concentration1</span><span class="p">,</span>
-            <span class="n">concentration0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">concentration0</span><span class="p">,</span>
+        <span class="k">return</span> <span class="n">inv_kumaraswamy_warp</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">c0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">concentration0</span><span class="p">,</span> <span class="n">c1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">concentration1</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_eps</span>
         <span class="p">)</span></div>
 
 
