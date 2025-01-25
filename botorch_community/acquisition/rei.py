@@ -36,6 +36,21 @@ class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
         length: float = 0.8,
         bounds: Optional[Union[float, Tensor]] = None,
     ):
+        r"""Log-Regional Expected Improvement (analytic).
+
+        Args:
+            model: A fitted single-outcome model.
+            best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
+                the best function value observed so far (assumed noiseless).
+            X_dev: A `n x d`-dim Tensor of `n` `d`-dim design points within a Trust Region.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
+            maximize: If True, consider the problem a maximization problem.
+            length: The length of the trust region to consider.
+            bounds: The bounds of the design space. First column represents dimension-wise lower bounds.
+                Second column represents dimension-wise upper bounds.
+        """
 
         super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
@@ -87,7 +102,31 @@ class qRegionalExpectedImprovement(MCAcquisitionFunction):
         bounds: Optional[Union[float, Tensor]] = None,
         **kwargs: Any,
     ) -> None:
+        r"""q-Regional Expected Improvement (MC acquisition function).
 
+        Args:
+            model: A fitted single-outcome model.
+            best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
+                the best function value observed so far (assumed noiseless).
+            X_dev: A `n x d`-dim Tensor of `n` `d`-dim design points within a Trust Region.
+            sampler: botorch.sampling.base.MCSampler
+                The sampler used to sample fantasized models. Defaults to
+                SobolQMCNormalSampler(num_samples=1)`.
+            objective: The MCAcquisitionObjective under which the samples are evaluated.
+                Defaults to `IdentityMCObjective()`.
+                NOTE: `ConstrainedMCObjective` for outcome constraints is deprecated in
+                favor of passing the `constraints` directly to this constructor.
+            posterior_transform: A PosteriorTransform. If using a multi-output model,
+                a PosteriorTransform that transforms the multi-output posterior into a
+                single-output posterior is required.
+            X_pending: A `batch_shape x m x d`-dim Tensor of `m` `d`-dim design
+                points that have been submitted for function evaluation but have
+                not yet been evaluated.
+            length: The length of the trust region to consider.
+            bounds: The bounds of the design space. First column represents dimension-wise lower bounds.
+                Second column represents dimension-wise upper bounds.
+
+        """
         super().__init__(
             model=model,
             sampler=sampler,
