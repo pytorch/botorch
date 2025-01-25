@@ -12,7 +12,8 @@ import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
-from botorch.fit import fit_gpytorch_mll
+from botorch.fit import fit_fully_bayesian_model_nuts, fit_gpytorch_mll
+from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import MultiTaskGP
@@ -733,3 +734,29 @@ class TestModelListGP(BotorchTestCase):
                             self.assertTrue(
                                 torch.equal(fm_i.train_inputs[0][0][-1], X[1 - i])
                             )
+
+    def test_with_different_batch_shapes(self) -> None:
+        # Tests that we can mix single task and SAAS models together.
+        tkwargs = {"device": self.device, "dtype": torch.double}
+        m1 = SaasFullyBayesianSingleTaskGP(
+            train_X=torch.rand(10, 2, **tkwargs), train_Y=torch.rand(10, 1, **tkwargs)
+        )
+        fit_fully_bayesian_model_nuts(m1, warmup_steps=0, num_samples=8, thinning=1)
+        m2 = SingleTaskGP(
+            train_X=torch.rand(10, 2, **tkwargs), train_Y=torch.rand(10, 1, **tkwargs)
+        )
+        m = ModelListGP(m1, m2)
+        with self.assertWarnsRegex(UserWarning, "Component models of"):
+            self.assertEqual(m.batch_shape, torch.Size([8]))
+        # Non-batched evaluation.
+        with self.assertWarnsRegex(UserWarning, "Component models of"):
+            post = m.posterior(torch.rand(1, 2, **tkwargs))
+        self.assertEqual(post.batch_shape, torch.Size([8]))
+        self.assertEqual(post.rsample(torch.Size([2])).shape, torch.Size([2, 8, 1, 2]))
+        # Batched evaluation.
+        with self.assertWarnsRegex(UserWarning, "Component models of"):
+            post = m.posterior(torch.rand(5, 1, 2, **tkwargs))
+        self.assertEqual(post.batch_shape, torch.Size([5, 8]))
+        self.assertEqual(
+            post.rsample(torch.Size([2])).shape, torch.Size([2, 5, 8, 1, 2])
+        )

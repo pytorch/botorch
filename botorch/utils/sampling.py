@@ -163,16 +163,15 @@ def sample_hypersphere(
         >>> sample_hypersphere(d=5, n=10)
     """
     if d == 1:
-        rnd = torch.randint(0, 2, (n, 1), device=device, dtype=dtype)
+        with manual_seed(seed=seed):
+            rnd = torch.randint(0, 2, (n, 1), device=device, dtype=dtype)
         return 2 * rnd - 1
     if qmc:
         rnd = draw_sobol_normal_samples(d=d, n=n, device=device, dtype=dtype, seed=seed)
     else:
         with manual_seed(seed=seed):
-            rnd = torch.randn(n, d, dtype=dtype)
+            rnd = torch.randn(n, d, device=device, dtype=dtype)
     samples = rnd / torch.linalg.norm(rnd, dim=-1, keepdim=True)
-    if device is not None:
-        samples = samples.to(device)
     return samples
 
 
