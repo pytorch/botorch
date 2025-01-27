@@ -33,7 +33,7 @@ References:
 import math
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, TypeVar
 
 import pyro
 import torch
@@ -66,6 +66,11 @@ from gpytorch.means.mean import Mean
 from gpytorch.models.exact_gp import ExactGP
 from pyro.ops.integrator import register_exception_handler
 from torch import Tensor
+
+# Can replace with Self type once 3.11 is the minimum version
+TFullyBayesianSingleTaskGP = TypeVar(
+    "TFullyBayesianSingleTaskGP", bound="FullyBayesianSingleTaskGP"
+)
 
 _sqrt5 = math.sqrt(5)
 
@@ -572,8 +577,8 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
         validate_input_scaling(
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
-        self._num_outputs = train_Y.shape[-1]
-        self._input_batch_shape = train_X.shape[:-2]
+        self._num_outputs: int = train_Y.shape[-1]
+        self._input_batch_shape: torch.Size = train_X.shape[:-2]
         if train_Yvar is not None:  # Clamp after transforming
             train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
 
@@ -591,11 +596,11 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
         )
         self.pyro_model: PyroModel = pyro_model
         if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
+            self.outcome_transform: OutcomeTransform = outcome_transform
         if input_transform is not None:
-            self.input_transform = input_transform
+            self.input_transform: InputTransform = input_transform
 
-    def _check_if_fitted(self):
+    def _check_if_fitted(self) -> None:
         r"""Raise an exception if the model hasn't been fitted."""
         if self.covar_module is None:
             raise RuntimeError(
@@ -623,13 +628,16 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
             aug_batch_shape += torch.Size([self.num_outputs])
         return aug_batch_shape
 
-    def train(self, mode: bool = True) -> None:
+    def train(
+        self: TFullyBayesianSingleTaskGP, mode: bool = True
+    ) -> TFullyBayesianSingleTaskGP:
         r"""Puts the model in `train` mode."""
         super().train(mode=mode)
         if mode:
             self.mean_module = None
             self.covar_module = None
             self.likelihood = None
+        return self
 
     def load_mcmc_samples(self, mcmc_samples: dict[str, Tensor]) -> None:
         r"""Load the MCMC hyperparameter samples into the model.
@@ -761,7 +769,9 @@ class SaasFullyBayesianSingleTaskGP(FullyBayesianSingleTaskGP):
         lengthscale = self.covar_module.base_kernel.lengthscale.clone()
         return lengthscale.median(0).values.squeeze(0)
 
-    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
+    def load_state_dict(
+        self, state_dict: Mapping[str, Any], strict: bool = True
+    ) -> None:
         r"""Custom logic for loading the state dict.
 
         The standard approach of calling `load_state_dict` currently doesn't play well
@@ -886,7 +896,9 @@ class FullyBayesianLinearSingleTaskGP(FullyBayesianSingleTaskGP):
         else:
             self.input_transform = input_transform
 
-    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
+    def load_state_dict(
+        self, state_dict: Mapping[str, Any], strict: bool = True
+    ) -> None:
         r"""Custom logic for loading the state dict.
 
         The standard approach of calling `load_state_dict` currently doesn't play well
@@ -924,7 +936,7 @@ class FullyBayesianLinearSingleTaskGP(FullyBayesianSingleTaskGP):
         *,
         use_input_warping: bool = True,
         indices_to_warp: list[int] | None = None,
-    ) -> dict[str, BotorchContainer | Tensor]:
+    ) -> dict[str, BotorchContainer | Tensor | None]:
         r"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.
 
         Args:

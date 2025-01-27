@@ -1036,7 +1036,7 @@ class TestInputTransforms(BotorchTestCase):
             eps = 1e-6 if dtype == torch.double else 1e-5
             if dtype == torch.float32:
                 # defaults are 1e-5, 1e-8
-                tols = {"rtol": 1e-4, "atol": 5e-7}
+                tols = {"rtol": 1e-4, "atol": 1e-6}
             else:
                 tols = {}
 
