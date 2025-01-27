@@ -577,8 +577,8 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
         validate_input_scaling(
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
-        self._num_outputs = train_Y.shape[-1]
-        self._input_batch_shape = train_X.shape[:-2]
+        self._num_outputs: int = train_Y.shape[-1]
+        self._input_batch_shape: torch.Size = train_X.shape[:-2]
         if train_Yvar is not None:  # Clamp after transforming
             train_Yvar = train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL)
 
@@ -596,11 +596,11 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
         )
         self.pyro_model: PyroModel = pyro_model
         if outcome_transform is not None:
-            self.outcome_transform = outcome_transform
+            self.outcome_transform: OutcomeTransform = outcome_transform
         if input_transform is not None:
-            self.input_transform = input_transform
+            self.input_transform: InputTransform = input_transform
 
-    def _check_if_fitted(self):
+    def _check_if_fitted(self) -> None:
         r"""Raise an exception if the model hasn't been fitted."""
         if self.covar_module is None:
             raise RuntimeError(
@@ -769,7 +769,9 @@ class SaasFullyBayesianSingleTaskGP(FullyBayesianSingleTaskGP):
         lengthscale = self.covar_module.base_kernel.lengthscale.clone()
         return lengthscale.median(0).values.squeeze(0)
 
-    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
+    def load_state_dict(
+        self, state_dict: Mapping[str, Any], strict: bool = True
+    ) -> None:
         r"""Custom logic for loading the state dict.
 
         The standard approach of calling `load_state_dict` currently doesn't play well
@@ -894,7 +896,9 @@ class FullyBayesianLinearSingleTaskGP(FullyBayesianSingleTaskGP):
         else:
             self.input_transform = input_transform
 
-    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True):
+    def load_state_dict(
+        self, state_dict: Mapping[str, Any], strict: bool = True
+    ) -> None:
         r"""Custom logic for loading the state dict.
 
         The standard approach of calling `load_state_dict` currently doesn't play well
@@ -932,7 +936,7 @@ class FullyBayesianLinearSingleTaskGP(FullyBayesianSingleTaskGP):
         *,
         use_input_warping: bool = True,
         indices_to_warp: list[int] | None = None,
-    ) -> dict[str, BotorchContainer | Tensor]:
+    ) -> dict[str, BotorchContainer | Tensor | None]:
         r"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.
 
         Args:

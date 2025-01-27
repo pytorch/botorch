@@ -19,7 +19,7 @@ from botorch.exceptions.errors import ModelFittingError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.logging import logger
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
-from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
+from botorch.models.fully_bayesian import FullyBayesianSingleTaskGP
 from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.optim.closures import get_loss_closure_with_grads
@@ -326,7 +326,7 @@ def _fit_fallback_approximate(
 
 
 def fit_fully_bayesian_model_nuts(
-    model: SaasFullyBayesianSingleTaskGP | SaasFullyBayesianMultiTaskGP,
+    model: FullyBayesianSingleTaskGP | SaasFullyBayesianMultiTaskGP,
     max_tree_depth: int = 6,
     warmup_steps: int = 512,
     num_samples: int = 256,
