@@ -111,6 +111,9 @@ Sparse Axis-Aligned Subspaces (SAAS) GP Models
 
 Variational GP Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.robust_relevance_pursuit_model
+    :members:
+
 .. automodule:: botorch.models.approximate_gp
     :members:
 
