@@ -4,6 +4,7 @@ from typing import Any, Optional, Union
 
 import torch
 from torch import Tensor
+from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
@@ -13,10 +14,6 @@ from botorch.acquisition.analytic import (
     _scaled_improvement,
     _log_ei_helper,
 )
-from botorch.acquisition.monte_carlo import MCAcquisitionFunction
-from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.model import Model
-from botorch.utils.transforms import t_batch_mode_transform
 
 TAU_RELU = 1e-6
 TAU_MAX = 1e-2
@@ -42,13 +39,14 @@ class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
             model: A fitted single-outcome model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
-            X_dev: A `n x d`-dim Tensor of `n` `d`-dim design points within a Trust Region.
+            X_dev: A `n x d`-dim Tensor of `n` `d`-dim design points within a TR.
             posterior_transform: A PosteriorTransform. If using a multi-output model,
                 a PosteriorTransform that transforms the multi-output posterior into a
                 single-output posterior is required.
             maximize: If True, consider the problem a maximization problem.
             length: The length of the trust region to consider.
-            bounds: The bounds of the design space. First column represents dimension-wise lower bounds.
+            bounds: The bounds of the design space.
+                First column represents dimension-wise lower bounds.
                 Second column represents dimension-wise upper bounds.
         """
 
@@ -108,7 +106,7 @@ class qRegionalExpectedImprovement(MCAcquisitionFunction):
             model: A fitted single-outcome model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
-            X_dev: A `n x d`-dim Tensor of `n` `d`-dim design points within a Trust Region.
+            X_dev: A `n x d`-dim Tensor of `n` `d`-dim design points within a TR.
             sampler: botorch.sampling.base.MCSampler
                 The sampler used to sample fantasized models. Defaults to
                 SobolQMCNormalSampler(num_samples=1)`.
@@ -123,7 +121,8 @@ class qRegionalExpectedImprovement(MCAcquisitionFunction):
                 points that have been submitted for function evaluation but have
                 not yet been evaluated.
             length: The length of the trust region to consider.
-            bounds: The bounds of the design space. First column represents dimension-wise lower bounds.
+            bounds: The bounds of the design space.
+                First column represents dimension-wise lower bounds.
                 Second column represents dimension-wise upper bounds.
 
         """

@@ -10,7 +10,6 @@ import warnings
 from warnings import catch_warnings, simplefilter
 
 import torch
-from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch_community.acquisition.rei import (
     LogRegionalExpectedImprovement,
     qRegionalExpectedImprovement,
