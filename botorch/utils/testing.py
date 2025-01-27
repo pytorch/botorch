@@ -348,10 +348,7 @@ class MockPosterior(Posterior):
         if sample_shape is None:
             sample_shape = torch.Size()
         extended_shape = self._extended_shape(sample_shape)
-        if self._samples.shape == extended_shape:
-            return self._samples
-        else:
-            return self._samples.expand(extended_shape)
+        return self._samples.expand(extended_shape)
 
     def rsample_from_base_samples(
         self,
