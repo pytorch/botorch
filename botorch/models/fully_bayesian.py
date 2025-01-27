@@ -33,7 +33,7 @@ References:
 import math
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, TypeVar
 
 import pyro
 import torch
@@ -66,6 +66,11 @@ from gpytorch.means.mean import Mean
 from gpytorch.models.exact_gp import ExactGP
 from pyro.ops.integrator import register_exception_handler
 from torch import Tensor
+
+# Can replace with Self type once 3.11 is the minimum version
+TFullyBayesianSingleTaskGP = TypeVar(
+    "TFullyBayesianSingleTaskGP", bound="FullyBayesianSingleTaskGP"
+)
 
 _sqrt5 = math.sqrt(5)
 
@@ -623,13 +628,16 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
             aug_batch_shape += torch.Size([self.num_outputs])
         return aug_batch_shape
 
-    def train(self, mode: bool = True) -> None:
+    def train(
+        self: TFullyBayesianSingleTaskGP, mode: bool = True
+    ) -> TFullyBayesianSingleTaskGP:
         r"""Puts the model in `train` mode."""
         super().train(mode=mode)
         if mode:
             self.mean_module = None
             self.covar_module = None
             self.likelihood = None
+        return self
 
     def load_mcmc_samples(self, mcmc_samples: dict[str, Tensor]) -> None:
         r"""Load the MCMC hyperparameter samples into the model.
