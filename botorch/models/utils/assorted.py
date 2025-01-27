@@ -397,3 +397,37 @@ class fantasize(_Flag):
     r"""A flag denoting whether we are currently in a `fantasize` context."""
 
     _state: bool = False
+
+
+def get_task_value_remapping(task_values: Tensor, dtype: torch.dtype) -> Tensor | None:
+    """Construct an mapping of discrete task values to contiguous int-valued floats.
+
+    Args:
+        task_values: A sorted long-valued tensor of task values.
+        dtype: The dtype of the model inputs (e.g. `X`), which the new
+            task values should have mapped to (e.g. float, double).
+
+    Returns:
+        A tensor of shape `task_values.max() + 1` that maps task values
+        to new task values. The indexing operation `mapper[task_value]`
+        will produce a tensor of new task values, of the same shape as
+        the original. The elements of the `mapper` tensor that do not
+        appear in the original `task_values` are mapped to `nan`. The
+        return value will be `None`, when the task values are contiguous
+        integers starting from zero.
+    """
+    task_range = torch.arange(
+        len(task_values), dtype=task_values.dtype, device=task_values.device
+    )
+    mapper = None
+    if not torch.equal(task_values, task_range):
+        # Create a tensor that maps task values to new task values.
+        # The number of tasks should be small, so this should be quite efficient.
+        mapper = torch.full(
+            (int(task_values.max().item()) + 1,),
+            float("nan"),
+            dtype=dtype,
+            device=task_values.device,
+        )
+        mapper[task_values] = task_range.to(dtype=dtype)
+    return mapper

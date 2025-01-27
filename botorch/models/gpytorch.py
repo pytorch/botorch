@@ -198,7 +198,7 @@ class GPyTorchModel(Model, ABC):
                     mvn = self.likelihood(mvn, X)
         posterior = GPyTorchPosterior(distribution=mvn)
         if hasattr(self, "outcome_transform"):
-            posterior = self.outcome_transform.untransform_posterior(posterior)
+            posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior
@@ -244,7 +244,7 @@ class GPyTorchModel(Model, ABC):
             # (unless we've already trasnformed if BatchedMultiOutputGPyTorchModel)
             if not isinstance(self, BatchedMultiOutputGPyTorchModel):
                 # `noise` is assumed to already be outcome-transformed.
-                Y, _ = self.outcome_transform(Y=Y, Yvar=Yvar)
+                Y, _ = self.outcome_transform(Y=Y, Yvar=Yvar, X=X)
         # Validate using strict=False, since we cannot tell if Y has an explicit
         # output dimension. Do not check shapes when fantasizing as they are
         # not expected to match.
@@ -467,7 +467,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
 
         posterior = GPyTorchPosterior(distribution=mvn)
         if hasattr(self, "outcome_transform"):
-            posterior = self.outcome_transform.untransform_posterior(posterior)
+            posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior
@@ -511,7 +511,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         if hasattr(self, "outcome_transform"):
             # We need to apply transforms before shifting batch indices around.
             # `noise` is assumed to already be outcome-transformed.
-            Y, _ = self.outcome_transform(Y)
+            Y, _ = self.outcome_transform(Y, X=X)
         # Do not check shapes when fantasizing as they are not expected to match.
         if fantasize_flag.off():
             self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
@@ -719,6 +719,7 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
                     interleaved=False,
                 )
             else:
+                mvns = self._broadcast_mvns(mvns=mvns)
                 mvn = (
                     mvns[0]
                     if len(mvns) == 1
@@ -737,6 +738,38 @@ class ModelListGPyTorchModel(ModelList, GPyTorchModel, ABC):
 
     def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> Model:
         raise NotImplementedError()
+
+    def _broadcast_mvns(self, mvns: list[MultivariateNormal]) -> MultivariateNormal:
+        """Broadcasts the batch shapes of the given MultivariateNormals.
+
+        The MVNs will have a batch shape of `input_batch_shape x model_batch_shape`.
+        If the model batch shapes are broadcastable, we will broadcast the mvns to
+        a batch shape of `input_batch_shape x self.batch_shape`.
+
+        Args:
+            mvns: A list of MultivariateNormals.
+
+        Returns:
+            A list of MultivariateNormals with broadcasted batch shapes.
+        """
+        mvn_batch_shapes = {mvn.batch_shape for mvn in mvns}
+        if len(mvn_batch_shapes) == 1:
+            # All MVNs have the same batch shape. We can return as is.
+            return mvns
+        # This call will error out if they're not broadcastable.
+        # If they're broadcastable, it'll log a warning.
+        target_model_shape = self.batch_shape
+        max_batch = max(mvn_batch_shapes, key=len)
+        max_len = len(max_batch)
+        input_batch_len = max_len - len(target_model_shape)
+        for i in range(len(mvns)):  # Loop over index since we modify contents.
+            while len(mvns[i].batch_shape) < max_len:
+                # MVN is missing batch dimensions. Unsqueeze as needed.
+                mvns[i] = mvns[i].unsqueeze(input_batch_len)
+            if mvns[i].batch_shape != max_batch:
+                # Expand to match the batch shapes.
+                mvns[i] = mvns[i].expand(max_batch)
+        return mvns
 
 
 class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
@@ -924,7 +957,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             )
             posterior = GPyTorchPosterior(distribution=mtmvn)
         if hasattr(self, "outcome_transform"):
-            posterior = self.outcome_transform.untransform_posterior(posterior)
+            posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
         if posterior_transform is not None:
             return posterior_transform(posterior)
         return posterior

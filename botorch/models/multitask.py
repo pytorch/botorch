@@ -39,6 +39,7 @@ from botorch.models.gpytorch import GPyTorchModel, MultiTaskGPyTorchModel
 from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
+from botorch.models.utils.assorted import get_task_value_remapping
 from botorch.models.utils.gpytorch_modules import (
     get_covar_module_with_dim_scaled_prior,
     get_gaussian_likelihood_with_lognormal_prior,
@@ -80,40 +81,6 @@ from linear_operator.operators import (
     to_linear_operator,
 )
 from torch import Tensor
-
-
-def get_task_value_remapping(task_values: Tensor, dtype: torch.dtype) -> Tensor | None:
-    """Construct an mapping of discrete task values to contiguous int-valued floats.
-
-    Args:
-        task_values: A sorted long-valued tensor of task values.
-        dtype: The dtype of the model inputs (e.g. `X`), which the new
-            task values should have mapped to (e.g. float, double).
-
-    Returns:
-        A tensor of shape `task_values.max() + 1` that maps task values
-        to new task values. The indexing operation `mapper[task_value]`
-        will produce a tensor of new task values, of the same shape as
-        the original. The elements of the `mapper` tensor that do not
-        appear in the original `task_values` are mapped to `nan`. The
-        return value will be `None`, when the task values are contiguous
-        integers starting from zero.
-    """
-    task_range = torch.arange(
-        len(task_values), dtype=task_values.dtype, device=task_values.device
-    )
-    mapper = None
-    if not torch.equal(task_values, task_range):
-        # Create a tensor that maps task values to new task values.
-        # The number of tasks should be small, so this should be quite efficient.
-        mapper = torch.full(
-            (int(task_values.max().item()) + 1,),
-            float("nan"),
-            dtype=dtype,
-            device=task_values.device,
-        )
-        mapper[task_values] = task_range.to(dtype=dtype)
-    return mapper
 
 
 class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
@@ -219,7 +186,9 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         if outcome_transform == DEFAULT:
             outcome_transform = Standardize(m=1, batch_shape=train_X.shape[:-2])
         if outcome_transform is not None:
-            train_Y, train_Yvar = outcome_transform(Y=train_Y, Yvar=train_Yvar)
+            train_Y, train_Yvar = outcome_transform(
+                Y=train_Y, Yvar=train_Yvar, X=transformed_X
+            )
 
         # squeeze output dim
         train_Y = train_Y.squeeze(-1)
@@ -464,7 +433,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
-            train_Y, _ = outcome_transform(train_Y)
+            train_Y, _ = outcome_transform(train_Y, X=transformed_X)
 
         self._validate_tensor_args(X=transformed_X, Y=train_Y)
         self._num_outputs = train_Y.shape[-1]
@@ -772,7 +741,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
         )
 
         if hasattr(self, "outcome_transform"):
-            posterior = self.outcome_transform.untransform_posterior(posterior)
+            posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
         return posterior
 
     def train(self, val=True, *args, **kwargs):

@@ -291,7 +291,7 @@ def get_pvar_expected(
     # variance according to that transform.
     if hasattr(model, "outcome_transform"):
         _, pvar_exp = model.outcome_transform.untransform(
-            Y=torch.zeros_like(pvar_exp), Yvar=pvar_exp
+            Y=torch.zeros_like(pvar_exp), Yvar=pvar_exp, X=X
         )
 
     return pvar_exp
