@@ -15,7 +15,7 @@ from botorch_community.acquisition.input_constructors import (  # noqa F401
 )
 from botorch_community.acquisition.rei import (
     LogRegionalExpectedImprovement,
-    qRegionalExpectedImprovement,
+    qLogRegionalExpectedImprovement,
 )
 from botorch_community.acquisition.scorebo import qSelfCorrectingBayesianOptimization
 
@@ -23,7 +23,7 @@ __all__ = [
     "LogRegionalExpectedImprovement",
     "qBayesianQueryByComittee",
     "qBayesianVarianceReduction",
-    "qRegionalExpectedImprovement",
+    "qLogRegionalExpectedImprovement",
     "qSelfCorrectingBayesianOptimization",
     "qStatisticalDistanceActiveLearning",
 ]

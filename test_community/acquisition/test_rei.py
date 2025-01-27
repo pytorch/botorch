@@ -7,18 +7,16 @@
 from typing import Any
 
 import warnings
-from warnings import catch_warnings, simplefilter
 
 import torch
 from botorch_community.acquisition.rei import (
     LogRegionalExpectedImprovement,
-    qRegionalExpectedImprovement,
+    qLogRegionalExpectedImprovement,
 )
 from botorch.acquisition.objective import (
     ScalarizedPosteriorTransform,
 )
 from botorch.exceptions import BotorchWarning, UnsupportedError
-from botorch.exceptions.warnings import NumericsWarning
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -123,7 +121,7 @@ class TestQRegionalExpectedImprovement(BotorchTestCase):
 
         # basic test
         sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
-        acqf = qRegionalExpectedImprovement(
+        acqf = qLogRegionalExpectedImprovement(
             model=mm, best_f=0, X_dev=X_dev, sampler=sampler
         )
         # test initialization
@@ -131,29 +129,30 @@ class TestQRegionalExpectedImprovement(BotorchTestCase):
             self.assertIn(k, acqf._modules)
 
         res = acqf(X)
-        self.assertEqual(res.item(), 0.0)
+        # self.assertEqual(res.item(), 0.0)
+        self.assertAlmostEqual(res.item(), -14.0473, places=4)
 
         # test shifting best_f value
-        acqf = qRegionalExpectedImprovement(
+        acqf = qLogRegionalExpectedImprovement(
             model=mm, best_f=-1, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertEqual(res.item(), 1.0)
+        self.assertEqual(res.item(), 0.0)
 
         # test bounds argument
-        acqf = qRegionalExpectedImprovement(
+        acqf = qLogRegionalExpectedImprovement(
             model=mm, best_f=-1, X_dev=X_dev, sampler=sampler, bounds=bounds
         )
         res = acqf(X)
-        self.assertEqual(res.item(), 1.0)
+        self.assertEqual(res.item(), 0.0)
 
         # basic test, no resample
         sampler = IIDNormalSampler(sample_shape=torch.Size([2]), seed=12345)
-        acqf = qRegionalExpectedImprovement(
+        acqf = qLogRegionalExpectedImprovement(
             model=mm, best_f=0, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertEqual(res.item(), 0.0)
+        self.assertAlmostEqual(res.item(), -14.0473, places=4)
         self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
         bs = acqf.sampler.base_samples.clone()
         res = acqf(X)
@@ -161,11 +160,11 @@ class TestQRegionalExpectedImprovement(BotorchTestCase):
 
         # basic test, qmc
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
-        acqf = qRegionalExpectedImprovement(
+        acqf = qLogRegionalExpectedImprovement(
             model=mm, best_f=0, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertEqual(res.item(), 0.0)
+        self.assertAlmostEqual(res.item(), -14.0473, places=4)
         self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
         bs = acqf.sampler.base_samples.clone()
         acqf(X)
@@ -203,45 +202,45 @@ class TestQRegionalExpectedImprovement(BotorchTestCase):
 
         # test batch mode
         sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
-        acqf = qRegionalExpectedImprovement(
+        acqf = qLogRegionalExpectedImprovement(
             model=mm, best_f=0, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertEqual(res[0].item(), 1.0)
-        self.assertEqual(res[1].item(), 0.0)
+        self.assertEqual(res[0].item(), 0.0)
+        self.assertAlmostEqual(res[1].item(), -14.0473, places=4)
 
         # test batch model, batched best_f values
         sampler = IIDNormalSampler(sample_shape=torch.Size([3]))
-        acqf = qRegionalExpectedImprovement(
+        acqf = qLogRegionalExpectedImprovement(
             model=mm, best_f=torch.Tensor([0, 0]), X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertEqual(res[0].item(), 1.0)
-        self.assertEqual(res[1].item(), 0.0)
+        self.assertEqual(res[0].item(), 0.0)
+        self.assertAlmostEqual(res[1].item(), -14.0473, places=4)
 
         # test shifting best_f value
-        acqf = qRegionalExpectedImprovement(
+        acqf = qLogRegionalExpectedImprovement(
             model=mm, best_f=-1, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertEqual(res[0].item(), 2.0)
-        self.assertEqual(res[1].item(), 1.0)
+        self.assertAlmostEqual(res[0].item(), 0.6931, places=4)
+        self.assertEqual(res[1].item(), 0.0)
 
         # test batch mode
         sampler = IIDNormalSampler(sample_shape=torch.Size([2]), seed=12345)
-        acqf = qRegionalExpectedImprovement(
+        acqf = qLogRegionalExpectedImprovement(
             model=mm, best_f=0, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)  # 1-dim batch
-        self.assertEqual(res[0].item(), 1.0)
-        self.assertEqual(res[1].item(), 0.0)
+        self.assertEqual(res[0].item(), 0.0)
+        self.assertAlmostEqual(res[1].item(), -14.0473, places=4)
         self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
         bs = acqf.sampler.base_samples.clone()
         acqf(X)
         self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
         res = acqf(X.expand(2, 2, 1))  # 2-dim batch
-        self.assertEqual(res[0].item(), 1.0)
-        self.assertEqual(res[1].item(), 0.0)
+        self.assertEqual(res[0].item(), 0.0)
+        self.assertAlmostEqual(res[1].item(), -14.0473, places=4)
         # the base samples should have the batch dim collapsed
         self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
         bs = acqf.sampler.base_samples.clone()
@@ -250,12 +249,12 @@ class TestQRegionalExpectedImprovement(BotorchTestCase):
 
         # test batch mode, qmc
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
-        acqf = qRegionalExpectedImprovement(
+        acqf = qLogRegionalExpectedImprovement(
             model=mm, best_f=0, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertEqual(res[0].item(), 1.0)
-        self.assertEqual(res[1].item(), 0.0)
+        self.assertEqual(res[0].item(), 0.0)
+        self.assertAlmostEqual(res[1].item(), -14.0473, places=4)
         self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
         bs = acqf.sampler.base_samples.clone()
         acqf(X)

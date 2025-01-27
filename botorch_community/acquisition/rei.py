@@ -10,9 +10,13 @@ for High-Dimensional Trust Region Bayesian Optimization.
 See [eriksson2019TuRBO]_, [namura2024rei]_
 
 Two versions of the Regional Expected Improvement (REI) acquisition 
-function are implemented here from the original paper [namura2024rei]_:
+function are implemented here:
 1. Analytic version: LogRegionalExpectedImprovement
-2. Monte Carlo version: qRegionalExpectedImprovement
+2. Monte Carlo version: qLogRegionalExpectedImprovement
+
+LogREI has been implemented from the original paper [namura2024rei]_ 
+and qLogREI have been implemented by slightly modifying the qREI 
+acquisition function implementation from the paper.
 
 These acquisition functions can help explore the design space efficiently
 since trust regions at initialization and restarts in algorithms like TuRBO 
@@ -47,9 +51,10 @@ from botorch.acquisition.analytic import (
 )
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
+from botorch.acquisition.logei import _log_improvement, check_tau
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
-from botorch.utils.safe_math import logmeanexp, fatminimum
+from botorch.utils.safe_math import logmeanexp
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 
 TAU_RELU = 1e-6
@@ -120,7 +125,7 @@ class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
         return logrei
 
 
-class qRegionalExpectedImprovement(MCAcquisitionFunction):
+class qLogRegionalExpectedImprovement(MCAcquisitionFunction):
 
     def __init__(
         self,
@@ -133,8 +138,10 @@ class qRegionalExpectedImprovement(MCAcquisitionFunction):
         X_pending: Tensor | None = None,
         length: float = 0.8,
         bounds: float | Tensor | None = None,
+        fat: bool = True,
+        tau_relu: float = TAU_RELU,
     ) -> None:
-        r"""q-Regional Expected Improvement (MC acquisition function).
+        r"""q-Log Regional Expected Improvement (MC acquisition function).
 
         Args:
             model: A fitted single-outcome model.
@@ -168,6 +175,8 @@ class qRegionalExpectedImprovement(MCAcquisitionFunction):
             X_pending=X_pending,
         )
         self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
+        self.fat = fat
+        self.tau_relu = check_tau(tau_relu, "tau_relu")
         dim = X_dev.shape[1]
         self.n_region = X_dev.shape[0]
         self.X_dev = X_dev.reshape(self.n_region, 1, 1, -1)
@@ -196,10 +205,9 @@ class qRegionalExpectedImprovement(MCAcquisitionFunction):
         )
         samples = self.get_posterior_samples(posterior)
         obj = self.objective(samples, X=Xs)
-        obj = (
-            (obj - self.best_f.unsqueeze(-1).to(obj))
-            .clamp_min(0)
-            .reshape(-1, self.n_region, batch_shape, q)
+        obj = _log_improvement(obj, self.best_f, self.tau_relu, self.fat).reshape(
+            -1, self.n_region, batch_shape, q
         )
-        q_rei = obj.max(dim=-1)[0].mean(dim=(0, 1))
-        return q_rei
+        q_log_rei = obj.max(dim=-1)[0].mean(dim=(0, 1))
+
+        return q_log_rei
