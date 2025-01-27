@@ -9,18 +9,18 @@ Region Averaged Acquisition Functions for Efficient Trust Region Selection
 for High-Dimensional Trust Region Bayesian Optimization.
 See [eriksson2019TuRBO]_, [namura2024rei]_
 
-Two versions of the Regional Expected Improvement (REI) acquisition 
+Two versions of the Regional Expected Improvement (REI) acquisition
 function are implemented here:
 1. Analytic version: LogRegionalExpectedImprovement
 2. Monte Carlo version: qLogRegionalExpectedImprovement
 
-LogREI has been implemented from the original paper [namura2024rei]_ 
-and qLogREI have been implemented by slightly modifying the qREI 
+LogREI has been implemented from the original paper [namura2024rei]_
+and qLogREI have been implemented by slightly modifying the qREI
 acquisition function implementation from the paper.
 
 These acquisition functions can help explore the design space efficiently
-since trust regions at initialization and restarts in algorithms like TuRBO 
-are selected by optimizing the Region Averaged Acquisition Functions instead 
+since trust regions at initialization and restarts in algorithms like TuRBO
+are selected by optimizing the Region Averaged Acquisition Functions instead
 of sampling them randomly. This has displayed faster convergence in some cases
 and convergence to better solutions in general as showed in [namura2024rei]_.
 
@@ -32,9 +32,9 @@ References
     Advances in Neural Information Processing Systems, 2019.
 .. [namura2024rei]
     Nobuo Namura, Sho Takemori.
-    Regional Expected Improvement for Efficient Trust Region 
+    Regional Expected Improvement for Efficient Trust Region
     Selection in High-Dimensional Bayesian Optimization.
-    Proceedings of the 39th AAAI Conference on Artificial 
+    Proceedings of the 39th AAAI Conference on Artificial
     Intelligence, 2025.
 
 Contributor: SaiAakash
@@ -165,6 +165,10 @@ class qLogRegionalExpectedImprovement(MCAcquisitionFunction):
             bounds: The bounds of the design space.
                 First column represents dimension-wise lower bounds.
                 Second column represents dimension-wise upper bounds.
+            fat: Toggles the logarithmic / linear asymptotic behavior of the smooth
+                approximation to the ReLU.
+            tau_relu: Temperature parameter controlling the sharpness of the smooth
+                approximations to ReLU.
 
         """
         super().__init__(
@@ -175,12 +179,12 @@ class qLogRegionalExpectedImprovement(MCAcquisitionFunction):
             X_pending=X_pending,
         )
         self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
-        self.fat = fat
-        self.tau_relu = check_tau(tau_relu, "tau_relu")
-        dim = X_dev.shape[1]
-        self.n_region = X_dev.shape[0]
-        self.X_dev = X_dev.reshape(self.n_region, 1, 1, -1)
-        self.length = length
+        self.fat: bool = fat
+        self.tau_relu: float = check_tau(tau_relu, "tau_relu")
+        dim: int = X_dev.shape[1]
+        self.n_region: int = X_dev.shape[0]
+        self.X_dev: Tensor = X_dev.reshape(self.n_region, 1, 1, -1)
+        self.length: float = length
         if bounds is not None:
             self.bounds = bounds
         else:
