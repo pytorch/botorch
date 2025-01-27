@@ -6,7 +6,10 @@
 
 import torch
 from botorch.utils import get_outcome_constraint_transforms
-from botorch.utils.constraints import get_monotonicity_constraints
+from botorch.utils.constraints import (
+    get_monotonicity_constraints,
+    LogTransformedInterval,
+)
 from botorch.utils.testing import BotorchTestCase
 
 
@@ -80,3 +83,17 @@ class TestConstraintUtils(BotorchTestCase):
                     Ad, bd = get_monotonicity_constraints(d, descending=True, **tkwargs)
                     self.assertAllClose(Ad, -A)
                     self.assertAllClose(bd, b)
+
+    def test_log_transformed_interval(self):
+        constraint = LogTransformedInterval(
+            lower_bound=0.1, upper_bound=0.2, initial_value=0.15
+        )
+        x = torch.tensor(0.1, device=self.device)
+        self.assertAllClose(constraint.transform(x), x.exp())
+        self.assertAllClose(constraint.inverse_transform(constraint.transform(x)), x)
+        with self.assertRaisesRegex(
+            RuntimeError, "Cannot make an Interval directly with non-finite bounds"
+        ):
+            constraint = LogTransformedInterval(
+                lower_bound=-torch.inf, upper_bound=torch.inf, initial_value=0.15
+            )
