@@ -186,6 +186,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                     noise=train_Yvar, batch_shape=self._aug_batch_shape
                 )
         else:
+            # This is used to check if the `model_list_to_batched` can be used
             self._is_custom_likelihood = True
         ExactGP.__init__(
             self, train_inputs=train_X, train_targets=train_Y, likelihood=likelihood

@@ -16,6 +16,7 @@ import gpytorch
 import torch
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import InputDataWarning
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.models.likelihoods.sparse_outlier_noise import (
     SparseOutlierGaussianLikelihood,
@@ -27,6 +28,10 @@ from botorch.models.relevance_pursuit import (
     forward_relevance_pursuit,
     get_posterior_over_support,
     RelevancePursuitMixin,
+)
+from botorch.models.robust_relevance_pursuit_model import (
+    FRACTIONS_OF_OUTLIERS,
+    RobustRelevancePursuitSingleTaskGP,
 )
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
@@ -40,6 +45,7 @@ from gpytorch.constraints import Interval
 from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.likelihoods.noise_models import HomoskedasticNoise
 from gpytorch.means import ZeroMean
+from gpytorch.mlls import PredictiveLogLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from pyre_extensions import none_throws
 from torch import Tensor
@@ -140,50 +146,51 @@ class TestRobustGP(BotorchTestCase):
         X, Y, outlier_indices = self._make_dataset(
             n=n, num_outliers=num_outliers, dtype=dtype, seed=1
         )
-        min_noise = 1e-6  # minimum noise variance constraint
-        max_noise = 1e-2
-        base_noise = HomoskedasticNoise(
-            noise_constraint=NonTransformedInterval(
-                min_noise, max_noise, initial_value=1e-3
-            )
-        ).to(dtype=dtype, device=self.device)
 
-        rp_likelihood = SparseOutlierGaussianLikelihood(
-            base_noise=base_noise,
-            dim=X.shape[0],
+        # The definition of "outliers" depends on the model capacity, so what is an
+        # outlier w.r.t. a simple model might not be an outlier w.r.t. a complex model.
+        # For this reason, it is necessary to bound the lengthscale of the GP from below
+        # as otherwise arbitrarily complex outlier deviations can be modeled well by the
+        # GP, if the data is not sampled finely enough.
+        min_lengthscale = 0.1
+        lengthscale_constraint = NonTransformedInterval(
+            min_lengthscale, torch.inf, initial_value=0.2
+        )
+
+        covar_module = ScaleKernel(
+            RBFKernel(
+                ard_num_dims=X.shape[-1], lengthscale_constraint=lengthscale_constraint
+            ),
+            outputscale_constraint=NonTransformedInterval(
+                0.01, 10.0, initial_value=0.1
+            ),
+        )
+
+        prior_mean_of_support = int(0.2 * n)
+        model = RobustRelevancePursuitSingleTaskGP(
+            train_X=X,
+            train_Y=Y,
+            input_transform=Normalize(d=X.shape[-1]),
+            cache_model_trace=True,  # to check the model trace after optimization
+            covar_module=covar_module,
             convex_parameterization=convex_parameterization,
+            prior_mean_of_support=prior_mean_of_support,
         )
 
-        model = self._get_robust_model(X=X, Y=Y, likelihood=rp_likelihood)
-
-        X_test = torch.rand(3, 1, dtype=dtype, device=self.device)
-        with self.assertWarnsRegex(InputDataWarning, "SparseOutlierNoise"):
-            model.posterior(X_test, observation_noise=True)
-
-        # optimization via backward relevance pursuit (num_contract=1)
-        sparse_module = model.likelihood.noise_covar
-        sparse_module.full_support()
         mll = ExactMarginalLogLikelihood(likelihood=model.likelihood, model=model)
-        optimizer_kwargs = {
-            "options": {"maxiter": 1024, "ftol": mll_tol, "gtol": mll_tol}
+        numbers_of_outliers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 16]
+        rp_kwargs = {
+            "numbers_of_outliers": numbers_of_outliers,  # skipping some
+            "optimizer_kwargs": {"options": {"maxiter": 1024}},
         }
-        sparse_module, model_trace = backward_relevance_pursuit(
-            sparse_module=sparse_module,
-            mll=mll,
-            record_model_trace=True,
-            reset_parameters=False,
-            # When `mll_iter` > 100, runtime seems to be primarily controlled
-            # by the convergence tolerance
-            optimizer_kwargs=optimizer_kwargs,
-        )
-        model_trace = none_throws(model_trace)
+        fit_gpytorch_mll(mll, **rp_kwargs)
+        model_trace = none_throws(model.model_trace)
 
         # Bayesian model comparison
-        prior_mean_of_support = 2.0
         support_size, bmc_probabilities = get_posterior_over_support(
             SparseOutlierNoise, model_trace, prior_mean_of_support=prior_mean_of_support
         )
-        self.assertEqual(len(support_size), n + 1)
+        self.assertEqual(len(support_size), len(numbers_of_outliers) + 1)
         self.assertEqual(len(support_size), len(bmc_probabilities))
         self.assertAlmostEqual(bmc_probabilities.sum().item(), 1.0)
         map_index = torch.argmax(bmc_probabilities)
@@ -447,6 +454,92 @@ class TestRobustGP(BotorchTestCase):
             self.assertAllClose(
                 support_size, support_size.sort(descending=False).values
             )
+
+    def test_robust_relevance_pursuit_single_task_gp(self) -> None:
+        """Test for `RobustRelevancePursuitSingleTaskGP`, whose main purpose is to
+        automatically dispatch to the relevance pursuit algorithm when optimized with
+        `fit_gpytorch_mll`.
+        """
+        for optimizer, dtype in itertools.product(
+            [forward_relevance_pursuit, backward_relevance_pursuit],
+            [torch.float32, torch.float64],
+        ):
+            with self.subTest(
+                optimizer=optimizer,
+                dtype=dtype,
+            ):
+                self._test_robust_relevance_pursuit_single_task_gp(
+                    optimizer=optimizer,
+                    dtype=dtype,
+                )
+
+    def _test_robust_relevance_pursuit_single_task_gp(
+        self,
+        optimizer: forward_relevance_pursuit | backward_relevance_pursuit,
+        dtype: torch.dtype,
+    ) -> None:
+        n = 32
+        dtype = torch.double
+        X, Y, _ = self._make_dataset(n=n, num_outliers=6, dtype=dtype, seed=1)
+        # test for model class
+        robust_model = RobustRelevancePursuitSingleTaskGP(
+            train_X=X,
+            train_Y=Y,
+        )
+        # test that the training mode is not affected by the conversion
+        # to the standard model
+        robust_model.eval()
+        standard_model = robust_model.to_standard_model()
+        self.assertIsInstance(standard_model, SingleTaskGP)
+        self.assertFalse(standard_model.training)
+        self.assertFalse(robust_model.training)
+
+        robust_model.train()
+        mll = ExactMarginalLogLikelihood(
+            likelihood=robust_model.likelihood, model=robust_model
+        )
+        mll = fit_gpytorch_mll(
+            mll,
+            optimizer_kwargs={"options": {"maxiter": 2}},
+            timeout_sec=10.0,
+            relevance_pursuit_optimizer=optimizer,
+        )
+        # check the default sparsity levels
+        expected_numbers_of_outliers = torch.tensor(
+            [int(p * n) for p in FRACTIONS_OF_OUTLIERS],
+            dtype=dtype,
+            device=self.device,
+        )
+        if optimizer is backward_relevance_pursuit:
+            inferred_numbers_of_outliers = robust_model.bmc_support_sizes
+            expected_numbers_of_outliers = expected_numbers_of_outliers.sort(
+                descending=True
+            ).values
+        else:
+            # the forward algorithm can terminate early when the mll doesn't strictly
+            # increase when including an additional index in the support. Further, the
+            # last iteration of the forward algorithm might have only added a smaller
+            # number of elements than expected, fewer elements had a strictly
+            # positive gradient.
+            inferred_numbers_of_outliers = robust_model.bmc_support_sizes[:-1]
+            expected_numbers_of_outliers = expected_numbers_of_outliers[
+                : len(inferred_numbers_of_outliers)
+            ]
+
+        self.assertAllClose(inferred_numbers_of_outliers, expected_numbers_of_outliers)
+
+        # test that multiple dispatch throws an error when attempting to fit
+        # an approximate marginal log liklihood with a RobustRelevancePursuitModel
+        approx_mll = PredictiveLogLikelihood(
+            likelihood=robust_model.likelihood,
+            model=robust_model,
+            num_data=n,
+        )
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Relevance Pursuit does not yet support approximate inference",
+        ):
+            fit_gpytorch_mll(approx_mll)
 
     def test_basic_relevance_pursuit_module(self) -> None:
         dim = 3
