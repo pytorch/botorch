@@ -28,9 +28,7 @@ from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNorm
 class TestLogRegionalExpectedImprovement(BotorchTestCase):
     def test_log_regional_expected_improvement(self):
         for dtype in (torch.float, torch.double):
-            with catch_warnings():
-                simplefilter("ignore", category=NumericsWarning)
-                self._test_log_regional_expected_improvement(dtype=dtype)
+            self._test_log_regional_expected_improvement(dtype=dtype)
 
     def _test_log_regional_expected_improvement(self, dtype: torch.dtype) -> None:
         mean = torch.tensor([[-0.5]], device=self.device, dtype=dtype)
@@ -55,8 +53,22 @@ class TestLogRegionalExpectedImprovement(BotorchTestCase):
         rei_expected = torch.tensor([0.6978], device=self.device, dtype=dtype)
         self.assertAllClose(log_rei, rei_expected.log(), atol=1e-4)
 
-        with self.assertRaises(UnsupportedError):
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Analytic acquisition functions do not account for X_pending yet.",
+        ):
             module.set_X_pending(None)
+
+        # test bounds argument
+        X_dev = torch.rand(1, 1, device=self.device, dtype=dtype)
+        bounds = torch.tensor([[0.0], [1.0]], device=self.device, dtype=dtype)
+        module = LogRegionalExpectedImprovement(
+            model=mm, best_f=0.0, X_dev=X_dev, bounds=bounds
+        )
+        X = torch.empty(1, 1, device=self.device, dtype=dtype)
+        log_rei = module(X)
+        rei_expected = torch.tensor([0.19780], device=self.device, dtype=dtype)
+        self.assertAllClose(log_rei, rei_expected.log(), atol=1e-4)
 
         # test posterior transform (single-output)
         mean = torch.tensor([0.5], device=self.device, dtype=dtype)
@@ -97,9 +109,7 @@ class TestQRegionalExpectedImprovement(BotorchTestCase):
     def test_q_regional_expected_improvement(self):
         for dtype in (torch.float, torch.double):
             with self.subTest(dtype=dtype):
-                with catch_warnings():
-                    simplefilter("ignore", category=NumericsWarning)
-                    self._test_q_regional_expected_improvement(dtype)
+                self._test_q_regional_expected_improvement(dtype)
 
     def _test_q_regional_expected_improvement(self, dtype: torch.dtype) -> None:
         tkwargs: dict[str, Any] = {"device": self.device, "dtype": dtype}
@@ -109,6 +119,7 @@ class TestQRegionalExpectedImprovement(BotorchTestCase):
         # X is `q x d` = 1 x 1. X is a dummy and unused b/c of mocking
         X = torch.zeros(1, 1, **tkwargs)
         X_dev = torch.zeros(1, 1, **tkwargs)
+        bounds = torch.tensor([[0.0], [1.0]], **tkwargs)
 
         # basic test
         sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
@@ -125,6 +136,13 @@ class TestQRegionalExpectedImprovement(BotorchTestCase):
         # test shifting best_f value
         acqf = qRegionalExpectedImprovement(
             model=mm, best_f=-1, X_dev=X_dev, sampler=sampler
+        )
+        res = acqf(X)
+        self.assertEqual(res.item(), 1.0)
+
+        # test bounds argument
+        acqf = qRegionalExpectedImprovement(
+            model=mm, best_f=-1, X_dev=X_dev, sampler=sampler, bounds=bounds
         )
         res = acqf(X)
         self.assertEqual(res.item(), 1.0)
@@ -171,9 +189,7 @@ class TestQRegionalExpectedImprovement(BotorchTestCase):
     def test_q_regional_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
             with self.subTest(dtype=dtype):
-                with catch_warnings():
-                    simplefilter("ignore", category=NumericsWarning)
-                    self._test_q_regional_expected_improvement_batch(dtype)
+                self._test_q_regional_expected_improvement_batch(dtype)
 
     def _test_q_regional_expected_improvement_batch(self, dtype: torch.dtype) -> None:
         # the event shape is `b x q x t` = 2 x 2 x 1

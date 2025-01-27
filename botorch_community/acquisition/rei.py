@@ -1,19 +1,56 @@
-from __future__ import annotations
+#!/usr/bin/env python3
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
 
-from typing import Any, Optional, Union
+r"""
+Region Averaged Acquisition Functions for Efficient Trust Region Selection
+for High-Dimensional Trust Region Bayesian Optimization.
+See [eriksson2019TuRBO]_, [namura2024rei]_
+
+Two versions of the Regional Expected Improvement (REI) acquisition 
+function are implemented here from the original paper [namura2024rei]_:
+1. Analytic version: LogRegionalExpectedImprovement
+2. Monte Carlo version: qRegionalExpectedImprovement
+
+These acquisition functions can help explore the design space efficiently
+since trust regions at initialization and restarts in algorithms like TuRBO 
+are selected by optimizing the Region Averaged Acquisition Functions instead 
+of sampling them randomly. This has displayed faster convergence in some cases
+and convergence to better solutions in general as showed in [namura2024rei]_.
+
+References
+
+.. [eriksson2019TuRBO]
+    D. Eriksson, M. Pearce, J.R. Gardner, R. Turner, M. Poloczek.
+    Scalable Global Optimization via Local Bayesian Optimization.
+    Advances in Neural Information Processing Systems, 2019.
+.. [namura2024rei]
+    Nobuo Namura, Sho Takemori.
+    Regional Expected Improvement for Efficient Trust Region 
+    Selection in High-Dimensional Bayesian Optimization.
+    Proceedings of the 39th AAAI Conference on Artificial 
+    Intelligence, 2025.
+
+Contributor: SaiAakash
+"""
+
+from __future__ import annotations
 
 import torch
 from torch import Tensor
-from botorch.acquisition.monte_carlo import MCAcquisitionFunction
-from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
-from botorch.models.model import Model
-from botorch.sampling.base import MCSampler
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from botorch.acquisition.analytic import (
     AnalyticAcquisitionFunction,
     _scaled_improvement,
     _log_ei_helper,
 )
+from botorch.acquisition.monte_carlo import MCAcquisitionFunction
+from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
+from botorch.models.model import Model
+from botorch.sampling.base import MCSampler
+from botorch.utils.safe_math import logmeanexp, fatminimum
+from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 
 TAU_RELU = 1e-6
 TAU_MAX = 1e-2
@@ -26,13 +63,13 @@ class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
-        X_dev: Union[float, Tensor],
-        posterior_transform: Optional[PosteriorTransform] = None,
+        best_f: float | Tensor,
+        X_dev: float | Tensor,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
         length: float = 0.8,
-        bounds: Optional[Union[float, Tensor]] = None,
-    ):
+        bounds: float | Tensor | None = None,
+    ) -> None:
         r"""Log-Regional Expected Improvement (analytic).
 
         Args:
@@ -52,12 +89,12 @@ class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
 
         super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("best_f", torch.as_tensor(best_f))
-        self.maximize = maximize
+        self.maximize: bool = maximize
 
-        dim = X_dev.shape[1]
-        self.n_region = X_dev.shape[0]
-        self.X_dev = X_dev.reshape(self.n_region, 1, 1, -1)
-        self.length = length
+        dim: int = X_dev.shape[1]
+        self.n_region: int = X_dev.shape[0]
+        self.X_dev: Tensor = X_dev.reshape(self.n_region, 1, 1, -1)
+        self.length: float = length
         if bounds is not None:
             self.bounds = bounds
         else:
@@ -79,9 +116,7 @@ class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
         mean, sigma = self._mean_and_sigma(Xs)
         u = _scaled_improvement(mean, sigma, self.best_f, self.maximize)
         logei = _log_ei_helper(u) + sigma.log()
-        logrei = torch.log(
-            torch.exp(logei.reshape(self.n_region, batch_shape)).mean(axis=0)
-        )
+        logrei = logmeanexp(logei.reshape(self.n_region, batch_shape), dim=0)
         return logrei
 
 
@@ -90,15 +125,14 @@ class qRegionalExpectedImprovement(MCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, Tensor],
-        X_dev: Union[float, Tensor],
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
+        best_f: float | Tensor,
+        X_dev: float | Tensor,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
         length: float = 0.8,
-        bounds: Optional[Union[float, Tensor]] = None,
-        **kwargs: Any,
+        bounds: float | Tensor | None = None,
     ) -> None:
         r"""q-Regional Expected Improvement (MC acquisition function).
 
