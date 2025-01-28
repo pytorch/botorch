@@ -56,7 +56,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pyro</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
@@ -89,6 +89,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.models.exact_gp</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExactGP</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyro.ops.integrator</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_exception_handler</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+
+<span class="c1"># Can replace with Self type once 3.11 is the minimum version</span>
+<span class="n">TFullyBayesianSingleTaskGP</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span>
+    <span class="s2">"TFullyBayesianSingleTaskGP"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">"FullyBayesianSingleTaskGP"</span>
+<span class="p">)</span>
 
 <span class="n">_sqrt5</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 
@@ -669,8 +674,8 @@
         <span class="n">validate_input_scaling</span><span class="p">(</span>
             <span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">train_Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Clamp after transforming</span>
             <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">train_Yvar</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">)</span>
 
@@ -688,11 +693,11 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pyro_model</span><span class="p">:</span> <span class="n">PyroModel</span> <span class="o">=</span> <span class="n">pyro_model</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="p">:</span> <span class="n">OutcomeTransform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span><span class="p">:</span> <span class="n">InputTransform</span> <span class="o">=</span> <span class="n">input_transform</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_check_if_fitted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_if_fitted</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Raise an exception if the model hasn't been fitted."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -722,13 +727,16 @@
 
 <div class="viewcode-block" id="FullyBayesianSingleTaskGP.train">
 <a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianSingleTaskGP.train">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">TFullyBayesianSingleTaskGP</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TFullyBayesianSingleTaskGP</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Puts the model in `train` mode."""</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mode</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="kc">None</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
 <div class="viewcode-block" id="FullyBayesianSingleTaskGP.load_mcmc_samples">
@@ -878,7 +886,9 @@
 
 <div class="viewcode-block" id="SaasFullyBayesianSingleTaskGP.load_state_dict">
 <a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.load_state_dict">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_state_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Custom logic for loading the state dict.</span>
 
 <span class="sd">        The standard approach of calling `load_state_dict` currently doesn't play well</span>
@@ -1012,7 +1022,9 @@
 
 <div class="viewcode-block" id="FullyBayesianLinearSingleTaskGP.load_state_dict">
 <a class="viewcode-back" href="../../../models.html#botorch.models.fully_bayesian.FullyBayesianLinearSingleTaskGP.load_state_dict">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_state_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Custom logic for loading the state dict.</span>
 
 <span class="sd">        The standard approach of calling `load_state_dict` currently doesn't play well</span>
@@ -1053,7 +1065,7 @@
         <span class="o">*</span><span class="p">,</span>
         <span class="n">use_input_warping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">indices_to_warp</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BotorchContainer</span> <span class="o">|</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BotorchContainer</span> <span class="o">|</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.</span>
 
 <span class="sd">        Args:</span>

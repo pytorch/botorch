@@ -86,6 +86,10 @@
 </li>
 <li><a href="models.html#botorch.models.utils.assorted.add_output_dim">add_output_dim() (in module botorch.models.utils.assorted)</a>
 </li>
+<li><a href="models.html#botorch.models.map_saas.add_saas_prior">add_saas_prior() (in module botorch.models.map_saas)</a>
+</li>
+<li><a href="models.html#botorch.models.map_saas.AdditiveMapSaasSingleTaskGP">AdditiveMapSaasSingleTaskGP (class in botorch.models.map_saas)</a>
+</li>
 <li><a href="models.html#botorch.models.deterministic.AffineDeterministicModel">AffineDeterministicModel (class in botorch.models.deterministic)</a>
 </li>
 <li><a href="models.html#botorch.models.cost.AffineFidelityCostModel">AffineFidelityCostModel (class in botorch.models.cost)</a>
@@ -104,10 +108,10 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.Penicillin.alpha_3">alpha_3 (botorch.test_functions.multi_objective.Penicillin attribute)</a>
 </li>
-<li><a href="acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction">AnalyticAcquisitionFunction (class in botorch.acquisition.analytic)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction">AnalyticAcquisitionFunction (class in botorch.acquisition.analytic)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.preference.AnalyticExpectedUtilityOfBestOption">AnalyticExpectedUtilityOfBestOption (class in botorch.acquisition.preference)</a>
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.MultiList.append">append() (botorch.utils.multi_objective.hypervolume.MultiList method)</a>
@@ -777,6 +781,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.models.map_saas
+
+      <ul>
+<li><a href="models.html#module-botorch.models.map_saas">module</a>
+</li>
+</ul></li>
+<li>
     botorch.models.model
 
       <ul>
@@ -812,14 +823,21 @@
 </li>
 </ul></li>
 <li>
+    botorch.models.robust_relevance_pursuit_model
+
+      <ul>
+<li><a href="models.html#module-botorch.models.robust_relevance_pursuit_model">module</a>
+</li>
+</ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li>
     botorch.models.transforms.factory
 
       <ul>
 <li><a href="models.html#module-botorch.models.transforms.factory">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.transforms.input
 
@@ -2780,6 +2798,8 @@
 <li><a href="acquisition.html#botorch.acquisition.utils.get_acquisition_function">(in module botorch.acquisition.utils)</a>
 </li>
 </ul></li>
+<li><a href="models.html#botorch.models.map_saas.get_additive_map_saas_covar_module">get_additive_map_saas_covar_module() (in module botorch.models.map_saas)</a>
+</li>
 <li><a href="models.html#botorch.models.multitask.MultiTaskGP.get_all_tasks">get_all_tasks() (botorch.models.multitask.MultiTaskGP class method)</a>
 </li>
 <li><a href="models.html#botorch.models.converter.get_attribute">get_attribute() (in module botorch.models.converter)</a>
@@ -2839,14 +2859,21 @@
 </li>
 <li><a href="utils.html#botorch.utils.feasible_volume.get_feasible_samples">get_feasible_samples() (in module botorch.utils.feasible_volume)</a>
 </li>
+<li><a href="fit.html#botorch.fit.get_fitted_map_saas_ensemble">get_fitted_map_saas_ensemble() (in module botorch.fit)</a>
+</li>
+<li><a href="fit.html#botorch.fit.get_fitted_map_saas_model">get_fitted_map_saas_model() (in module botorch.fit)</a>
+</li>
 <li><a href="utils.html#botorch.utils.test_helpers.get_fully_bayesian_model">get_fully_bayesian_model() (in module botorch.utils.test_helpers)</a>
 </li>
 <li><a href="utils.html#botorch.utils.test_helpers.get_fully_bayesian_model_list">get_fully_bayesian_model_list() (in module botorch.utils.test_helpers)</a>
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">get_gaussian_likelihood_with_gamma_prior() (in module botorch.models.utils.gpytorch_modules)</a>
+<li><a href="models.html#botorch.models.map_saas.get_gaussian_likelihood_with_gamma_prior">get_gaussian_likelihood_with_gamma_prior() (in module botorch.models.map_saas)</a>
+<ul>
+<li><a href="models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_gamma_prior">(in module botorch.models.utils.gpytorch_modules)</a>
 </li>
+</ul></li>
 <li><a href="models.html#botorch.models.utils.gpytorch_modules.get_gaussian_likelihood_with_lognormal_prior">get_gaussian_likelihood_with_lognormal_prior() (in module botorch.models.utils.gpytorch_modules)</a>
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.get_gp_samples">get_gp_samples() (in module botorch.utils.gp_sampling)</a>
@@ -2879,9 +2906,13 @@
 </li>
 <li><a href="optim.html#botorch.optim.closures.model_closures.get_loss_closure_with_grads">get_loss_closure_with_grads() (in module botorch.optim.closures.model_closures)</a>
 </li>
+<li><a href="models.html#botorch.models.map_saas.get_map_saas_model">get_map_saas_model() (in module botorch.models.map_saas)</a>
+</li>
 <li><a href="models.html#botorch.models.utils.gpytorch_modules.get_matern_kernel_with_gamma_prior">get_matern_kernel_with_gamma_prior() (in module botorch.models.utils.gpytorch_modules)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.posterior_samplers.get_matheron_path_model">get_matheron_path_model() (in module botorch.sampling.pathwise.posterior_samplers)</a>
+</li>
+<li><a href="models.html#botorch.models.map_saas.get_mean_module_with_normal_prior">get_mean_module_with_normal_prior() (in module botorch.models.map_saas)</a>
 </li>
 <li><a href="utils.html#botorch.utils.test_helpers.get_model">get_model() (in module botorch.utils.test_helpers)</a>
 </li>
@@ -3046,10 +3077,10 @@
 <li><a href="sampling.html#botorch.sampling.pathwise.utils.TransformedModuleMixin.input_transform">(botorch.sampling.pathwise.utils.TransformedModuleMixin attribute)</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.errors.InputDataError">InputDataError</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.warnings.InputDataWarning">InputDataWarning</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.InputPerturbation">InputPerturbation (class in botorch.models.transforms.input)</a>
@@ -3064,8 +3095,15 @@
 </li>
 <li><a href="models.html#botorch.models.transforms.utils.inv_kumaraswamy_warp">inv_kumaraswamy_warp() (in module botorch.models.transforms.utils)</a>
 </li>
-<li><a href="utils.html#botorch.utils.constraints.NonTransformedInterval.inverse_transform">inverse_transform() (botorch.utils.constraints.NonTransformedInterval method)</a>
+<li><a href="models.html#botorch.models.map_saas.SaasPriorHelper.inv_lengthscale_prior_param_or_closure">inv_lengthscale_prior_param_or_closure() (botorch.models.map_saas.SaasPriorHelper method)</a>
 </li>
+<li><a href="models.html#botorch.models.map_saas.SaasPriorHelper.inv_lengthscale_prior_setting_closure">inv_lengthscale_prior_setting_closure() (botorch.models.map_saas.SaasPriorHelper method)</a>
+</li>
+<li><a href="utils.html#botorch.utils.constraints.LogTransformedInterval.inverse_transform">inverse_transform() (botorch.utils.constraints.LogTransformedInterval method)</a>
+<ul>
+<li><a href="utils.html#botorch.utils.constraints.NonTransformedInterval.inverse_transform">(botorch.utils.constraints.NonTransformedInterval method)</a>
+</li>
+</ul></li>
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility">InverseCostWeightedUtility (class in botorch.acquisition.cost_aware)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.pathwise.utils.InverseLengthscaleTransform">InverseLengthscaleTransform (class in botorch.sampling.pathwise.utils)</a>
@@ -3218,6 +3256,8 @@
 <li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP.load_mcmc_samples">(botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP method)</a>
 </li>
 </ul></li>
+<li><a href="models.html#botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitMixin.load_standard_model">load_standard_model() (botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitMixin method)</a>
+</li>
 <li><a href="models.html#botorch.models.fully_bayesian.FullyBayesianLinearSingleTaskGP.load_state_dict">load_state_dict() (botorch.models.fully_bayesian.FullyBayesianLinearSingleTaskGP method)</a>
 <ul>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP.load_state_dict">(botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP method)</a>
@@ -3302,6 +3342,8 @@
 <li><a href="acquisition.html#botorch.acquisition.analytic.LogProbabilityOfImprovement">LogProbabilityOfImprovement (class in botorch.acquisition.analytic)</a>
 </li>
 <li><a href="utils.html#botorch.utils.safe_math.logsumexp">logsumexp() (in module botorch.utils.safe_math)</a>
+</li>
+<li><a href="utils.html#botorch.utils.constraints.LogTransformedInterval">LogTransformedInterval (class in botorch.utils.constraints)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.joint_entropy_search.LowerBoundMultiObjectiveEntropySearch">LowerBoundMultiObjectiveEntropySearch (class in botorch.acquisition.multi_objective.joint_entropy_search)</a>
 </li>
@@ -3574,6 +3616,8 @@
 </li>
 <li><a href="models.html#module-botorch.models.likelihoods.sparse_outlier_noise">botorch.models.likelihoods.sparse_outlier_noise</a>
 </li>
+<li><a href="models.html#module-botorch.models.map_saas">botorch.models.map_saas</a>
+</li>
 <li><a href="models.html#module-botorch.models.model">botorch.models.model</a>
 </li>
 <li><a href="models.html#module-botorch.models.model_list_gp_regression">botorch.models.model_list_gp_regression</a>
@@ -3583,6 +3627,8 @@
 <li><a href="models.html#module-botorch.models.pairwise_gp">botorch.models.pairwise_gp</a>
 </li>
 <li><a href="models.html#module-botorch.models.relevance_pursuit">botorch.models.relevance_pursuit</a>
+</li>
+<li><a href="models.html#module-botorch.models.robust_relevance_pursuit_model">botorch.models.robust_relevance_pursuit_model</a>
 </li>
 <li><a href="models.html#module-botorch.models.transforms.factory">botorch.models.transforms.factory</a>
 </li>
@@ -4428,9 +4474,13 @@
 </li>
 <li><a href="models.html#botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise.rho">rho (botorch.models.likelihoods.sparse_outlier_noise.SparseOutlierNoise property)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.risk_measures.RiskMeasureMCObjective">RiskMeasureMCObjective (class in botorch.acquisition.risk_measures)</a>
+</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="acquisition.html#botorch.acquisition.risk_measures.RiskMeasureMCObjective">RiskMeasureMCObjective (class in botorch.acquisition.risk_measures)</a>
+<li><a href="models.html#botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitMixin">RobustRelevancePursuitMixin (class in botorch.models.robust_relevance_pursuit_model)</a>
+</li>
+<li><a href="models.html#botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitSingleTaskGP">RobustRelevancePursuitSingleTaskGP (class in botorch.models.robust_relevance_pursuit_model)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock">Rosenbrock (class in botorch.test_functions.synthetic)</a>
 </li>
@@ -4494,6 +4544,8 @@
 <li><a href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP">SaasFullyBayesianMultiTaskGP (class in botorch.models.fully_bayesian_multitask)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP">SaasFullyBayesianSingleTaskGP (class in botorch.models.fully_bayesian)</a>
+</li>
+<li><a href="models.html#botorch.models.map_saas.SaasPriorHelper">SaasPriorHelper (class in botorch.models.map_saas)</a>
 </li>
 <li><a href="models.html#botorch.models.fully_bayesian.SaasPyroModel">SaasPyroModel (class in botorch.models.fully_bayesian)</a>
 </li>
@@ -4809,6 +4861,12 @@
 </li>
 <li><a href="models.html#botorch.models.contextual_multioutput.LCEMGP.task_covar_module">task_covar_module() (botorch.models.contextual_multioutput.LCEMGP method)</a>
 </li>
+<li><a href="models.html#botorch.models.map_saas.SaasPriorHelper.tau">tau() (botorch.models.map_saas.SaasPriorHelper method)</a>
+</li>
+<li><a href="models.html#botorch.models.map_saas.SaasPriorHelper.tau_prior_param_or_closure">tau_prior_param_or_closure() (botorch.models.map_saas.SaasPriorHelper method)</a>
+</li>
+<li><a href="models.html#botorch.models.map_saas.SaasPriorHelper.tau_prior_setting_closure">tau_prior_setting_closure() (botorch.models.map_saas.SaasPriorHelper method)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.TensionCompressionString">TensionCompressionString (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="utils.html#botorch.utils.context_managers.TensorCheckpoint">TensorCheckpoint (class in botorch.utils.context_managers)</a>
@@ -4847,6 +4905,11 @@
 </li>
 <li><a href="models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin.to_sparse">to_sparse() (botorch.models.relevance_pursuit.RelevancePursuitMixin method)</a>
 </li>
+<li><a href="models.html#botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitMixin.to_standard_model">to_standard_model() (botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitMixin method)</a>
+<ul>
+<li><a href="models.html#botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitSingleTaskGP.to_standard_model">(botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitSingleTaskGP method)</a>
+</li>
+</ul></li>
 <li><a href="optim.html#botorch.optim.core.torch_minimize">torch_minimize() (in module botorch.optim.core)</a>
 </li>
 <li><a href="optim.html#botorch.optim.utils.model_utils.TorchAttr">TorchAttr (class in botorch.optim.utils.model_utils)</a>
@@ -4893,6 +4956,8 @@
 <li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform.transform">(botorch.models.transforms.input.ReversibleInputTransform method)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.Round.transform">(botorch.models.transforms.input.Round method)</a>
+</li>
+<li><a href="utils.html#botorch.utils.constraints.LogTransformedInterval.transform">(botorch.utils.constraints.LogTransformedInterval method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.constraints.NonTransformedInterval.transform">(botorch.utils.constraints.NonTransformedInterval method)</a>
 </li>

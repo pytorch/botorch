@@ -1,0 +1,471 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/latest/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/latest/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/latest/img/botorch.png"/><link rel="shortcut icon" href="/v/latest/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-CXN3PGE3CC"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-CXN3PGE3CC');
+            </script><link rel="stylesheet" href="/v/latest/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/latest/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/latest/js/mathjax.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS_SVG"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.models.robust_relevance_pursuit_model</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) Meta Platforms, Inc. and affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">This file contains a readily usable implementation of the robust Gaussian process</span>
+<span class="sd">model of [Ament2024pursuit]_, leveraging the Relevance Pursuit algorithm.</span>
+
+<span class="sd">In particular, this file contains a `RobustRelevancePursuitMixin` class, and a concrete</span>
+<span class="sd">implementation of a `SingleTaskGP` model, `RobustRelevancePursuitSingleTaskGP`, which</span>
+<span class="sd">has the same API as a standard `SingleTaskGP` model, but automatically instantiates the</span>
+<span class="sd">robust likelihood `SparseOutlierGaussianLikelihood` and dispatches the relevance pursuit</span>
+<span class="sd">algorithm during model fitting via `fit_gpytorch_mll`.</span>
+
+<span class="sd">Even though a standard `SingleTaskGP` model is expressive enough to implement the robust</span>
+<span class="sd">model by changing the likelihood, its optimization is more complex. So the main reason</span>
+<span class="sd">for the `RobustRelevancePursuitMixin` class is to hide this complexity by using multiple</span>
+<span class="sd">dispatch of `fit_gpytorch_mll`, which needs to do two distinct operations in the context</span>
+<span class="sd">of the robust model:</span>
+
+<span class="sd">(1) It needs to toggle the relevance pursuit discrete optimization algorithm that</span>
+<span class="sd">    changes the support, and as a sub-task,</span>
+<span class="sd">(2) it needs to still carry out the numerical optimization of the hyper-parameters given</span>
+<span class="sd">    a fixed support, but still with a `SparseOutlierGaussianLikelihood`. Since the types</span>
+<span class="sd">    of the marginal likelihood (`MarginalLogLikelihood`) and the likelihood</span>
+<span class="sd">    (`SparseOutlierGaussianLikelihood`) are the same in both calls, the only way we can</span>
+<span class="sd">    leverage the multiple dispatch mechanism is the model type.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">FitGPyTorchMLL</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.likelihoods.sparse_outlier_noise</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SparseOutlierGaussianLikelihood</span><span class="p">,</span>
+    <span class="n">SparseOutlierNoise</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.relevance_pursuit</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">backward_relevance_pursuit</span><span class="p">,</span>
+    <span class="n">get_posterior_over_support</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.input</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutcomeTransform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.utils.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">_DefaultType</span><span class="p">,</span> <span class="n">DEFAULT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.likelihoods</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">,</span>
+    <span class="n">GaussianLikelihood</span><span class="p">,</span>
+    <span class="n">Likelihood</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.means.mean</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mean</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls._approximate_mll</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ApproximateMarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.mlls.marginal_log_likelihood</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.module</span><span class="w"> </span><span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+
+
+<span class="c1"># default fractions of outliers to consider during relevance pursuit</span>
+<span class="n">FRACTIONS_OF_OUTLIERS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mf">0.0</span><span class="p">,</span>
+    <span class="mf">0.05</span><span class="p">,</span>
+    <span class="mf">0.1</span><span class="p">,</span>
+    <span class="mf">0.15</span><span class="p">,</span>
+    <span class="mf">0.2</span><span class="p">,</span>
+    <span class="mf">0.3</span><span class="p">,</span>
+    <span class="mf">0.4</span><span class="p">,</span>
+    <span class="mf">0.5</span><span class="p">,</span>
+    <span class="mf">0.75</span><span class="p">,</span>
+    <span class="mf">1.0</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="RobustRelevancePursuitMixin">
+<a class="viewcode-back" href="../../../models.html#botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitMixin">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RobustRelevancePursuitMixin</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A Mixin class for robust relevance pursuit models, which wraps a base likelihood</span>
+<span class="sd">    with a `SparseOutlierGaussianLikelihood` to detect outliers, and calls the</span>
+<span class="sd">    relevance pursuit algorithm during model fitting via `fit_gpytorch_mll`.</span>
+
+<span class="sd">    This is distinct from the `RelevancePursuitMixin` class, which is a Mixin class to</span>
+<span class="sd">    equip a specific module (the likelihood, in the case of the robust model) with the</span>
+<span class="sd">    relevance pursuit algorithms.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_likelihood</span><span class="p">:</span> <span class="n">GaussianLikelihood</span> <span class="o">|</span> <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">,</span>
+        <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">prior_mean_of_support</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">convex_parameterization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">cache_model_trace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initializes a robust relevance pursuit model, which wraps a base likelihood</span>
+<span class="sd">        with a `SparseOutlierGaussianLikelihood` to detect outliers, and calls the</span>
+<span class="sd">        relevance pursuit algorithm during model fitting via `fit_gpytorch_mll`.</span>
+
+<span class="sd">        For details, see [Ament2024pursuit]_ or https://arxiv.org/abs/2410.24222.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            base_likelihood: The base likelihood that will be wrapped by a</span>
+<span class="sd">                `SparseOutlierGaussianLikelihood` to detect outliers.</span>
+<span class="sd">            dim: The number of training data points, i.e. the maximum dimensionality</span>
+<span class="sd">                of the support set of the likelihood.</span>
+<span class="sd">            prior_mean_of_support: The mean value for the default exponential prior</span>
+<span class="sd">                distribution over the support size.</span>
+<span class="sd">            convex_parameterization: If True, use a convex parameterization of the</span>
+<span class="sd">                sparse noise model. See `SparseOutlierGaussianLikelihood` for details.</span>
+<span class="sd">            cache_model_trace: If True, cache the model trace during relevance pursuit.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">SparseOutlierGaussianLikelihood</span><span class="p">(</span>
+            <span class="n">base_noise</span><span class="o">=</span><span class="n">base_likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="p">,</span>
+            <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span>
+            <span class="n">convex_parameterization</span><span class="o">=</span><span class="n">convex_parameterization</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bmc_support_size</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bmc_probability</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_model_trace</span> <span class="o">=</span> <span class="n">cache_model_trace</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_trace</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SingleTaskGP</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prior_mean_of_support</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">*</span> <span class="n">dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">prior_mean_of_support</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">prior_mean_of_support</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="RobustRelevancePursuitMixin.to_standard_model">
+<a class="viewcode-back" href="../../../models.html#botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitMixin.to_standard_model">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_standard_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Converts this `RobustRelevancePursuitMixin` to an equivalent standard model</span>
+<span class="sd">        with the same robust likelihood and hyper-parameters. This leaves the model</span>
+<span class="sd">        structure and predictions unchanged, but leads `fit_gpytorch_mll`'s dispatch to</span>
+<span class="sd">        *numerically* optimize the hyper-parameters of the model with a fixed support</span>
+<span class="sd">        set, as opposed to dispatching to the discrete optimization via the relevance</span>
+<span class="sd">        pursuit algorithm.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A standard model.</span>
+<span class="sd">        """</span></div>
+
+
+<div class="viewcode-block" id="RobustRelevancePursuitMixin.load_standard_model">
+<a class="viewcode-back" href="../../../models.html#botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitMixin.load_standard_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_standard_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">standard_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RobustRelevancePursuitMixin</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Loads the state dict of a model into the `RobustRelevancePursuitMixin`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            standard_model: A standard model with the same parameter structure and</span>
+<span class="sd">                likelihood as the `RobustRelevancePursuitMixin` model.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The `RobustRelevancePursuitMixin` with the standard model's state dict.</span>
+<span class="sd">        """</span>
+        <span class="c1"># need special case for the likelihood because raw_rho's shape changes</span>
+        <span class="c1"># throughout the optimization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">standard_model</span><span class="o">.</span><span class="n">likelihood</span>
+        <span class="c1"># overwrite state_dict in place</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">standard_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RobustRelevancePursuitSingleTaskGP">
+<a class="viewcode-back" href="../../../models.html#botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitSingleTaskGP">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RobustRelevancePursuitSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">,</span> <span class="n">RobustRelevancePursuitMixin</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">likelihood</span><span class="p">:</span> <span class="n">Likelihood</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covar_module</span><span class="p">:</span> <span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mean_module</span><span class="p">:</span> <span class="n">Mean</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">OutcomeTransform</span> <span class="o">|</span> <span class="n">_DefaultType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">DEFAULT</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">InputTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">convex_parameterization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">prior_mean_of_support</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cache_model_trace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""A robust single-task GP model that toggles the relevance pursuit algorithm</span>
+<span class="sd">            during model fitting via `fit_gpytorch_mll`.</span>
+
+<span class="sd">        For details, see [Ament2024pursuit]_ or https://arxiv.org/abs/2410.24222.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            train_X: A `batch_shape x n x d` tensor of training features.</span>
+<span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>
+<span class="sd">            train_Yvar: An optional `batch_shape x n x m` tensor of observed</span>
+<span class="sd">                measurement noise.</span>
+<span class="sd">            likelihood: A base likelihood that will be wrapped by a</span>
+<span class="sd">                `SparseOutlierGaussianLikelihood` to detect outliers. If omitted,</span>
+<span class="sd">                use a standard `GaussianLikelihood` with inferred noise level if</span>
+<span class="sd">                `train_Yvar` is None, and a `FixedNoiseGaussianLikelihood` with the</span>
+<span class="sd">                given noise observations if `train_Yvar` is not None.</span>
+<span class="sd">            covar_module: The module computing the covariance (Kernel) matrix.</span>
+<span class="sd">                If omitted, uses an `RBFKernel`.</span>
+<span class="sd">            mean_module: The mean function to be used. If omitted, use a</span>
+<span class="sd">                `ConstantMean`.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
+<span class="sd">                training data during instantiation and to the posterior during</span>
+<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
+<span class="sd">                `.posterior` on the model will be on the original scale). We use a</span>
+<span class="sd">                `Standardize` transform if no `outcome_transform` is specified.</span>
+<span class="sd">                Pass down `None` to use no outcome transform.</span>
+<span class="sd">            input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass.</span>
+<span class="sd">            convex_parameterization: If True, use a convex parameterization of the</span>
+<span class="sd">                sparse noise model. See `SparseOutlierGaussianLikelihood` for details.</span>
+<span class="sd">            prior_mean_of_support: The mean value for the default exponential prior</span>
+<span class="sd">                distribution over the support size.</span>
+<span class="sd">            cache_model_trace: If True, cache the model trace during relevance pursuit.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; m = RobustRelevancePursuitSingleTaskGP(train_X=X, train_Y=Y)</span>
+<span class="sd">            &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(model=m, likelihood=m.likelihood)</span>
+<span class="sd">            &gt;&gt;&gt; mll = fit_gpytorch_mll(mll)</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_original_X</span> <span class="o">=</span> <span class="n">train_X</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_original_Y</span> <span class="o">=</span> <span class="n">train_Y</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
+            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
+            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
+            <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">,</span>
+            <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
+            <span class="n">mean_module</span><span class="o">=</span><span class="n">mean_module</span><span class="p">,</span>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+            <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># After canonical GP is instantiated, modify the likelihood</span>
+        <span class="n">RobustRelevancePursuitMixin</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">base_likelihood</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span>
+            <span class="n">dim</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+            <span class="n">prior_mean_of_support</span><span class="o">=</span><span class="n">prior_mean_of_support</span><span class="p">,</span>
+            <span class="n">convex_parameterization</span><span class="o">=</span><span class="n">convex_parameterization</span><span class="p">,</span>
+            <span class="n">cache_model_trace</span><span class="o">=</span><span class="n">cache_model_trace</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="RobustRelevancePursuitSingleTaskGP.to_standard_model">
+<a class="viewcode-back" href="../../../models.html#botorch.models.robust_relevance_pursuit_model.RobustRelevancePursuitSingleTaskGP.to_standard_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_standard_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Returns a standard SingleTaskGP with the same parameters as this model.</span>
+<span class="sd">        This is used to avoid recursion through the fit_gpytorch_mll dispatch."""</span>
+        <span class="c1"># don't need to put model into training mode to access the untransformed inputs,</span>
+        <span class="c1"># since we cached the original train_inputs</span>
+        <span class="n">is_training</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_original_X</span><span class="p">,</span>
+            <span class="n">train_Y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_original_Y</span><span class="p">,</span>
+            <span class="n">train_Yvar</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># not needed because likelihood is already instantiated</span>
+            <span class="n">likelihood</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span>
+            <span class="n">covar_module</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">,</span>
+            <span class="n">mean_module</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">,</span>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">input_transform</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_training</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">model</span></div>
+</div>
+
+
+
+<span class="nd">@FitGPyTorchMLL</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
+    <span class="n">SparseOutlierGaussianLikelihood</span><span class="p">,</span>
+    <span class="n">RobustRelevancePursuitMixin</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_fit_rrp</span><span class="p">(</span>
+    <span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">,</span>
+    <span class="n">_</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">SparseOutlierGaussianLikelihood</span><span class="p">],</span>
+    <span class="n">__</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">RobustRelevancePursuitMixin</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">numbers_of_outliers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fractions_of_outliers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">timeout_sec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">relevance_pursuit_optimizer</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">backward_relevance_pursuit</span><span class="p">,</span>
+    <span class="n">reset_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">reset_dense_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="c1"># fit_gpytorch_mll kwargs</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">closure_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MarginalLogLikelihood</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fits a RobustRelevancePursuitGP model using the given marginal likelihood.</span>
+
+<span class="sd">    For details, see [Ament2024pursuit]_ or https://arxiv.org/abs/2410.24222.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mll: The marginal likelihood to fit.</span>
+<span class="sd">        _: A likelihood, only directly used for dispatching.</span>
+<span class="sd">        _: A model, only directly used for dispatching.</span>
+<span class="sd">        numbers_of_outliers: An optional list of numbers of outliers to consider during</span>
+<span class="sd">            relevance pursuit. By default, the algorithm falls back to a default list</span>
+<span class="sd">            of fractions of outliers, see below.</span>
+<span class="sd">        fractions_of_outliers: An optional list of fractions of outliers to consider if</span>
+<span class="sd">            numbers_of_outliers is None. By default, the algorithm uses</span>
+<span class="sd">            `[0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0]`.</span>
+<span class="sd">        relevance_pursuit_optimizer: The relevance pursuit optimizer to use. By default,</span>
+<span class="sd">            uses `backward_relevance_pursuit`, which is generally the most powerful</span>
+<span class="sd">            algorithm for challenging problems with a wide range of outliers. The</span>
+<span class="sd">            `forward_relevance_pursuit` algorithm can be efficient when the number of</span>
+<span class="sd">            outliers is relatively small.</span>
+<span class="sd">        reset_parameters: If True, we will reset the sparse parameters of the model</span>
+<span class="sd">            after each iteration of the relevance pursuit algorithm.</span>
+<span class="sd">        reset_dense_parameters: If True, we will reset the dense parameters of the model</span>
+<span class="sd">            after each iteration of the relevance pursuit algorithm.</span>
+<span class="sd">        closure: A closure to use to compute the loss and the gradients, see docstring</span>
+<span class="sd">            of `fit_gpytorch_mll` for details.</span>
+<span class="sd">        optimizer: The numerical optimizer, see docstring of `fit_gpytorch_mll`.</span>
+<span class="sd">        closure_kwargs: Additional arguments to pass to the `closure` function.</span>
+<span class="sd">        optimizer_kwargs: Additional arguments to pass to `fit_gpytorch_mll`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The fitted marginal likelihood.</span>
+<span class="sd">    """</span>
+    <span class="n">sparse_module</span> <span class="o">=</span> <span class="n">SparseOutlierNoise</span><span class="o">.</span><span class="n">_from_model</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">sparse_module</span><span class="o">.</span><span class="n">dim</span>  <span class="c1"># equal to the number of training data points</span>
+
+    <span class="k">if</span> <span class="n">numbers_of_outliers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">fractions_of_outliers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fractions_of_outliers</span> <span class="o">=</span> <span class="n">FRACTIONS_OF_OUTLIERS</span>
+
+        <span class="c1"># list from which BMC chooses</span>
+        <span class="n">numbers_of_outliers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">fractions_of_outliers</span><span class="p">]</span>
+
+    <span class="n">optimizer_kwargs_</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">{}</span> <span class="k">if</span> <span class="n">optimizer_kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">timeout_sec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">optimizer_kwargs_</span><span class="p">[</span><span class="s2">"timeout_sec"</span><span class="p">]</span> <span class="o">=</span> <span class="n">timeout_sec</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">numbers_of_outliers</span><span class="p">)</span>
+
+    <span class="c1"># Need to convert model to avoid recursion through fit_gpytorch_mll dispatch, since</span>
+    <span class="c1"># relevance pursuit expects to call the base fit_gpytorch_mll.</span>
+    <span class="n">original_model</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span>  <span class="c1"># Robust Relevance Pursuit Model</span>
+    <span class="n">mll</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">original_model</span><span class="o">.</span><span class="n">to_standard_model</span><span class="p">()</span>
+    <span class="n">sparse_module</span> <span class="o">=</span> <span class="n">SparseOutlierNoise</span><span class="o">.</span><span class="n">_from_model</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">sparse_module</span><span class="p">,</span> <span class="n">model_trace</span> <span class="o">=</span> <span class="n">relevance_pursuit_optimizer</span><span class="p">(</span>
+        <span class="n">sparse_module</span><span class="o">=</span><span class="n">sparse_module</span><span class="p">,</span>
+        <span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span>
+        <span class="n">sparsity_levels</span><span class="o">=</span><span class="n">numbers_of_outliers</span><span class="p">,</span>
+        <span class="n">reset_parameters</span><span class="o">=</span><span class="n">reset_parameters</span><span class="p">,</span>
+        <span class="n">reset_dense_parameters</span><span class="o">=</span><span class="n">reset_dense_parameters</span><span class="p">,</span>
+        <span class="n">record_model_trace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="c1"># These are the args of the canonical mll fit routine</span>
+        <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+        <span class="n">closure_kwargs</span><span class="o">=</span><span class="n">closure_kwargs</span><span class="p">,</span>
+        <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="n">optimizer_kwargs_</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Bayesian model comparison</span>
+    <span class="n">bmc_support_sizes</span><span class="p">,</span> <span class="n">bmc_probabilities</span> <span class="o">=</span> <span class="n">get_posterior_over_support</span><span class="p">(</span>
+        <span class="n">SparseOutlierNoise</span><span class="p">,</span>
+        <span class="n">model_trace</span><span class="p">,</span>
+        <span class="n">prior_mean_of_support</span><span class="o">=</span><span class="n">original_model</span><span class="o">.</span><span class="n">prior_mean_of_support</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">map_index</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">bmc_probabilities</span><span class="p">)</span>
+    <span class="n">map_model</span> <span class="o">=</span> <span class="n">model_trace</span><span class="p">[</span><span class="n">map_index</span><span class="p">]</span>  <span class="c1"># choosing model with highest BMC score</span>
+    <span class="c1"># overwrite mll.model with chosen model</span>
+    <span class="n">mll</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">original_model</span>  <span class="c1"># first restore original model pointer</span>
+    <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_standard_model</span><span class="p">(</span><span class="n">map_model</span><span class="p">)</span>
+    <span class="c1"># Store the bmc results</span>
+    <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bmc_support_sizes</span> <span class="o">=</span> <span class="n">bmc_support_sizes</span>
+    <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">bmc_probabilities</span> <span class="o">=</span> <span class="n">bmc_probabilities</span>
+    <span class="k">if</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">cache_model_trace</span><span class="p">:</span>
+        <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">model_trace</span> <span class="o">=</span> <span class="n">model_trace</span>
+    <span class="k">return</span> <span class="n">mll</span>
+
+
+<span class="nd">@FitGPyTorchMLL</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">_ApproximateMarginalLogLikelihood</span><span class="p">,</span>
+    <span class="n">SparseOutlierGaussianLikelihood</span><span class="p">,</span>
+    <span class="n">RobustRelevancePursuitMixin</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_fit_rrp_approximate_mll</span><span class="p">(</span>
+    <span class="n">mll</span><span class="p">:</span> <span class="n">_ApproximateMarginalLogLikelihood</span><span class="p">,</span>
+    <span class="n">_</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">SparseOutlierGaussianLikelihood</span><span class="p">],</span>
+    <span class="n">__</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">RobustRelevancePursuitMixin</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+        <span class="s2">"Relevance Pursuit does not yet support approximate inference. "</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="Main" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<search id="searchbox" role="search" style="display: none">
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" placeholder="Search" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_utils.html">botorch.test_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/latest/" class="nav-home"><img src="/v/latest/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/latest/docs/introduction">Introduction</a><a href="/v/latest/docs/getting_started">Getting Started</a><a href="/v/latest/tutorials/">Tutorials</a><a href="/v/latest/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/latest/img/oss_logo.png" alt="Meta Open Source" width="300" height="25"/></a><section class="copyright"> Copyright © 2025 Meta Platforms, Inc</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/latest/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

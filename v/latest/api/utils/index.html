@@ -137,6 +137,63 @@ An example transform for the case where both are finite is torch.nn.functional.s
 </dl>
 </dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.constraints.LogTransformedInterval">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.utils.constraints.</span></span><span class="sig-name descname"><span class="pre">LogTransformedInterval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lower_bound</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_bound</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/constraints.html#LogTransformedInterval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.constraints.LogTransformedInterval" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code></p>
+<p>Modification of the GPyTorch interval class.</p>
+<p>The Interval class in GPyTorch will map the parameter to the range [0, 1] before
+applying the inverse transform. LogTransformedInterval skips this step to avoid
+numerical issues, and applies the log transform directly to the parameter values.
+GPyTorch automatically recognizes that the bound constraint have not been applied
+yet, and passes the bounds to the optimizer instead, which then optimizes
+log(parameter) under the constraints log(lower) &lt;= log(parameter) &lt;= log(upper).</p>
+<p>Constructor of the LogTransformedInterval class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lower_bound</strong> (<em>float</em>) – The lower bound of the interval.</p></li>
+<li><p><strong>upper_bound</strong> (<em>float</em>) – The upper bound of the interval.</p></li>
+<li><p><strong>initial_value</strong> (<em>float</em><em> | </em><em>None</em>) – The initial value of the parameter.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.constraints.LogTransformedInterval.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/constraints.html#LogTransformedInterval.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.constraints.LogTransformedInterval.transform" title="Link to this definition">¶</a></dt>
+<dd><p>Transform the parameter using the exponential function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tensor</strong> (<em>Tensor</em>) – Tensor of parameter values to transform.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor of transformed parameter values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.constraints.LogTransformedInterval.inverse_transform">
+<span class="sig-name descname"><span class="pre">inverse_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transformed_tensor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/constraints.html#LogTransformedInterval.inverse_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.constraints.LogTransformedInterval.inverse_transform" title="Link to this definition">¶</a></dt>
+<dd><p>Untransform the parameter using the natural logarithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor</strong> – Tensor of parameter values to untransform.</p></li>
+<li><p><strong>transformed_tensor</strong> (<em>Tensor</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor of untransformed parameter values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Tensor</em></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.utils.containers">
 <span id="containers"></span><h2>Containers<a class="headerlink" href="#module-botorch.utils.containers" title="Link to this heading">¶</a></h2>

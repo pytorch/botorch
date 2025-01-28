@@ -43,7 +43,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy</span><span class="p">,</span> <span class="n">deepcopy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
@@ -58,14 +58,15 @@
 
 <span class="n">MLL_ITER</span> <span class="o">=</span> <span class="mi">10_000</span>  <span class="c1"># let's take convergence seriously</span>
 <span class="n">MLL_TOL</span> <span class="o">=</span> <span class="mf">1e-8</span>
-<span class="n">RESET_PARAMETERS</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">RESET_PARAMETERS</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">RESET_DENSE_PARAMETERS</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <div class="viewcode-block" id="RelevancePursuitMixin">
 <a class="viewcode-back" href="../../../models.html#botorch.models.relevance_pursuit.RelevancePursuitMixin">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RelevancePursuitMixin</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Mixin class to convert between the sparse and dense representations of the</span>
-<span class="sd">    relevance pursuit models' sparse parameters, as well as to compute the generalized</span>
+<span class="sd">    relevance pursuit modules' sparse parameters, as well as to compute the generalized</span>
 <span class="sd">    support acquisition and support deletion criteria.</span>
 <span class="sd">    """</span>
 
@@ -299,19 +300,21 @@
         <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">modifier</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Computes the indices of the features that maximize the gradient of the sparse</span>
+<span class="w">        </span><span class="sd">"""Computes the indices of the elements that maximize the gradient of the sparse</span>
 <span class="sd">        parameter and that are not already in the support, and subsequently expands the</span>
-<span class="sd">        support to include the features if their gradient is positive.</span>
+<span class="sd">        support to include the elements if their gradient is positive.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            mll: The marginal likelihood, containing the model to optimize.</span>
 <span class="sd">                NOTE: Virtually all of the rest of the code is not specific to the</span>
 <span class="sd">                marginal likelihood optimization, so we could generalize this to work</span>
 <span class="sd">                with any objective.</span>
-<span class="sd">            n: The number of features to select.</span>
-<span class="sd">            modifier: A function that modifies the gradient of the inactive parameters</span>
+<span class="sd">            n: The maximum number of elements to select. NOTE: The actual number of</span>
+<span class="sd">                elements that are added could be fewer if there are fewer than `n`</span>
+<span class="sd">                elements with a positive gradient.</span>
+<span class="sd">            modifier: A function that modifies the gradient of the inactive elements</span>
 <span class="sd">                before computing the support expansion criterion. This can be used</span>
-<span class="sd">                to select the maximum gradient magnitude for real-valued parameters</span>
+<span class="sd">                to select the maximum gradient magnitude for real-valued elements</span>
 <span class="sd">                whose gradients are not non-negative, using modifier = torch.abs.</span>
 
 <span class="sd">        Returns:</span>
@@ -408,15 +411,15 @@
         <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">modifier</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Computes the indices of the features that have the smallest coefficients,</span>
-<span class="sd">        and subsequently contracts the exlude the features.</span>
+<span class="w">        </span><span class="sd">"""Computes the indices of the elements with the smallest magnitude,</span>
+<span class="sd">        and subsequently contracts the support by exluding the elements.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            mll: The marginal likelihood, containing the model to optimize.</span>
 <span class="sd">                NOTE: Virtually all of the rest of the code is not specific to the</span>
 <span class="sd">                marginal likelihood optimization, so we could generalize this to work</span>
 <span class="sd">                with any objective.</span>
-<span class="sd">            n: The number of features to select for removal.</span>
+<span class="sd">            n: The number of elements to select for removal.</span>
 <span class="sd">            modifier: A function that modifies the parameter values before computing</span>
 <span class="sd">                the support contraction criterion.</span>
 
@@ -452,7 +455,11 @@
         <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">,</span>
         <span class="n">model_trace</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">reset_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
-        <span class="n">reset_dense_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
+        <span class="n">reset_dense_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_DENSE_PARAMETERS</span><span class="p">,</span>
+        <span class="c1"># fit_gpytorch_mll kwargs</span>
+        <span class="n">closure</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">closure_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Optimizes the marginal likelihood.</span>
@@ -467,6 +474,10 @@
 <span class="sd">            reset_dense_parameters: If True, re-initializes the dense parameters, e.g.</span>
 <span class="sd">                other GP hyper-parameters that are *not* part of the Relevance Pursuit</span>
 <span class="sd">                module, to the initial values provided by their associated constraints.</span>
+<span class="sd">            closure: A closure to use to compute the loss and the gradients, see</span>
+<span class="sd">                docstring of `fit_gpytorch_mll` for details.</span>
+<span class="sd">            optimizer: The numerical optimizer, see docstring of `fit_gpytorch_mll`.</span>
+<span class="sd">            closure_kwargs: Additional arguments to pass to the `closure` function.</span>
 <span class="sd">            optimizer_kwargs: A dictionary of keyword arguments for the optimizer.</span>
 
 <span class="sd">        Returns:</span>
@@ -476,7 +487,6 @@
             <span class="c1"># this might be beneficial because the parameters can</span>
             <span class="c1"># end up at a constraint boundary, which can anecdotally make</span>
             <span class="c1"># it more difficult to move the newly added parameters.</span>
-            <span class="c1"># should we only do this after expansion?</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sparse_parameter</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
 
@@ -487,7 +497,13 @@
         <span class="c1"># NOTE: this function should never force the dense representation, because some</span>
         <span class="c1"># models might never need it, and it would be inefficient.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to_sparse</span><span class="p">()</span>
-        <span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
+        <span class="n">mll</span> <span class="o">=</span> <span class="n">fit_gpytorch_mll</span><span class="p">(</span>
+            <span class="n">mll</span><span class="p">,</span>
+            <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
+            <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span>
+            <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">closure_kwargs</span><span class="o">=</span><span class="n">closure_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">model_trace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># need to record the full model here, rather than just the sparse parameter</span>
             <span class="c1"># since other hyper-parameters are co-adapted to the sparse parameter.</span>
@@ -504,11 +520,15 @@
     <span class="n">sparse_module</span><span class="p">:</span> <span class="n">RelevancePursuitMixin</span><span class="p">,</span>
     <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">,</span>
     <span class="n">sparsity_levels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">reset_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
-    <span class="n">reset_dense_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
+    <span class="n">reset_dense_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_DENSE_PARAMETERS</span><span class="p">,</span>
     <span class="n">record_model_trace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">initial_support</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># fit_gpytorch_mll kwargs</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">closure_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RelevancePursuitMixin</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Model</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">"""Forward Relevance Pursuit.</span>
 
@@ -539,9 +559,6 @@
 <span class="sd">        sparse_module: The relevance pursuit module.</span>
 <span class="sd">        mll: The marginal likelihood, containing the model to optimize.</span>
 <span class="sd">        sparsity_levels: The sparsity levels to expand the support to.</span>
-<span class="sd">        optimizer_kwargs: A dictionary of keyword arguments to pass to the optimizer.</span>
-<span class="sd">            By default, initializes the "options" sub-dictionary with `maxiter` and</span>
-<span class="sd">            `ftol`, `gtol` values, unless specified.</span>
 <span class="sd">        reset_parameters: If true, initializes the sparse parameter to the all zeros</span>
 <span class="sd">            after each iteration.</span>
 <span class="sd">        reset_dense_parameters: If true, re-initializes the dense parameters, e.g.</span>
@@ -550,6 +567,13 @@
 <span class="sd">        record_model_trace: If true, records the model state after every iteration.</span>
 <span class="sd">        initial_support: The support with which to initialize the sparse module. By</span>
 <span class="sd">            default, the support is initialized to the empty set.</span>
+<span class="sd">        closure: A closure to use to compute the loss and the gradients, see docstring</span>
+<span class="sd">            of `fit_gpytorch_mll` for details.</span>
+<span class="sd">        optimizer: The numerical optimizer, see docstring of `fit_gpytorch_mll`.</span>
+<span class="sd">        closure_kwargs: Additional arguments to pass to the `closure` function.</span>
+<span class="sd">        optimizer_kwargs: A dictionary of keyword arguments to pass to the optimizer.</span>
+<span class="sd">            By default, initializes the "options" sub-dictionary with `maxiter` and</span>
+<span class="sd">            `ftol`, `gtol` values, unless specified.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The relevance pursuit module after forward relevance pursuit optimization, and</span>
@@ -571,14 +595,17 @@
 
     <span class="n">model_trace</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">record_model_trace</span> <span class="k">else</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">sparse_module</span><span class="o">.</span><span class="n">optimize_mll</span><span class="p">(</span>
-            <span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span>
-            <span class="n">model_trace</span><span class="o">=</span><span class="n">model_trace</span><span class="p">,</span>
-            <span class="n">reset_parameters</span><span class="o">=</span><span class="n">reset_parameters</span><span class="p">,</span>
-            <span class="n">reset_dense_parameters</span><span class="o">=</span><span class="n">reset_dense_parameters</span><span class="p">,</span>
-            <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">optimize_mll</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">sparse_module</span><span class="o">.</span><span class="n">optimize_mll</span><span class="p">,</span>
+        <span class="n">model_trace</span><span class="o">=</span><span class="n">model_trace</span><span class="p">,</span>
+        <span class="n">reset_parameters</span><span class="o">=</span><span class="n">reset_parameters</span><span class="p">,</span>
+        <span class="n">reset_dense_parameters</span><span class="o">=</span><span class="n">reset_dense_parameters</span><span class="p">,</span>
+        <span class="c1"># These are the args of the canonical mll fit routine</span>
+        <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+        <span class="n">closure_kwargs</span><span class="o">=</span><span class="n">closure_kwargs</span><span class="p">,</span>
+        <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="c1"># if sparsity levels contains the initial support, remove it</span>
     <span class="k">if</span> <span class="n">sparsity_levels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparse_module</span><span class="o">.</span><span class="n">support</span><span class="p">):</span>
@@ -612,11 +639,15 @@
     <span class="n">sparse_module</span><span class="p">:</span> <span class="n">RelevancePursuitMixin</span><span class="p">,</span>
     <span class="n">mll</span><span class="p">:</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">,</span>
     <span class="n">sparsity_levels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">reset_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
-    <span class="n">reset_dense_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_PARAMETERS</span><span class="p">,</span>
+    <span class="n">reset_dense_parameters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">RESET_DENSE_PARAMETERS</span><span class="p">,</span>
     <span class="n">record_model_trace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">initial_support</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="c1"># fit_gpytorch_mll kwargs</span>
+    <span class="n">closure</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">closure_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RelevancePursuitMixin</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Model</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">"""Backward Relevance Pursuit.</span>
 
@@ -647,9 +678,6 @@
 <span class="sd">        sparse_module: The relevance pursuit module.</span>
 <span class="sd">        mll: The marginal likelihood, containing the model to optimize.</span>
 <span class="sd">        sparsity_levels: The sparsity levels to expand the support to.</span>
-<span class="sd">        optimizer_kwargs: A dictionary of keyword arguments to pass to the optimizer.</span>
-<span class="sd">            By default, initializes the "options" sub-dictionary with `maxiter` and</span>
-<span class="sd">            `ftol`, `gtol` values, unless specified.</span>
 <span class="sd">        reset_parameters: If true, initializes the sparse parameter to the all zeros</span>
 <span class="sd">            after each iteration.</span>
 <span class="sd">        reset_dense_parameters: If true, re-initializes the dense parameters, e.g.</span>
@@ -658,6 +686,13 @@
 <span class="sd">        record_model_trace: If true, records the model state after every iteration.</span>
 <span class="sd">        initial_support: The support with which to initialize the sparse module. By</span>
 <span class="sd">            default, the support is initialized to the full set.</span>
+<span class="sd">        closure: A closure to use to compute the loss and the gradients, see docstring</span>
+<span class="sd">            of `fit_gpytorch_mll` for details.</span>
+<span class="sd">        optimizer: The numerical optimizer, see docstring of `fit_gpytorch_mll`.</span>
+<span class="sd">        closure_kwargs: Additional arguments to pass to the `closure` function.</span>
+<span class="sd">        optimizer_kwargs: A dictionary of keyword arguments to pass to the optimizer.</span>
+<span class="sd">            By default, initializes the "options" sub-dictionary with `maxiter` and</span>
+<span class="sd">            `ftol`, `gtol` values, unless specified.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The relevance pursuit module after forward relevance pursuit optimization, and</span>
@@ -687,6 +722,10 @@
             <span class="n">model_trace</span><span class="o">=</span><span class="n">model_trace</span><span class="p">,</span>
             <span class="n">reset_parameters</span><span class="o">=</span><span class="n">reset_parameters</span><span class="p">,</span>
             <span class="n">reset_dense_parameters</span><span class="o">=</span><span class="n">reset_dense_parameters</span><span class="p">,</span>
+            <span class="c1"># These are the args of the canonical mll fit routine</span>
+            <span class="n">closure</span><span class="o">=</span><span class="n">closure</span><span class="p">,</span>
+            <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">closure_kwargs</span><span class="o">=</span><span class="n">closure_kwargs</span><span class="p">,</span>
             <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
 

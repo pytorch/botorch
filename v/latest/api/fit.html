@@ -59,7 +59,7 @@ i.e. <cite>mll.training == False</cite>. Otherwise, <cite>mll</cite> will be in 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a><em> | </em><a class="reference internal" href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP" title="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP"><em>SaasFullyBayesianMultiTaskGP</em></a>) – SaasFullyBayesianSingleTaskGP to be fitted.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.fully_bayesian.FullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.FullyBayesianSingleTaskGP"><em>FullyBayesianSingleTaskGP</em></a><em> | </em><a class="reference internal" href="models.html#botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP" title="botorch.models.fully_bayesian_multitask.SaasFullyBayesianMultiTaskGP"><em>SaasFullyBayesianMultiTaskGP</em></a>) – SaasFullyBayesianSingleTaskGP to be fitted.</p></li>
 <li><p><strong>max_tree_depth</strong> (<em>int</em>) – Maximum tree depth for NUTS</p></li>
 <li><p><strong>warmup_steps</strong> (<em>int</em>) – The number of burn-in steps for NUTS.</p></li>
 <li><p><strong>num_samples</strong> (<em>int</em>) – The number of MCMC samples. Note that with thinning,
@@ -81,6 +81,61 @@ errors, e.g., <a class="reference external" href="https://github.com/pyro-ppl/py
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fit_fully_bayesian_model_nuts</span><span class="p">(</span><span class="n">gp</span><span class="p">)</span>
 </pre></div>
 </div>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.fit.get_fitted_map_saas_model">
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">get_fitted_map_saas_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#get_fitted_map_saas_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.get_fitted_map_saas_model" title="Link to this definition">¶</a></dt>
+<dd><p>Get a fitted MAP SAAS model with a Matern kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<em>Tensor</em>) – Tensor of shape <cite>n x d</cite> with training inputs.</p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>) – Tensor of shape <cite>n x 1</cite> with training targets.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Optional tensor of shape <cite>n x 1</cite> with observed noise,
+inferred if None.</p></li>
+<li><p><strong>input_transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>None</em>) – An optional input transform.</p></li>
+<li><p><strong>outcome_transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>None</em>) – An optional outcome transforms.</p></li>
+<li><p><strong>tau</strong> (<em>float</em><em> | </em><em>None</em>) – Fixed value of the global shrinkage tau. If None, the model
+places a HC(0.1) prior on tau.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – A dict of options for the optimizer passed
+to fit_gpytorch_mll.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A fitted SingleTaskGP with a Matern kernel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="models.html#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><em>SingleTaskGP</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.fit.get_fitted_map_saas_ensemble">
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">get_fitted_map_saas_ensemble</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taus</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_taus</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#get_fitted_map_saas_ensemble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.get_fitted_map_saas_ensemble" title="Link to this definition">¶</a></dt>
+<dd><p>Get a fitted SAAS ensemble using several different tau values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<em>Tensor</em>) – Tensor of shape <cite>n x d</cite> with training inputs.</p></li>
+<li><p><strong>train_Y</strong> (<em>Tensor</em>) – Tensor of shape <cite>n x 1</cite> with training targets.</p></li>
+<li><p><strong>train_Yvar</strong> (<em>Tensor</em><em> | </em><em>None</em>) – Optional tensor of shape <cite>n x 1</cite> with observed noise,
+inferred if None.</p></li>
+<li><p><strong>input_transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em> | </em><em>None</em>) – An optional input transform.</p></li>
+<li><p><strong>outcome_transform</strong> (<a class="reference internal" href="models.html#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em> | </em><em>None</em>) – An optional outcome transforms.</p></li>
+<li><p><strong>taus</strong> (<em>Tensor</em><em> | </em><em>list</em><em>[</em><em>float</em><em>] </em><em>| </em><em>None</em>) – Global shrinkage values to use. If None, we sample <cite>num_taus</cite> values
+from an HC(0.1) distrbution.</p></li>
+<li><p><strong>num_taus</strong> (<em>int</em>) – Optional argument for how many taus to sample.</p></li>
+<li><p><strong>optimizer_kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – A dict of options for the optimizer passed
+to fit_gpytorch_mll.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A fitted SaasFullyBayesianSingleTaskGP with a Matern kernel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="models.html#botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP" title="botorch.models.fully_bayesian.SaasFullyBayesianSingleTaskGP"><em>SaasFullyBayesianSingleTaskGP</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 </section>
 </div>
