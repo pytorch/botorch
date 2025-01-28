@@ -131,11 +131,6 @@ def create_frontmatter(path: Path, nb_metadata: Dict[str, Dict[str, str]]) -> st
         for key, value in {
             "title": metadata["title"],
             "sidebar_label": metadata["title"],
-            # "displayed_sidebar": "tutorials",
-            # "path": "",
-            # "nb_path": "",
-            # "github": "",
-            # "colab": "",
         }.items()
     ]
     frontmatter = "\n".join(frontmatter_delimiter + frontmatter + frontmatter_delimiter)
@@ -332,11 +327,11 @@ def sanitize_mdx(mdx: str) -> str:
     mdx = re.sub(
         "(\\\\begin\\\\{(\\w*?)\\\\}(.|\n)*?end\\\\{\\2\\\\})", "$$\\g<1>$$", mdx
     )
-    # # make sure $$ symbols are not escaped and include line breaks.
+    # Make sure $$ symbols are not escaped and include line breaks.
     mdx = re.sub(
         "\\\\?\\$\\\\?\\$((?:.|\n)*?)\\\\?\\$\\\\?\\$", "\n$$\n\\g<1>\n$$\n", mdx
     )
-    # # Escaping braces causes issues in math blocks, unescape them.
+    # Escaping braces causes issues in math blocks, unescape them.
     mdx = re.sub(
         "\\$?\\$(.|\n)*?\\$\\$?",
         lambda match: match[0].replace("\\{", "{").replace("\\}", "}"),
