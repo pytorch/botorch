@@ -152,6 +152,8 @@ class TestDeterministicModels(BotorchTestCase):
         train_Y = torch.rand(2, 2)
         model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
         mean_model = PosteriorMeanModel(model=model)
+        self.assertTrue(mean_model.num_outputs == train_Y.shape[-1])
+        self.assertTrue(mean_model.batch_shape == torch.Size([]))
 
         test_X = torch.rand(2, 3)
         post = model.posterior(test_X)
