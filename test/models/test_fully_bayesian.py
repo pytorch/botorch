@@ -126,12 +126,10 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.rand(10, 4, **tkwargs)
-            train_Y = self._test_f(X=train_X)
-            train_Yvar = (
-                None
-                if infer_noise
-                else torch.arange(0.1, 1.1, 0.1, **tkwargs).unsqueeze(-1)
+            train_Y = self._test_f(X=train_X) + 0.1 * torch.randn(
+                train_X.shape[0], 1, **tkwargs
             )
+            train_Yvar = None if infer_noise else torch.full_like(train_Y, 0.01)
             model = self.model_cls(
                 train_X=train_X,
                 train_Y=train_Y,
@@ -238,6 +236,7 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
             model.posterior(torch.rand(1, 4, **tkwargs))
 
     def test_fit_model(self) -> None:
+        torch.manual_seed(16)
         for infer_noise, dtype in itertools.product(
             [True, False], [torch.float, torch.double]
         ):

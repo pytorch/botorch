@@ -22,7 +22,10 @@ from botorch.exceptions.warnings import OptimizationWarning
 from botorch.logging import logger
 from botorch.models import SingleTaskGP
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
-from botorch.models.fully_bayesian import FullyBayesianSingleTaskGP
+from botorch.models.fully_bayesian import (
+    FullyBayesianSingleTaskGP,
+    SaasFullyBayesianSingleTaskGP,
+)
 from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
 from botorch.models.map_saas import get_map_saas_model
 from botorch.models.model_list_gp_regression import ModelListGP
