@@ -38,6 +38,7 @@ from botorch.exceptions.warnings import NumericsWarning
 from botorch.models import SingleTaskGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
+from botorch.utils.sampling import draw_sobol_normal_samples
 from botorch.utils.test_helpers import DummyNonScalarizingPosteriorTransform
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch.utils.transforms import standardize
@@ -1015,8 +1016,14 @@ class TestQPosteriorStandardDeviation(BotorchTestCase):
         n_samples = 128
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 1 x 1 x 1
-            torch.manual_seed(0)
-            samples = torch.randn(n_samples, 1, 1, 1, device=self.device, dtype=dtype)
+            samples = draw_sobol_normal_samples(
+                1,
+                n_samples,
+                device=self.device,
+                dtype=dtype,
+                seed=0,
+            )[..., None, None]
+            # samples has shape (n_samples, 1, 1, 1)
             std = samples.std(dim=0, correction=0).item()
             mm = MockModel(
                 MockPosterior(samples=samples, base_shape=torch.Size([1, 1, 1]))
