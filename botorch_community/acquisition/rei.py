@@ -15,6 +15,7 @@ function are implemented here:
 2. Monte Carlo version: qLogRegionalExpectedImprovement
 
 LogREI has been implemented from the original paper [namura2024rei]_
+and code(https://github.com/Nobuo-Namura/regional-expected-improvement/)
 and qLogREI have been implemented by slightly modifying the qREI
 acquisition function implementation from the paper.
 
