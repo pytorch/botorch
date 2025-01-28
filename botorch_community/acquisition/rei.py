@@ -43,26 +43,25 @@ Contributor: SaiAakash
 from __future__ import annotations
 
 import torch
-from torch import Tensor
 from botorch.acquisition.analytic import (
-    AnalyticAcquisitionFunction,
-    _scaled_improvement,
     _log_ei_helper,
+    _scaled_improvement,
+    AnalyticAcquisitionFunction,
 )
+from botorch.acquisition.logei import _log_improvement, check_tau
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
-from botorch.acquisition.logei import _log_improvement, check_tau
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.utils.safe_math import logmeanexp
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from torch import Tensor
 
 TAU_RELU = 1e-6
 TAU_MAX = 1e-2
 
 
 class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
-
     _log: bool = True
 
     def __init__(
@@ -126,7 +125,6 @@ class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
 
 
 class qLogRegionalExpectedImprovement(MCAcquisitionFunction):
-
     def __init__(
         self,
         model: Model,

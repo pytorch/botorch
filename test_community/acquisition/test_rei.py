@@ -4,22 +4,19 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import warnings
 from typing import Any
 
-import warnings
-
 import torch
-from botorch_community.acquisition.rei import (
-    LogRegionalExpectedImprovement,
-    qLogRegionalExpectedImprovement,
-)
-from botorch.acquisition.objective import (
-    ScalarizedPosteriorTransform,
-)
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from botorch_community.acquisition.rei import (
+    LogRegionalExpectedImprovement,
+    qLogRegionalExpectedImprovement,
+)
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 
 
