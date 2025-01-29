@@ -163,11 +163,14 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     NOTE: This model requires the use of specialized Kronecker solves in
     linear operator, which are disabled by default in BoTorch. These are enabled
     by default in the `HigherOrderGP.posterior` call. However, they need to be
-    manually enabled by the user during model fitting.
+    manually enabled by the user during model fitting. Note also that we're using
+    `fit_gpytorch_mll_torch()` here instead of `fit_gpytorch_mll()` since the
+    approximate computations result in a non-smooth MLL that the default
+    L-BFGS-B optimizer invoked by `fit_gpytorch_mll()` does not handle well.
 
     Example:
         >>> from linear_operator.settings import _fast_solves
-        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> model = HigherOrderGP(train_X, train_Y)
         >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
         >>> with _fast_solves(True):
         >>>     fit_gpytorch_mll_torch(mll)
