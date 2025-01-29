@@ -799,7 +799,7 @@
 <span class="sd">    non-negative. `qSimpleRegret` acquisition values can be negative, so we instead use</span>
 <span class="sd">    a `ConstrainedMCObjective` which applies constraints to the objectives (e.g. before</span>
 <span class="sd">    computing the acquisition function) and shifts negative objective values using</span>
-<span class="sd">    by an infeasible cost to ensure non-negativity (before applying constraints and</span>
+<span class="sd">    an infeasible cost to ensure non-negativity (before applying constraints and</span>
 <span class="sd">    shifting them back).</span>
 
 <span class="sd">    Example:</span>
@@ -868,11 +868,11 @@
 <span class="sd">    `SampleReducingMCAcquisitionFunction` computes the acquisition values on the sample</span>
 <span class="sd">    level and then weights the sample-level acquisition values by a soft feasibility</span>
 <span class="sd">    indicator. Hence, it expects non-log acquisition function values to be</span>
-<span class="sd">    non-negative. `qSimpleRegret` acquisition values can be negative, so we instead use</span>
-<span class="sd">    a `ConstrainedMCObjective` which applies constraints to the objectives (e.g. before</span>
-<span class="sd">    computing the acquisition function) and shifts negative objective values using</span>
-<span class="sd">    by an infeasible cost to ensure non-negativity (before applying constraints and</span>
-<span class="sd">    shifting them back).</span>
+<span class="sd">    non-negative. `qUpperConfidenceBound` acquisition values can be negative, so we</span>
+<span class="sd">    instead use a `ConstrainedMCObjective` which applies constraints to the objectives</span>
+<span class="sd">    (e.g. before computing the acquisition function) and shifts negative objective</span>
+<span class="sd">    values using an infeasible cost to ensure non-negativity (before applying</span>
+<span class="sd">    constraints and shifting them back).</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
@@ -945,6 +945,76 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_beta_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Multiply beta prime by -1 to get the lower confidence bound."""</span>
         <span class="k">return</span> <span class="o">-</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_beta_prime</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="qPosteriorStandardDeviation">
+<a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qPosteriorStandardDeviation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">qPosteriorStandardDeviation</span><span class="p">(</span><span class="n">SampleReducingMCAcquisitionFunction</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""MC-based batch Posterior Standard Deviation.</span>
+
+<span class="sd">    An acquisition function for pure exploration.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1024)</span>
+<span class="sd">        &gt;&gt;&gt; qPSTD = qPosteriorStandardDeviation(model, sampler)</span>
+<span class="sd">        &gt;&gt;&gt; std = qPSTD(test_X)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="p">:</span> <span class="n">MCSampler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">posterior_transform</span><span class="p">:</span> <span class="n">PosteriorTransform</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""q-Posterior Standard Deviation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted model.</span>
+<span class="sd">            sampler: The sampler used to draw base samples. See `MCAcquisitionFunction`</span>
+<span class="sd">                more details.</span>
+<span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
+<span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
+<span class="sd">            posterior_transform: A PosteriorTransform (optional).</span>
+<span class="sd">            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have</span>
+<span class="sd">                points that have been submitted for function evaluation but have not yet</span>
+<span class="sd">                been evaluated. Concatenated into X upon forward call. Copied and set to</span>
+<span class="sd">                have no gradient.</span>
+<span class="sd">            constraints: A list of constraint callables which map a Tensor of posterior</span>
+<span class="sd">                samples of dimension `sample_shape x batch-shape x q x m`-dim to a</span>
+<span class="sd">                `sample_shape x batch-shape x q`-dim Tensor. The associated constraints</span>
+<span class="sd">                are considered satisfied if the output is less than zero.</span>
+<span class="sd">            eta: Temperature parameter(s) governing the smoothness of the sigmoid</span>
+<span class="sd">                approximation to the constraint indicators. For more details, on this</span>
+<span class="sd">                parameter, see the docs of `compute_smoothed_feasibility_indicator`.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">posterior_transform</span><span class="o">=</span><span class="n">posterior_transform</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sample_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">"""Evaluate qPosteriorStandardDeviation per sample on the candidate set `X`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `sample_shape x batch_shape x q`-dim Tensor of acquisition values.</span>
+<span class="sd">        """</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">obj</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span></div>
 
 </pre></div>
 </div>

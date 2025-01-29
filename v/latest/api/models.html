@@ -1158,6 +1158,16 @@ dimension <cite>m</cite> must be explicit if <cite>m=1</cite>).</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.deterministic.PosteriorMeanModel.num_outputs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_outputs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.models.deterministic.PosteriorMeanModel.num_outputs" title="Link to this definition">¶</a></dt>
+<dd><p>The number of outputs of the model.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.deterministic.PosteriorMeanModel.batch_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Size</span></em><a class="headerlink" href="#botorch.models.deterministic.PosteriorMeanModel.batch_shape" title="Link to this definition">¶</a></dt>
+<dd><p>The batch shape of the model.</p>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.deterministic.FixedSingleSampleModel">
@@ -2943,10 +2953,13 @@ The Kronecker structure allows representing this as a product of 10x10,
 <p>NOTE: This model requires the use of specialized Kronecker solves in
 linear operator, which are disabled by default in BoTorch. These are enabled
 by default in the <cite>HigherOrderGP.posterior</cite> call. However, they need to be
-manually enabled by the user during model fitting.</p>
+manually enabled by the user during model fitting. Note also that we’re using
+<cite>fit_gpytorch_mll_torch()</cite> here instead of <cite>fit_gpytorch_mll()</cite> since the
+approximate computations result in a non-smooth MLL that the default
+L-BFGS-B optimizer invoked by <cite>fit_gpytorch_mll()</cite> does not handle well.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">linear_operator.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">_fast_solves</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">HigherOrderGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">_fast_solves</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">fit_gpytorch_mll_torch</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>

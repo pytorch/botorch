@@ -200,11 +200,14 @@
 <span class="sd">    NOTE: This model requires the use of specialized Kronecker solves in</span>
 <span class="sd">    linear operator, which are disabled by default in BoTorch. These are enabled</span>
 <span class="sd">    by default in the `HigherOrderGP.posterior` call. However, they need to be</span>
-<span class="sd">    manually enabled by the user during model fitting.</span>
+<span class="sd">    manually enabled by the user during model fitting. Note also that we're using</span>
+<span class="sd">    `fit_gpytorch_mll_torch()` here instead of `fit_gpytorch_mll()` since the</span>
+<span class="sd">    approximate computations result in a non-smooth MLL that the default</span>
+<span class="sd">    L-BFGS-B optimizer invoked by `fit_gpytorch_mll()` does not handle well.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; from linear_operator.settings import _fast_solves</span>
-<span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; model = HigherOrderGP(train_X, train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; mll = ExactMarginalLogLikelihood(model.likelihood, model)</span>
 <span class="sd">        &gt;&gt;&gt; with _fast_solves(True):</span>
 <span class="sd">        &gt;&gt;&gt;     fit_gpytorch_mll_torch(mll)</span>
