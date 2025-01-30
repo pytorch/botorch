@@ -49,13 +49,16 @@ from botorch.acquisition.analytic import (
     _scaled_improvement,
     AnalyticAcquisitionFunction,
 )
-from botorch.acquisition.logei import _log_improvement, check_tau
-from botorch.acquisition.monte_carlo import MCAcquisitionFunction
+from botorch.acquisition.logei import (
+    _log_improvement,
+    check_tau,
+    LogImprovementMCAcquisitionFunction,
+)
 from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.utils.safe_math import logmeanexp
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import t_batch_mode_transform
 from torch import Tensor
 
 TAU_RELU = 1e-6
@@ -125,7 +128,7 @@ class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
         return logrei
 
 
-class qLogRegionalExpectedImprovement(MCAcquisitionFunction):
+class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
     def __init__(
         self,
         model: Model,
@@ -191,10 +194,7 @@ class qLogRegionalExpectedImprovement(MCAcquisitionFunction):
                 device=self.X_dev.device, dtype=self.X_dev.dtype
             )
 
-    @concatenate_pending_points
-    @t_batch_mode_transform()
-    def forward(self, X: Tensor) -> Tensor:
-        batch_shape = X.shape[0]
+    def _sample_forward(self, X: Tensor) -> Tensor:
         q = X.shape[1]
         d = X.shape[2]
 
@@ -208,9 +208,6 @@ class qLogRegionalExpectedImprovement(MCAcquisitionFunction):
         )
         samples = self.get_posterior_samples(posterior)
         obj = self.objective(samples, X=Xs)
-        obj = _log_improvement(obj, self.best_f, self.tau_relu, self.fat).reshape(
-            -1, self.n_region, batch_shape, q
-        )
-        q_log_rei = obj.max(dim=-1)[0].mean(dim=(0, 1))
+        obj = _log_improvement(obj, self.best_f, self.tau_relu, self.fat)
 
-        return q_log_rei
+        return obj

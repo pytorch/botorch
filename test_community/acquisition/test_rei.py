@@ -174,8 +174,6 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
         self.assertIsNone(acqf.X_pending)
         acqf.set_X_pending(X)
         self.assertEqual(acqf.X_pending, X)
-        mm._posterior._samples = torch.zeros(1, 2, 1, **tkwargs)
-        res = acqf(X)
         X2 = torch.zeros(1, 1, 1, **tkwargs, requires_grad=True)
         with warnings.catch_warnings(record=True) as ws:
             acqf.set_X_pending(X2)
