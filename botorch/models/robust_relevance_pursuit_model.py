@@ -61,7 +61,6 @@ from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.module import Module
 from torch import Tensor
 
-
 # default fractions of outliers to consider during relevance pursuit
 FRACTIONS_OF_OUTLIERS = [
     0.0,
@@ -117,8 +116,8 @@ class RobustRelevancePursuitMixin(ABC):
             dim=dim,
             convex_parameterization=convex_parameterization,
         )
-        self.bmc_support_size: Tensor | None = None
-        self.bmc_probability: Tensor | None = None
+        self.bmc_support_sizes: Tensor | None = None
+        self.bmc_probabilities: Tensor | None = None
         self.cache_model_trace = cache_model_trace
         self.model_trace: list[SingleTaskGP] | None = None
         self.prior_mean_of_support: float = (
