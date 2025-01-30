@@ -26,7 +26,7 @@ WEBSITE_DIR = LIB_DIR.joinpath("website")
 DOCS_DIR = LIB_DIR.joinpath("docs")
 TUTORIALS_DIR = DOCS_DIR.joinpath("tutorials")
 
-ORGANIZATION = "cristianlara"
+ORGANIZATION = "pytorch"
 PROJECT = "botorch"
 
 # Data display priority. Below lists the priority for displaying data from cell outputs.
