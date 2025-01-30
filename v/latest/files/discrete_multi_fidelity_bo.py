@@ -29,7 +29,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 # ### Problem setup
 # 
-# We'll consider the Augmented Hartmann multi-fidelity synthetic test problem. This function is a version of the Hartmann6 test function with an additional dimension representing the fidelity parameter; details are in [2]. The function takes the form $f(x,s)$ where $x \in [0,1]^6$ and $s \in \{0.5, 0.75, 1\}$. The target fidelity is 1.0, which means that our goal is to solve $\max_x f(x,1.0)$ by making use of cheaper evaluations $f(x,s)$ for $s \in \{0.5, 0.75\}$. In this example, we'll assume that the cost function takes the form $5.0 + s$, illustrating a situation where the fixed cost is $5.0$.
+# We'll consider the Augmented Hartmann multi-fidelity synthetic test problem. This function is a version of the Hartmann6 test function with an additional dimension representing the fidelity parameter; details are in [2]. The function takes the form $f(x,s)$ where $x \in [0,1]^6$ and $s \in \{0.5, 0.75, 1\}$. The target fidelity is 1.0, which means that our goal is to solve $\max_x f(x,1.0)$ by making use of cheaper evaluations $f(x,s)$ for $s \in \{0.5, 0.75\}$. In this example, we'll assume that the cost function takes the form $0.25 + s$, illustrating a situation where the fixed cost is $0.25$.
 
 # In[2]:
 
@@ -94,7 +94,7 @@ from botorch.acquisition.utils import project_to_target_fidelity
 bounds = torch.tensor([[0.0] * problem.dim, [1.0] * problem.dim], **tkwargs)
 target_fidelities = {6: 1.0}
 
-cost_model = AffineFidelityCostModel(fidelity_weights={6: 1.0}, fixed_cost=5.0)
+cost_model = AffineFidelityCostModel(fidelity_weights={6: 1.0}, fixed_cost=0.25)
 cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)
 
 
@@ -233,22 +233,19 @@ final_rec = get_recommendation(model)
 print(f"\ntotal cost: {cumulative_cost}\n")
 
 
-# ### Comparison to standard EI (always use target fidelity)
-# Let's now repeat the same steps using a standard EI acquisition function (note that this is not a rigorous comparison as we are only looking at one trial in order to keep computational requirements low).
+# ### Comparison to standard (log)EI (always use target fidelity)
+# Let's now repeat the same steps using a standard qLogExpectedImprovement acquisition function (note that this is not a rigorous comparison as we are only looking at one trial in order to keep computational requirements low).
 
 # In[10]:
 
 
-from botorch.acquisition import qExpectedImprovement
+from botorch.acquisition import qLogExpectedImprovement
 
 
 def get_ei(model, best_f):
-
+        
     return FixedFeatureAcquisitionFunction(
-        acq_function=qExpectedImprovement(model=model, best_f=best_f),
-        d=7,
-        columns=[6],
-        values=[1],
+        acq_function=qLogExpectedImprovement(model=model, best_f=best_f), d=7, columns=[6], values=[1],
     )
 
 
@@ -298,10 +295,4 @@ for _ in range(N_ITER):
 
 final_rec = get_recommendation(model)
 print(f"\ntotal cost: {cumulative_cost}\n")
-
-
-# In[12]:
-
-
-
 

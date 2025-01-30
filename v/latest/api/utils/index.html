@@ -2369,9 +2369,9 @@ persistent buffers.</p></li>
 <li><p><strong>strict</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to strictly enforce that the keys
 in <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> match the keys returned by this module’s
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">state_dict()</span></code> function. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
-<li><p><strong>assign</strong> (<em>bool</em><em>, </em><em>optional</em>) – When <code class="docutils literal notranslate"><span class="pre">False</span></code>, the properties of the tensors
-in the current module are preserved while when <code class="docutils literal notranslate"><span class="pre">True</span></code>, the
-properties of the Tensors in the state dict are preserved. The only
+<li><p><strong>assign</strong> (<em>bool</em><em>, </em><em>optional</em>) – When set to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the properties of the tensors
+in the current module are preserved whereas setting it to <code class="docutils literal notranslate"><span class="pre">True</span></code> preserves
+properties of the Tensors in the state dict. The only
 exception is the <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code> field of <code class="xref py py-class docutils literal notranslate">
 <span class="pre">Default:</span> <span class="pre">``False`</span></code></p></li>
 </ul>
@@ -2727,7 +2727,7 @@ key-value pairs of type (string, <code class="xref py py-class docutils literal 
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.torch.BufferDict.extra_repr">
 <span class="sig-name descname"><span class="pre">extra_repr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.extra_repr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.extra_repr" title="Link to this definition">¶</a></dt>
-<dd><p>Set the extra representation of the module.</p>
+<dd><p>Return the extra representation of the module.</p>
 <p>To print customized extra information, you should re-implement
 this method in your own modules. Both single-line and multi-line
 strings are acceptable.</p>
