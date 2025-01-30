@@ -17,11 +17,16 @@ jobs:
 
   build-website:
     runs-on: ubuntu-latest
+    env:
+      # `uv pip ...` requires venv by default. This skips that requirement.
+      UV_SYSTEM_PYTHON: 1
     steps:
     - uses: actions/checkout@v4
       with:
         ref: 'docusaurus-versions' # release branch
         fetch-depth: 0
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
     - name: Sync release branch with main
       run: |
         git config --global user.name "github-actions[bot]"
@@ -35,16 +40,16 @@ jobs:
     - if: ${{ !inputs.new_version }}
       name: Install latest GPyTorch and Linear Operator
       run: |
-        pip install git+https://github.com/cornellius-gp/linear_operator.git
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        uv pip install git+https://github.com/cornellius-gp/linear_operator.git
+        uv pip install git+https://github.com/cornellius-gp/gpytorch.git
     - name: Install dependencies
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
         ALLOW_BOTORCH_LATEST: true  # Allow Ax to install w/ new BoTorch release.
       run: |
-        pip install ."[dev, tutorials]"
-        # There may not be a compatible Ax pip version, so we use the development version.
-        pip install git+https://github.com/facebook/Ax.git
+        uv pip install ."[dev, tutorials]"
+        # There may not be a compatible Ax uv pip version, so we use the development version.
+        uv pip install git+https://github.com/facebook/Ax.git
     - if: ${{ inputs.new_version }}
       name: Create new docusaurus version
       run: |

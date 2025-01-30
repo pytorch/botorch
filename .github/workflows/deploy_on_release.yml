@@ -20,9 +20,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write # This is required for PyPI OIDC authentication.
+    env:
+      # `uv pip ...` requires venv by default. This skips that requirement.
+      UV_SYSTEM_PYTHON: 1
     needs: tests-and-coverage
     steps:
     - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
     - name: Set up Python
@@ -31,8 +36,8 @@ jobs:
         python-version: "3.12"
     - name: Install dependencies
       run: |
-        pip install .[test]
-        pip install --upgrade build setuptools setuptools_scm wheel
+        uv pip install .[test]
+        uv pip install --upgrade build setuptools setuptools_scm wheel
     - name: Build packages (wheel and source distribution)
       run: |
         python -m build --sdist --wheel
