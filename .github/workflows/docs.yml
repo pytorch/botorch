@@ -32,7 +32,7 @@ jobs:
       run: |
         uv pip install git+https://github.com/cornellius-gp/linear_operator.git
         uv pip install git+https://github.com/cornellius-gp/gpytorch.git
-        uv pip install .[dev, tutorials]
+        uv pip install ."[dev, tutorials]"
     - name: Validate Sphinx
       run: |
         python scripts/validate_sphinx.py -p "$(pwd)"
