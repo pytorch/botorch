@@ -50,9 +50,9 @@ module.exports={
         "theme": {
           "customCss": "static/css/custom.css"
         },
-        // "gtag": {
-        //   "trackingID": "G-CXN3PGE3CC"
-        // }
+        "gtag": {
+          "trackingID": "G-CXN3PGE3CC"
+        }
       }
     ]
   ],
