@@ -180,6 +180,7 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
             posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
+
         self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
         self.fat: bool = fat
         self.tau_relu: float = check_tau(tau_relu, "tau_relu")
@@ -194,7 +195,23 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
                 device=self.X_dev.device, dtype=self.X_dev.dtype
             )
 
-    def _sample_forward(self, X: Tensor) -> Tensor:
+    def _get_samples_and_objectives(self, X: Tensor) -> tuple[Tensor, Tensor]:
+        """Computes posterior samples and objective values at input X.
+
+        This is required in order to munge X and create samples within a TR
+        and compute the MC objective over these points. This is then later
+        passed to the _sample_forward function to compute the Log Regional
+        Expected Improvement acqusition function value.
+
+        Args:
+            X: A `batch_shape x q x d`-dim Tensor of model inputs.
+
+        Returns:
+            A two-tuple `(samples, obj)`, where `samples` is a tensor of posterior
+            samples with shape `sample_shape x batch_shape x q x m`, and `obj` is a
+            tensor of MC objective values with shape `sample_shape x batch_shape x q`.
+        """
+        # region-averaged EI specific code
         q = X.shape[1]
         d = X.shape[2]
 
@@ -203,11 +220,22 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
         X_max = (X + 0.5 * self.length).clamp_max(self.bounds[1]).unsqueeze(0)
         Xs = (self.X_dev * (X_max - X_min) + X_min).reshape(-1, q, d)
 
-        posterior = self.model.posterior(
-            X=Xs, posterior_transform=self.posterior_transform
-        )
-        samples = self.get_posterior_samples(posterior)
-        obj = self.objective(samples, X=Xs)
-        obj = _log_improvement(obj, self.best_f, self.tau_relu, self.fat)
+        # calling the original method with the modified inputs
+        return super()._get_samples_and_objectives(Xs)
 
-        return obj
+    def _sample_forward(self, obj: Tensor) -> Tensor:
+        r"""Evaluate qLogExpectedImprovement on the candidate set `X`.
+
+        Args:
+            obj: `mc_shape x batch_shape x q`-dim Tensor of MC objective values.
+
+        Returns:
+            A `mc_shape x batch_shape x q`-dim Tensor of expected improvement values.
+        """
+        li = _log_improvement(
+            Y=obj,
+            best_f=self.best_f,
+            tau=self.tau_relu,
+            fat=self._fat,
+        )
+        return li
