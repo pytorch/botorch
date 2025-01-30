@@ -14,6 +14,7 @@ from typing import Any
 import numpy.typing as npt
 from botorch.exceptions.errors import OptimizationTimeoutError
 from scipy import optimize
+from threadpoolctl import threadpool_limits
 
 
 def minimize_with_timeout(
@@ -79,20 +80,23 @@ def minimize_with_timeout(
 
     try:
         warnings.filterwarnings("error", message="Method .* cannot handle")
-        return optimize.minimize(
-            fun=fun,
-            x0=x0,
-            args=args,
-            method=method,
-            jac=jac,
-            hess=hess,
-            hessp=hessp,
-            bounds=bounds,
-            constraints=constraints,
-            tol=tol,
-            callback=wrapped_callback,
-            options=options,
-        )
+        # To prevent slowdowns after scipy 1.15.
+        # See https://github.com/scipy/scipy/issues/22438.
+        with threadpool_limits(limits=1, user_api="blas"):
+            return optimize.minimize(
+                fun=fun,
+                x0=x0,
+                args=args,
+                method=method,
+                jac=jac,
+                hess=hess,
+                hessp=hessp,
+                bounds=bounds,
+                constraints=constraints,
+                tol=tol,
+                callback=wrapped_callback,
+                options=options,
+            )
     except OptimizationTimeoutError as e:
         msg = f"Optimization timed out after {e.runtime} seconds."
         current_fun, *_ = fun(e.current_x, *args)
