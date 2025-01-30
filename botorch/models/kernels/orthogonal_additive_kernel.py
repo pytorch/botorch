@@ -336,7 +336,8 @@ def _check_hypercube(x: Tensor, name: str) -> None:
         x: Tensor to be checked.
         name: Name of the Tensor for the error message.
     """
-    if (x < 0).any() or (x > 1).any():
+    tolerance = 1e-6
+    if (x < -1 * tolerance).any() or (x > 1 + tolerance).any():
         raise ValueError(name + " is not in hypercube [0, 1]^d.")
 
 

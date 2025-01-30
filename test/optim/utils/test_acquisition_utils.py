@@ -240,7 +240,9 @@ class TestGetXBaseline(BotorchTestCase):
             # to the train_inputs when the model is in eval mode, we
             # extract the untransformed train_inputs
             model = SingleTaskGP(
-                X_train, Y_train[:, :1], input_transform=Warp(indices=[0, 1])
+                X_train,
+                Y_train[:, :1],
+                input_transform=Warp(d=X_train.shape[-1], indices=[0, 1]),
             )
             model.eval()
             self.assertFalse(torch.equal(model.train_inputs[0], X_train))

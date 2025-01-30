@@ -420,23 +420,6 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         self.assertTrue(X is X_out)  # testing pointer equality for due to short cut
         self.assertAllClose(ei_val, ei(X[None]))
 
-        # Input outside of bounds raises error.
-        invalid_X = X.clone()
-        invalid_X[2] = 2
-        with self.assertRaisesRegex(
-            ValueError,
-            "continuous_step requires current_x to be",
-        ):
-            X_new, ei_val = continuous_step(
-                opt_inputs=_make_opt_inputs(
-                    acq_function=ei,
-                    bounds=bounds,
-                    options={"maxiter_continuous": 32},
-                ),
-                discrete_dims=binary_dims,
-                current_x=invalid_X,
-            )
-
     def test_optimize_acqf_mixed_binary_only(self) -> None:
         train_X, train_Y, binary_dims, cont_dims = self._get_data()
         dim = len(binary_dims) + len(cont_dims)

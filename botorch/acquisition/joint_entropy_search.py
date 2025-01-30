@@ -29,7 +29,7 @@ import torch
 from botorch import settings
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
 from botorch.acquisition.objective import PosteriorTransform
-from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
+from botorch.models.fully_bayesian import FullyBayesianSingleTaskGP
 from botorch.models.model import Model
 from botorch.models.utils import check_no_nans, fantasize as fantasize_flag
 from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
@@ -124,7 +124,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
         # and the optimal outputs have shapes num_optima x [num_models if FB] x 1 x 1
         # The third dimension equaling 1 is required to get one optimum per model,
         # which raises a BotorchTensorDimensionWarning.
-        if isinstance(model, SaasFullyBayesianSingleTaskGP):
+        if isinstance(model, FullyBayesianSingleTaskGP):
             raise NotImplementedError(FULLY_BAYESIAN_ERROR_MSG)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")

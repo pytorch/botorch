@@ -129,6 +129,10 @@
     {
       "id": "information_theoretic_acquisition_functions",
       "title": "Information-theoretic acquisition functions"
+    },
+    {
+      "id": "relevance_pursuit_robust_regression",
+      "title": "Robust Gaussian Processes via Relevance Pursuit"
     }
   ],
   "Advanced Usage": [

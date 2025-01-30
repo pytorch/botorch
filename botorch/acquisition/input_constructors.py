@@ -1758,7 +1758,7 @@ def optimize_objective(
             columns=list(fixed_features.keys()),
             values=list(fixed_features.values()),
         )
-        free_feature_dims = list(range(len(bounds)) - fixed_features.keys())
+        free_feature_dims = list(range(bounds.shape[1]) - fixed_features.keys())
         free_feature_bounds = bounds[:, free_feature_dims]  # (2, d' <= d)
     else:
         free_feature_bounds = bounds
@@ -1775,18 +1775,21 @@ def optimize_objective(
             rhs = -b[i, 0]
             inequality_constraints.append((indices, coefficients, rhs))
 
+    options = {
+        "batch_limit": optimizer_options.get("batch_limit", 8),
+        "maxiter": optimizer_options.get("maxiter", 200),
+        "nonnegative": optimizer_options.get("nonnegative", False),
+    }
+    if "method" in optimizer_options:
+        options["method"] = optimizer_options.pop("method")
+
     return optimize_acqf(
         acq_function=acq_function,
         bounds=free_feature_bounds,
         q=q,
         num_restarts=optimizer_options.get("num_restarts", 60),
         raw_samples=optimizer_options.get("raw_samples", 1024),
-        options={
-            "batch_limit": optimizer_options.get("batch_limit", 8),
-            "maxiter": optimizer_options.get("maxiter", 200),
-            "nonnegative": optimizer_options.get("nonnegative", False),
-            "method": optimizer_options.get("method", "L-BFGS-B"),
-        },
+        options=options,
         inequality_constraints=inequality_constraints,
         fixed_features=None,  # handled inside the acquisition function
         post_processing_func=post_processing_func,

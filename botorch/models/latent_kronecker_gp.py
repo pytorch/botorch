@@ -81,7 +81,7 @@ class MinMaxStandardize(Standardize):
         self._use_min = use_min
 
     def forward(
-        self, Y: Tensor, Yvar: Tensor | None = None
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
     ) -> tuple[Tensor, Tensor | None]:
         r"""Standardize outcomes.
 
@@ -93,6 +93,7 @@ class MinMaxStandardize(Standardize):
             Y: A `batch_shape x n x m`-dim tensor of training targets.
             Yvar: A `batch_shape x n x m`-dim tensor of observation noises
                 associated with the training targets (if applicable).
+            X: A `batch_shape x n x d`-dim tensor of training inputs (if applicable).
 
         Returns:
             A two-tuple with the transformed outcomes:
@@ -240,7 +241,9 @@ class LatentKroneckerGP(GPyTorchModel, ExactGP, FantasizeMixin):
             outcome_transform = MinMaxStandardize(batch_shape=batch_shape)
         if outcome_transform is not None:
             # transform outputs once and keep the results
-            train_Y = outcome_transform(train_Y.unsqueeze(-1))[0].squeeze(-1)
+            train_Y = outcome_transform(train_Y.unsqueeze(-1), X=transformed_X)[
+                0
+            ].squeeze(-1)
 
         ExactGP.__init__(
             self,
@@ -506,7 +509,7 @@ class LatentKroneckerGP(GPyTorchModel, ExactGP, FantasizeMixin):
         )
         # samples.shape = (*sample_shape, *broadcast_shape, n_test_x, n_t)
         if hasattr(self, "outcome_transform") and self.outcome_transform is not None:
-            samples, _ = self.outcome_transform.untransform(samples)
+            samples, _ = self.outcome_transform.untransform(samples, X=X)
         return samples
 
     def condition_on_observations(

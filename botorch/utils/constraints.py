@@ -10,11 +10,14 @@ Helpers for handling input or outcome constraints.
 
 from __future__ import annotations
 
+import math
+
 from collections.abc import Callable
 
 from functools import partial
 
 import torch
+from gpytorch import settings
 from gpytorch.constraints import Interval
 
 from torch import Tensor
@@ -143,3 +146,77 @@ class NonTransformedInterval(Interval):
 
     def inverse_transform(self, transformed_tensor: Tensor) -> Tensor:
         return transformed_tensor
+
+
+class LogTransformedInterval(Interval):
+    """Modification of the GPyTorch interval class.
+
+    The Interval class in GPyTorch will map the parameter to the range [0, 1] before
+    applying the inverse transform. LogTransformedInterval skips this step to avoid
+    numerical issues, and applies the log transform directly to the parameter values.
+    GPyTorch automatically recognizes that the bound constraint have not been applied
+    yet, and passes the bounds to the optimizer instead, which then optimizes
+    log(parameter) under the constraints log(lower) <= log(parameter) <= log(upper).
+    """
+
+    def __init__(
+        self,
+        lower_bound: float,
+        upper_bound: float,
+        initial_value: float | None = None,
+    ):
+        """Constructor of the LogTransformedInterval class.
+
+        Args:
+            lower_bound: The lower bound of the interval.
+            upper_bound: The upper bound of the interval.
+            initial_value: The initial value of the parameter.
+        """
+        super().__init__(
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            transform=torch.exp,
+            inv_transform=torch.log,
+            initial_value=initial_value,
+        )
+
+        # Save the untransformed initial value
+        self.register_buffer(
+            "initial_value_untransformed",
+            (
+                torch.tensor(initial_value).to(self.lower_bound)
+                if initial_value is not None
+                else None
+            ),
+        )
+
+        if settings.debug.on():
+            max_bound = torch.max(self.upper_bound)
+            min_bound = torch.min(self.lower_bound)
+            if max_bound == math.inf or min_bound == -math.inf:
+                raise RuntimeError(
+                    "Cannot make an Interval directly with non-finite bounds. Use a "
+                    "derived class like GreaterThan or LessThan instead."
+                )
+
+    def transform(self, tensor: Tensor) -> Tensor:
+        """Transform the parameter using the exponential function.
+
+        Args:
+            tensor: Tensor of parameter values to transform.
+
+        Returns:
+            Tensor of transformed parameter values.
+        """
+        return self._transform(tensor)
+
+    def inverse_transform(self, transformed_tensor: Tensor) -> Tensor:
+        """Untransform the parameter using the natural logarithm.
+
+        Args:
+            tensor: Tensor of parameter values to untransform.
+
+        Returns:
+            Tensor of untransformed parameter values.
+        """
+        return self._inv_transform(transformed_tensor)

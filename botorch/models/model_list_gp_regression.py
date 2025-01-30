@@ -117,7 +117,7 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
             else:
                 noise_i = torch.cat([noise[..., k] for k in range(i, j)], dim=-1)
             if hasattr(model, "outcome_transform"):
-                y_i, noise_i = model.outcome_transform(y_i, noise_i)
+                y_i, noise_i = model.outcome_transform(y_i, noise_i, X=X_i)
                 if noise_i is not None:
                     noise_i = noise_i.squeeze(0)
             targets.append(y_i)

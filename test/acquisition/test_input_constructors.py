@@ -14,6 +14,8 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 from functools import reduce
+
+from random import randint
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -43,12 +45,14 @@ from botorch.acquisition.input_constructors import (
     get_acqf_input_constructor,
     get_best_f_analytic,
     get_best_f_mc,
+    optimize_objective,
 )
 from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
 )
+
 from botorch.acquisition.logei import (
     qLogExpectedImprovement,
     qLogNoisyExpectedImprovement,
@@ -108,6 +112,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.models import MultiTaskGP, SaasFullyBayesianSingleTaskGP, SingleTaskGP
 from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.model_list_gp_regression import ModelListGP
+from botorch.optim.optimize import optimize_acqf
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.test_utils.mock import mock_optimize
 from botorch.utils.constraints import get_outcome_constraint_transforms
@@ -221,38 +226,73 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase):
         best_f_expected = multi_Y.sum(dim=-1).max()
         self.assertAllClose(best_f, best_f_expected)
 
-    @mock.patch("botorch.acquisition.input_constructors.optimize_acqf")
-    def test_optimize_objective(self, mock_optimize_acqf):
-        from botorch.acquisition.input_constructors import optimize_objective
+    @mock_optimize
+    def test_optimize_objective(self) -> None:
+        torch.manual_seed(randint(a=0, b=100))
+        n = 4
+        d = 3
+        x = torch.rand(n, d, dtype=torch.double, device=self.device)
+        y = torch.rand(n, 1, dtype=torch.double, device=self.device)
+        model = SingleTaskGP(train_X=x, train_Y=y)
 
-        mock_model = self.mock_model
-        bounds = torch.rand(2, len(self.bounds))
+        bounds = torch.tensor(
+            [[0.0, -0.01, -0.02], [1.0, 1.01, 1.02]],
+            dtype=torch.double,
+            device=self.device,
+        )
 
         with self.subTest("scalarObjective_acquisitionFunction"):
-            optimize_objective(
-                model=mock_model,
-                bounds=bounds,
-                q=1,
-                acq_function=UpperConfidenceBound(model=mock_model, beta=0.1),
-            )
+            acq_function = UpperConfidenceBound(model=model, beta=0.1)
+            with mock.patch(
+                "botorch.acquisition.input_constructors.optimize_acqf",
+                wraps=optimize_acqf,
+            ) as mock_optimize_acqf:
+                optimize_objective(
+                    model=model,
+                    bounds=bounds,
+                    q=1,
+                    acq_function=acq_function,
+                )
             kwargs = mock_optimize_acqf.call_args[1]
-            self.assertIsInstance(kwargs["acq_function"], UpperConfidenceBound)
+            self.assertIs(kwargs["acq_function"], acq_function)
 
-        A = torch.rand(1, bounds.shape[-1])
-        b = torch.zeros([1, 1])
+        with self.subTest("Passing optimizer"):
+            # Not testing for a more specific error message because the
+            # exception comes from Scipy and they might change it
+            with self.assertRaises(RuntimeWarning):
+                optimize_objective(
+                    model=model,
+                    bounds=bounds,
+                    q=1,
+                    acq_function=acq_function,
+                    optimizer_options={"method": "throwing darts"},
+                )
+
+        A = torch.rand(1, bounds.shape[-1], dtype=torch.double, device=self.device)
+        b = torch.zeros([1, 1], dtype=torch.double, device=self.device)
         idx = A[0].nonzero(as_tuple=False).squeeze()
         inequality_constraints = ((idx, -A[0, idx], -b[0, 0]),)
 
+        m = 2
+        y = torch.rand((n, m), dtype=torch.double, device=self.device)
+        model = SingleTaskGP(train_X=x, train_Y=y)
+
         with self.subTest("scalarObjective_linearConstraints"):
-            post_tf = ScalarizedPosteriorTransform(weights=torch.rand(bounds.shape[-1]))
-            _ = optimize_objective(
-                model=mock_model,
-                bounds=bounds,
-                q=1,
-                posterior_transform=post_tf,
-                linear_constraints=(A, b),
-                fixed_features=None,
+            post_tf = ScalarizedPosteriorTransform(
+                weights=torch.rand(m, dtype=torch.double, device=self.device)
             )
+            with mock.patch(
+                "botorch.acquisition.input_constructors.optimize_acqf",
+                wraps=optimize_acqf,
+            ) as mock_optimize_acqf:
+                _ = optimize_objective(
+                    model=model,
+                    bounds=bounds,
+                    q=1,
+                    posterior_transform=post_tf,
+                    linear_constraints=(A, b),
+                    fixed_features=None,
+                )
 
             kwargs = mock_optimize_acqf.call_args[1]
             self.assertIsInstance(kwargs["acq_function"], PosteriorMean)
@@ -264,13 +304,20 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase):
                 self.assertTrue(torch.equal(a, b))
 
         with self.subTest("mcObjective_fixedFeatures"):
-            _ = optimize_objective(
-                model=mock_model,
-                bounds=bounds,
-                q=1,
-                objective=LinearMCObjective(weights=torch.rand(bounds.shape[-1])),
-                fixed_features={0: 0.5},
+            objective = LinearMCObjective(
+                weights=torch.rand(m, dtype=torch.double, device=self.device)
             )
+            with mock.patch(
+                "botorch.acquisition.input_constructors.optimize_acqf",
+                wraps=optimize_acqf,
+            ) as mock_optimize_acqf:
+                _ = optimize_objective(
+                    model=model,
+                    bounds=bounds,
+                    q=1,
+                    objective=objective,
+                    fixed_features={0: 0.5},
+                )
 
             kwargs = mock_optimize_acqf.call_args[1]
             self.assertIsInstance(
