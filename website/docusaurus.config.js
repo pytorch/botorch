@@ -6,7 +6,7 @@ module.exports={
   "title": "BoTorch",
   "tagline": "Bayesian Optimization in PyTorch",
   "url": "https://botorch.org",
-  "baseUrl": "/botorch",
+  "baseUrl": "/",
   "organizationName": "pytorch",
   "projectName": "botorch",
   "scripts": [
