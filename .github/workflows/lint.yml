@@ -12,16 +12,20 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    env:
+      # `uv pip ...` requires venv by default. This skips that requirement.
+      UV_SYSTEM_PYTHON: 1
     steps:
       - uses: actions/checkout@v4
-
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Install dependencies
-        run: pip install pre-commit
+        run: uv pip install pre-commit
 
       - name: Run pre-commit
         run: pre-commit run --all-files --show-diff-on-failure
