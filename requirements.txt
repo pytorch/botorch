@@ -4,5 +4,6 @@ gpytorch==1.14
 linear_operator==0.6
 torch>=2.0.1
 pyro-ppl>=1.8.4
-scipy<1.15
+scipy
 multipledispatch
+threadpoolctl
