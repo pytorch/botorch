@@ -188,9 +188,8 @@ module.exports={
       copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc.`,
     },
     "algolia": {
-      // T208893119: change algolia api key before merge
-      "appId": "4ROLHRP5JS",
-      "apiKey": "9832d5900b4146855d71295140d05ae1",
+      "appId": "BH4D9OD16A",
+      "apiKey": "207c27d819f967749142d8611de7cb19",
       "indexName": "botorch"
     }
   }
