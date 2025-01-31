@@ -157,6 +157,9 @@ additional context on the default hyperparameters.
 - [`SingleTaskVariationalGP`](../api/models.html#botorch.models.approximate_gp.SingleTaskVariationalGP):
   an approximate model for faster computation when you have a lot of data or
   your responses are non-Gaussian.
+- [`NeuralProcessModel`](../api/models.html#botorch_community.models.np_regression.NeuralProcessModel):
+  A NP Model utilizing a novel acquisition function computing the expected KL 
+  Divergence in the latent processes.
 
 ## Implementing Custom Models
 

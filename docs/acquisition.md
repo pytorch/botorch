@@ -170,3 +170,38 @@ Backpropagation and Approximate Inference in Deep Generative Models. ICML, 2014.
 [^Wilson2017]: J. T. Wilson, R. Moriconi, F. Hutter, M. P. Deisenroth.
 The Reparameterization Trick for Acquisition Functions. NeurIPS Workshop on
 Bayesian Optimization, 2017.
+
+## Latent Information Gain
+
+In the high-dimensional spatiotemporal domain, Expected Information Gain becomes
+less informative for useful observations, and it can be difficult to calculate
+its parameters. To overcome these limitations, we propose a novel acquisition 
+function by computing the expected information gain in the latent space rather
+than the observational space. To design this acquisition function,
+we prove the equivalence between the expected information gain
+in the observational space and the expected KL divergence in the
+latent processes w.r.t. a candidate parameter 𝜃, as illustrated by the
+following proposition.
+
+Proposition 1. The expected information gain (EIG) for Neural
+Process is equivalent to the KL divergence between the prior and
+posterior in the latent process, that is
+
+$$ \text{EIG}(\hat{x}_{1:T}, \theta) := \mathbb{E} \left[ H(\hat{x}_{1:T}) - 
+H(\hat{x}_{1:T} \mid z_{1:T}, \theta) \right] 
+= \mathbb{E}_{p(\hat{x}_{1:T} \mid \theta)} 
+\text{KL} \left( p(z_{1:T} \mid \hat{x}_{1:T}, \theta) \,\|\, p(z_{1:T}) \right)
+$$
+
+
+Inspired by this fact, we propose a novel acquisition function computing the 
+expected KL divergence in the latent processes and name it LIG. Specifically, 
+the trained NP model produces a variational posterior given the current dataset. 
+For every parameter $$\theta$$ remained in the search space, we can predict 
+$$\hat{x}_{1:T}$$ with the decoder. We use $$\hat{x}_{1:T}$$ and $$\theta$$ 
+as input to the encoder to re-evaluate the posterior. LIG computes the 
+distributional difference with respect to the latent process.
+[Wu2023arxiv]:
+   Wu, D., Niu, R., Chinazzi, M., Vespignani, A., Ma, Y.-A., & Yu, R. (2023).
+   Deep Bayesian Active Learning for Accelerating Stochastic Simulation.
+   arXiv preprint arXiv:2106.02770. Retrieved from https://arxiv.org/abs/2106.02770
