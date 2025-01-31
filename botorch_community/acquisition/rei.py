@@ -192,7 +192,7 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
         self.tau_relu: float = check_tau(tau_relu, "tau_relu")
         dim: int = X_dev.shape[1]
         self.n_region: int = X_dev.shape[0]
-        self.X_dev: Tensor = X_dev.reshape(self.n_region, 1, 1, -1)
+        self.X_dev: Tensor = X_dev
         self.length: float = length
         if bounds is not None:
             self.bounds = bounds
@@ -219,7 +219,7 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
             `sample_shape x n_region x batch_shape x q`.
         """
         # region-averaged EI specific code
-        batch_shape = X.shape[0]
+        batch_shape = X.shape[:-2]
         d = X.shape[2]
 
         # make N_x samples in design space
@@ -228,7 +228,7 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
 
         # n_region x (1, ..., 1) x 1 x d
         X_dev = self.X_dev.reshape(
-            (self.n_region,) + (tuple(1 for _ in range(batch_shape)) + (1, d))
+            (self.n_region,) + (tuple(1 for _ in batch_shape) + (1, d))
         )
         # n_region x batch_shape x q x d
         Xs = X_dev * (X_max - X_min) + X_min

@@ -195,10 +195,10 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
         n_tr = 17
         X_dev = torch.rand(n_tr, d)
         acqf = qLogRegionalExpectedImprovement(model, best_f=0.0, X_dev=X_dev)
-        # can modify this here to use it as a test for the batch case
         batch_shape = ()
         X_test = torch.randn(*batch_shape, n, d)
-        acqf(X_test)
+        q_log_rei = acqf(X_test)
+        self.assertEqual(q_log_rei.shape, torch.Size([1]))
 
     def test_q_log_regional_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -292,7 +292,8 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
         n_tr = 17
         X_dev = torch.rand(n_tr, d)
         acqf = qLogRegionalExpectedImprovement(model, best_f=0.0, X_dev=X_dev)
-        # can modify this here to use it as a test for the batch case
-        batch_shape = ()
+        # Test for non-trivial batch shape
+        batch_shape = (5,)
         X_test = torch.randn(*batch_shape, n, d)
-        acqf(X_test)
+        q_log_rei = acqf(X_test)
+        self.assertEqual(q_log_rei.shape, torch.Size([5]))
