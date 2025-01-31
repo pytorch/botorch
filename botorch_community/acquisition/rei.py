@@ -42,6 +42,7 @@ Contributor: SaiAakash
 """
 
 from __future__ import annotations
+
 from functools import partial
 
 import torch
@@ -181,7 +182,8 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
             posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
-        # adding + 1 to account for the additional MC sampling dimension for points inside the trust region surrounding `X`
+        # adding + 1 to account for the additional MC sampling dimension
+        # for points inside the trust region surrounding `X`
         sample_dim = tuple(range(len(self.sample_shape) + 1))
         self._sample_reduction = partial(logmeanexp, dim=sample_dim)
 

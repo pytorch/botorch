@@ -110,7 +110,7 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
 
     def _test_q_log_regional_expected_improvement(self, dtype: torch.dtype) -> None:
         tkwargs: dict[str, Any] = {"device": self.device, "dtype": dtype}
-        # the event shape is `mc_model_samples x mc_X_dev_samples x q x d` = 1 x 1 x 1 x 1
+        # `mc_model_samples x mc_X_dev_samples x q x d` = 1 x 1 x 1 x 1
         samples = torch.zeros(1, 1, 1, 1, **tkwargs)
         mm = MockModel(MockPosterior(samples=samples))
         # X is `q x d` = 1 x 1. X is a dummy and unused b/c of mocking
@@ -195,7 +195,8 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
         n_tr = 17
         X_dev = torch.rand(n_tr, d)
         acqf = qLogRegionalExpectedImprovement(model, best_f=0.0, X_dev=X_dev)
-        batch_shape = ()  # can modify this here to use it as a test for the batch case (`_test_q_log_regional_expected_improvement_batch`)
+        # can modify this here to use it as a test for the batch case
+        batch_shape = ()
         X_test = torch.randn(*batch_shape, n, d)
         acqf(X_test)
 
@@ -207,8 +208,7 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
     def _test_q_log_regional_expected_improvement_batch(
         self, dtype: torch.dtype
     ) -> None:
-
-        # the event shape is `mc_model_samples x mc_X_dev_samples x q x d` = 1 x 1 x 1 x 1
+        # `mc_model_samples x mc_X_dev_samples x q x d` = 1 x 1 x 1 x 1
         samples = torch.zeros(2, 2, 2, 1, device=self.device, dtype=dtype)
         samples[0, 0, 0] = 1.0
         mm = MockModel(MockPosterior(samples=samples))
@@ -292,6 +292,7 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
         n_tr = 17
         X_dev = torch.rand(n_tr, d)
         acqf = qLogRegionalExpectedImprovement(model, best_f=0.0, X_dev=X_dev)
-        batch_shape = ()  # can modify this here to use it as a test for the batch case (`_test_q_log_regional_expected_improvement_batch`)
+        # can modify this here to use it as a test for the batch case
+        batch_shape = ()
         X_test = torch.randn(*batch_shape, n, d)
         acqf(X_test)
