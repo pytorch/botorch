@@ -33,7 +33,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.12"
     - name: Install dependencies
       run: |
         uv pip install .[test]
@@ -49,11 +49,40 @@ jobs:
       with:
         verbose: true
 
-  publish-versioned-website:
-    name: Publish versioned website
+  check-versions:
     needs: package-deploy-pypi
-    uses: ./.github/workflows/reusable_website.yml
+    name: Check if major or minor version changed
+    runs-on: ubuntu-latest
+    outputs:
+      major_minor_changed: ${{ steps.compare.outputs.major_minor_changed }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+        ref: ${{ github.sha }}
+    - name: Check if major or minor version changed
+      id: compare
+      run: |
+        git fetch --tags --force
+        previous_version=$(git describe --tags --abbrev=0 ${{ github.event.release.tag_name }}^)
+        prev=$(cut -d '.' -f 1-2 <<< $previous_version) # remove patch number
+        prev=${prev#v}                                  # remove optional "v" prefix
+        next=$(cut -d '.' -f 1-2 <<< ${{ github.event.release.tag_name }})
+        next=${next#v}
+
+        echo "Updating from version $previous_version to ${{ github.event.release.tag_name }}"
+        if [[ "$prev" == "$next" ]]; then
+          echo "::warning::Major/Minor version was not changed. Skipping website & docs generation step."
+        else
+          echo major_minor_changed=true >> $GITHUB_OUTPUT
+        fi
+
+  version-and-publish-website:
+    needs: check-versions
+    name: Version and Publish website
+    if: ${{ needs.check-versions.outputs.major_minor_changed == 'true' }}
+    uses: ./.github/workflows/publish_website.yml
     with:
-      publish_versioned_website: true
-      release_tag: ${{ github.event.release.tag_name }}
+      new_version: ${{ github.event.release.tag_name }}
     secrets: inherit
