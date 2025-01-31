@@ -197,7 +197,7 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
 
         # X is a dummy and unused b/c of mocking
         X = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
-        X_dev = torch.zeros(1, 1, device=self.device, dtype=dtype)
+        X_dev = torch.zeros(2, 2, device=self.device, dtype=dtype)
 
         # test batch mode
         sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
@@ -243,7 +243,7 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
         # the base samples should have the batch dim collapsed
         self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
         bs = acqf.sampler.base_samples.clone()
-        acqf(X.expand(2, 2, 1))
+        acqf(X.expand(2, 2, 2))
         self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
         # test batch mode, qmc
