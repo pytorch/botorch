@@ -32,7 +32,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.12"
     - name: Install dependencies
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
@@ -68,9 +68,7 @@ jobs:
   publish-latest-website:
     name: Publish latest website
     needs: [tests-and-coverage-nightly, package-test-deploy-pypi]
-    uses: ./.github/workflows/reusable_website.yml
-    with:
-      publish_versioned_website: false
+    uses: ./.github/workflows/publish_website.yml
     secrets: inherit
 
   run_tutorials:

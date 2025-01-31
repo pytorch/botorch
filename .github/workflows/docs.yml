@@ -25,15 +25,14 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.12"
     - name: Install dependencies
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         uv pip install git+https://github.com/cornellius-gp/linear_operator.git
         uv pip install git+https://github.com/cornellius-gp/gpytorch.git
-        uv pip install .[dev]
-        uv pip install beautifulsoup4 ipython nbconvert jinja2
+        uv pip install ."[dev, tutorials]"
     - name: Validate Sphinx
       run: |
         python scripts/validate_sphinx.py -p "$(pwd)"
@@ -43,4 +42,4 @@ jobs:
         sphinx-build -WT --keep-going sphinx/source sphinx/build
     - name: Validate and parse tutorials
       run: |
-        python scripts/parse_tutorials.py -w "$(pwd)"
+        python scripts/convert_ipynb_to_mdx.py --clean
