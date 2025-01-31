@@ -81,7 +81,7 @@ module.exports={
           "position": "left"
         },
         {
-          "href": "https://botorch-dev.readthedocs.io/",
+          "href": "https://botorch.readthedocs.io/",
           "label": "API Reference",
           "position": "left",
           "target": "_blank",
@@ -143,7 +143,7 @@ module.exports={
             },
             {
               label: 'API Reference',
-              to: 'https://botorch-dev.readthedocs.io/',
+              to: 'https://botorch.readthedocs.io/',
             },
             {
               label: 'Paper',
