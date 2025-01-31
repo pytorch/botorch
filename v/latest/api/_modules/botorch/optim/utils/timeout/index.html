@@ -37,6 +37,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.exceptions.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationTimeoutError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">optimize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">threadpoolctl</span><span class="w"> </span><span class="kn">import</span> <span class="n">threadpool_limits</span>
 
 
 <div class="viewcode-block" id="minimize_with_timeout">
@@ -104,20 +105,23 @@
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"error"</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">"Method .* cannot handle"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">optimize</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span>
-            <span class="n">fun</span><span class="o">=</span><span class="n">fun</span><span class="p">,</span>
-            <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span>
-            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-            <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
-            <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">,</span>
-            <span class="n">hess</span><span class="o">=</span><span class="n">hess</span><span class="p">,</span>
-            <span class="n">hessp</span><span class="o">=</span><span class="n">hessp</span><span class="p">,</span>
-            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
-            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
-            <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
-            <span class="n">callback</span><span class="o">=</span><span class="n">wrapped_callback</span><span class="p">,</span>
-            <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="c1"># To prevent slowdowns after scipy 1.15.</span>
+        <span class="c1"># See https://github.com/scipy/scipy/issues/22438.</span>
+        <span class="k">with</span> <span class="n">threadpool_limits</span><span class="p">(</span><span class="n">limits</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">user_api</span><span class="o">=</span><span class="s2">"blas"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">optimize</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span>
+                <span class="n">fun</span><span class="o">=</span><span class="n">fun</span><span class="p">,</span>
+                <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">,</span>
+                <span class="n">hess</span><span class="o">=</span><span class="n">hess</span><span class="p">,</span>
+                <span class="n">hessp</span><span class="o">=</span><span class="n">hessp</span><span class="p">,</span>
+                <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+                <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
+                <span class="n">callback</span><span class="o">=</span><span class="n">wrapped_callback</span><span class="p">,</span>
+                <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+            <span class="p">)</span>
     <span class="k">except</span> <span class="n">OptimizationTimeoutError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Optimization timed out after </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">runtime</span><span class="si">}</span><span class="s2"> seconds."</span>
         <span class="n">current_fun</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">current_x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
