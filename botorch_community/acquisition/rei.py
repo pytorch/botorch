@@ -42,6 +42,7 @@ Contributor: SaiAakash
 """
 
 from __future__ import annotations
+from functools import partial
 
 import torch
 from botorch.acquisition.analytic import (
@@ -72,11 +73,11 @@ class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
         self,
         model: Model,
         best_f: float | Tensor,
-        X_dev: float | Tensor,
+        X_dev: Tensor,
         posterior_transform: PosteriorTransform | None = None,
         maximize: bool = True,
         length: float = 0.8,
-        bounds: float | Tensor | None = None,
+        bounds: Tensor | None = None,
     ) -> None:
         r"""Log-Regional Expected Improvement (analytic).
 
@@ -133,13 +134,13 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
         self,
         model: Model,
         best_f: float | Tensor,
-        X_dev: float | Tensor,
+        X_dev: Tensor,
         sampler: MCSampler | None = None,
         objective: MCAcquisitionObjective | None = None,
         posterior_transform: PosteriorTransform | None = None,
         X_pending: Tensor | None = None,
         length: float = 0.8,
-        bounds: float | Tensor | None = None,
+        bounds: Tensor | None = None,
         fat: bool = True,
         tau_relu: float = TAU_RELU,
     ) -> None:
@@ -180,6 +181,9 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
             posterior_transform=posterior_transform,
             X_pending=X_pending,
         )
+        # adding + 1 to account for the additional MC sampling dimension for points inside the trust region surrounding `X`
+        sample_dim = tuple(range(len(self.sample_shape) + 1))
+        self._sample_reduction = partial(logmeanexp, dim=sample_dim)
 
         self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
         self.fat: bool = fat
@@ -208,17 +212,24 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
 
         Returns:
             A two-tuple `(samples, obj)`, where `samples` is a tensor of posterior
-            samples with shape `sample_shape x batch_shape x q x m`, and `obj` is a
-            tensor of MC objective values with shape `sample_shape x batch_shape x q`.
+            samples with shape `sample_shape x n_region x batch_shape x q x m`,
+            and `obj` is a tensor of MC objective values with shape
+            `sample_shape x n_region x batch_shape x q`.
         """
         # region-averaged EI specific code
-        q = X.shape[1]
+        batch_shape = X.shape[0]
         d = X.shape[2]
 
         # make N_x samples in design space
         X_min = (X - 0.5 * self.length).clamp_min(self.bounds[0]).unsqueeze(0)
         X_max = (X + 0.5 * self.length).clamp_max(self.bounds[1]).unsqueeze(0)
-        Xs = (self.X_dev * (X_max - X_min) + X_min).reshape(-1, q, d)
+
+        # n_region x (1, ..., 1) x 1 x d
+        X_dev = self.X_dev.reshape(
+            (self.n_region,) + (tuple(1 for _ in range(batch_shape)) + (1, d))
+        )
+        # n_region x batch_shape x q x d
+        Xs = X_dev * (X_max - X_min) + X_min
 
         # calling the original method with the modified inputs
         return super()._get_samples_and_objectives(Xs)

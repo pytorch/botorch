@@ -10,6 +10,8 @@ from typing import Any
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import BotorchWarning, UnsupportedError
+from botorch.models import SingleTaskGP
+from botorch.models.transforms import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -108,8 +110,8 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
 
     def _test_q_log_regional_expected_improvement(self, dtype: torch.dtype) -> None:
         tkwargs: dict[str, Any] = {"device": self.device, "dtype": dtype}
-        # the event shape is `b x q x t` = 1 x 1 x 1
-        samples = torch.zeros(1, 1, 1, **tkwargs)
+        # the event shape is `mc_model_samples x mc_X_dev_samples x q x d` = 1 x 1 x 1 x 1
+        samples = torch.zeros(1, 1, 1, 1, **tkwargs)
         mm = MockModel(MockPosterior(samples=samples))
         # X is `q x d` = 1 x 1. X is a dummy and unused b/c of mocking
         X = torch.zeros(1, 1, **tkwargs)
@@ -150,7 +152,7 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
         )
         res = acqf(X)
         self.assertAlmostEqual(res.item(), -14.0473, places=4)
-        self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
+        self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1, 1]))
         bs = acqf.sampler.base_samples.clone()
         res = acqf(X)
         self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
@@ -162,7 +164,7 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
         )
         res = acqf(X)
         self.assertAlmostEqual(res.item(), -14.0473, places=4)
-        self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
+        self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1, 1]))
         bs = acqf.sampler.base_samples.clone()
         acqf(X)
         self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
@@ -182,6 +184,21 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
         self.assertEqual(acqf.X_pending, X2)
         self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
 
+        # Test without mocking tensor dimensions
+        n = 3
+        d = 2
+        X = torch.randn(n, d, dtype=torch.float64)
+        Y = X.sin().sum(dim=-1, keepdim=True)
+
+        model = SingleTaskGP(X, Y, input_transform=Normalize(d=X.shape[-1]))
+
+        n_tr = 17
+        X_dev = torch.rand(n_tr, d)
+        acqf = qLogRegionalExpectedImprovement(model, best_f=0.0, X_dev=X_dev)
+        batch_shape = ()  # can modify this here to use it as a test for the batch case (`_test_q_log_regional_expected_improvement_batch`)
+        X_test = torch.randn(*batch_shape, n, d)
+        acqf(X_test)
+
     def test_q_log_regional_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
             with self.subTest(dtype=dtype):
@@ -190,14 +207,15 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
     def _test_q_log_regional_expected_improvement_batch(
         self, dtype: torch.dtype
     ) -> None:
-        # the event shape is `b x q x t` = 2 x 2 x 1
-        samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
+
+        # the event shape is `mc_model_samples x mc_X_dev_samples x q x d` = 1 x 1 x 1 x 1
+        samples = torch.zeros(2, 2, 2, 1, device=self.device, dtype=dtype)
         samples[0, 0, 0] = 1.0
         mm = MockModel(MockPosterior(samples=samples))
 
         # X is a dummy and unused b/c of mocking
         X = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
-        X_dev = torch.zeros(2, 2, device=self.device, dtype=dtype)
+        X_dev = torch.zeros(2, 1, device=self.device, dtype=dtype)
 
         # test batch mode
         sampler = IIDNormalSampler(sample_shape=torch.Size([2]))
@@ -205,7 +223,7 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
             model=mm, best_f=0, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertAlmostEqual(res[0].item(), 0.0, places=7)
+        self.assertAlmostEqual(res[0].item(), -0.6931, places=4)
         self.assertAlmostEqual(res[1].item(), -14.0403, places=4)
 
         # test batch model, batched best_f values
@@ -214,7 +232,7 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
             model=mm, best_f=torch.Tensor([0, 0]), X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertAlmostEqual(res[0].item(), 0.0, places=7)
+        self.assertAlmostEqual(res[0].item(), -0.6931, places=4)
         self.assertAlmostEqual(res[1].item(), -14.0403, places=4)
 
         # test shifting best_f value
@@ -222,7 +240,7 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
             model=mm, best_f=-1, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertAlmostEqual(res[0].item(), 0.6932, places=4)
+        self.assertAlmostEqual(res[0].item(), 0.4078, places=4)
         self.assertAlmostEqual(res[1].item(), 0.0069, places=4)
 
         # test batch mode
@@ -231,19 +249,19 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
             model=mm, best_f=0, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)  # 1-dim batch
-        self.assertAlmostEqual(res[0].item(), 0.0, places=7)
+        self.assertAlmostEqual(res[0].item(), -0.6931, places=4)
         self.assertAlmostEqual(res[1].item(), -14.0403, places=4)
-        self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
+        self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 2, 1]))
         bs = acqf.sampler.base_samples.clone()
         acqf(X)
         self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
         res = acqf(X.expand(2, 2, 1))  # 2-dim batch
-        self.assertAlmostEqual(res[0].item(), 0.0, places=7)
+        self.assertAlmostEqual(res[0].item(), -0.6931, places=4)
         self.assertAlmostEqual(res[1].item(), -14.0403, places=4)
         # the base samples should have the batch dim collapsed
-        self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
+        self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 2, 1]))
         bs = acqf.sampler.base_samples.clone()
-        acqf(X.expand(2, 2, 2))
+        acqf(X.expand(2, 2, 1))
         self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
         # test batch mode, qmc
@@ -252,9 +270,28 @@ class TestQLogRegionalExpectedImprovement(BotorchTestCase):
             model=mm, best_f=0, X_dev=X_dev, sampler=sampler
         )
         res = acqf(X)
-        self.assertAlmostEqual(res[0].item(), 0.0, places=7)
+        self.assertAlmostEqual(res[0].item(), -0.6931, places=4)
         self.assertAlmostEqual(res[1].item(), -14.0403, places=4)
-        self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
+        self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 2, 1]))
         bs = acqf.sampler.base_samples.clone()
         acqf(X)
         self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+
+        # Test without mocking
+        n = 3
+        d = 2
+        X = torch.randn(n, d, dtype=torch.float64)
+        Y = X.sin().sum(dim=-1, keepdim=True)
+
+        model = SingleTaskGP(
+            X,
+            Y,
+            input_transform=Normalize(d=X.shape[-1]),
+        )
+
+        n_tr = 17
+        X_dev = torch.rand(n_tr, d)
+        acqf = qLogRegionalExpectedImprovement(model, best_f=0.0, X_dev=X_dev)
+        batch_shape = ()  # can modify this here to use it as a test for the batch case (`_test_q_log_regional_expected_improvement_batch`)
+        X_test = torch.randn(*batch_shape, n, d)
+        acqf(X_test)
