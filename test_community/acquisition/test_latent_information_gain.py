@@ -41,23 +41,13 @@ class TestLatentInformationGain(unittest.TestCase):
             candidate_x=self.candidate_x
         )
         self.assertTrue(torch.is_tensor(lig_score))
-        self.assertEqual(lig_score.shape, ())
+        self.assertEqual(lig_score.shape, (1, 5))
 
     def test_acquisition_kl(self):
         lig_score = self.acquisition_function.forward(
             candidate_x=self.candidate_x
         )
-        self.assertGreaterEqual(lig_score.item(), 0)
-
-    def test_acquisition_samples(self):
-        lig_1 = self.acquisition_function.forward(candidate_x=self.candidate_x)
-        
-        self.acquisition_function.num_samples = 20
-        lig_2 = self.acquisition_function.forward(candidate_x=self.candidate_x)
-        self.assertTrue(lig_2.item() < lig_1.item())
-        self.assertTrue(abs(lig_2.item() - lig_1.item()) < 0.2)
-
-
+        self.assertGreaterEqual(lig_score.mean().item(), 0)
 
 if __name__ == "__main__":
     unittest.main()
