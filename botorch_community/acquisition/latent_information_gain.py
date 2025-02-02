@@ -62,43 +62,36 @@ class LatentInformationGain(AcquisitionFunction):
         self.context_x = context_x.to(device)
         self.context_y = context_y.to(device)
 
-    def forward(self, candidate_x):
+    def forward(self, candidate_x: Tensor) -> Tensor:
         """
         Conduct the Latent Information Gain acquisition function for the inputs.
 
         Args:
-            candidate_x: Candidate input points, as a Tensor.
+            candidate_x: Candidate input points, as a Tensor. Ideally in the shape (N, q, D), and assumes N = 1 if the given dimensions are 2D.
 
         Returns:
-            torch.Tensor: The LIG score of computed KLDs.
+            torch.Tensor: The LIG scores of computed KLDs, in the shape (N, q).
         """
-
         candidate_x = candidate_x.to(device)
-        
+        if candidate_x.dim() == 2:
+            candidate_x = candidate_x.unsqueeze(0) 
+        N, q, D = candidate_x.shape
         # Encoding and Scaling the context data
         z_mu_context, z_logvar_context = self.model.data_to_z_params(self.context_x, self.context_y)
-        kl = 0.0
+        kl = torch.zeros(N, q, device=device)
         for _ in range(self.num_samples):
-            # Taking reparameterized samples
+            # Taking Samples/Predictions
             samples = self.model.sample_z(z_mu_context, z_logvar_context)
-
-            # Using the Decoder to take predicted values
-            y_pred = self.model.decoder(candidate_x, samples)
-
-            # Combining context and candidate data
-            combined_x = torch.cat([self.context_x, candidate_x], dim=0).to(device)
+            y_pred = self.model.decoder(candidate_x.view(-1, D), samples)
+            # Combining the data
+            combined_x = torch.cat([self.context_x, candidate_x.view(-1, D)], dim=0).to(device)
             combined_y = torch.cat([self.context_y, y_pred], dim=0).to(device)
-
             # Computing posterior variables
             z_mu_posterior, z_logvar_posterior = self.model.data_to_z_params(combined_x, combined_y)
             std_prior = self.min_std + self.scaler * torch.sigmoid(z_logvar_context) 
             std_posterior = self.min_std + self.scaler * torch.sigmoid(z_logvar_posterior)
-
             p = torch.distributions.Normal(z_mu_posterior, std_posterior)
             q = torch.distributions.Normal(z_mu_context, std_prior)
-
             kl_divergence = torch.distributions.kl_divergence(p, q).sum()
             kl += kl_divergence
-
-        # Average KLD
         return kl / self.num_samples
