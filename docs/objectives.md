@@ -23,11 +23,11 @@ relative impunity so long gradients can be back-propagated through the
 transformation.
 
 All BoTorch objectives are derived from
-[`MCAcquisitionObjective`](../api/acquisition.html#mcacquisitionobjective).
+[`MCAcquisitionObjective`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective).
 BoTorch implements several MC-based objectives, including
-[`LinearMCObjective`](../api/acquisition.html#linearmcobjective) for linear
+[`LinearMCObjective`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.objective.LinearMCObjective) for linear
 combinations of model outputs, and
-[`ConstrainedMCObjective`](../api/acquisition.html#constrainedmcobjective) for
+[`ConstrainedMCObjective`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.objective.ConstrainedMCObjective) for
 constrained objectives (using a sigmoid approximation for the constraints).
 
 
@@ -35,7 +35,7 @@ constrained objectives (using a sigmoid approximation for the constraints).
 
 ### Utilizing GenericMCObjective
 
-The [`GenericMCObjective`](../api/acquisition.html#genericmcobjective) allows
+The [`GenericMCObjective`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.objective.GenericMCObjective) allows
 simply using a generic callable to implement an ad-hoc objective. The callable
 is expected to map a `sample_shape x batch_shape x q x o`-dimensional tensor of
 posterior samples and an (optional) `batch_shape x q x d`-dimensional tensor of

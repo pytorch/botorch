@@ -9,7 +9,7 @@ black box function.
 
 BoTorch supports both analytic as well as (quasi-) Monte-Carlo based acquisition
 functions. It provides a generic
-[`AcquisitionFunction`](../api/acquisition.html#acquisitionfunction) API that
+[`AcquisitionFunction`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction) API that
 abstracts away from the particular type, so that optimization can be performed
 on the same objects.
 
@@ -64,7 +64,7 @@ where $\mu(X)$ is the posterior mean of $f$ at $X$, and $L(X)L(X)^T = \Sigma(X)$
 is a root decomposition of the posterior covariance matrix.
 
 All MC-based acquisition functions in BoTorch are derived from
-[`MCAcquisitionFunction`](../api/acquisition.html#mcacquisitionfunction).
+[`MCAcquisitionFunction`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction).
 
 Acquisition functions expect input tensors $X$ of shape
 $\textit{batch\_shape} \times q \times d$, where $d$ is the dimension of the
@@ -122,15 +122,15 @@ above.
 
 BoTorch also provides implementations of analytic acquisition functions that
 do not depend on MC sampling. These acquisition functions are subclasses of
-[`AnalyticAcquisitionFunction`](../api/acquisition.html#analyticacquisitionfunction)
+[`AnalyticAcquisitionFunction`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction)
 and only exist for the case of a single candidate point ($q = 1$). These
 include classical acquisition functions such as Expected Improvement (EI),
 Upper Confidence Bound (UCB), and Probability of Improvement (PI). An example
-comparing [`ExpectedImprovement`](../api/acquisition.html#expectedimprovement),
+comparing [`ExpectedImprovement`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.analytic.ExpectedImprovement),
 the analytic version of EI, to it's MC counterpart
-[`qExpectedImprovement`](../api/acquisition.html#qexpectedimprovement)
+[`qExpectedImprovement`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement)
 can be found in
-[this tutorial](../tutorials/compare_mc_analytic_acquisition).
+[this tutorial](tutorials/compare_mc_analytic_acquisition).
 
 Analytic acquisition functions allow for an explicit expression in terms of the
 summary statistics of the posterior distribution at the evaluated point(s).

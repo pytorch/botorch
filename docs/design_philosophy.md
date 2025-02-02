@@ -69,7 +69,7 @@ all data available. In typical machine learning model training, a stochastic
 version of the empirical loss, obtained by "mini-batching" the data, is
 optimized using stochastic optimization algorithms.
 
-In BoTorch, [`AcquisitionFunction`](../api/acquisition.html#acquisitionfunction)
+In BoTorch, [`AcquisitionFunction`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction)
 modules map an input design $X$ to the acquisition function value. Optimizing
 the acquisition function means optimizing the output over the possible values of
 $X$. If the acquisition function is deterministic, then so is the optimization

@@ -41,7 +41,7 @@ the constrained expected improvement variant is mathematically equivalent to the
 unconstrained expected improvement of the objective, multiplied by the probability of
 feasibility under the modeled outcome constraint.
 
-See the [Closed-Loop Optimization](../tutorials/closed_loop_botorch_only)
+See the [Closed-Loop Optimization](tutorials/closed_loop_botorch_only)
 tutorial for an example of using outcome constraints in BoTorch.
 
 
