@@ -31,8 +31,8 @@ module.exports={
     "users": [],
     "wrapPagesHTML": true
   },
-  "onBrokenLinks": "log",
-  "onBrokenMarkdownLinks": "log",
+  "onBrokenLinks": "throw",
+  "onBrokenMarkdownLinks": "warn",
   "presets": [
     [
       "@docusaurus/preset-classic",
