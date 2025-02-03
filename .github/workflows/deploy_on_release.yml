@@ -85,4 +85,7 @@ jobs:
     uses: ./.github/workflows/publish_website.yml
     with:
       new_version: ${{ github.event.release.tag_name }}
-    secrets: inherit
+    permissions:
+      pages: write
+      id-token: write
+      contents: write
