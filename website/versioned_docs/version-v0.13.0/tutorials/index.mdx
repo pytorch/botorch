@@ -1,0 +1,52 @@
+---
+title: BoTorch Tutorials
+---
+The tutorials here will help you understand and use BoTorch in
+your own work. They assume that you are familiar with both
+Bayesian optimization (BO) and PyTorch.
+
+If you are new to BO, we recommend you start with the
+[Ax docs](https://ax.dev/docs/bayesopt) and the
+following
+[tutorial paper](https://arxiv.org/abs/1807.02811).
+
+If you are new to PyTorch, the easiest way to get started is
+with the [What is PyTorch?](https://pytorch.org/tutorials/beginner/blitz/tensor_tutorial.html#sphx-glr-beginner-blitz-tensor-tutorial-py)
+tutorial.
+
+The BoTorch tutorials are grouped into the following four areas.
+
+
+<h4>Using BoTorch with Ax</h4>
+These tutorials give you an overview of how to leverage
+[Ax](https://ax.dev), a platform for sequential
+experimentation, in order to simplify the management of your BO
+loop. Doing so can help you focus on the main aspects of BO
+(models, acquisition functions, optimization of acquisition
+functions), rather than tedious loop control. See our
+[Documentation](/docs/botorch_and_ax)
+for additional information.
+
+<h4>Full Optimization Loops</h4>
+In some situations (e.g. when working in a non-standard setting,
+or if you want to understand and control various details of the
+BO loop), then you may also consider working purely in BoTorch.
+The tutorials in this section illustrate this approach.
+
+<h4>Bite-Sized Tutorials</h4>
+Rather than guiding you through full end-to-end BO loops, the
+tutorials in this section focus on specific tasks that you will
+encounter in customizing your BO algorithms. For instance, you
+may want to
+[write a custom acquisition function](/docs/tutorials/custom_acquisition)
+and then
+[use a custom zero-th order optimizer](/docs/tutorials/optimize_with_cmaes)
+to optimize it.
+
+<h4>Advanced Usage</h4>
+Tutorials in this section showcase more advanced ways of using
+BoTorch. For instance,
+[this tutorial](/docs/tutorials/vae_mnist)
+shows how to perform BO if your objective function is an image,
+by optimizing in the latent space of a variational auto-encoder
+(VAE).
