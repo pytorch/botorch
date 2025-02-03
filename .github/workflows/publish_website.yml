@@ -20,6 +20,8 @@ jobs:
     env:
       # `uv pip ...` requires venv by default. This skips that requirement.
       UV_SYSTEM_PYTHON: 1
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v4
       with:
