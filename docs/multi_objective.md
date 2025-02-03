@@ -5,13 +5,13 @@ title: Multi-Objective Bayesian Optimization
 
 BoTorch provides first-class support for Multi-Objective (MO) Bayesian
 Optimization (BO) including implementations of
-[`qLogNoisyExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement)
+[`qLogNoisyExpectedHypervolumeImprovement`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement)
 (qLogNEHVI)[^qNEHVI][^LogEI],
-[`qLogExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement)
+[`qLogExpectedHypervolumeImprovement`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.multi_objective.logei.qLogExpectedHypervolumeImprovement)
 (qLogEHVI),
-[`qLogNParEGO`](../api/acquisition.html#botorch.acquisition.multi_objective.parego.qLogNParEGO)[^qNEHVI],
+[`qLogNParEGO`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.multi_objective.parego.qLogNParEGO)[^qNEHVI],
 and analytic
-[`ExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement)
+[`ExpectedHypervolumeImprovement`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement)
 (EHVI) with gradients via auto-differentiation acquisition functions[^qEHVI].
 
 The goal in MOBO is learn the _Pareto front_: the set of optimal trade-offs,
@@ -36,9 +36,9 @@ acquisition functions support using the sample average approximation for rapid
 convergence [^BoTorch].
 
 All analytic MO acquisition functions derive from
-[`MultiObjectiveAnalyticAcquisitionFunction`](../api/acquisition.html#botorch.acquisition.multi_objective.base.MultiObjectiveAnalyticAcquisitionFunction)
+[`MultiObjectiveAnalyticAcquisitionFunction`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.multi_objective.base.MultiObjectiveAnalyticAcquisitionFunction)
 and all MC-based acquisition functions derive from
-[`MultiObjectiveMCAcquisitionFunction`](../api/acquisition.html#botorch.acquisition.multi_objective.base.MultiObjectiveMCAcquisitionFunction).
+[`MultiObjectiveMCAcquisitionFunction`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.multi_objective.base.MultiObjectiveMCAcquisitionFunction).
 These abstract classes easily integrate with BoTorch's standard optimization
 machinery.
 
@@ -46,22 +46,22 @@ machinery.
 setting, it uses a new random scalarization for each candidate [^qEHVI].
 Candidates are selected in a sequential greedy fashion, each with a different
 scalarization, via the
-[`optimize_acqf_list`](../api/optim.html#botorch.optim.optimize.optimize_acqf_list)
+[`optimize_acqf_list`](https://botorch.readthedocs.io/en/latest/optim.html#botorch.optim.optimize.optimize_acqf_list)
 function.
 
 For a more in-depth example using these acquisition functions, check out the
-[Multi-Objective Bayesian Optimization tutorial notebook](../tutorials/multi_objective_bo).
+[Multi-Objective Bayesian Optimization tutorial notebook](tutorials/multi_objective_bo).
 
 ## Multi-Objective Utilities
 
 BoTorch provides several utility functions for evaluating performance in MOBO
 including a method for computing the Pareto front
-[`is_non_dominated`](../api/utils.html#botorch.utils.multi_objective.pareto.is_non_dominated)
+[`is_non_dominated`](https://botorch.readthedocs.io/en/latest/utils.html#botorch.utils.multi_objective.pareto.is_non_dominated)
 and efficient box decomposition algorithms for efficiently partitioning the the
 space dominated
-[`DominatedPartitioning`](../api/utils.html#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning)
+[`DominatedPartitioning`](https://botorch.readthedocs.io/en/latest/utils.html#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning)
 or non-dominated
-[`NonDominatedPartitioning`](../api/utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning)
+[`NonDominatedPartitioning`](https://botorch.readthedocs.io/en/latest/utils.html#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning)
 by the Pareto frontier into axis-aligned hyperrectangular boxes. For exact box
 decompositions, BoTorch uses a two-step approach similar to that in [^Yang2019],
 where (1) Algorithm 1 from [Lacour17]_ is used to find the local lower bounds
@@ -76,9 +76,9 @@ also be used to efficiently compute hypervolumes.
 Additionally, variations on ParEGO can be trivially implemented using an
 augmented Chebyshev scalarization as the objective with an EI-type
 single-objective acquisition function such as
-[`qLogNoisyExpectedImprovement`](../api/acquisition.html#botorch.acquisition.logei.qLogNoisyExpectedImprovement).
+[`qLogNoisyExpectedImprovement`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.logei.qLogNoisyExpectedImprovement).
 The
-[`get_chebyshev_scalarization`](../api/utils.html#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization)
+[`get_chebyshev_scalarization`](https://botorch.readthedocs.io/en/latest/utils.html#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization)
 convenience function generates these scalarizations.
 
 [^qNEHVI]:
@@ -93,9 +93,9 @@ convenience function generates these scalarizations.
     Neural Information Processing Systems 36, 2023.
     [paper](https://arxiv.org/abs/2310.20708) "Log" variances of acquisition
     functions, such as
-    [`qLogNoisyExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement),
+    [`qLogNoisyExpectedHypervolumeImprovement`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.multi_objective.logei.qLogNoisyExpectedHypervolumeImprovement),
     offer improved numerics compared to older counterparts such as
-    [`qNoisyExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement).
+    [`qNoisyExpectedHypervolumeImprovement`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement).
 
 [^qEHVI]:
     S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume

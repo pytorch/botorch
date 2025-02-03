@@ -13,6 +13,7 @@ import Layout from "@theme/Layout";
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import CodeBlock from '@theme/CodeBlock';
+import Heading from '@theme/Heading';
 
 const features = [
     {
@@ -94,7 +95,7 @@ const HomeSplash = () => {
           Introduction
         </Link>
         <Link
-          to="#quickstart"
+          to="/#quickstart"
           className="button button--lg button--outline button--secondary margin--sm">
           Get started
         </Link>
@@ -149,14 +150,13 @@ candidate  # tensor([[0.2981, 0.2401]], dtype=torch.float64)`;
   year = 2020,
   url = {http://arxiv.org/abs/1910.06403}
 }`;
-  //
+
   const QuickStart = () => (
     <div
       className="padding--xl"
-      id="quickstart"
       style={{ 'background-color': 'var(--ifm-color-emphasis-200)' }}
     >
-      <h2 className='text--center padding--md'>Get Started</h2>
+      <Heading as="h2" className='text--center padding--md' id="quickstart">Get Started</Heading>
       <div>
         <ol>
           <li>

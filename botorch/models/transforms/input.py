@@ -1242,7 +1242,7 @@ class AppendFeatures(InputTransform):
     `RiskMeasureMCObjective` to optimize risk measures as described in
     [Cakmak2020risk]_. A tutorial notebook implementing the rhoKG acqusition
     function introduced in [Cakmak2020risk]_ can be found at
-    https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables.
+    https://botorch.org/docs/tutorials/risk_averse_bo_with_environmental_variables.
 
     The steps for using this to obtain samples of a risk measure are as follows:
 
@@ -1505,7 +1505,7 @@ class InputPerturbation(InputTransform):
     on optimizing risk measures.
 
     A tutorial notebook using this with `qNoisyExpectedImprovement` can be found at
-    https://botorch.org/tutorials/risk_averse_bo_with_input_perturbations.
+    https://botorch.org/docs/tutorials/risk_averse_bo_with_input_perturbations.
     """
 
     is_one_to_many: bool = True

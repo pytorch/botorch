@@ -130,7 +130,7 @@ pip install -e ".[dev, tutorials]"
 
 Here's a quick run down of the main components of a Bayesian optimization loop.
 For more details see our [Documentation](https://botorch.org/docs/introduction) and the
-[Tutorials](https://botorch.org/tutorials).
+[Tutorials](https://botorch.org/docs/tutorials).
 
 1. Fit a Gaussian Process model to data
   ```python
