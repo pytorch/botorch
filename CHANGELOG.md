@@ -2,6 +2,86 @@
 
 The release log for BoTorch.
 
+
+## [0.13.0] -- Feb 3, 2025
+
+#### Highlights
+* BoTorch website has been upgraded to utilize Docusaurus v3, with the API
+  reference being hosted by ReadTheDocs. The tutorials now expose an option to
+  open with Colab, for easy access to a runtime with modifiable tutorials.
+  The old versions of the website can be found at archive.botorch.org (#2653).
+* `RobustRelevancePursuitSingleTaskGP`, a robust Gaussian process model that adaptively identifies
+  outliers and leverages Bayesian model selection ([paper](https://arxiv.org/pdf/2410.24222)) (#2608, #2690, #2707).
+* `LatentKroneckerGP`, a scalable model for data on partially observed grids, like the joint modeling
+  of hyper-parameters and partially completed learning curves in AutoML ([paper](https://arxiv.org/pdf/2410.09239)) (#2647).
+* Add MAP-SAAS model, which utilizes the sparse axis-aligned subspace priors
+  ([paper](https://proceedings.mlr.press/v161/eriksson21a/eriksson21a.pdf)) with MAP model fitting (#2694).
+
+#### Compatibility
+* Require GPyTorch==1.14 and linear_operator==0.6 (#2710).
+* Remove support for anaconda (official package) (#2617).
+* Remove `mpmath` dependency pin (#2640).
+* Updates to optimization routines to support SciPy>1.15:
+  * Use `threadpoolctl` in `minimize_with_timeout` to prevent CPU oversubscription (#2712).
+  * Update optimizer output parsing to make model fitting compatible with SciPy>1.15 (#2667).
+
+#### New Features
+* Add support for priors in OAK Kernel (#2535).
+* Add `BatchBroadcastedTransformList`, which broadcasts a list of `InputTransform`s over batch shapes (#2558).
+* `InteractionFeatures` input transform (#2560).
+* Implement `percentile_of_score`, which takes inputs `data` and `score`, and returns the percentile of
+  values in `data` that are below `score` (#2568).
+* Add `optimize_acqf_mixed_alternating`, which supports optimization over mixed discrete & continuous spaces (#2573).
+* Add support for `PosteriorTransform` to `get_optimal_samples` and `optimize_posterior_samples` (#2576).
+* Support inequality constraints & `X_avoid` in `optimize_acqf_discrete` (#2593).
+* Add ability to mix batch initial conditions and internal IC generation (#2610).
+* Add `qPosteriorStandardDeviation` acquisition function (#2634).
+* TopK downselection for initial batch generation. (#2636).
+* Support optimization over mixed spaces in `optimize_acqf_homotopy` (#2639).
+* Add `InfeasibilityError` exception class (#2652).
+* Support `InputTransform`s in `SparseOutlierLikelihood` and `get_posterior_over_support` (#2659).
+* `StratifiedStandardize` outcome transform (#2671).
+* Add `center` argument to `Normalize` (#2680).
+* Add input normalization step in `Warp` input transform (#2692).
+* Support mixing fully Bayesian & `SingleTaskGP` models in `ModelListGP` (#2693).
+* Add abstract fully Bayesian GP class and fully Bayesian linear GP model (#2696, #2697).
+* Tutorial on BO constrained by probability of classification model (#2700).
+
+#### Bug Fixes
+* Fix error in decoupled_mobo tutorial due to torch/numpy issues (#2550).
+* Raise error for MTGP in `batch_cross_validation` (#2554).
+* Fix `posterior` method in `BatchedMultiOutputGPyTorchModel` for tracing JIT (#2592).
+* Replace hard-coded double precision in test_functions with default dtype (#2597).
+* Remove `as_tensor` argument of `set_tensors_from_ndarray_1d` (#2615).
+* Skip fixed feature enumerations in `optimize_acqf_mixed` that can't satisfy the parameter constraints (#2614).
+* Fix `get_default_partitioning_alpha` for >7 objectives (#2646).
+* Fix random seed handling in `sample_hypersphere` (#2688).
+* Fix bug in `optimize_objective` with fixed features (#2691).
+* `FullyBayesianSingleTaskGP.train` should not return `None` (#2702).
+
+#### Other Changes
+* More efficient sampling from `KroneckerMultiTaskGP` (#2460).
+* Update `HigherOrderGP` to use new priors & standardize outcome transform by default (#2555).
+* Update `initialize_q_batch` methods to return both candidates and the corresponding acquisition values (#2571).
+* Update optimization documentation with LogEI insights (#2587).
+* Make all arguments in `optimize_acqf_homotopy` explicit (#2588).
+* Introduce `trial_indices` argument to `SupervisedDataset` (#2595).
+* Make optimizers raise an error when provided negative indices for fixed features (#2603).
+* Make input transforms `Module`s by default (#2607).
+* Reduce memory usage in `ConstrainedMaxPosteriorSampling` (#2622).
+* Add `clone` method to datasets (#2625).
+* Add support for continuous relaxation within `optimize_acqf_mixed_alternating` (#2635).
+* Update indexing in `qLogNEI._get_samples_and_objectives` to support multiple input batches (#2649).
+* Pass `X` to `OutcomeTransform`s (#2663).
+* Use mini-batches when evaluating candidates within `optimize_acqf_discrete_local_search` (#2682).
+
+#### Deprecations
+* Remove `HeteroskedasticSingleTaskGP` (#2616).
+* Remove `FixedNoiseDataset` (#2626).
+* Remove support for legacy format non-linear constraints (#2627).
+* Remove `maximize` option from information theoretic acquisition functions (#2590).
+
+
 ## [0.12.0] -- Sep 17, 2024
 
 #### Major changes
