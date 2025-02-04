@@ -60,7 +60,7 @@ jobs:
         yarn
         yarn docusaurus docs:version ${{ inputs.new_version }}
 
-        git add --all
+        git add versioned_docs/ versioned_sidebars/ versions.json
         git commit -m "Create version ${{ inputs.new_version }} of site in Docusaurus"
         git push --force origin HEAD:docusaurus-versions
     - name: Build website
