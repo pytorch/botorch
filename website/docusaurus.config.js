@@ -195,8 +195,8 @@ module.exports={
       copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc.`,
     },
     "algolia": {
-      "appId": "BH4D9OD16A",
-      "apiKey": "207c27d819f967749142d8611de7cb19",
+      "appId": "ASRH08QMIJ",
+      "apiKey": "e5edacd85d22b57ef7ca2d06ba6333f8",
       "indexName": "botorch"
     }
   }

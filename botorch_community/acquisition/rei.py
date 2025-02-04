@@ -187,7 +187,7 @@ class qLogRegionalExpectedImprovement(LogImprovementMCAcquisitionFunction):
         sample_dim = tuple(range(len(self.sample_shape) + 1))
         self._sample_reduction = partial(logmeanexp, dim=sample_dim)
 
-        self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
+        self.register_buffer("best_f", torch.as_tensor(best_f))
         self.fat: bool = fat
         self.tau_relu: float = check_tau(tau_relu, "tau_relu")
         dim: int = X_dev.shape[1]
