@@ -401,7 +401,7 @@ class qExpectedImprovement(SampleReducingMCAcquisitionFunction):
             constraints=constraints,
             eta=eta,
         )
-        self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
+        self.register_buffer("best_f", torch.as_tensor(best_f))
 
     def _sample_forward(self, obj: Tensor) -> Tensor:
         r"""Evaluate qExpectedImprovement per sample on the candidate set `X`.
@@ -715,9 +715,9 @@ class qProbabilityOfImprovement(SampleReducingMCAcquisitionFunction):
             constraints=constraints,
             eta=eta,
         )
-        best_f = torch.as_tensor(best_f, dtype=float).unsqueeze(-1)  # adding batch dim
+        best_f = torch.as_tensor(best_f).unsqueeze(-1)  # adding batch dim
         self.register_buffer("best_f", best_f)
-        self.register_buffer("tau", torch.as_tensor(tau, dtype=float))
+        self.register_buffer("tau", torch.as_tensor(tau))
 
     def _sample_forward(self, obj: Tensor) -> Tensor:
         r"""Evaluate qProbabilityOfImprovement per sample on the candidate set `X`.
