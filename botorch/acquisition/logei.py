@@ -18,11 +18,8 @@ References
 from __future__ import annotations
 
 from collections.abc import Callable
-
 from copy import deepcopy
-
 from functools import partial
-
 from typing import TypeVar
 
 import torch
@@ -215,7 +212,7 @@ class qLogExpectedImprovement(LogImprovementMCAcquisitionFunction):
             tau_max=check_tau(tau_max, name="tau_max"),
             fat=fat,
         )
-        self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
+        self.register_buffer("best_f", torch.as_tensor(best_f))
         self.tau_relu = check_tau(tau_relu, name="tau_relu")
 
     def _sample_forward(self, obj: Tensor) -> Tensor:

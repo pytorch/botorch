@@ -46,7 +46,6 @@ from botorch.models import ModelListGP, SingleTaskGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
-
 from botorch.utils.transforms import standardize
 from torch import Tensor
 
@@ -131,8 +130,10 @@ class TestQLogExpectedImprovement(BotorchTestCase):
                 self.assertIn(k, acqf._modules)
                 self.assertIn(k, log_acqf._modules)
 
-            res = acqf(X).item()
-            self.assertEqual(res, 0.0)
+            res = acqf(X)
+            self.assertEqual(res.dtype, dtype)
+            self.assertEqual(res.device.type, self.device.type)
+            self.assertEqual(res.item(), 0.0)
             exp_log_res = log_acqf(X).exp().item()
             # Due to the smooth approximation, the value at zero should be close to, but
             # not exactly zero, and upper-bounded by the tau hyperparameter.
