@@ -1035,6 +1035,7 @@ class PressureVessel(ConstrainedSyntheticTestFunction):
     dim = 4
     num_constraints = 4
     _bounds = [(0.0, 10.0), (0.0, 10.0), (10.0, 50.0), (150.0, 200.0)]
+    _optimal_value = 6059.946341  # from [CoelloCoello2002constraint]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4 = X.unbind(-1)
@@ -1073,6 +1074,7 @@ class WeldedBeamSO(ConstrainedSyntheticTestFunction):
     dim = 4
     num_constraints = 6
     _bounds = [(0.125, 10.0), (0.1, 10.0), (0.1, 10.0), (0.1, 10.0)]
+    _optimal_value = 1.728226  # from [CoelloCoello2002constraint]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4 = X.unbind(-1)
@@ -1126,6 +1128,7 @@ class TensionCompressionString(ConstrainedSyntheticTestFunction):
     dim = 3
     num_constraints = 4
     _bounds = [(0.01, 1.0), (0.01, 1.0), (0.01, 20.0)]
+    _optimal_value = 0.012681  # from [CoelloCoello2002constraint]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2, x3 = X.unbind(-1)
