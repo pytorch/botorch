@@ -358,7 +358,7 @@ class TestParameterConstraints(BotorchTestCase):
                 ),
             )
         )
-        self.assertFalse(
+        self.assertEqual(
             nonlinear_constraint_is_feasible(
                 nlc,
                 True,
@@ -366,7 +366,8 @@ class TestParameterConstraints(BotorchTestCase):
                     [[[1.5, 1.5], [1.5, 1.5]], [[1.5, 1.5], [1.5, 3.5]]],
                     device=self.device,
                 ),
-            )
+            ).tolist(),
+            [True, False],
         )
         self.assertTrue(
             nonlinear_constraint_is_feasible(
@@ -381,14 +382,14 @@ class TestParameterConstraints(BotorchTestCase):
                     [[[1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0]]],
                     device=self.device,
                 ),
-            )
+            ).all()
         )
         self.assertFalse(
             nonlinear_constraint_is_feasible(
                 nlc, False, torch.tensor([[[1.5, 1.5], [1.5, 1.5]]], device=self.device)
             )
         )
-        self.assertFalse(
+        self.assertEqual(
             nonlinear_constraint_is_feasible(
                 nlc,
                 False,
@@ -396,7 +397,8 @@ class TestParameterConstraints(BotorchTestCase):
                     [[[1.0, 1.0], [1.0, 1.0]], [[1.5, 1.5], [1.5, 1.5]]],
                     device=self.device,
                 ),
-            )
+            ).tolist(),
+            [True, False],
         )
 
     def test_generate_unfixed_nonlin_constraints(self):
