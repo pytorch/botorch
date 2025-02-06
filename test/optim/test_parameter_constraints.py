@@ -18,6 +18,7 @@ from botorch.optim.parameter_constraints import (
     _make_linear_constraints,
     _make_nonlinear_constraints,
     eval_lin_constraint,
+    evaluate_feasibility,
     lin_constraint_jac,
     make_scipy_bounds,
     make_scipy_linear_constraints,
@@ -528,6 +529,142 @@ class TestParameterConstraints(BotorchTestCase):
                     dimension=dimension,
                     eq=eq,
                 )
+
+    def test_evaluate_feasibility(self) -> None:
+        # Check that the feasibility is evaluated correctly.
+        X = torch.tensor(  # 3 x 2 x 3 -> leads to output of shape 3.
+            [
+                [[1.0, 1.0, 1.0], [1.0, 1.0, 3.0]],
+                [[2.0, 2.0, 1.0], [2.0, 2.0, 5.0]],
+                [[3.0, 3.0, 3.0], [3.0, 3.0, 3.0]],
+            ],
+            device=self.device,
+        )
+        # X[..., 2] * 4 >= 5.
+        inequality_constraints = [
+            (
+                torch.tensor([2], device=self.device),
+                torch.tensor([4], device=self.device),
+                5.0,
+            )
+        ]
+        # X[..., 0] + X[..., 1] == 4.
+        equality_constraints = [
+            (
+                torch.tensor([0, 1], device=self.device),
+                torch.ones(2, device=self.device),
+                4.0,
+            )
+        ]
+
+        # sum(X, dim=-1) < 5.
+        def nlc1(x):
+            return 5 - x.sum(dim=-1)
+
+        # Only inequality.
+        self.assertAllClose(
+            evaluate_feasibility(
+                X=X,
+                inequality_constraints=inequality_constraints,
+            ),
+            torch.tensor([False, False, True], device=self.device),
+        )
+        # Only equality.
+        self.assertAllClose(
+            evaluate_feasibility(
+                X=X,
+                equality_constraints=equality_constraints,
+            ),
+            torch.tensor([False, True, False], device=self.device),
+        )
+        # Both inequality and equality.
+        self.assertAllClose(
+            evaluate_feasibility(
+                X=X,
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+            ),
+            torch.tensor([False, False, False], device=self.device),
+        )
+        # Nonlinear inequality.
+        self.assertAllClose(
+            evaluate_feasibility(
+                X=X,
+                nonlinear_inequality_constraints=[(nlc1, True)],
+            ),
+            torch.tensor([True, False, False], device=self.device),
+        )
+        # No constraints.
+        self.assertAllClose(
+            evaluate_feasibility(
+                X=X,
+            ),
+            torch.ones(3, device=self.device, dtype=torch.bool),
+        )
+
+    def test_evaluate_feasibility_inter_point(self) -> None:
+        # Check that inter-point constraints evaluate correctly.
+        X = torch.tensor(  # 3 x 2 x 3 -> leads to output of shape 3.
+            [
+                [[1.0, 1.0, 1.0], [0.0, 1.0, 3.0]],
+                [[1.0, 1.0, 1.0], [2.0, 1.0, 3.0]],
+                [[2.0, 2.0, 1.0], [2.0, 2.0, 5.0]],
+            ],
+            dtype=torch.double,
+            device=self.device,
+        )
+        linear_inter_cons = (  # X[..., 0, 0] - X[..., 1, 0] >= / == 0.
+            torch.tensor([[0, 0], [1, 0]], device=self.device),
+            torch.tensor([1.0, -1.0], device=self.device),
+            0,
+        )
+        # Linear inequality.
+        self.assertAllClose(
+            evaluate_feasibility(
+                X=X,
+                inequality_constraints=[linear_inter_cons],
+            ),
+            torch.tensor([True, False, True], device=self.device),
+        )
+        # Linear equality.
+        self.assertAllClose(
+            evaluate_feasibility(
+                X=X,
+                equality_constraints=[linear_inter_cons],
+            ),
+            torch.tensor([False, False, True], device=self.device),
+        )
+        # Linear equality with too high of a tolerance.
+        self.assertAllClose(
+            evaluate_feasibility(
+                X=X,
+                equality_constraints=[linear_inter_cons],
+                tolerance=100,
+            ),
+            torch.tensor([True, True, True], device=self.device),
+        )
+
+        # Nonlinear inequality.
+        def nlc1(x):  # X.sum(over q & d) >= 10.0
+            return x.sum() - 10.0
+
+        self.assertEqual(
+            evaluate_feasibility(
+                X=X,
+                nonlinear_inequality_constraints=[(nlc1, False)],
+            ).tolist(),
+            [False, False, True],
+        )
+        # All together.
+        self.assertEqual(
+            evaluate_feasibility(
+                X=X,
+                inequality_constraints=[linear_inter_cons],
+                equality_constraints=[linear_inter_cons],
+                nonlinear_inequality_constraints=[(nlc1, False)],
+            ).tolist(),
+            [False, False, True],
+        )
 
 
 class TestMakeScipyBounds(BotorchTestCase):
