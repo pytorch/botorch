@@ -265,17 +265,21 @@ def gen_candidates_scipy(
     # so it shouldn't be an issue given enough restarts.
     if nonlinear_inequality_constraints:
         for con, is_intrapoint in nonlinear_inequality_constraints:
-            if not nonlinear_constraint_is_feasible(
-                con, is_intrapoint=is_intrapoint, x=candidates
-            ):
-                candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)
+            if not (
+                feasible := nonlinear_constraint_is_feasible(
+                    con, is_intrapoint=is_intrapoint, x=candidates
+                )
+            ).all():
+                # Replace the infeasible batches with feasible ICs.
+                candidates[~feasible] = (
+                    torch.from_numpy(x0).to(candidates).reshape(shapeX)[~feasible]
+                )
                 warnings.warn(
                     "SLSQP failed to converge to a solution the satisfies the "
                     "non-linear constraints. Returning the feasible starting point.",
                     OptimizationWarning,
                     stacklevel=2,
                 )
-                break
 
     clamped_candidates = columnwise_clamp(
         X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True

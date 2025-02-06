@@ -512,7 +512,7 @@ def _make_f_and_grad_nonlinear_inequality_constraints(
 
 def nonlinear_constraint_is_feasible(
     nonlinear_inequality_constraint: Callable, is_intrapoint: bool, x: Tensor
-) -> bool:
+) -> Tensor:
     """Checks if a nonlinear inequality constraint is fulfilled.
 
     Args:
@@ -522,23 +522,24 @@ def nonlinear_constraint_is_feasible(
             is applied pointwise and is broadcasted over the q-batch. Else, the
             constraint has to evaluated over the whole q-batch and is a an
             inter-point constraint.
-        x: Tensor of shape (b x q x d).
+        x: Tensor of shape (batch x q x d).
 
     Returns:
-        bool: True if the constraint is fulfilled, else False.
+        A boolean tensor of shape (batch) indicating if the constraint is
+        satified by the corresponding batch of `x`.
     """
 
     def check_x(x: Tensor) -> bool:
         return _arrayify(nonlinear_inequality_constraint(x)).item() >= NLC_TOL
 
-    for x_ in x:
+    x_flat = x.view(-1, *x.shape[-2:])
+    is_feasible = torch.ones(x_flat.shape[0], dtype=torch.bool, device=x.device)
+    for i, x_ in enumerate(x_flat):
         if is_intrapoint:
-            if not all(check_x(x__) for x__ in x_):
-                return False
+            is_feasible[i] &= all(check_x(x__) for x__ in x_)
         else:
-            if not check_x(x_):
-                return False
-    return True
+            is_feasible[i] &= check_x(x_)
+    return is_feasible.view(x.shape[:-2])
 
 
 def make_scipy_nonlinear_inequality_constraints(
@@ -589,7 +590,7 @@ def make_scipy_nonlinear_inequality_constraints(
         nlc, is_intrapoint = constraint
         if not nonlinear_constraint_is_feasible(
             nlc, is_intrapoint=is_intrapoint, x=x0.reshape(shapeX)
-        ):
+        ).all():
             raise ValueError(
                 "`batch_initial_conditions` must satisfy the non-linear inequality "
                 "constraints."
