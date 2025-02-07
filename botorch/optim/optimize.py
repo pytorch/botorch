@@ -1438,7 +1438,7 @@ def optimize_acqf_discrete_local_search(
         X_avoid = torch.zeros(0, dim, device=device, dtype=dtype)
 
     inequality_constraints = inequality_constraints or []
-    for i in range(q):
+    for _ in range(q):
         # generate some starting points
         X0 = _gen_starting_points_local_search(
             discrete_choices=discrete_choices,
