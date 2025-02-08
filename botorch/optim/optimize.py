@@ -1027,7 +1027,7 @@ def optimize_acqf_mixed(
 
     if isinstance(acq_function, OneShotAcquisitionFunction):
         if not hasattr(acq_function, "evaluate") and q > 1:
-            raise ValueError(
+            raise UnsupportedError(
                 "`OneShotAcquisitionFunction`s that do not implement `evaluate` "
                 "are currently not supported when `q > 1`. This is needed to "
                 "compute the joint acquisition value."

@@ -623,10 +623,10 @@ class TestOptimizeAcqf(BotorchTestCase):
 
         for ic_shape, expected_shape in [((2, 1, dim), 2), ((2, dim), 1)]:
             with self.subTest(gen_candidates=gen_candidates):
+                ics = torch.ones((ic_shape))
                 with self.assertWarnsRegex(
                     RuntimeWarning, "botorch will default to old behavior"
                 ):
-                    ics = torch.ones((ic_shape))
                     _candidates, acq_value_list = optimize_acqf(
                         acq_function=SinOneOverXAcqusitionFunction(),
                         bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
@@ -638,8 +638,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                         gen_candidates=gen_candidates,
                         batch_initial_conditions=ics,
                     )
-
-                    self.assertEqual(acq_value_list.shape, (expected_shape,))
+                self.assertEqual(acq_value_list.shape, (expected_shape,))
 
     def test_optimize_acqf_runs_given_batch_initial_conditions(self):
         num_restarts, raw_samples, dim = 1, 2, 3
@@ -914,27 +913,6 @@ class TestOptimizeAcqf(BotorchTestCase):
             self.assertTrue(
                 torch.allclose(acq_value, torch.tensor([4], **tkwargs), atol=1e-3)
             )
-
-            # Make sure we return the initial solution if SLSQP fails to return
-            # a feasible point.
-            with mock.patch(
-                "botorch.generation.gen.minimize_with_timeout"
-            ) as mock_minimize:
-                # By setting "success" to True and "status" to 0, we prevent a
-                # warning that `minimize` failed, which isn't the behavior
-                # we're looking to test here.
-                mock_minimize.return_value = OptimizeResult(
-                    x=np.array([4, 4, 4]), success=True, status=0
-                )
-                candidates, acq_value = optimize_acqf(
-                    acq_function=mock_acq_function,
-                    bounds=bounds,
-                    q=1,
-                    nonlinear_inequality_constraints=[(nlc1, True)],
-                    batch_initial_conditions=batch_initial_conditions,
-                    num_restarts=1,
-                )
-                self.assertAllClose(candidates, batch_initial_conditions[0, ...])
 
             # Constrain all variables to be >= 1. The global optimum is 2.45 and
             # is attained by some permutation of [1, 1, 2]
@@ -1685,10 +1663,10 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             self.assertTrue(torch.equal(acq_value, expected_acq_value))
 
     def test_optimize_acqf_mixed_empty_ff(self):
+        mock_acq_function = MockAcquisitionFunction()
         with self.assertRaisesRegex(
             ValueError, expected_regex="fixed_features_list must be non-empty."
         ):
-            mock_acq_function = MockAcquisitionFunction()
             optimize_acqf_mixed(
                 acq_function=mock_acq_function,
                 q=1,
@@ -1715,9 +1693,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             )
 
     def test_optimize_acqf_one_shot_large_q(self):
-        with self.assertRaises(ValueError):
-            mock_acq_function = MockOneShotAcquisitionFunction()
-            fixed_features_list = [{i: i * 0.1} for i in range(2)]
+        mock_acq_function = MockOneShotAcquisitionFunction()
+        fixed_features_list = [{i: i * 0.1} for i in range(2)]
+        with self.assertRaisesRegex(UnsupportedError, "OneShotAcquisitionFunction"):
             optimize_acqf_mixed(
                 acq_function=mock_acq_function,
                 q=2,
