@@ -647,11 +647,11 @@ def evaluate_feasibility(
             intra-point or inter-point constraint (`True` for intra-point. `False` for
             inter-point). For more information on intra-point vs inter-point
             constraints, see the docstring of the `inequality_constraints` argument.
-        tolerance: The tolerance used to check the feasibility of equality constraints
-            and non-linear inequality constraints. For equality constraints, we check
-            if `abs(const(X) - rhs) < tolerance`. For non-linear inequality constraints,
-            we check if `const(X) >= -tolerance`. This avoids marking the candidates as
-            infeasible due to tiny violations.
+        tolerance: The tolerance used to check the feasibility of constraints.
+            For inequality constraints, we check if `const(X) >= rhs - tolerance`.
+            For equality constraints, we check if `abs(const(X) - rhs) < tolerance`.
+            For non-linear inequality constraints, we check if `const(X) >= -tolerance`.
+            This avoids marking the candidates as infeasible due to tiny violations.
 
     Returns:
         A boolean tensor of shape `batch` indicating if the corresponding candidate of
@@ -662,10 +662,14 @@ def evaluate_feasibility(
         for idx, coef, rhs in inequality_constraints:
             if idx.ndim == 1:
                 # Intra-point constraints.
-                is_feasible &= ((X[..., idx] * coef).sum(dim=-1) >= rhs).all(dim=-1)
+                is_feasible &= (
+                    (X[..., idx] * coef).sum(dim=-1) >= rhs - tolerance
+                ).all(dim=-1)
             else:
                 # Inter-point constraints.
-                is_feasible &= (X[..., idx[:, 0], idx[:, 1]] * coef).sum(dim=-1) >= rhs
+                is_feasible &= (X[..., idx[:, 0], idx[:, 1]] * coef).sum(
+                    dim=-1
+                ) >= rhs - tolerance
     if equality_constraints is not None:
         for idx, coef, rhs in equality_constraints:
             if idx.ndim == 1:
