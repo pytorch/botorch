@@ -196,7 +196,7 @@ def _optimize_acqf_all_features_fixed(
     X = X.expand(q, *X.shape)
     with torch.no_grad():
         acq_value = acq_function(X)
-    return X, acq_value
+    return X, acq_value[0]
 
 
 def _validate_sequential_inputs(opt_inputs: OptimizeAcqfInputs) -> None:
