@@ -171,6 +171,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             train_Y=train_Y,
             train_Yvar=train_Yvar,
             ignore_X_dims=ignore_X_dims,
+            check_nans_only=covar_module is not None,
         )
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, train_Yvar = self._transform_tensor_args(

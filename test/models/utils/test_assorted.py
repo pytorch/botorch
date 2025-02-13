@@ -181,6 +181,11 @@ class TestInputDataChecks(BotorchTestCase):
         # check that errors are raised when requested
         with self.assertRaises(InputDataError):
             validate_input_scaling(train_X=train_X, train_Y=train_Y, raise_on_fail=True)
+        # check that normalization & standardization checks & errors are skipped when
+        # check_nans_only is True
+        validate_input_scaling(
+            train_X=train_X, train_Y=train_Y, raise_on_fail=True, check_nans_only=True
+        )
         # check that no errors are being raised if everything is standardized
         train_X_min = train_X.min(dim=-1, keepdim=True)[0]
         train_X_max = train_X.max(dim=-1, keepdim=True)[0]
@@ -202,6 +207,11 @@ class TestInputDataChecks(BotorchTestCase):
         train_X_std[0, 0, 0] = float("nan")
         with self.assertRaises(InputDataError):
             validate_input_scaling(train_X=train_X_std, train_Y=train_Y_std)
+        # NaNs still raise errors when check_nans_only is True
+        with self.assertRaises(InputDataError):
+            validate_input_scaling(
+                train_X=train_X_std, train_Y=train_Y_std, check_nans_only=True
+            )
 
 
 class TestGPTPosteriorSettings(BotorchTestCase):
