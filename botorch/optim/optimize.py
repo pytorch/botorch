@@ -117,7 +117,7 @@ class OptimizeAcqfInputs:
                 )
 
             if (
-                len(batch_initial_conditions_shape) == 2 
+                len(batch_initial_conditions_shape) == 2
                 and self.raw_samples is not None
             ):
                 warnings.warn(
