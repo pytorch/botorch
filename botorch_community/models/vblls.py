@@ -16,12 +16,13 @@ References:
 Contributor: brunzema
 """
 
-from typing import Optional, Dict
+from typing import Dict, Optional, Type
 from abc import ABC, abstractmethod
 
 import torch
 import torch.nn as nn
 from torch import Tensor
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from gpytorch.distributions import MultivariateNormal
@@ -166,6 +167,27 @@ class VBLLNetwork(nn.Module):
         return SampleModel(self.backbone, sampled_params)
 
 
+def _get_optimizer(
+    optimizer_class: Type[Optimizer],
+    model_parameters,
+    lr: float = 1e-3,
+    **kwargs,
+) -> Optimizer:
+    """
+    Creates and returns an optimizer.
+
+    Args:
+        optimizer_class (Type[Optimizer]): The optimizer class (e.g., torch.optim.AdamW).
+        model_parameters: Parameters to be optimized.
+        lr (float): Learning rate.
+        **kwargs: Additional arguments to be passed to the optimizer.
+
+    Returns:
+        Optimizer: The initialized optimizer.
+    """
+    return optimizer_class(model_parameters, lr=lr, **kwargs)
+
+
 class AbstractBLLModel(Model, ABC):
     def __init__(self):
         super().__init__()
@@ -188,8 +210,8 @@ class AbstractBLLModel(Model, ABC):
         self,
         train_X: Tensor,
         train_y: Tensor,
-        optimization_settings: Dict = None,
-        initialization_params: Dict = None,
+        optimization_settings: Optional[Dict] = None,
+        initialization_params: Optional[Dict] = None,
     ):
         """
         Fits the model to the given training data. Note that for continual learning, we assume that the last point in the training data is the new point.
@@ -226,17 +248,19 @@ class AbstractBLLModel(Model, ABC):
             "freeze_backbone": False,
             "patience": 100,
             "batch_size": 32,
-            "optimizer": torch.optim.AdamW,
+            "optimizer": torch.optim.AdamW,  # Now uses a class, not an instance
             "lr": 1e-3,
             "wd": 1e-4,
             "clip_val": 1.0,
+            "optimizer_kwargs": {},  # Extra optimizer-specific args (e.g., betas for Adam)
         }
 
         # Merge defaults with provided settings
-        if optimization_settings is None:
-            optimization_settings = default_opt_settings
-        else:
-            optimization_settings = {**default_opt_settings, **optimization_settings}
+        optimization_settings = (
+            default_opt_settings
+            if optimization_settings is None
+            else {**default_opt_settings, **optimization_settings}
+        )
 
         # Make dataloader based on train_X, train_y
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -267,8 +291,16 @@ class AbstractBLLModel(Model, ABC):
                 }
             )
 
-        optimizer = optimization_settings["optimizer"](
-            lr=optimization_settings["lr"], params=param_list
+        # Extract settings
+        optimizer_class = optimization_settings["optimizer"]
+        optimizer_kwargs = optimization_settings.get("optimizer_kwargs", {})
+
+        # Initialize optimizer using helper function
+        optimizer = _get_optimizer(
+            optimizer_class,
+            model_parameters=param_list,
+            lr=optimization_settings["lr"],
+            **optimizer_kwargs,
         )
 
         best_loss = float("inf")
@@ -329,11 +361,9 @@ class AbstractBLLModel(Model, ABC):
         if len(X.shape) < 3:
             B, D = X.shape
             Q = 1
-            batched = False
         else:
             B, Q, D = X.shape
             X = X.reshape(B * Q, D)
-            batched = True
 
         posterior = self.model(X).predictive
 
@@ -345,11 +375,7 @@ class AbstractBLLModel(Model, ABC):
         # pass as MultivariateNormal to GPyTorchPosterior
         dist = MultivariateNormal(mean, cov)
         post_pred = GPyTorchPosterior(dist)
-
-        if batched:
-            return BLLPosterior(post_pred, self, X, self.num_outputs)
-        else:
-            return post_pred
+        return BLLPosterior(post_pred, self, X, self.num_outputs)
 
     @abstractmethod
     def sample(self, sample_shape: Optional[torch.Size] = None):
