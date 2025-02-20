@@ -4,7 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-This file contains an implemenation of a Variational Bayesian Last Layer (VBLL) model that can be used within BoTorch.
+This file contains an implemenation of a Variational Bayesian Last Layer (VBLL) model that can be used within BoTorch
+for Bayesian optimization.
 
 References:
 
@@ -15,11 +16,8 @@ References:
 Contributor: brunzema
 """
 
-import os
 from typing import Optional, Dict
 from abc import ABC, abstractmethod
-
-import random
 
 import torch
 import torch.nn as nn
@@ -38,6 +36,22 @@ import vbll
 
 
 torch.set_default_dtype(torch.float64)
+
+
+class SampleModel(nn.Module):
+    def __init__(self, backbone: nn.Module, sampled_params: Tensor):
+        super().__init__()
+        self.backbone = backbone
+        self.sampled_params = sampled_params
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.backbone(x)
+
+        if self.sampled_params.dim() == 2:
+            return (self.sampled_params @ x[..., None]).squeeze(-1)
+
+        x_expanded = x.unsqueeze(0).expand(self.sampled_params.shape[0], -1, -1)
+        return torch.matmul(self.sampled_params, x_expanded.transpose(-1, -2))
 
 
 class VBLLNetwork(nn.Module):
@@ -122,7 +136,9 @@ class VBLLNetwork(nn.Module):
         x = self.backbone(x)
         return self.head(x)
 
-    def sample_posterior_function(self, sample_shape: Optional[torch.Size] = None):
+    def sample_posterior_function(
+        self, sample_shape: Optional[torch.Size] = None
+    ) -> nn.Module:
         """
         Samples a posterior function by drawing parameters from the model's learned distribution.
 
@@ -132,8 +148,8 @@ class VBLLNetwork(nn.Module):
                 Defaults to None.
 
         Returns:
-            Callable[[Tensor], Tensor]:
-                A function that takes an input tensor `x` and returns the corresponding
+            nn.Module[[Tensor], Tensor]:
+                A nn.Module that takes an input tensor `x` and returns the corresponding
                 model output tensor. The function applies the backbone transformation
                 and computes the final output using the sampled parameters.
 
@@ -142,22 +158,12 @@ class VBLLNetwork(nn.Module):
             - If `sample_shape` is provided, multiple parameter samples are drawn, and the function
               will return a batched output where the first dimension corresponds to different samples.
         """
-        if sample_shape is None:
-            sampled_params = self.head.W().rsample().to(self.device)
-        else:
-            sampled_params = self.head.W().rsample(sample_shape).to(self.device)
-
-        def sampled_parametric_function(x: Tensor) -> Tensor:
-            x = self.backbone(x)
-
-            if sample_shape is None:
-                return (sampled_params @ x[..., None]).squeeze(-1)
-
-            x_expanded = x.unsqueeze(0).expand(sampled_params.shape[0], -1, -1)
-            output = torch.matmul(sampled_params, x_expanded.transpose(-1, -2))
-            return output
-
-        return sampled_parametric_function
+        sampled_params = (
+            self.head.W().rsample(sample_shape).to(self.device)
+            if sample_shape
+            else self.head.W().rsample().to(self.device)
+        )
+        return SampleModel(self.backbone, sampled_params)
 
 
 class AbstractBLLModel(Model, ABC):
@@ -178,27 +184,12 @@ class AbstractBLLModel(Model, ABC):
     def device(self):
         return self.model.device
 
-    @staticmethod
-    def sigmoid_retrain_schedule(
-        time_horizon, epoch, transition_window_ratio, location
-    ):
-        # Compute stretch dynamically
-        transition_window = time_horizon * transition_window_ratio
-        stretch = (
-            2 * torch.log(torch.tensor(9.0)) / transition_window
-        )  # Ensures 10%-90% transition within the transition_window, see [1]
-
-        # Sigmoid function
-        probability = 1 / (1 + torch.exp(-stretch * (location - epoch)))
-        return torch.rand(1).item() < probability
-
     def fit(
         self,
         train_X: Tensor,
         train_y: Tensor,
         optimization_settings: Dict = None,
-        continual_learning_settings: Dict = None,
-        old_model_params: Dict = None,
+        initialization_params: Dict = None,
     ):
         """
         Fits the model to the given training data. Note that for continual learning, we assume that the last point in the training data is the new point.
@@ -221,26 +212,12 @@ class AbstractBLLModel(Model, ABC):
                     - "wd" (float, default=1e-4): Weight decay (L2 regularization) coefficient.
                     - "clip_val" (float, default=1.0): Gradient clipping threshold.
 
-            continual_learning_settings (dict, optional):
-                A dictionary specifying continual learning (CL) configurations. If a key is missing, default values will be used.
-                Available settings:
-                    - "use_cl" (bool or str, default=False): If False, CL is disabled. Can be set to:
-                        - `"event_trigger"`: Enables CL based on an event-triggering mechanism.
-                        - `"sigmoid_schedule"`: Enables CL using a sigmoid-based schedule.
-                    - "event_trigger" (dict, required if `use_cl == "event_trigger"`):
-                        - "test_threshold" (float, default=0.0): Threshold on the log likelihood of the new point.
-                    - "sigmoid_schedule" (dict, required if `use_cl == "sigmoid_schedule"`):
-                        - "transition_window_ratio" (float, default=0.5): Ratio of transition window to time horizon.
-                        - "location" (float or None, default=None): Center of the transition window. Defaults to `time_horizon / 2` if None.
-                        - "time_horizon" (int, default=100): Total time horizon for the sigmoid schedule.
-                        - "current_iteration" (int, default=0): Current iteration of the optimization.
+            initialization_params (dict, optional):
+                A dictionary containing the initial parameters of the model for feature reuse.
+                If None, the optimization will start from from the random initialization in the __init__ method.
 
         Returns:
             None: The function trains the model in place and does not return a value.
-
-        Notes:
-            - If continual learning (CL) is enabled, the function dynamically determines whether to retrain the model
-              based on the specified method (`event_trigger` or `sigmoid_schedule`). TODO: Add full functionality.
         """
 
         # Default settings
@@ -255,33 +232,11 @@ class AbstractBLLModel(Model, ABC):
             "clip_val": 1.0,
         }
 
-        default_cont_learning_settings = {
-            "use_cl": False,  # Can be False, "event_trigger", or "sigmoid_schedule"
-            "event_trigger": {
-                "test_threshold": 0.0,  # Threshold on the log-likelihood for event triggering
-            },
-            "sigmoid_schedule": {
-                "transition_window_ratio": 0.5,  # Ratio of the transition window to time horizon
-                "location": None,  # Defaults to time_horizon / 2 if None
-                "time_horizon": 100,  # Total time horizon for the optimization
-                "current_iteration": 0,  # Current iteration of the optimization
-            },
-        }
-
         # Merge defaults with provided settings
         if optimization_settings is None:
             optimization_settings = default_opt_settings
         else:
             optimization_settings = {**default_opt_settings, **optimization_settings}
-
-        # Merge defaults with provided settings
-        if continual_learning_settings is None:
-            cl_settings = default_cont_learning_settings
-        else:
-            cl_settings = {
-                **default_cont_learning_settings,
-                **continual_learning_settings,
-            }
 
         # Make dataloader based on train_X, train_y
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -291,140 +246,77 @@ class AbstractBLLModel(Model, ABC):
             dataset, shuffle=True, batch_size=optimization_settings["batch_size"]
         )
 
-        # default is to always fully train
-        full_training = True
+        if initialization_params is not None:
+            self.model.load_state_dict(initialization_params)
 
-        """
-        # renormalize the data based on the mean and std of the data expext the last point
-        mean = train_y[:-1].mean(dim=0)
-        if len(train_y) > 2:
-            std = train_y[:-1].std(dim=0)
-        else:
-            std = torch.ones_like(mean)
+        self.model.to(device)
+        self.set_reg_weight(self.model.kl_scale / len(train_y))
+        param_list = [
+            {
+                "params": self.model.head.parameters(),
+                "weight_decay": 0.0,
+            },
+        ]
 
-        # renorm^2 suuper ugly
-        x_new = train_X[-1]
-        y_new = (train_y[-1] * train_y.std(dim=0) + train_y.mean(dim=0) - mean) / std
-        out = self.old_model(x_new.to(device))
-        """
-        log_likelihood = 0  # -out.val_loss_fn(y_new.to(device)).sum().item()
-
-        if cl_settings["use_cl"]:
-            method = cl_settings["use_cl"]
-
-            if not old_model_params:
-                raise ValueError(
-                    "No old model parameters provided for continual learning."
-                )
-            else:
-                self.old_model.load_state_dict(old_model_params)
-
-            if method == "event_trigger":
-                full_training = (
-                    log_likelihood < cl_settings["event_trigger"]["test_threshold"]
-                )
-
-            elif method == "sigmoid_schedule":
-                # Sigmoid-based probability
-                transition_window_ratio = cl_settings["sigmoid_schedule"][
-                    "transition_window_ratio"
-                ]
-                location = cl_settings["sigmoid_schedule"]["location"]
-                time_horizon = cl_settings["sigmoid_schedule"]["time_horizon"]
-                iteration = cl_settings["sigmoid_schedule"]["iteration"]
-
-                if location is None:
-                    location = (
-                        time_horizon / 2
-                    )  # Default to middle of time horizon if not provided
-
-                full_training = self.sigmoid_retrain_schedule(
-                    time_horizon, iteration, transition_window_ratio, location
-                )
-
-            else:
-                raise ValueError(f"Unknown continual learning method: {method}")
-
-        if not full_training:
-            self.model.to(device)
-            self.model.load_state_dict(self.old_model.state_dict())
-
-            with torch.no_grad():
-                x, y = x_new.to(device), y_new.to(device)
-                out = self.model(x.reshape(1, -1))
-                loss = out.train_loss_fn(y.reshape(1, -1), recursive_update=True)
-
-            print("Recurive update of the last layer.")
-
-        else:
-            self.model.to(device)
-            self.set_regularization_weight(self.model.kl_scale / len(train_y))
-            param_list = [
+        # freeze backbone
+        if not optimization_settings["freeze_backbone"]:
+            param_list.append(
                 {
-                    "params": self.model.head.parameters(),
-                    "weight_decay": 0.0,
-                },
-            ]
-
-            # freeze backbone
-            if not optimization_settings["freeze_backbone"]:
-                param_list.append(
-                    {
-                        "params": self.model.backbone.parameters(),
-                        "weight_decay": optimization_settings["wd"],
-                    }
-                )
-
-            optimizer = optimization_settings["optimizer"](
-                lr=optimization_settings["lr"], params=param_list
+                    "params": self.model.backbone.parameters(),
+                    "weight_decay": optimization_settings["wd"],
+                }
             )
 
-            best_loss = float("inf")
-            epochs_no_improve = 0
-            early_stop = False
-            best_model_state = None  # To store the best model parameters
+        optimizer = optimization_settings["optimizer"](
+            lr=optimization_settings["lr"], params=param_list
+        )
 
-            for epoch in range(optimization_settings["num_epochs"] + 1):
-                # early stopping
-                if early_stop:
-                    break
+        best_loss = float("inf")
+        epochs_no_improve = 0
+        early_stop = False
+        best_model_state = None  # To store the best model parameters
 
-                self.model.train()
-                running_loss = []
+        for epoch in range(1, optimization_settings["num_epochs"] + 1):
+            # early stopping
+            if early_stop:
+                break
 
-                for train_step, (x, y) in enumerate(dataloader):
-                    x, y = x.to(device), y.to(device)
-                    optimizer.zero_grad()
-                    out = self.model(x)
-                    loss = out.train_loss_fn(y)  # vbll layer will calculate the loss
+            self.model.train()
+            running_loss = []
 
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(
-                        self.model.parameters(), optimization_settings["clip_val"]
-                    )
-                    optimizer.step()
-                    running_loss.append(loss.item())
+            for train_step, (x, y) in enumerate(dataloader):
+                x, y = x.to(device), y.to(device)
+                optimizer.zero_grad()
+                out = self.model(x)
+                loss = out.train_loss_fn(y)  # vbll layer will calculate the loss
 
-                # Calculate average loss over the epoch
-                avg_loss = sum(running_loss[-len(dataloader) :]) / len(dataloader)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(
+                    self.model.parameters(), optimization_settings["clip_val"]
+                )
+                optimizer.step()
+                running_loss.append(loss.item())
 
-                # Early stopping logic
-                if avg_loss < best_loss:
-                    best_loss = avg_loss
-                    best_model_state = self.model.state_dict()
-                    epochs_no_improve = 0
-                else:
-                    epochs_no_improve += 1
+            # Calculate average loss over the epoch
+            avg_loss = sum(running_loss[-len(dataloader) :]) / len(dataloader)
 
-                if epochs_no_improve >= optimization_settings["patience"]:
-                    early_stop = True
+            # Early stopping logic
+            if avg_loss < best_loss:
+                best_loss = avg_loss
+                best_model_state = self.model.state_dict()
+                epochs_no_improve = 0
+            else:
+                epochs_no_improve += 1
 
-            # load best model
-            if best_model_state is not None:
-                self.model.load_state_dict(best_model_state)
-                print("Early stopping at epoch ", epoch, " with loss ", best_loss)
+            if epochs_no_improve >= optimization_settings["patience"]:
+                early_stop = True
 
-    def set_regularization_weight(self, new_weight: float):
+        # load best model
+        if best_model_state is not None:
+            self.model.load_state_dict(best_model_state)
+            print("Early stopping at epoch ", epoch, " with loss ", best_loss)
+
+    def set_reg_weight(self, new_weight: float):
         self.model.head.regularization_weight = new_weight
 
     def posterior(
@@ -443,24 +335,14 @@ class AbstractBLLModel(Model, ABC):
             X = X.reshape(B * Q, D)
             batched = True
 
-        K = self.num_outputs
-        posterior = self.model(X).predictive  #
+        posterior = self.model(X).predictive
 
         # Extract mean and variance
         mean = posterior.mean.squeeze(-1)
         variance = posterior.variance.squeeze(-1)
         cov = torch.diag_embed(variance)
 
-        # TODO: may need some further reshaping for batch size > 1
-        # Mean in `(batch_shape, q*k)`
-        # mean = mean.reshape(B, Q * K)
-
-        # # Cov is `(batch_shape, q*k, q*k)`
-        # cov += 1e-4 * torch.eye(B * Q * K).to(X)
-        # cov = cov.reshape(B, Q, K, B, Q, K)
-        # cov = torch.einsum('bqkbrl->bqkrl', cov)  # (B, Q, K, Q, K)
-        # cov = cov.reshape(B, Q * K, Q * K)
-
+        # pass as MultivariateNormal to GPyTorchPosterior
         dist = MultivariateNormal(mean, cov)
         post_pred = GPyTorchPosterior(dist)
 
@@ -478,7 +360,6 @@ class VBLLModel(AbstractBLLModel):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.model = VBLLNetwork(*args, **kwargs)
-        self.old_model = VBLLNetwork(*args, **kwargs)  # used for continual learning
 
     def sample(self, sample_shape: Optional[torch.Size] = None):
         return self.model.sample_posterior_function(sample_shape)
