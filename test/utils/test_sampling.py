@@ -18,13 +18,14 @@ from botorch.acquisition.objective import (
     LinearMCObjective,
     ScalarizedPosteriorTransform,
 )
-from botorch.exceptions.errors import BotorchError
+from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.exceptions.warnings import UserInputWarning
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.utils.sampling import (
     _convert_bounds_to_inequality_constraints,
     batched_multinomial,
+    boltzmann_sample,
     DelaunayPolytopeSampler,
     draw_sobol_samples,
     find_interior_point,
@@ -35,8 +36,10 @@ from botorch.utils.sampling import (
     optimize_posterior_samples,
     PolytopeSampler,
     sample_hypersphere,
+    sample_perturbed_subset_dims,
     sample_polytope,
     sample_simplex,
+    sample_truncated_normal_perturbations,
     sparse_to_dense_constraints,
 )
 from botorch.utils.testing import BotorchTestCase
@@ -684,3 +687,154 @@ class TestOptimizePosteriorSamples(BotorchTestCase):
         )
         correct_f_shape = (num_optima,) + batch_shape + (1,)
         self.assertEqual(f_opt.shape, correct_f_shape)
+
+
+class TestSampleTruncatedNormalPerturbations(BotorchTestCase):
+    def test_sample_truncated_normal_perturbations(self):
+        tkwargs = {"device": self.device}
+        n_discrete_points = 5
+        _bounds = torch.ones(2, 4)
+        _bounds[1] = 2
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            bounds = _bounds.to(**tkwargs)
+            for n_best in (1, 2):
+                X = 1 + torch.rand(n_best, 4, **tkwargs)
+                # basic test
+                perturbed_X = sample_truncated_normal_perturbations(
+                    X=X,
+                    n_discrete_points=n_discrete_points,
+                    sigma=4,
+                    bounds=bounds,
+                    qmc=False,
+                )
+                self.assertEqual(perturbed_X.shape, torch.Size([n_discrete_points, 4]))
+                self.assertTrue((perturbed_X >= 1).all())
+                self.assertTrue((perturbed_X <= 2).all())
+                # test qmc
+                with mock.patch(
+                    "botorch.utils.sampling.draw_sobol_samples",
+                    wraps=draw_sobol_samples,
+                ) as mock_sobol:
+                    perturbed_X = sample_truncated_normal_perturbations(
+                        X=X,
+                        n_discrete_points=n_discrete_points,
+                        sigma=4,
+                        bounds=bounds,
+                        qmc=True,
+                    )
+                    mock_sobol.assert_called_once()
+                self.assertEqual(perturbed_X.shape, torch.Size([n_discrete_points, 4]))
+                self.assertTrue((perturbed_X >= 1).all())
+                self.assertTrue((perturbed_X <= 2).all())
+
+
+class TestSamplePerturbedSubsetDims(BotorchTestCase):
+    def test_sample_perturbed_subset_dims(self):
+        tkwargs = {"device": self.device}
+        n_discrete_points = 5
+
+        # test that errors are raised
+        with self.assertRaises(BotorchTensorDimensionError):
+            sample_perturbed_subset_dims(
+                X=torch.zeros(1, 1),
+                n_discrete_points=1,
+                sigma=1e-3,
+                bounds=torch.zeros(1, 2, 1),
+            )
+        with self.assertRaises(BotorchTensorDimensionError):
+            sample_perturbed_subset_dims(
+                X=torch.zeros(1, 1, 1),
+                n_discrete_points=1,
+                sigma=1e-3,
+                bounds=torch.zeros(2, 1),
+            )
+        for dtype in (torch.float, torch.double):
+            for n_best in (1, 2):
+                tkwargs["dtype"] = dtype
+                bounds = torch.zeros(2, 21, **tkwargs)
+                bounds[1] = 1
+                X = torch.rand(n_best, 21, **tkwargs)
+                # basic test
+                with mock.patch(
+                    "botorch.utils.sampling.draw_sobol_samples",
+                ) as mock_sobol:
+                    perturbed_X = sample_perturbed_subset_dims(
+                        X=X,
+                        n_discrete_points=n_discrete_points,
+                        qmc=False,
+                        sigma=1e-3,
+                        bounds=bounds,
+                    )
+                    mock_sobol.assert_not_called()
+                self.assertEqual(perturbed_X.shape, torch.Size([n_discrete_points, 21]))
+                self.assertTrue((perturbed_X >= 0).all())
+                self.assertTrue((perturbed_X <= 1).all())
+                # test qmc
+                with mock.patch(
+                    "botorch.utils.sampling.draw_sobol_samples",
+                    wraps=draw_sobol_samples,
+                ) as mock_sobol:
+                    perturbed_X = sample_perturbed_subset_dims(
+                        X=X,
+                        n_discrete_points=n_discrete_points,
+                        sigma=1e-3,
+                        bounds=bounds,
+                    )
+                    mock_sobol.assert_called_once()
+                self.assertEqual(perturbed_X.shape, torch.Size([n_discrete_points, 21]))
+                self.assertTrue((perturbed_X >= 0).all())
+                self.assertTrue((perturbed_X <= 1).all())
+                # for each point in perturbed_X compute the number of
+                # dimensions it has in common with each point in X
+                # and take the maximum number
+                max_equal_dims = (
+                    (perturbed_X.unsqueeze(0) == X.unsqueeze(1))
+                    .sum(dim=-1)
+                    .max(dim=0)
+                    .values
+                )
+                # check that at least one dimension is perturbed
+                self.assertTrue((20 - max_equal_dims >= 1).all())
+
+
+class TestBoltzmannSample(BotorchTestCase):
+    def test_boltzmann_sample(self):
+        tkwargs = {"device": self.device}
+        for dtype in (torch.float32, torch.float64):
+            tkwargs["dtype"] = dtype
+
+        function_values = torch.tensor([1.0, 2.0, 3.0, 4.0], **tkwargs)
+        num_samples = 2
+        eta = 1.0
+        result = boltzmann_sample(function_values, num_samples, eta)
+        self.assertEqual(result.shape, (num_samples,))
+
+        # test batch dimensions
+        function_values = torch.tensor(
+            [[-1.0, 2.0, -3.0], [-4.0, -3.0, 1.0]], **tkwargs
+        )
+        num_samples = 2
+        eta = 1.0
+        result = boltzmann_sample(function_values, num_samples, eta)
+        self.assertEqual(result.shape, (function_values.shape[0], num_samples))
+
+        function_values = torch.tensor([1.0, 2.0, 3.0, 4.0], **tkwargs)
+        num_samples = 5
+        eta = 0.1
+
+        # With replacement (should succeed even if num_samples > len(function_values))
+        result_with_replacement = boltzmann_sample(
+            function_values, num_samples, eta, replacement=True
+        )
+        self.assertEqual(result_with_replacement.shape, (num_samples,))
+
+        # Without replacement (should fail if num_samples > len(function_values))
+        with self.assertRaises(RuntimeError):
+            boltzmann_sample(function_values, num_samples, eta, replacement=False)
+
+        function_values = torch.tensor([1.0, 2.0, 3.0, 4.0], **tkwargs)
+        num_samples = 2
+        large_eta = 1000.0
+        result = boltzmann_sample(function_values, num_samples, large_eta)
+        self.assertEqual(result.shape, (num_samples,))
