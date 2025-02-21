@@ -87,7 +87,7 @@ class VBLLNetwork(nn.Module):
     def __init__(
         self,
         in_features: int = 2,
-        hidden_features: int = 50,
+        hidden_features: int = 64,
         out_features: int = 1,
         num_layers: int = 3,
         prior_scale: float = 1.0,
@@ -206,6 +206,10 @@ class AbstractBLLModel(Model, ABC):
     def device(self):
         return self.model.device
 
+    @property
+    def backbone(self):
+        return self.model.backbone
+
     def fit(
         self,
         train_X: Tensor,
@@ -308,12 +312,13 @@ class AbstractBLLModel(Model, ABC):
         early_stop = False
         best_model_state = None  # To store the best model parameters
 
+        self.model.train()
+
         for epoch in range(1, optimization_settings["num_epochs"] + 1):
             # early stopping
             if early_stop:
                 break
 
-            self.model.train()
             running_loss = []
 
             for train_step, (x, y) in enumerate(dataloader):
@@ -323,9 +328,12 @@ class AbstractBLLModel(Model, ABC):
                 loss = out.train_loss_fn(y)  # vbll layer will calculate the loss
 
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(
-                    self.model.parameters(), optimization_settings["clip_val"]
-                )
+
+                if optimization_settings["clip_val"] is not None:
+                    torch.nn.utils.clip_grad_norm_(
+                        self.model.parameters(), optimization_settings["clip_val"]
+                    )
+
                 optimizer.step()
                 running_loss.append(loss.item())
 
@@ -355,26 +363,42 @@ class AbstractBLLModel(Model, ABC):
         self,
         X: Tensor,
         output_indices=None,
-        observation_noise=False,
+        observation_noise=None,
         posterior_transform=None,
     ) -> Posterior:
-        if len(X.shape) < 3:
-            B, D = X.shape
-            Q = 1
+        # Determine if the input is batched
+        batched = X.dim() == 3
+
+        if not batched:
+            N, D = X.shape
+            B = 1
         else:
-            B, Q, D = X.shape
-            X = X.reshape(B * Q, D)
+            B, N, D = X.shape
+            X = X.reshape(B * N, D)
 
         posterior = self.model(X).predictive
 
         # Extract mean and variance
-        mean = posterior.mean.squeeze(-1)
-        variance = posterior.variance.squeeze(-1)
+        mean = posterior.mean.squeeze()
+        variance = posterior.variance.squeeze()
         cov = torch.diag_embed(variance)
 
+        K = self.num_outputs
+        mean = mean.reshape(B, N * K)
+
+        # Cov must be `(B, Q*K, Q*K)`
+        cov = cov.reshape(B, N, K, B, N, K)
+        cov = torch.einsum("bqkbrl->bqkrl", cov)  # (B, Q, K, Q, K)
+        cov = cov.reshape(B, N * K, N * K)
+
+        # Remove fake batch dimension if not batched
+        if not batched:
+            mean = mean.squeeze(0)
+            cov = cov.squeeze(0)
+
         # pass as MultivariateNormal to GPyTorchPosterior
-        dist = MultivariateNormal(mean, cov)
-        post_pred = GPyTorchPosterior(dist)
+        mvn_dist = MultivariateNormal(mean, cov)
+        post_pred = GPyTorchPosterior(mvn_dist)
         return BLLPosterior(post_pred, self, X, self.num_outputs)
 
     @abstractmethod
