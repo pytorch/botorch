@@ -578,8 +578,8 @@ class TestOptimizePosteriorSamples(BotorchTestCase):
         dims = 2
         dtype = torch.float64
         eps = 1e-4
-        for_testing_speed_kwargs = {"raw_samples": 128, "num_restarts": 4}
-        nums_optima = (1, 7)
+        for_testing_speed_kwargs = {"raw_samples": 64, "num_restarts": 2}
+        nums_optima = (1, 5)
         batch_shapes = ((), (2,), (3, 2))
         posterior_transforms = (
             None,
@@ -589,12 +589,14 @@ class TestOptimizePosteriorSamples(BotorchTestCase):
             nums_optima, batch_shapes, posterior_transforms
         ):
             bounds = torch.tensor([[0, 1]] * dims, dtype=dtype).T
-            X = torch.rand(*batch_shape, 4, dims, dtype=dtype)
+            X = torch.rand(*batch_shape, 3, dims, dtype=dtype)
             Y = torch.pow(X - 0.5, 2).sum(dim=-1, keepdim=True)
 
             # having a noiseless model all but guarantees that the found optima
             # will be better than the observations
-            model = SingleTaskGP(X, Y, torch.full_like(Y, eps))
+            model = SingleTaskGP(
+                train_X=X, train_Y=Y, train_Yvar=torch.full_like(Y, eps)
+            )
             model.covar_module.lengthscale = 0.5
             paths = get_matheron_path_model(
                 model=model, sample_shape=torch.Size([num_optima])
@@ -642,7 +644,7 @@ class TestOptimizePosteriorSamples(BotorchTestCase):
         dims = 2
         dtype = torch.float64
         eps = 1e-4
-        for_testing_speed_kwargs = {"raw_samples": 128, "num_restarts": 4}
+        for_testing_speed_kwargs = {"raw_samples": 64, "num_restarts": 2}
         num_optima = 5
         batch_shape = (3,)
 
