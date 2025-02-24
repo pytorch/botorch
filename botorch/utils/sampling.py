@@ -1091,7 +1091,8 @@ def boltzmann_sample(
             succesively decreased by 'temp_decrease'.
         replacement: If True, samples are drawn with replacement, allowing duplicates.
         temp_decrease: The rate at which temperature decreases in case of inf weights.
-    Returns:
+
+        Returns:
         A [batch_shape] x num_samples tensor of indices of sampled positions.
     """
     norm_weights = standardize(function_values)
