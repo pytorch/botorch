@@ -81,7 +81,7 @@ class VBLLNetwork(nn.Module):
             Activation function applied between hidden layers. Defaults to `nn.ELU()`.
 
     Notes:
-        - If a `backbone` module is provided, it is applied before the fully connected layers. If not, we use a default MLP structure.
+        - If a `backbone` module is provided, it is applied before the variational last layer. If not, we use a default MLP structure.
     """
 
     def __init__(
