@@ -422,6 +422,8 @@ def get_task_value_remapping(task_values: Tensor, dtype: torch.dtype) -> Tensor 
         return value will be `None`, when the task values are contiguous
         integers starting from zero.
     """
+    if dtype not in (torch.float, torch.double):
+        raise ValueError(f"dtype must be torch.float or torch.double, but got {dtype}.")
     task_range = torch.arange(
         len(task_values), dtype=task_values.dtype, device=task_values.device
     )
