@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable
-from math import ceil
 from typing import Optional, Union
 
 import torch
@@ -43,14 +42,15 @@ from botorch.models.model import Model
 from botorch.optim.utils import fix_features, get_X_baseline
 from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.sampling import (
-    batched_multinomial,
+    boltzmann_sample,
     draw_sobol_samples,
     get_polytope_samples,
     manual_seed,
+    sample_perturbed_subset_dims,
+    sample_truncated_normal_perturbations,
 )
-from botorch.utils.transforms import normalize, standardize, unnormalize
+from botorch.utils.transforms import unnormalize
 from torch import Tensor
-from torch.distributions import Normal
 from torch.quasirandom import SobolEngine
 
 TGenInitialConditions = Callable[
@@ -468,6 +468,91 @@ def gen_batch_initial_conditions(
     return batch_initial_conditions
 
 
+def gen_optimal_input_initial_conditions(
+    acq_function: AcquisitionFunction,
+    bounds: Tensor,
+    q: int,
+    num_restarts: int,
+    raw_samples: int,
+    fixed_features: dict[int, float] | None = None,
+    options: dict[str, bool | float | int] | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+):
+    options = options or {}
+    device = bounds.device
+    if not hasattr(acq_function, "optimal_inputs"):
+        raise AttributeError(
+            "gen_optimal_input_initial_conditions can only be used with "
+            "an AcquisitionFunction that has an optimal_inputs attribute."
+        )
+    frac_random: float = options.get("frac_random", 0.0)
+    if not 0 <= frac_random <= 1:
+        raise ValueError(
+            f"frac_random must take on values in (0,1). Value: {frac_random}"
+        )
+
+    batch_limit = options.get("batch_limit")
+    num_optima = acq_function.optimal_inputs.shape[:-1].numel()
+    suggestions = acq_function.optimal_inputs.reshape(num_optima, -1)
+    X = torch.empty(0, q, bounds.shape[1], dtype=bounds.dtype)
+    num_random = round(raw_samples * frac_random)
+    if num_random > 0:
+        X_rnd = sample_q_batches_from_polytope(
+            n=num_random,
+            q=q,
+            bounds=bounds,
+            n_burnin=options.get("n_burnin", 10000),
+            n_thinning=options.get("n_thinning", 32),
+            equality_constraints=equality_constraints,
+            inequality_constraints=inequality_constraints,
+        )
+        X = torch.cat((X, X_rnd))
+
+    if num_random < raw_samples:
+        X_perturbed = sample_points_around_best(
+            acq_function=acq_function,
+            n_discrete_points=q * (raw_samples - num_random),
+            sigma=options.get("sample_around_best_sigma", 1e-2),
+            bounds=bounds,
+            best_X=suggestions,
+        )
+        X_perturbed = X_perturbed.view(
+            raw_samples - num_random, q, bounds.shape[-1]
+        ).cpu()
+        X = torch.cat((X, X_perturbed))
+
+    if options.get("sample_around_best", False):
+        X_best = sample_points_around_best(
+            acq_function=acq_function,
+            n_discrete_points=q * raw_samples,
+            sigma=options.get("sample_around_best_sigma", 1e-2),
+            bounds=bounds,
+        )
+        X_best = X_best.view(raw_samples, q, bounds.shape[-1]).cpu()
+        X = torch.cat((X, X_best))
+
+    with torch.no_grad():
+        if batch_limit is None:
+            batch_limit = X.shape[0]
+        # Evaluate the acquisition function on `X_rnd` using `batch_limit`
+        # sized chunks.
+        acq_vals = torch.cat(
+            [
+                acq_function(x_.to(device=device)).cpu()
+                for x_ in X.split(split_size=batch_limit, dim=0)
+            ],
+            dim=0,
+        )
+    idx = boltzmann_sample(
+        function_values=acq_vals,
+        num_samples=num_restarts,
+        eta=options.get("eta", 2.0),
+    )
+    # set the respective initial conditions to the sampled optimizers
+    return X[idx]
+
+
 def gen_one_shot_kg_initial_conditions(
     acq_function: qKnowledgeGradient,
     bounds: Tensor,
@@ -578,10 +663,12 @@ def gen_one_shot_kg_initial_conditions(
 
     # sampling from the optimizers
     n_value = int((1 - frac_random) * (q_aug - q))  # number of non-random ICs
-    eta = options.get("eta", 2.0)
-    weights = torch.exp(eta * standardize(fantasy_vals))
-    idx = torch.multinomial(weights, num_restarts * n_value, replacement=True)
-
+    idx = boltzmann_sample(
+        function_values=fantasy_vals,
+        num_samples=num_restarts * n_value,
+        eta=options.get("eta", 2.0),
+        replacement=True,
+    )
     # set the respective initial conditions to the sampled optimizers
     ics[..., -n_value:, :] = fantasy_cands[idx, 0].view(num_restarts, n_value, -1)
     return ics
@@ -699,14 +786,14 @@ def gen_one_shot_hvkg_initial_conditions(
         sequential=False,
     )
     # sampling from the optimizers
-    eta = options.get("eta", 2.0)
     if num_optim_restarts > 0:
-        probs = torch.nn.functional.softmax(eta * standardize(fantasy_vals), dim=0)
-        idx = torch.multinomial(
-            probs,
-            num_optim_restarts * acq_function.num_fantasies,
+        idx = boltzmann_sample(
+            function_values=fantasy_vals,
+            num_samples=num_optim_restarts * acq_function.num_fantasies,
+            eta=options.get("eta", 2.0),
             replacement=True,
         )
+
         optim_ics = fantasy_cands[idx]
         if is_mf_hvkg:
             # add fixed features
@@ -885,11 +972,10 @@ def gen_value_function_initial_conditions(
     # sampling from the optimizers
     n_value = int((1 - frac_random) * raw_samples)  # number of non-random ICs
     if n_value > 0:
-        eta = options.get("eta", 2.0)
-        weights = torch.exp(eta * standardize(fantasy_vals))
-        idx = batched_multinomial(
-            weights=weights.expand(*batch_shape, -1),
+        idx = boltzmann_sample(
+            function_values=fantasy_vals.expand(*batch_shape, -1),
             num_samples=n_value,
+            eta=options.get("eta", 2.0),
             replacement=True,
         ).permute(-1, *range(len(batch_shape)))
         resampled = fantasy_cands[idx]
@@ -979,18 +1065,12 @@ def initialize_q_batch(
         return X[idcs], acq_vals[idcs]
 
     max_val, max_idx = torch.max(acq_vals, dim=0)
-    Z = (acq_vals - acq_vals.mean(dim=0)) / Ystd
-    etaZ = eta * Z
-    weights = torch.exp(etaZ)
-    while torch.isinf(weights).any():
-        etaZ *= 0.5
-        weights = torch.exp(etaZ)
-    if batch_shape == torch.Size():
-        idcs = torch.multinomial(weights, n)
-    else:
-        idcs = batched_multinomial(
-            weights=weights.permute(*range(1, len(batch_shape) + 1), 0), num_samples=n
-        ).permute(-1, *range(len(batch_shape)))
+    idcs = boltzmann_sample(
+        acq_vals.permute(*range(1, len(batch_shape) + 1), 0),
+        num_samples=n,
+        eta=eta,
+    ).permute(-1, *range(len(batch_shape)))
+
     # make sure we get the maximum
     if max_idx not in idcs:
         idcs[-1] = max_idx
@@ -1141,6 +1221,7 @@ def sample_points_around_best(
     best_pct: float = 5.0,
     subset_sigma: float = 1e-1,
     prob_perturb: float | None = None,
+    best_X: Tensor | None = None,
 ) -> Tensor | None:
     r"""Find best points and sample nearby points.
 
@@ -1159,60 +1240,62 @@ def sample_points_around_best(
         An optional `n_discrete_points x d`-dim tensor containing the
             sampled points. This is None if no baseline points are found.
     """
-    X = get_X_baseline(acq_function=acq_function)
-    if X is None:
-        return
-    with torch.no_grad():
-        try:
-            posterior = acq_function.model.posterior(X)
-        except AttributeError:
-            warnings.warn(
-                "Failed to sample around previous best points.",
-                BotorchWarning,
-                stacklevel=3,
-            )
+    if best_X is None:
+        X = get_X_baseline(acq_function=acq_function)
+        if X is None:
             return
-        mean = posterior.mean
-        while mean.ndim > 2:
-            # take average over batch dims
-            mean = mean.mean(dim=0)
-        try:
-            f_pred = acq_function.objective(mean)
-        # Some acquisition functions do not have an objective
-        # and for some acquisition functions the objective is None
-        except (AttributeError, TypeError):
-            f_pred = mean
-        if hasattr(acq_function, "maximize"):
-            # make sure that the optimiztaion direction is set properly
-            if not acq_function.maximize:
-                f_pred = -f_pred
-        try:
-            # handle constraints for EHVI-based acquisition functions
-            constraints = acq_function.constraints
-            if constraints is not None:
-                neg_violation = -torch.stack(
-                    [c(mean).clamp_min(0.0) for c in constraints], dim=-1
-                ).sum(dim=-1)
-                feas = neg_violation == 0
-                if feas.any():
-                    f_pred[~feas] = float("-inf")
-                else:
-                    # set objective equal to negative violation
-                    f_pred = neg_violation
-        except AttributeError:
-            pass
-        if f_pred.ndim == mean.ndim and f_pred.shape[-1] > 1:
-            # multi-objective
-            # find pareto set
-            is_pareto = is_non_dominated(f_pred)
-            best_X = X[is_pareto]
-        else:
-            if f_pred.shape[-1] == 1:
-                f_pred = f_pred.squeeze(-1)
-            n_best = max(1, round(X.shape[0] * best_pct / 100))
-            # the view() is to ensure that best_idcs is not a scalar tensor
-            best_idcs = torch.topk(f_pred, n_best).indices.view(-1)
-            best_X = X[best_idcs]
+        with torch.no_grad():
+            try:
+                posterior = acq_function.model.posterior(X)
+            except AttributeError:
+                warnings.warn(
+                    "Failed to sample around previous best points.",
+                    BotorchWarning,
+                    stacklevel=3,
+                )
+                return
+            mean = posterior.mean
+            while mean.ndim > 2:
+                # take average over batch dims
+                mean = mean.mean(dim=0)
+            try:
+                f_pred = acq_function.objective(mean)
+            # Some acquisition functions do not have an objective
+            # and for some acquisition functions the objective is None
+            except (AttributeError, TypeError):
+                f_pred = mean
+            if hasattr(acq_function, "maximize"):
+                # make sure that the optimiztaion direction is set properly
+                if not acq_function.maximize:
+                    f_pred = -f_pred
+            try:
+                # handle constraints for EHVI-based acquisition functions
+                constraints = acq_function.constraints
+                if constraints is not None:
+                    neg_violation = -torch.stack(
+                        [c(mean).clamp_min(0.0) for c in constraints], dim=-1
+                    ).sum(dim=-1)
+                    feas = neg_violation == 0
+                    if feas.any():
+                        f_pred[~feas] = float("-inf")
+                    else:
+                        # set objective equal to negative violation
+                        f_pred = neg_violation
+            except AttributeError:
+                pass
+            if f_pred.ndim == mean.ndim and f_pred.shape[-1] > 1:
+                # multi-objective
+                # find pareto set
+                is_pareto = is_non_dominated(f_pred)
+                best_X = X[is_pareto]
+            else:
+                if f_pred.shape[-1] == 1:
+                    f_pred = f_pred.squeeze(-1)
+                n_best = max(1, round(X.shape[0] * best_pct / 100))
+                # the view() is to ensure that best_idcs is not a scalar tensor
+                best_idcs = torch.topk(f_pred, n_best).indices.view(-1)
+                best_X = X[best_idcs]
+
     use_perturbed_sampling = best_X.shape[-1] >= 20 or prob_perturb is not None
     n_trunc_normal_points = (
         n_discrete_points // 2 if use_perturbed_sampling else n_discrete_points
@@ -1237,133 +1320,6 @@ def sample_points_around_best(
         perm = torch.randperm(perturbed_X.shape[0], device=X.device)
         perturbed_X = perturbed_X[perm]
     return perturbed_X
-
-
-def sample_truncated_normal_perturbations(
-    X: Tensor,
-    n_discrete_points: int,
-    sigma: float,
-    bounds: Tensor,
-    qmc: bool = True,
-) -> Tensor:
-    r"""Sample points around `X`.
-
-    Sample perturbed points around `X` such that the added perturbations
-    are sampled from N(0, sigma^2 I) and truncated to be within [0,1]^d.
-
-    Args:
-        X: A `n x d`-dim tensor starting points.
-        n_discrete_points: The number of points to sample.
-        sigma: The standard deviation of the additive gaussian noise for
-            perturbing the points.
-        bounds: A `2 x d`-dim tensor containing the bounds.
-        qmc: A boolean indicating whether to use qmc.
-
-    Returns:
-        A `n_discrete_points x d`-dim tensor containing the sampled points.
-    """
-    X = normalize(X, bounds=bounds)
-    d = X.shape[1]
-    # sample points from N(X_center, sigma^2 I), truncated to be within
-    # [0, 1]^d.
-    if X.shape[0] > 1:
-        rand_indices = torch.randint(X.shape[0], (n_discrete_points,), device=X.device)
-        X = X[rand_indices]
-    if qmc:
-        std_bounds = torch.zeros(2, d, dtype=X.dtype, device=X.device)
-        std_bounds[1] = 1
-        u = draw_sobol_samples(bounds=std_bounds, n=n_discrete_points, q=1).squeeze(1)
-    else:
-        u = torch.rand((n_discrete_points, d), dtype=X.dtype, device=X.device)
-    # compute bounds to sample from
-    a = -X
-    b = 1 - X
-    # compute z-score of bounds
-    alpha = a / sigma
-    beta = b / sigma
-    normal = Normal(0, 1)
-    cdf_alpha = normal.cdf(alpha)
-    # use inverse transform
-    perturbation = normal.icdf(cdf_alpha + u * (normal.cdf(beta) - cdf_alpha)) * sigma
-    # add perturbation and clip points that are still outside
-    perturbed_X = (X + perturbation).clamp(0.0, 1.0)
-    return unnormalize(perturbed_X, bounds=bounds)
-
-
-def sample_perturbed_subset_dims(
-    X: Tensor,
-    bounds: Tensor,
-    n_discrete_points: int,
-    sigma: float = 1e-1,
-    qmc: bool = True,
-    prob_perturb: float | None = None,
-) -> Tensor:
-    r"""Sample around `X` by perturbing a subset of the dimensions.
-
-    By default, dimensions are perturbed with probability equal to
-    `min(20 / d, 1)`. As shown in [Regis]_, perturbing a small number
-    of dimensions can be beneificial. The perturbations are sampled
-    from N(0, sigma^2 I) and truncated to be within [0,1]^d.
-
-    Args:
-        X: A `n x d`-dim tensor starting points. `X`
-            must be normalized to be within `[0, 1]^d`.
-        bounds: The bounds to sample perturbed values from
-        n_discrete_points: The number of points to sample.
-        sigma: The standard deviation of the additive gaussian noise for
-            perturbing the points.
-        qmc: A boolean indicating whether to use qmc.
-        prob_perturb: The probability of perturbing each dimension. If omitted,
-            defaults to `min(20 / d, 1)`.
-
-    Returns:
-        A `n_discrete_points x d`-dim tensor containing the sampled points.
-
-    """
-    if bounds.ndim != 2:
-        raise BotorchTensorDimensionError("bounds must be a `2 x d`-dim tensor.")
-    elif X.ndim != 2:
-        raise BotorchTensorDimensionError("X must be a `n x d`-dim tensor.")
-    d = bounds.shape[-1]
-    if prob_perturb is None:
-        # Only perturb a subset of the features
-        prob_perturb = min(20.0 / d, 1.0)
-
-    if X.shape[0] == 1:
-        X_cand = X.repeat(n_discrete_points, 1)
-    else:
-        rand_indices = torch.randint(X.shape[0], (n_discrete_points,), device=X.device)
-        X_cand = X[rand_indices]
-    pert = sample_truncated_normal_perturbations(
-        X=X_cand,
-        n_discrete_points=n_discrete_points,
-        sigma=sigma,
-        bounds=bounds,
-        qmc=qmc,
-    )
-
-    # find cases where we are not perturbing any dimensions
-    mask = (
-        torch.rand(
-            n_discrete_points,
-            d,
-            dtype=bounds.dtype,
-            device=bounds.device,
-        )
-        <= prob_perturb
-    )
-    ind = (~mask).all(dim=-1).nonzero()
-    # perturb `n_perturb` of the dimensions
-    n_perturb = ceil(d * prob_perturb)
-    perturb_mask = torch.zeros(d, dtype=mask.dtype, device=mask.device)
-    perturb_mask[:n_perturb].fill_(1)
-    # TODO: use batched `torch.randperm` when available:
-    # https://github.com/pytorch/pytorch/issues/42502
-    for idx in ind:
-        mask[idx] = perturb_mask[torch.randperm(d, device=bounds.device)]
-    # Create candidate points
-    X_cand[mask] = pert[mask]
-    return X_cand
 
 
 def is_nonnegative(acq_function: AcquisitionFunction) -> bool:

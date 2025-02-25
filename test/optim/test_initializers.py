@@ -13,6 +13,7 @@ from unittest import mock
 import torch
 from botorch.acquisition.analytic import PosteriorMean
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
@@ -34,6 +35,7 @@ from botorch.optim.initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_hvkg_initial_conditions,
     gen_one_shot_kg_initial_conditions,
+    gen_optimal_input_initial_conditions,
     gen_value_function_initial_conditions,
     initialize_q_batch,
     initialize_q_batch_nonneg,
@@ -41,13 +43,13 @@ from botorch.optim.initializers import (
     sample_perturbed_subset_dims,
     sample_points_around_best,
     sample_q_batches_from_polytope,
-    sample_truncated_normal_perturbations,
     transform_constraints,
     transform_inter_point_constraint,
     transform_intra_point_constraint,
 )
 from botorch.sampling.normal import IIDNormalSampler
-from botorch.utils.sampling import draw_sobol_samples, manual_seed, unnormalize
+from botorch.utils.sampling import manual_seed, unnormalize
+from botorch.utils.test_helpers import get_model
 from botorch.utils.testing import (
     _get_max_violation_of_bounds,
     _get_max_violation_of_constraints,
@@ -1075,6 +1077,110 @@ class TestGenOneShotKGInitialConditions(BotorchTestCase):
                 )
                 self.assertTrue(torch.all(ics[..., -n_value:, :] == 1))
 
+    def test_gen_optimal_input_initial_conditions(self):
+        num_restarts = 10
+        raw_samples = 16
+        q = 3
+        for dtype in (torch.float, torch.double):
+            model = get_model(
+                torch.rand(4, 2, dtype=dtype), torch.rand(4, 1, dtype=dtype)
+            )
+            optimal_inputs = torch.rand(5, 2, dtype=dtype)
+            optimal_outputs = torch.rand(5, 1, dtype=dtype)
+            jes = qJointEntropySearch(
+                model=model,
+                optimal_inputs=optimal_inputs,
+                optimal_outputs=optimal_outputs,
+            )
+            bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
+            # base case
+            ics = gen_optimal_input_initial_conditions(
+                acq_function=jes,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+            )
+            self.assertEqual(ics.shape, torch.Size([num_restarts, q, 2]))
+
+            # since we do sample_around best, this should generate enough points
+            # despite num_restarts being larger than raw_samples
+            ics = gen_optimal_input_initial_conditions(
+                acq_function=jes,
+                bounds=bounds,
+                q=q,
+                num_restarts=15,
+                raw_samples=8,
+                options={"frac_random": 0.2, "sample_around_best": True},
+            )
+            self.assertEqual(ics.shape, torch.Size([15, q, 2]))
+
+            # test option error
+            with self.assertRaises(ValueError):
+                gen_optimal_input_initial_conditions(
+                    acq_function=jes,
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options={"frac_random": 2.0},
+                )
+
+            ei = qExpectedImprovement(model, 99.9)
+            with self.assertRaisesRegex(
+                AttributeError,
+                "gen_optimal_input_initial_conditions can only be used with "
+                "an AcquisitionFunction that has an optimal_inputs attribute.",
+            ):
+                gen_optimal_input_initial_conditions(
+                    acq_function=ei,
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options={"frac_random": 2.0},
+                )
+            # test generation logic
+            random_ics = torch.rand(raw_samples // 2, q, 2)
+            suggested_ics = torch.rand(raw_samples // 2 * q, 2)
+            with ExitStack() as es:
+                mock_random_ics = es.enter_context(
+                    mock.patch(
+                        "botorch.optim.initializers.sample_q_batches_from_polytope",
+                        return_value=random_ics,
+                    )
+                )
+                mock_suggested_ics = es.enter_context(
+                    mock.patch(
+                        "botorch.optim.initializers.sample_points_around_best",
+                        return_value=suggested_ics,
+                    )
+                )
+                mock_choose = es.enter_context(
+                    mock.patch(
+                        "torch.multinomial",
+                        return_value=torch.arange(0, 10),
+                    )
+                )
+
+                ics = gen_optimal_input_initial_conditions(
+                    acq_function=jes,
+                    bounds=bounds,
+                    q=q,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options={"frac_random": 0.5},
+                )
+
+                mock_suggested_ics.assert_called_once()
+                mock_random_ics.assert_called_once()
+                mock_choose.assert_called_once()
+
+                expected_result = torch.cat(
+                    (random_ics, suggested_ics.view(raw_samples // 2, q, 2)[0:2])
+                )
+                self.assertTrue(torch.equal(ics, expected_result))
+
 
 class TestGenOneShotHVKGInitialConditions(BotorchTestCase):
     def test_gen_one_shot_hvkg_initial_conditions(self):
@@ -1266,111 +1372,6 @@ class TestGenValueFunctionInitialConditions(BotorchTestCase):
 
 
 class TestSampleAroundBest(BotorchTestCase):
-    def test_sample_truncated_normal_perturbations(self):
-        tkwargs = {"device": self.device}
-        n_discrete_points = 5
-        _bounds = torch.ones(2, 4)
-        _bounds[1] = 2
-        for dtype in (torch.float, torch.double):
-            tkwargs["dtype"] = dtype
-            bounds = _bounds.to(**tkwargs)
-            for n_best in (1, 2):
-                X = 1 + torch.rand(n_best, 4, **tkwargs)
-                # basic test
-                perturbed_X = sample_truncated_normal_perturbations(
-                    X=X,
-                    n_discrete_points=n_discrete_points,
-                    sigma=4,
-                    bounds=bounds,
-                    qmc=False,
-                )
-                self.assertEqual(perturbed_X.shape, torch.Size([n_discrete_points, 4]))
-                self.assertTrue((perturbed_X >= 1).all())
-                self.assertTrue((perturbed_X <= 2).all())
-                # test qmc
-                with mock.patch(
-                    "botorch.optim.initializers.draw_sobol_samples",
-                    wraps=draw_sobol_samples,
-                ) as mock_sobol:
-                    perturbed_X = sample_truncated_normal_perturbations(
-                        X=X,
-                        n_discrete_points=n_discrete_points,
-                        sigma=4,
-                        bounds=bounds,
-                        qmc=True,
-                    )
-                    mock_sobol.assert_called_once()
-                self.assertEqual(perturbed_X.shape, torch.Size([n_discrete_points, 4]))
-                self.assertTrue((perturbed_X >= 1).all())
-                self.assertTrue((perturbed_X <= 2).all())
-
-    def test_sample_perturbed_subset_dims(self):
-        tkwargs = {"device": self.device}
-        n_discrete_points = 5
-
-        # test that errors are raised
-        with self.assertRaises(BotorchTensorDimensionError):
-            sample_perturbed_subset_dims(
-                X=torch.zeros(1, 1),
-                n_discrete_points=1,
-                sigma=1e-3,
-                bounds=torch.zeros(1, 2, 1),
-            )
-        with self.assertRaises(BotorchTensorDimensionError):
-            sample_perturbed_subset_dims(
-                X=torch.zeros(1, 1, 1),
-                n_discrete_points=1,
-                sigma=1e-3,
-                bounds=torch.zeros(2, 1),
-            )
-        for dtype in (torch.float, torch.double):
-            for n_best in (1, 2):
-                tkwargs["dtype"] = dtype
-                bounds = torch.zeros(2, 21, **tkwargs)
-                bounds[1] = 1
-                X = torch.rand(n_best, 21, **tkwargs)
-                # basic test
-                with mock.patch(
-                    "botorch.optim.initializers.draw_sobol_samples",
-                ) as mock_sobol:
-                    perturbed_X = sample_perturbed_subset_dims(
-                        X=X,
-                        n_discrete_points=n_discrete_points,
-                        qmc=False,
-                        sigma=1e-3,
-                        bounds=bounds,
-                    )
-                    mock_sobol.assert_not_called()
-                self.assertEqual(perturbed_X.shape, torch.Size([n_discrete_points, 21]))
-                self.assertTrue((perturbed_X >= 0).all())
-                self.assertTrue((perturbed_X <= 1).all())
-                # test qmc
-                with mock.patch(
-                    "botorch.optim.initializers.draw_sobol_samples",
-                    wraps=draw_sobol_samples,
-                ) as mock_sobol:
-                    perturbed_X = sample_perturbed_subset_dims(
-                        X=X,
-                        n_discrete_points=n_discrete_points,
-                        sigma=1e-3,
-                        bounds=bounds,
-                    )
-                    mock_sobol.assert_called_once()
-                self.assertEqual(perturbed_X.shape, torch.Size([n_discrete_points, 21]))
-                self.assertTrue((perturbed_X >= 0).all())
-                self.assertTrue((perturbed_X <= 1).all())
-                # for each point in perturbed_X compute the number of
-                # dimensions it has in common with each point in X
-                # and take the maximum number
-                max_equal_dims = (
-                    (perturbed_X.unsqueeze(0) == X.unsqueeze(1))
-                    .sum(dim=-1)
-                    .max(dim=0)
-                    .values
-                )
-                # check that at least one dimension is perturbed
-                self.assertTrue((20 - max_equal_dims >= 1).all())
-
     def test_sample_points_around_best(self):
         tkwargs = {"device": self.device}
         _bounds = torch.ones(2, 2)
