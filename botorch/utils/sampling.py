@@ -21,18 +21,27 @@ import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager
+from math import ceil
 from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 import scipy
+
 import torch
-from botorch.exceptions.errors import BotorchError, InfeasibilityError
+
+from botorch.exceptions.errors import (
+    BotorchError,
+    BotorchTensorDimensionError,
+    InfeasibilityError,
+)
 from botorch.exceptions.warnings import UserInputWarning
 from botorch.sampling.qmc import NormalQMCEngine
-from botorch.utils.transforms import unnormalize
+
+from botorch.utils.transforms import normalize, standardize, unnormalize
 from scipy.spatial import Delaunay, HalfspaceIntersection
 from torch import LongTensor, Tensor
+from torch.distributions import Normal
 from torch.quasirandom import SobolEngine
 
 
@@ -990,10 +999,12 @@ def sparse_to_dense_constraints(
 def optimize_posterior_samples(
     paths: GenericDeterministicModel,
     bounds: Tensor,
-    raw_samples: int = 1024,
-    num_restarts: int = 20,
+    raw_samples: int = 2048,
+    num_restarts: int = 4,
     sample_transform: Callable[[Tensor], Tensor] | None = None,
     return_transformed: bool = False,
+    suggested_points: Tensor | None = None,
+    options: dict | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""Cheaply maximizes posterior samples by random querying followed by
     gradient-based optimization using SciPy's L-BFGS-B routine.
@@ -1002,12 +1013,19 @@ def optimize_posterior_samples(
         paths: Random Fourier Feature-based sample paths from the GP
         bounds: The bounds on the search space.
         raw_samples: The number of samples with which to query the samples initially.
+            Raw samples are cheap to evaluate, so this should ideally be set much higher
+            than num_restarts.
         num_restarts: The number of points selected for gradient-based optimization.
+            Should be set low relative to the number of raw
         sample_transform: A callable transform of the sample outputs (e.g.
             MCAcquisitionObjective or ScalarizedPosteriorTransform.evaluate) used to
             negate the objective or otherwise transform the output.
         return_transformed: A boolean indicating whether to return the transformed
             or non-transformed samples.
+        suggested_points: Tensor of suggested input locations that are high-valued.
+            These are more densely evaluated during the sampling phase of optimization.
+        options: Options for generation of initial candidates, passed to
+            gen_batch_initial_conditions.
 
     Returns:
         A two-element tuple containing:
@@ -1015,6 +1033,7 @@ def optimize_posterior_samples(
             - f_opt: A `num_optima x [batch_size] x m`-dim, optionally
                 `num_optima x [batch_size] x 1`-dim,  tensor of optimal outputs f*.
     """
+    options = {} if options is None else options
 
     def path_func(x) -> Tensor:
         res = paths(x)
@@ -1023,21 +1042,35 @@ def optimize_posterior_samples(
 
         return res.squeeze(-1)
 
-    candidate_set = unnormalize(
-        SobolEngine(dimension=bounds.shape[1], scramble=True).draw(n=raw_samples),
-        bounds=bounds,
-    )
     # queries all samples on all candidates - output shape
     # raw_samples * num_optima * num_models
+    frac_random = 1 if suggested_points is None else options.get("frac_random", 0.9)
+    candidate_set = draw_sobol_samples(
+        bounds=bounds, n=round(raw_samples * frac_random), q=1
+    ).squeeze(-2)
+    if frac_random < 1:
+        perturbed_suggestions = sample_truncated_normal_perturbations(
+            X=suggested_points,
+            n_discrete_points=round(raw_samples * (1 - frac_random)),
+            sigma=options.get("sample_around_best_sigma", 1e-2),
+            bounds=bounds,
+        )
+        candidate_set = torch.cat((candidate_set, perturbed_suggestions))
+
     candidate_queries = path_func(candidate_set)
-    argtop_k = torch.topk(candidate_queries, num_restarts, dim=-1).indices
-    X_top_k = candidate_set[argtop_k, :]
+    idx = boltzmann_sample(
+        function_values=candidate_queries.unsqueeze(-1),
+        num_samples=num_restarts,
+        eta=options.get("eta", 2.0),
+        replacement=False,
+    )
+    ics = candidate_set[idx, :]
 
     # to avoid circular import, the import occurs here
     from botorch.generation.gen import gen_candidates_scipy
 
     X_top_k, f_top_k = gen_candidates_scipy(
-        X_top_k,
+        ics,
         path_func,
         lower_bounds=bounds[0],
         upper_bounds=bounds[1],
@@ -1061,3 +1094,165 @@ def optimize_posterior_samples(
 
     f_opt = paths(X_opt.unsqueeze(-2)).squeeze(-2)
     return X_opt, f_opt
+
+
+def boltzmann_sample(
+    function_values: Tensor,
+    num_samples: int,
+    eta: float,
+    replacement: bool = False,
+    temp_decrease: float = 0.5,
+):
+    """
+    Perform Boltzmann sampling from a set of function values, weighted by the
+    exponentiated difference between function values and their standardized mean.
+
+    Args:
+        function_values: A [batch_shape] x N  tensor of function values.
+        num_samples: The number of samples (restarts) to draw.
+        eta: The Boltzmann temperature, controls the sharpness of the weighting. If the
+            temperature is too high, causing NaN values, the eta parameter is
+            succesively decreased by 'temp_decrease'.
+        replacement: If True, samples are drawn with replacement, allowing duplicates.
+        temp_decrease: The rate at which temperature decreases in case of inf weights.
+
+        Returns:
+        A [batch_shape] x num_samples tensor of indices of sampled positions.
+    """
+    norm_weights = standardize(function_values)
+    weights = torch.exp(eta * norm_weights)
+    while torch.isinf(weights).any():
+        eta *= temp_decrease
+        weights = torch.exp(eta * norm_weights)
+
+    # squeeze in case of m = 1 (mono-output provided as batch_size x N x 1)
+    return batched_multinomial(
+        weights=weights.squeeze(-1), num_samples=num_samples, replacement=replacement
+    )
+
+
+def sample_truncated_normal_perturbations(
+    X: Tensor,
+    n_discrete_points: int,
+    sigma: float,
+    bounds: Tensor,
+    qmc: bool = True,
+) -> Tensor:
+    r"""Sample points around `X`.
+
+    Sample perturbed points around `X` such that the added perturbations
+    are sampled from N(0, sigma^2 I) and truncated to be within [0,1]^d.
+
+    Args:
+        X: A `n x d`-dim tensor starting points.
+        n_discrete_points: The number of points to sample.
+        sigma: The standard deviation of the additive gaussian noise for
+            perturbing the points.
+        bounds: A `2 x d`-dim tensor containing the bounds.
+        qmc: A boolean indicating whether to use qmc.
+
+    Returns:
+        A `n_discrete_points x d`-dim tensor containing the sampled points.
+    """
+    X = normalize(X, bounds=bounds)
+    d = X.shape[1]
+    # sample points from N(X_center, sigma^2 I), truncated to be within
+    # [0, 1]^d.
+    if X.shape[0] > 1:
+        rand_indices = torch.randint(X.shape[0], (n_discrete_points,), device=X.device)
+        X = X[rand_indices]
+    if qmc:
+        std_bounds = torch.zeros(2, d, dtype=X.dtype, device=X.device)
+        std_bounds[1] = 1
+        u = draw_sobol_samples(bounds=std_bounds, n=n_discrete_points, q=1).squeeze(1)
+    else:
+        u = torch.rand((n_discrete_points, d), dtype=X.dtype, device=X.device)
+    # compute bounds to sample from
+    a = -X
+    b = 1 - X
+    # compute z-score of bounds
+    alpha = a / sigma
+    beta = b / sigma
+    normal = Normal(0, 1)
+    cdf_alpha = normal.cdf(alpha)
+    # use inverse transform
+    perturbation = normal.icdf(cdf_alpha + u * (normal.cdf(beta) - cdf_alpha)) * sigma
+    # add perturbation and clip points that are still outside
+    perturbed_X = (X + perturbation).clamp(0.0, 1.0)
+    return unnormalize(perturbed_X, bounds=bounds)
+
+
+def sample_perturbed_subset_dims(
+    X: Tensor,
+    bounds: Tensor,
+    n_discrete_points: int,
+    sigma: float = 1e-1,
+    qmc: bool = True,
+    prob_perturb: float | None = None,
+) -> Tensor:
+    r"""Sample around `X` by perturbing a subset of the dimensions.
+
+    By default, dimensions are perturbed with probability equal to
+    `min(20 / d, 1)`. As shown in [Regis]_, perturbing a small number
+    of dimensions can be beneificial. The perturbations are sampled
+    from N(0, sigma^2 I) and truncated to be within [0,1]^d.
+
+    Args:
+        X: A `n x d`-dim tensor starting points. `X`
+            must be normalized to be within `[0, 1]^d`.
+        bounds: The bounds to sample perturbed values from
+        n_discrete_points: The number of points to sample.
+        sigma: The standard deviation of the additive gaussian noise for
+            perturbing the points.
+        qmc: A boolean indicating whether to use qmc.
+        prob_perturb: The probability of perturbing each dimension. If omitted,
+            defaults to `min(20 / d, 1)`.
+
+    Returns:
+        A `n_discrete_points x d`-dim tensor containing the sampled points.
+
+    """
+    if bounds.ndim != 2:
+        raise BotorchTensorDimensionError("bounds must be a `2 x d`-dim tensor.")
+    elif X.ndim != 2:
+        raise BotorchTensorDimensionError("X must be a `n x d`-dim tensor.")
+    d = bounds.shape[-1]
+    if prob_perturb is None:
+        # Only perturb a subset of the features
+        prob_perturb = min(20.0 / d, 1.0)
+
+    if X.shape[0] == 1:
+        X_cand = X.repeat(n_discrete_points, 1)
+    else:
+        rand_indices = torch.randint(X.shape[0], (n_discrete_points,), device=X.device)
+        X_cand = X[rand_indices]
+    pert = sample_truncated_normal_perturbations(
+        X=X_cand,
+        n_discrete_points=n_discrete_points,
+        sigma=sigma,
+        bounds=bounds,
+        qmc=qmc,
+    )
+
+    # find cases where we are not perturbing any dimensions
+    mask = (
+        torch.rand(
+            n_discrete_points,
+            d,
+            dtype=bounds.dtype,
+            device=bounds.device,
+        )
+        <= prob_perturb
+    )
+    ind = (~mask).all(dim=-1).nonzero()
+    # perturb `n_perturb` of the dimensions
+    n_perturb = ceil(d * prob_perturb)
+    perturb_mask = torch.zeros(d, dtype=mask.dtype, device=mask.device)
+    perturb_mask[:n_perturb].fill_(1)
+    # TODO: use batched `torch.randperm` when available:
+    # https://github.com/pytorch/pytorch/issues/42502
+    for idx in ind:
+        mask[idx] = perturb_mask[torch.randperm(d, device=bounds.device)]
+    # Create candidate points
+    X_cand[mask] = pert[mask]
+    return X_cand
