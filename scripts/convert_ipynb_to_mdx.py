@@ -323,10 +323,6 @@ def sanitize_mdx(mdx: str) -> str:
     mdx = re.sub("([^\\\\])([{}])", "\\g<1>\\\\\\g<2>", mdx)
 
     # -- KaTeX --
-    # Wrap '\begin{}...\end{}' in $$ for KaTeX to work.
-    mdx = re.sub(
-        "(\\\\begin\\\\{(\\w*?)\\\\}(.|\n)*?end\\\\{\\2\\\\})", "$$\\g<1>$$", mdx
-    )
     # Make sure $$ symbols are not escaped and include line breaks.
     mdx = re.sub(
         "\\\\?\\$\\\\?\\$((?:.|\n)*?)\\\\?\\$\\\\?\\$", "\n$$\n\\g<1>\n$$\n", mdx
@@ -339,6 +335,25 @@ def sanitize_mdx(mdx: str) -> str:
     )
 
     return mdx
+
+
+def get_source(cell: NotebookNode) -> str:
+    """
+    Extract the source code from a Jupyter notebook cell. The source is
+    characteristically multi-line strings but may be stored as a list of strings, in
+    which case we join them together.
+    https://ipython.readthedocs.io/en/3.x/notebook/nbformat.html
+
+    Args:
+        cell (NotebookNode): A Jupyter notebook cell object.
+
+    Returns:
+        str: The source code as a string.
+    """
+    source = cell.get("source", "")
+    if isinstance(source, list):
+        return "".join(source)
+    return source
 
 
 def handle_markdown_cell(
@@ -358,7 +373,7 @@ def handle_markdown_cell(
     Returns:
         str: Transformed Markdown object suitable for inclusion in MDX.
     """
-    markdown = cell["source"]
+    markdown = get_source(cell)
 
     # Update image paths in the Markdown and copy them to the Markdown tutorials folder.
     # Skip - Our images are base64 encoded, so we don't need to copy them to the docs
@@ -392,7 +407,7 @@ def handle_cell_input(cell: NotebookNode, language: str) -> str:
     Returns:
         str: Code block formatted Markdown string.
     """
-    cell_source = cell.get("source", "")
+    cell_source = get_source(cell)
     return f"```{language}\n{cell_source}\n```\n\n"
 
 
