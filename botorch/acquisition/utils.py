@@ -534,6 +534,7 @@ def get_optimal_samples(
     posterior_transform: ScalarizedPosteriorTransform | None = None,
     objective: MCAcquisitionObjective | None = None,
     return_transformed: bool = False,
+    options: dict | None = None,
 ) -> tuple[Tensor, Tensor]:
     """Draws sample paths from the posterior and maximizes the samples using GD.
 
@@ -551,7 +552,8 @@ def get_optimal_samples(
         objective: An MCAcquisitionObjective, used to negate the objective or otherwise
             transform sample outputs. Cannot be combined with `posterior_transform`.
         return_transformed: If True, return the transformed samples.
-
+        options: Options for generation of initial candidates, passed to
+            gen_batch_initial_conditions.
     Returns:
         The optimal input locations and corresponding outputs, x* and f*.
 
@@ -576,6 +578,12 @@ def get_optimal_samples(
         sample_transform = None
 
     paths = get_matheron_path_model(model=model, sample_shape=torch.Size([num_optima]))
+    suggested_points = prune_inferior_points(
+        model=model,
+        X=model.train_inputs[0],
+        posterior_transform=posterior_transform,
+        objective=objective,
+    )
     optimal_inputs, optimal_outputs = optimize_posterior_samples(
         paths=paths,
         bounds=bounds,
@@ -583,5 +591,7 @@ def get_optimal_samples(
         num_restarts=num_restarts,
         sample_transform=sample_transform,
         return_transformed=return_transformed,
+        suggested_points=suggested_points,
+        options=options,
     )
     return optimal_inputs, optimal_outputs
