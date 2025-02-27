@@ -20,6 +20,7 @@ from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
 from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
     qHypervolumeKnowledgeGradient,
@@ -33,6 +34,7 @@ from botorch.optim.initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_hvkg_initial_conditions,
     gen_one_shot_kg_initial_conditions,
+    gen_optimal_input_initial_conditions,
     TGenInitialConditions,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
@@ -174,6 +176,8 @@ class OptimizeAcqfInputs:
             return gen_one_shot_kg_initial_conditions
         elif isinstance(self.acq_function, qHypervolumeKnowledgeGradient):
             return gen_one_shot_hvkg_initial_conditions
+        elif isinstance(self.acq_function, qJointEntropySearch):
+            return gen_optimal_input_initial_conditions
         return gen_batch_initial_conditions
 
 
