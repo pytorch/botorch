@@ -26,6 +26,7 @@ class TestqLogNParEGO(BotorchTestCase):
         with_scalarization_weights: bool = False,
         with_objective: bool = False,
         model: Model | None = None,
+        incremental: bool = True,
     ) -> None:
         if with_constraints:
             assert with_objective, "Objective must be specified if constraints are."
@@ -57,6 +58,7 @@ class TestqLogNParEGO(BotorchTestCase):
             objective=objective,
             constraints=constraints,
             prune_baseline=True,
+            incremental=incremental,
         )
         self.assertEqual(acqf.Y_baseline.shape, torch.Size([3, 2]))
         # Scalarization weights should be set if given and sampled otherwise.
@@ -101,6 +103,9 @@ class TestqLogNParEGO(BotorchTestCase):
         self.base_test_parego(
             with_constraints=True, with_objective=True, with_scalarization_weights=True
         )
+
+    def test_parego_with_non_incremental_ei(self) -> None:
+        self.base_test_parego(incremental=False)
 
     def test_parego_with_ensemble_model(self) -> None:
         tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.double}
