@@ -650,6 +650,7 @@ def construct_inputs_qLogNEI(
     fat: bool = True,
     tau_max: float = TAU_MAX,
     tau_relu: float = TAU_RELU,
+    incremental: bool = True,
 ):
     r"""Construct kwargs for the `qLogNoisyExpectedImprovement` constructor.
 
@@ -684,6 +685,9 @@ def construct_inputs_qLogNEI(
             approximations to max.
         tau_relu: Temperature parameter controlling the sharpness of the smooth
             approximations to ReLU.
+        incremental: Whether to compute incremental EI over the pending points
+            or compute EI of the joint batch improvement (including pending
+            points).
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
@@ -705,6 +709,7 @@ def construct_inputs_qLogNEI(
         "fat": fat,
         "tau_max": tau_max,
         "tau_relu": tau_relu,
+        "incremental": incremental,
     }
 
 
