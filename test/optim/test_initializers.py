@@ -13,6 +13,7 @@ from unittest import mock
 import torch
 from botorch.acquisition.analytic import PosteriorMean
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
@@ -34,6 +35,7 @@ from botorch.optim.initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_hvkg_initial_conditions,
     gen_one_shot_kg_initial_conditions,
+    gen_optimal_input_initial_conditions,
     gen_value_function_initial_conditions,
     initialize_q_batch,
     initialize_q_batch_nonneg,
@@ -47,6 +49,7 @@ from botorch.optim.initializers import (
 )
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.sampling import manual_seed, unnormalize
+from botorch.utils.test_helpers import get_model
 from botorch.utils.testing import (
     _get_max_violation_of_bounds,
     _get_max_violation_of_constraints,
@@ -1073,6 +1076,110 @@ class TestGenOneShotKGInitialConditions(BotorchTestCase):
                     )
                 )
                 self.assertTrue(torch.all(ics[..., -n_value:, :] == 1))
+
+    def test_gen_optimal_input_initial_conditions(self):
+        num_restarts = 10
+        raw_samples = 16
+        q = 3
+        for dtype in (torch.float, torch.double):
+            model = get_model(
+                torch.rand(4, 2, dtype=dtype), torch.rand(4, 1, dtype=dtype)
+            )
+            optimal_inputs = torch.rand(5, 2, dtype=dtype)
+            optimal_outputs = torch.rand(5, 1, dtype=dtype)
+            jes = qJointEntropySearch(
+                model=model,
+                optimal_inputs=optimal_inputs,
+                optimal_outputs=optimal_outputs,
+            )
+            bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
+            # base case
+            ics = gen_optimal_input_initial_conditions(
+                acq_function=jes,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+            )
+            self.assertEqual(ics.shape, torch.Size([num_restarts, q, 2]))
+
+            # since we do sample_around best, this should generate enough points
+            # despite num_restarts being larger than raw_samples
+            ics = gen_optimal_input_initial_conditions(
+                acq_function=jes,
+                bounds=bounds,
+                q=q,
+                num_restarts=15,
+                raw_samples=8,
+                options={"frac_random": 0.2, "sample_around_best": True},
+            )
+            self.assertEqual(ics.shape, torch.Size([15, q, 2]))
+
+            # test option error
+            with self.assertRaises(ValueError):
+                gen_optimal_input_initial_conditions(
+                    acq_function=jes,
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options={"frac_random": 2.0},
+                )
+
+            ei = qExpectedImprovement(model, 99.9)
+            with self.assertRaisesRegex(
+                AttributeError,
+                "gen_optimal_input_initial_conditions can only be used with "
+                "an AcquisitionFunction that has an optimal_inputs attribute.",
+            ):
+                gen_optimal_input_initial_conditions(
+                    acq_function=ei,
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options={"frac_random": 2.0},
+                )
+            # test generation logic
+            random_ics = torch.rand(raw_samples // 2, q, 2)
+            suggested_ics = torch.rand(raw_samples // 2 * q, 2)
+            with ExitStack() as es:
+                mock_random_ics = es.enter_context(
+                    mock.patch(
+                        "botorch.optim.initializers.sample_q_batches_from_polytope",
+                        return_value=random_ics,
+                    )
+                )
+                mock_suggested_ics = es.enter_context(
+                    mock.patch(
+                        "botorch.optim.initializers.sample_points_around_best",
+                        return_value=suggested_ics,
+                    )
+                )
+                mock_choose = es.enter_context(
+                    mock.patch(
+                        "torch.multinomial",
+                        return_value=torch.arange(0, 10),
+                    )
+                )
+
+                ics = gen_optimal_input_initial_conditions(
+                    acq_function=jes,
+                    bounds=bounds,
+                    q=q,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options={"frac_random": 0.5},
+                )
+
+                mock_suggested_ics.assert_called_once()
+                mock_random_ics.assert_called_once()
+                mock_choose.assert_called_once()
+
+                expected_result = torch.cat(
+                    (random_ics, suggested_ics.view(raw_samples // 2, q, 2)[0:2])
+                )
+                self.assertTrue(torch.equal(ics, expected_result))
 
 
 class TestGenOneShotHVKGInitialConditions(BotorchTestCase):
