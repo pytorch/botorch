@@ -479,7 +479,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # get multiple candidates
         root = torch.zeros(dim, device=self.device)
         model = QuadraticDeterministicModel(root)
-        acqf = qLogNoisyExpectedImprovement(model=model, X_baseline=train_X)
+        acqf = qLogNoisyExpectedImprovement(
+            model=model, X_baseline=train_X, prune_baseline=False
+        )
         options["initialization_strategy"] = "equally_spaced"
         candidates, _ = optimize_acqf_mixed_alternating(
             acq_function=acqf,

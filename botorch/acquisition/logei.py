@@ -273,7 +273,7 @@ class qLogNoisyExpectedImprovement(
         constraints: list[Callable[[Tensor], Tensor]] | None = None,
         eta: Tensor | float = 1e-3,
         fat: bool = True,
-        prune_baseline: bool = False,
+        prune_baseline: bool = True,
         cache_root: bool = True,
         tau_max: float = TAU_MAX,
         tau_relu: float = TAU_RELU,
