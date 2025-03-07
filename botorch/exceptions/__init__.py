@@ -22,7 +22,7 @@ from botorch.exceptions.warnings import (
     NumericsWarning,
     OptimizationWarning,
     SamplingWarning,
-    UserInputWarning
+    UserInputWarning,
 )
 
 
