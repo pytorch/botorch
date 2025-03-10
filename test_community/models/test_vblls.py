@@ -13,8 +13,8 @@ from botorch_community.posteriors.bll_posterior import BLLPosterior
 
 
 def _reg_data_singletask(d, n=10):
-    X = torch.randn(10, d)
-    y = torch.randn(10, 1)
+    X = torch.randn(10, d, dtype=torch.float64)
+    y = torch.randn(10, 1, dtype=torch.float64)
     return X, y
 
 
@@ -77,48 +77,40 @@ class TestVBLLModel(BotorchTestCase):
                 torch.nn.ReLU(),
                 torch.nn.Linear(num_hidden, num_hidden),
                 torch.nn.ELU(),
-            )
+            ).to(dtype=torch.float64)
 
             model = VBLLModel(
-                backbone=copy.deepcopy(test_backbone),  # copy.deepcopy(test_backbone)
+                backbone=copy.deepcopy(test_backbone),
                 hidden_features=num_hidden,  # match the output of the backbone
             )
 
             X, y = _reg_data_singletask(d)
             optim_settings = {
-                "num_epochs": 10,
-                "lr": 5.0,  # large lr to make sure that the weights change
+                "num_epochs": 1,
+                "lr": 10.0,  # large lr to make sure that the weights change
                 "freeze_backbone": freeze_backbone,
             }
             model.fit(X, y, optimization_settings=optim_settings)
 
             if freeze_backbone:
                 # Ensure all parameters remain unchanged
-                all_params_unchanged = all(
-                    torch.allclose(
-                        test_backbone.state_dict()[key],
-                        model.backbone.state_dict()[key],
-                        atol=1e-6,
+                model_bb_sdict = model.backbone.state_dict()
+                for key, val in test_backbone.state_dict().items():
+                    self.assertTrue(
+                        torch.allclose(val, model_bb_sdict[key], atol=1e-6),
+                        f"Parameter {key} changed with freeze_backbone=True",
                     )
-                    for key in test_backbone.state_dict()
-                )
-                self.assertTrue(
-                    all_params_unchanged,
-                    f"Expected all parameters to remain unchanged, but some changed with freeze_backbone={freeze_backbone}",
-                )
             else:
                 # Ensure at least one parameter has changed
-                any_param_changed = any(
-                    not torch.allclose(
-                        test_backbone.state_dict()[key],
-                        model.backbone.state_dict()[key],
-                        atol=1e-6,
-                    )
-                    for key in test_backbone.state_dict()
-                )
+                model_bb_sdict = model.backbone.state_dict()
+                changed = False
+                for key, val in test_backbone.state_dict().items():
+                    if not torch.allclose(val, model_bb_sdict[key], atol=1e-6):
+                        changed = True
+                        break
                 self.assertTrue(
-                    any_param_changed,
-                    f"Expected at least one parameter to change, but all remained the same with freeze_backbone={freeze_backbone}",
+                    changed,
+                    "Expected at least one parameter to change, but all remained the same with freeze_backbone=False",
                 )
 
     def test_update_of_reg_weight(self) -> None:
@@ -148,6 +140,58 @@ class TestVBLLModel(BotorchTestCase):
             f"Regularization weight should be {kl_scale}/{len(y)}, but got {model.model.head.regularization_weight}.",
         )
 
+    def test_shape_of_sampling(self) -> None:
+        d = 4
+
+        for out_features in (1, 2):
+            model = VBLLModel(
+                in_features=d,
+                hidden_features=4,
+                out_features=out_features,
+                num_layers=1,
+            )
+            n_test_points = 3
+            X = torch.rand(n_test_points, d, dtype=torch.float64)
+            for sample_shape in (torch.Size(), torch.Size([2])):
+                sample_path = model.sample(sample_shape=sample_shape)
+                y_hat = sample_path(X)
+                expected_shape = sample_shape + torch.Size(
+                    [n_test_points, out_features]
+                )
+                self.assertEqual(
+                    y_hat.shape,
+                    expected_shape,
+                    f"Expected samples to have shape {expected_shape}, but got {y_hat.shape}.",
+                )
+
+    def test_shape_of_forward(self) -> None:
+        d = 4
+        for out_features in (1, 2):
+            model = VBLLModel(
+                in_features=d,
+                hidden_features=4,
+                out_features=out_features,
+                num_layers=1,
+            )
+            n_test_points = 3
+            X = torch.rand(n_test_points, d, dtype=torch.float64)
+            y_pred = model(X)
+
+            y_hat = y_pred.mean
+            y_var = y_pred.variance
+
+            expected_shape = torch.Size([n_test_points, out_features])
+            self.assertEqual(
+                y_hat.shape,
+                expected_shape,
+                f"Expected forward pass to have shape {expected_shape}, but got {y_hat.shape}.",
+            )
+            self.assertEqual(
+                y_var.shape,
+                expected_shape,
+                f"Expected forward pass to have shape {expected_shape}, but got {y_var.shape}.",
+            )
+
     def test_shape_of_predictions(self) -> None:
         d = 4
         model = VBLLModel(
@@ -159,7 +203,7 @@ class TestVBLLModel(BotorchTestCase):
         model.fit(X, y, optimization_settings=optim_settings)
 
         for batch_shape in (torch.Size([2]), torch.Size()):
-            X = torch.rand(batch_shape + torch.Size([3, d]))
+            X = torch.rand(batch_shape + torch.Size([3, d]), dtype=torch.float64)
             expected_shape = batch_shape + torch.Size([3, 1])
 
             post = model.posterior(X)
