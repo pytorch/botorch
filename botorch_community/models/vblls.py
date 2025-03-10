@@ -419,7 +419,9 @@ class AbstractBLLModel(Model, ABC):
         # pass as MultivariateNormal to GPyTorchPosterior
         mvn_dist = MultivariateNormal(mean, cov)
         post_pred = GPyTorchPosterior(mvn_dist)
-        return BLLPosterior(post_pred, self, X, self.num_outputs)
+        return BLLPosterior(
+            posterior=post_pred, model=self, X=X, output_dim=self.num_outputs
+        )
 
     @abstractmethod
     def sample(self, sample_shape: torch.Size | None = None) -> nn.Module:
