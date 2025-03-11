@@ -35,6 +35,7 @@ class qLogNParEGO(qLogNoisyExpectedImprovement, MultiObjectiveMCAcquisitionFunct
         cache_root: bool = True,
         tau_relu: float = TAU_RELU,
         tau_max: float = TAU_MAX,
+        incremental: bool = True,
     ) -> None:
         r"""q-LogNParEGO supporting m >= 2 outcomes. This acquisition function
         utilizes qLogNEI to compute the expected improvement over Chebyshev
@@ -88,6 +89,9 @@ class qLogNParEGO(qLogNoisyExpectedImprovement, MultiObjectiveMCAcquisitionFunct
                 approximations to max.
             tau_relu: Temperature parameter controlling the sharpness of the smooth
                 approximations to ReLU.
+            incremental: Whether to compute incremental EI over the pending points
+                or compute EI of the joint batch improvement (including pending
+                points).
         """
         MultiObjectiveMCAcquisitionFunction.__init__(
             self,
@@ -134,6 +138,7 @@ class qLogNParEGO(qLogNoisyExpectedImprovement, MultiObjectiveMCAcquisitionFunct
             cache_root=cache_root,
             tau_max=tau_max,
             tau_relu=tau_relu,
+            incremental=incremental,
         )
         # Set these after __init__ calls so that they're not overwritten / deleted.
         # These are intended mainly for easier debugging & transparency.

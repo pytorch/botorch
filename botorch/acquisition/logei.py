@@ -250,6 +250,11 @@ class qLogNoisyExpectedImprovement(
 
     where `(Y, Y_baseline) ~ f((X, X_baseline)), X = (x_1,...,x_q)`.
 
+    For optimizing a batch of `q > 1` points using sequential greedy optimization,
+    the incremental improvement from the latest point is computed and returned by
+    default. I.e. the pending points are treated X_baseline. Often, the incremental
+    EI is easier to optimize.
+
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
         >>> sampler = SobolQMCNormalSampler(1024)
@@ -268,11 +273,12 @@ class qLogNoisyExpectedImprovement(
         constraints: list[Callable[[Tensor], Tensor]] | None = None,
         eta: Tensor | float = 1e-3,
         fat: bool = True,
-        prune_baseline: bool = False,
+        prune_baseline: bool = True,
         cache_root: bool = True,
         tau_max: float = TAU_MAX,
         tau_relu: float = TAU_RELU,
         marginalize_dim: int | None = None,
+        incremental: bool = True,
     ) -> None:
         r"""q-Noisy Expected Improvement.
 
@@ -312,6 +318,9 @@ class qLogNoisyExpectedImprovement(
             tau_relu: Temperature parameter controlling the sharpness of the smooth
                 approximations to ReLU.
             marginalize_dim: The dimension to marginalize over.
+            incremental: Whether to compute incremental EI over the pending points
+                or compute EI of the joint batch improvement (including pending
+                points).
 
         TODO: similar to qNEHVI, when we are using sequential greedy candidate
         selection, we could incorporate pending points X_baseline and compute
@@ -320,27 +329,34 @@ class qLogNoisyExpectedImprovement(
         """
         # TODO: separate out baseline variables initialization and other functions
         # in qNEI to avoid duplication of both code and work at runtime.
+        self.incremental = incremental
+
         super().__init__(
             model=model,
             sampler=sampler,
             objective=objective,
             posterior_transform=posterior_transform,
-            X_pending=X_pending,
+            # we set X_pending in init_baseline for incremental NEI
+            X_pending=X_pending if not incremental else None,
             constraints=constraints,
             eta=eta,
             fat=fat,
             tau_max=tau_max,
         )
         self.tau_relu = tau_relu
+        self.prune_baseline = prune_baseline
+        self.marginalize_dim = marginalize_dim
+        if incremental:
+            self.X_pending = None  # required to initialize attribute for optimize_acqf
         self._init_baseline(
             model=model,
             X_baseline=X_baseline,
+            # This is ignored in incremental=False
+            X_pending=X_pending,
             sampler=sampler,
             objective=objective,
             posterior_transform=posterior_transform,
-            prune_baseline=prune_baseline,
             cache_root=cache_root,
-            marginalize_dim=marginalize_dim,
         )
 
     def _sample_forward(self, obj: Tensor) -> Tensor:
@@ -364,26 +380,34 @@ class qLogNoisyExpectedImprovement(
         self,
         model: Model,
         X_baseline: Tensor,
+        X_pending: Tensor | None = None,
         sampler: MCSampler | None = None,
         objective: MCAcquisitionObjective | None = None,
         posterior_transform: PosteriorTransform | None = None,
-        prune_baseline: bool = False,
         cache_root: bool = True,
-        marginalize_dim: int | None = None,
     ) -> None:
         CachedCholeskyMCSamplerMixin.__init__(
             self, model=model, cache_root=cache_root, sampler=sampler
         )
-        if prune_baseline:
+        if self.prune_baseline:
             X_baseline = prune_inferior_points(
                 model=model,
                 X=X_baseline,
                 objective=objective,
                 posterior_transform=posterior_transform,
-                marginalize_dim=marginalize_dim,
+                marginalize_dim=self.marginalize_dim,
                 constraints=self._constraints,
             )
-        self.register_buffer("X_baseline", X_baseline)
+        self.register_buffer("_X_baseline", X_baseline)
+        # full_X_baseline is the set of points that should be considered as the
+        # incumbent. For incremental EI, this contains the previously evaluated
+        # points (X_baseline) and pending points (X_pending). For non-incremental
+        # EI, this contains the  previously evaluated points (X_baseline).
+        if X_pending is not None and self.incremental:
+            full_X_baseline = torch.cat([X_baseline, X_pending], dim=-2)
+        else:
+            full_X_baseline = X_baseline
+        self.register_buffer("_full_X_baseline", full_X_baseline)
         # registering buffers for _get_samples_and_objectives in the next `if` block
         self.register_buffer("baseline_samples", None)
         self.register_buffer("baseline_obj", None)
@@ -392,7 +416,7 @@ class qLogNoisyExpectedImprovement(
             # set baseline samples
             with torch.no_grad():  # this is _get_samples_and_objectives(X_baseline)
                 posterior = self.model.posterior(
-                    X_baseline, posterior_transform=self.posterior_transform
+                    self.X_baseline, posterior_transform=self.posterior_transform
                 )
                 # Note: The root decomposition is cached in two different places. It
                 # may be confusing to have two different caches, but this is not
@@ -404,7 +428,9 @@ class qLogNoisyExpectedImprovement(
                 # - self._baseline_L allows a root decomposition to be persisted outside
                 #   this method.
                 self.baseline_samples = self.get_posterior_samples(posterior)
-                self.baseline_obj = self.objective(self.baseline_samples, X=X_baseline)
+                self.baseline_obj = self.objective(
+                    self.baseline_samples, X=self.X_baseline
+                )
 
             # We make a copy here because we will write an attribute `base_samples`
             # to `self.base_sampler.base_samples`, and we don't want to mutate
@@ -417,6 +443,46 @@ class qLogNoisyExpectedImprovement(
                 ),
             )
             self._baseline_L = self._compute_root_decomposition(posterior=posterior)
+
+    @property
+    def X_baseline(self) -> Tensor:
+        """Returns the set of pointsthat should be considered as the incumbent.
+
+        For incremental EI, this contains the previously evaluated points
+        (X_baseline) and pending points (X_pending). For non-incremental
+        EI, this contains the  previously evaluated points (X_baseline).
+        """
+        return self._full_X_baseline
+
+    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
+        r"""Informs the acquisition function about pending design points.
+
+        Here pending points are concatenated with X_baseline and incremental
+        NEI is computed.
+
+        Args:
+            X_pending: `n x d` Tensor with `n` `d`-dim design points that have
+                been submitted for evaluation but have not yet been evaluated.
+        """
+        if not self.incremental:
+            return super().set_X_pending(X_pending=X_pending)
+        if X_pending is None:
+            if not hasattr(self, "_full_X_baseline") or (
+                self._full_X_baseline.shape[-2] == self._X_baseline.shape[-2]
+            ):
+                return
+            else:
+                # reset pending points
+                X_pending = None
+        self._init_baseline(
+            model=self.model,
+            X_baseline=self._X_baseline,
+            X_pending=X_pending,
+            sampler=self.sampler,
+            objective=self.objective,
+            posterior_transform=self.posterior_transform,
+            cache_root=self._cache_root,
+        )
 
     def compute_best_f(self, obj: Tensor) -> Tensor:
         """Computes the best (feasible) noisy objective value.

@@ -700,3 +700,12 @@ class TestMultiTaskUtils(BotorchTestCase):
             mapping = get_task_value_remapping(task_values, dtype)
             self.assertTrue(torch.equal(mapping[[1, 3]], expected_mapping_no_nan))
             self.assertTrue(torch.isnan(mapping[[0, 2]]).all())
+
+    def test_get_task_value_remapping_invalid_dtype(self) -> None:
+        task_values = torch.tensor([1, 3])
+        for dtype in (torch.int32, torch.long, torch.bool):
+            with self.assertRaisesRegex(
+                ValueError,
+                f"dtype must be torch.float or torch.double, but got {dtype}.",
+            ):
+                get_task_value_remapping(task_values, dtype)

@@ -9,10 +9,14 @@ from botorch.exceptions import UnsupportedError
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from botorch.models.utils.gpytorch_modules import (
+    get_gaussian_likelihood_with_lognormal_prior,
+)
 from botorch.utils.constraints import LogTransformedInterval
+from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.constraints import Interval
 from gpytorch.kernels import AdditiveKernel, Kernel, MaternKernel, ScaleKernel
-from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
+from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior, HalfCauchyPrior, NormalPrior
 from torch import Tensor
@@ -363,7 +367,7 @@ class AdditiveMapSaasSingleTaskGP(SingleTaskGP):
         train_X: Tensor,
         train_Y: Tensor,
         train_Yvar: Tensor | None = None,
-        outcome_transform: OutcomeTransform | None = None,
+        outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
         input_transform: InputTransform | None = None,
         num_taus: int = 4,
     ) -> None:
@@ -373,7 +377,12 @@ class AdditiveMapSaasSingleTaskGP(SingleTaskGP):
             train_X: A `batch_shape x n x d` tensor of training features.
             train_Y: A `batch_shape x n x m` tensor of training observations.
             train_Yvar: A `batch_shape x n x m` tensor of observed noise.
-            outcome_transform: An optional outcome transform.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform.
             input_transform: An optional input transform.
             num_taus: The number of taus to use (4 if omitted).
         """
@@ -381,18 +390,12 @@ class AdditiveMapSaasSingleTaskGP(SingleTaskGP):
         mean_module = get_mean_module_with_normal_prior(
             batch_shape=self._aug_batch_shape
         )
-        if train_Yvar is not None:
-            _, _, train_Yvar = self._transform_tensor_args(
-                X=train_X, Y=train_Y, Yvar=train_Yvar
-            )
         likelihood = (
-            FixedNoiseGaussianLikelihood(
-                noise=train_Yvar, batch_shape=self._aug_batch_shape
-            )
-            if train_Yvar is not None
-            else get_gaussian_likelihood_with_gamma_prior(
+            get_gaussian_likelihood_with_lognormal_prior(
                 batch_shape=self._aug_batch_shape
             )
+            if train_Yvar is None
+            else None
         )
         covar_module = get_additive_map_saas_covar_module(
             ard_num_dims=train_X.shape[-1],
@@ -409,6 +412,7 @@ class AdditiveMapSaasSingleTaskGP(SingleTaskGP):
             self=self,
             train_X=train_X,
             train_Y=train_Y,
+            train_Yvar=train_Yvar,
             mean_module=mean_module,
             covar_module=covar_module,
             likelihood=likelihood,

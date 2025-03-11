@@ -533,6 +533,7 @@ def continuous_step(
         opt_inputs,
         q=1,
         num_restarts=1,
+        raw_samples=None,
         batch_initial_conditions=current_x.unsqueeze(0),
         fixed_features={
             **dict(zip(discrete_dims.tolist(), current_x[discrete_dims])),

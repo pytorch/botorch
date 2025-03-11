@@ -116,7 +116,10 @@ class OptimizeAcqfInputs:
                     f"shape is {batch_initial_conditions_shape}."
                 )
 
-            if len(batch_initial_conditions_shape) == 2:
+            if (
+                len(batch_initial_conditions_shape) == 2
+                and self.raw_samples is not None
+            ):
                 warnings.warn(
                     "If using a 2-dim `batch_initial_conditions` botorch will "
                     "default to old behavior of ignoring `num_restarts` and just "
@@ -132,6 +135,7 @@ class OptimizeAcqfInputs:
                 len(batch_initial_conditions_shape) == 3
                 and batch_initial_conditions_shape[0] < self.num_restarts
                 and batch_initial_conditions_shape[-2] != self.q
+                and self.raw_samples is not None
             ):
                 warnings.warn(
                     "If using a 3-dim `batch_initial_conditions` where the "
