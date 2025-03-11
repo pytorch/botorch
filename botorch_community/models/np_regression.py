@@ -231,6 +231,7 @@ class NeuralProcessModel(Model):
         y_dim: int = 1,
         r_dim: int = 64,
         z_dim: int = 8,
+        n_context: int = 20,
         activation: Callable = nn.Sigmoid,
         init_func: Optional[Callable] = torch.nn.init.normal_,
         likelihood: Likelihood | None = None,
@@ -248,6 +249,7 @@ class NeuralProcessModel(Model):
             y_dim: Int dimensionality of target data y.
             r_dim: Int dimensionality of representation r.
             z_dim: Int dimensionality of latent variable z.
+            n_context (int): Number of context points, defaults to 20.
             activation: Activation function applied between layers, defaults to nn.
             Sigmoid.
             init_func: A function initializing the weights,
@@ -276,6 +278,7 @@ class NeuralProcessModel(Model):
         ).to(device)
         self.train_X = train_X.to(device)
         self.train_Y = train_Y.to(device)
+        self.n_context = n_context
         self.z_dim = z_dim
         self.z_mu_all = None
         self.z_logvar_all = None
@@ -430,14 +433,13 @@ class NeuralProcessModel(Model):
             return input_transform(X)
         try:
             return self.input_transform(X)
-        except AttributeError:
+        except (AttributeError, TypeError):
             return X
 
     def forward(
         self,
         train_X: torch.Tensor,
         train_Y: torch.Tensor,
-        n_context: int,
         axis: int = 0,
     ) -> MultivariateNormal:
         r"""Forward pass for the model.
@@ -445,7 +447,6 @@ class NeuralProcessModel(Model):
         Args:
             train_X: A `batch_shape x n x d` tensor of training features.
             train_Y: A `batch_shape x n x m` tensor of training observations.
-            n_context (int): Number of context points.
             axis: Dimension axis as int, defaulted as 0.
 
         Returns:
@@ -453,17 +454,17 @@ class NeuralProcessModel(Model):
         """
         train_X = self.transform_inputs(train_X)
         x_c, y_c, x_t, y_t = self.random_split_context_target(
-            train_X, train_Y, n_context, axis=axis
+            train_X, train_Y, self.n_context, axis=axis
         )
         x_t = x_t.to(device)
         x_c = x_c.to(device)
         y_c = y_c.to(device)
         y_t = y_t.to(device)
         self.z_mu_all, self.z_logvar_all = self.data_to_z_params(
-            self.train_X, self.train_Y, dim=axis
+            self.train_X, self.train_Y
         )
         self.z_mu_context, self.z_logvar_context = self.data_to_z_params(
-            x_c, y_c, dim=axis
+            x_c, y_c
         )
         x_t = self.transform_inputs(x_t)
         return self.posterior(x_t).distribution
@@ -486,6 +487,7 @@ class NeuralProcessModel(Model):
                 - x_t: Target input data.
                 - y_t: Target target data.
         """
+        self.n_context = n_context
         mask = torch.randperm(x.shape[axis])[:n_context]
         x_c = torch.from_numpy(x[mask]).to(device)
         y_c = torch.from_numpy(y[mask]).to(device)
@@ -493,4 +495,36 @@ class NeuralProcessModel(Model):
         splitter[mask] = True
         x_t = torch.from_numpy(x[~splitter]).to(device)
         y_t = torch.from_numpy(y[~splitter]).to(device)
+        return x_c, y_c, x_t, y_t
+
+    def random_split_context_target(
+        self, 
+        x: torch.Tensor, 
+        y: torch.Tensor, 
+        n_context: int = 20, 
+        axis: int = 0
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        r"""Helper function to split randomly into context and target.
+
+        Args:
+            x: A `batch_shape x n x d` tensor of training features.
+            y: A `batch_shape x n x m` tensor of training observations.
+            n_context (int): Number of context points.
+            axis: Dimension axis as int
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+                - x_c: Context input data.
+                - y_c: Context target data.
+                - x_t: Target input data.
+                - y_t: Target target data.
+        """
+        self.n_context = n_context
+        mask = torch.randperm(x.shape[axis])[:n_context]
+        splitter = torch.zeros(x.shape[axis], dtype=torch.bool)
+        x_c = x[mask].to(device)
+        y_c = y[mask].to(device)
+        splitter[mask] = True
+        x_t = x[~splitter].to(device)
+        y_t = y[~splitter].to(device)
         return x_c, y_c, x_t, y_t
