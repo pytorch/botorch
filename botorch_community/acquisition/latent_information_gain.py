@@ -47,7 +47,7 @@ class LatentInformationGain(AcquisitionFunction):
                 defaults to 0.01.
             scaler: Float scaling the std, defaults to 0.5.
         """
-        super().__init__()
+        super().__init__(model)
         self.model = model
         self.num_samples = num_samples
         self.min_std = min_std
@@ -72,19 +72,28 @@ class LatentInformationGain(AcquisitionFunction):
 
         kl = torch.zeros(N, q, device=device)
 
-        if self.model is NeuralProcessModel:
-            z_mu_context, z_logvar_context = self.model.data_to_z_params(
-                self.context_x, self.context_y
+        if isinstance(self.model, NeuralProcessModel):
+            x_c, y_c, x_t, y_t = self.model.random_split_context_target(
+                self.model.train_X[:, 0], self.model.train_Y
             )
+            print(x_c.shape)
+            print(y_c.shape)
+            print(self.model.train_X)
+            print(self.model.train_X[:, 0])
+            print(self.model.train_Y)
+            print(self.model.train_Y[:, 0])
+            z_mu_context, z_logvar_context = self.model.data_to_z_params(x_c, y_c, xy_dim = -1)
+            print(z_mu_context)
+            print(z_logvar_context)
             for _ in range(self.num_samples):
                 # Taking Samples/Predictions
                 samples = self.model.sample_z(z_mu_context, z_logvar_context)
                 y_pred = self.model.decoder(candidate_x.view(-1, D), samples)
                 # Combining the data
                 combined_x = torch.cat(
-                    [self.context_x, candidate_x.view(-1, D)], dim=0
+                    [x_c, candidate_x.view(-1, D)], dim=0
                 ).to(device)
-                combined_y = torch.cat([self.context_y, y_pred], dim=0).to(device)
+                combined_y = torch.cat([self.y_c, y_pred], dim=0).to(device)
                 # Computing posterior variables
                 z_mu_posterior, z_logvar_posterior = self.model.data_to_z_params(
                     combined_x, combined_y
