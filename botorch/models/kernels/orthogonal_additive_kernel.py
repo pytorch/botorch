@@ -146,7 +146,10 @@ class OrthogonalAdditiveKernel(Kernel):
         Returns:
             A `batch_shape x d x n1 x n2`-dim Tensor of kernel matrices.
         """
-        return self.base_kernel(x1, x2, last_dim_is_batch=True).to_dense()
+        # This replicates deprecated `last_dim_is_batch` functionality.
+        x1 = x1.transpose(-1, -2).unsqueeze(-1)
+        x2 = x2.transpose(-1, -2).unsqueeze(-1)
+        return self.base_kernel(x1, x2).to_dense()
 
     @property
     def offset(self) -> Tensor:
