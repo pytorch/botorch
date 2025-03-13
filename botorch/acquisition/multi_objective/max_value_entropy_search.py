@@ -20,7 +20,6 @@ References
 from __future__ import annotations
 
 from collections.abc import Callable
-
 from math import pi
 
 import torch
@@ -139,19 +138,13 @@ class qMultiObjectiveMaxValueEntropy(
                 sampler=self.fantasies_sampler,
             )
             self.mo_model = fantasy_model
-            # convert model to batched single outcome model.
-            self.model = batched_multi_output_to_single_output(
-                batch_mo_model=self.mo_model
-            )
-            self._sample_max_values()
         else:
             # This is mainly for setting the model to the original model
             # after the sequential optimization at q > 1
             self.mo_model = self._init_model
-            self.model = batched_multi_output_to_single_output(
-                batch_mo_model=self.mo_model
-            )
-            self._sample_max_values()
+        # convert model to batched single outcome model.
+        self.model = batched_multi_output_to_single_output(batch_mo_model=self.mo_model)
+        self._sample_max_values()
 
     def _sample_max_values(self) -> None:
         """Sample max values for MC approximation of the expectation in MES.
