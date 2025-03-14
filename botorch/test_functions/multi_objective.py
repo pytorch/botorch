@@ -705,9 +705,10 @@ class Penicillin(MultiObjectiveTestProblem):
     The function is defined for minimization of all objectives.
 
     The reference point was set using the `infer_reference_point` heuristic
-    on the Pareto frontier over a large discrete set of random designs.
+    on the Pareto frontier obtained via NSGA-II.
     """
 
+    _max_hv = 2183455.909507436
     dim = 7
     num_objectives = 3
     _bounds = [
@@ -719,7 +720,7 @@ class Penicillin(MultiObjectiveTestProblem):
         (500.0, 700.0),
         (5.0, 6.5),
     ]
-    _ref_point = [1.85, 86.93, 514.70]
+    _ref_point = [25.935, 57.612, 935.5]
 
     Y_xs = 0.45
     Y_ps = 0.90
