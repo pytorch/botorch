@@ -28,7 +28,7 @@ from botorch.models.pairwise_gp import PairwiseGP
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils import apply_constraints
-from botorch.utils.testing import _get_test_posterior, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, get_test_posterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from linear_operator.operators.dense_linear_operator import to_linear_operator
 
@@ -67,7 +67,7 @@ class TestScalarizedPosteriorTransform(BotorchTestCase):
             offset = torch.rand(1).item()
             weights = torch.randn(m, device=self.device, dtype=dtype)
             obj = ScalarizedPosteriorTransform(weights=weights, offset=offset)
-            posterior = _get_test_posterior(
+            posterior = get_test_posterior(
                 batch_shape, m=m, device=self.device, dtype=dtype
             )
             mean, covar = (
