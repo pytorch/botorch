@@ -50,6 +50,12 @@ class BotorchTestCase(TestCase):
     device = torch.device("cpu")
 
     def setUp(self, suppress_input_warnings: bool = True) -> None:
+        """Set up the test case.
+
+        Args:
+            suppress_input_warnings: If True, suppress common input warnings
+                (see below).
+        """
         warnings.resetwarnings()
         warnings.simplefilter("always", append=True)
         if suppress_input_warnings:
@@ -92,9 +98,19 @@ class BotorchTestCase(TestCase):
         atol: float = 1e-08,
         equal_nan: bool = False,
     ) -> None:
-        r"""
+        r"""Assert that two tensors are close.
+
         Calls torch.testing.assert_close, using the signature and default behavior
         of torch.allclose.
+
+        The formula asserted is abs(input - other) <= atol + rtol * abs(other).
+
+        Args:
+            input: First tensor or tensor-or-scalar-like to compare
+            other: Second tensor or tensor-or-scalar-like to compare
+            rtol: Relative tolerance
+            atol: Absolute tolerance
+            equal_nan: If True, consider NaN values as equal
 
         Example output:
             AssertionError: Scalars are not close!
@@ -116,7 +132,12 @@ class BotorchTestCase(TestCase):
 
 
 class BaseTestProblemTestCaseMixIn:
+    r"""Mixin for testing BaseTestProblem (functions) implementations."""
+
     def test_forward_and_evaluate_true(self):
+        r"""Run every BaseTestProblem in `self.functions` on random inputs.
+        Runs both `forward` and `evaluate_true`.
+        """
         dtypes = (torch.float, torch.double)
         batch_shapes = (torch.Size(), torch.Size([2]), torch.Size([2, 3]))
         for dtype, batch_shape, f in product(dtypes, batch_shapes, self.functions):
@@ -142,13 +163,19 @@ class BaseTestProblemTestCaseMixIn:
     @property
     @abstractmethod
     def functions(self) -> Sequence[BaseTestProblem]:
-        # The functions that should be tested. Typically defined as a class
-        # attribute on the test case subclassing this class.
-        pass  # pragma: no cover
+        r"""The functions that should be tested.
+
+        Typically defined as a class attribute on the test case subclassing this class.
+        """
 
 
 class SyntheticTestFunctionTestCaseMixin:
+    r"""Mixin for testing synthetic `BaseTestProblem` aka test functions."""
+
     def test_optimal_value(self):
+        """Test that a function's optimal_value is correctly computed,
+        and defined if it should be.
+        """
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(device=self.device, dtype=dtype)
@@ -161,6 +188,7 @@ class SyntheticTestFunctionTestCaseMixin:
                     self.assertEqual(optval, optval_exp)
 
     def test_optimizer(self):
+        r"""Test that optimizers are correctly computed."""
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(device=self.device, dtype=dtype)
@@ -176,15 +204,33 @@ class SyntheticTestFunctionTestCaseMixin:
                     grad = torch.autograd.grad([*res], Xopt)[0]
                     self.assertLess(grad.abs().max().item(), 1e-3)
 
+    @property
+    @abstractmethod
+    def functions(self) -> Sequence[BaseTestProblem]:
+        """The functions that should be tested.
+
+        Typically defined as a class attribute on the test case subclassing this class.
+        """
+        pass  # pragma: no cover
+
 
 class MultiObjectiveTestProblemTestCaseMixin:
+    r"""Mixin for testing multi-objective test problems.
+
+    This class provides test cases for attributes,
+    maximum hypervolume, and reference points
+    of multi-objective test problems.
+    """
+
     def test_attributes(self):
+        r"""Test that each function has the required attributes."""
         for f in self.functions:
             self.assertTrue(hasattr(f, "dim"))
             self.assertTrue(hasattr(f, "num_objectives"))
             self.assertEqual(f.bounds.shape, torch.Size([2, f.dim]))
 
     def test_max_hv(self):
+        r"""Test the maximum hypervolume (max_hv) attribute for each function."""
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(device=self.device, dtype=dtype)
@@ -195,6 +241,9 @@ class MultiObjectiveTestProblemTestCaseMixin:
                     self.assertEqual(f.max_hv, f._max_hv)
 
     def test_ref_point(self):
+        """Test the reference point (ref_point) attribute
+        for each function (for each dtype).
+        """
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(dtype=dtype, device=self.device)
@@ -205,13 +254,40 @@ class MultiObjectiveTestProblemTestCaseMixin:
                     )
                 )
 
+    @property
+    @abstractmethod
+    def functions(self) -> Sequence[BaseTestProblem]:
+        """The functions that should be tested.
+
+        Typically defined as a class attribute on the test case subclassing this class.
+        """
+        pass  # pragma: no cover
+
 
 class ConstrainedTestProblemTestCaseMixin:
+    """Mixin for testing constrained test problems.
+
+    This class provides test cases for attributes and methods
+    of constrained test problems, including testing the number of
+    constraints and the evaluation of constraint slack.
+    """
+
     def test_num_constraints(self):
+        """Test that each function has the required num_constraints attribute."""
         for f in self.functions:
             self.assertTrue(hasattr(f, "num_constraints"))
 
     def test_evaluate_slack(self):
+        """Test the evaluate_slack method for each function.
+
+        This test verifies that:
+
+        1. The evaluate_slack_true and evaluate_slack methods
+            return tensors of the expected shape
+
+        2. The relationship between evaluate_slack and evaluate_slack_true
+        is consistent with the constraint_noise_std attribute of the function
+        """
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(device=self.device, dtype=dtype)
@@ -245,14 +321,46 @@ class ConstrainedTestProblemTestCaseMixin:
                 else:
                     self.assertTrue(is_equal.all().item())
 
+    @property
+    @abstractmethod
+    def functions(self) -> Sequence[BaseTestProblem]:
+        r"""The functions that should be tested.
+
+        Typically defined as a class attribute on the test case subclassing this class.
+        """
+        pass  # pragma: no cover
+
 
 class TestCorruptedProblemsMixin(BotorchTestCase):
+    r"""Mixin for testing corrupted test problems.
+
+    This class provides setup and utility functions
+    for testing corrupted test problems using a specified outlier generator
+    and a Rosenbrock problem.
+    """
+
     def setUp(self, suppress_input_warnings: bool = True) -> None:
+        r"""Set up the test case with a dummy outlier generator
+        and a Rosenbrock problem.
+
+        Args:
+            suppress_input_warnings: If True, suppress common input warnings.
+        """
         super().setUp(suppress_input_warnings=suppress_input_warnings)
 
         def outlier_generator(
             problem: torch.Tensor | BaseTestProblem, X: Any, bounds: Any
         ) -> torch.Tensor:
+            r"""Generate outliers for the given problem.
+
+            Args:
+                problem: The test problem.
+                X: Input tensor.
+                bounds: Bounds for the input.
+
+            Returns:
+                A tensor of ones with the same shape as the input.
+            """
             return torch.ones(X.shape[0])
 
         self.outlier_generator = outlier_generator
@@ -266,19 +374,29 @@ class TestCorruptedProblemsMixin(BotorchTestCase):
 
 
 class MockPosterior(Posterior):
-    r"""Mock object that implements dummy methods and feeds through specified outputs"""
+    r"""This class is used to simulate a posterior with specified mean,
+    variance, and samples.
+
+    Everything is deterministic in this class.
+    """
 
     def __init__(
-        self, mean=None, variance=None, samples=None, base_shape=None, batch_range=None
+        self,
+        mean: torch.Tensor | None = None,
+        variance: torch.Tensor | None = None,
+        samples: torch.Tensor | None = None,
+        base_shape: torch.Size | None = None,
+        batch_range: tuple[int, int] | None = None,
     ) -> None:
-        r"""
+        r"""Initialize the MockPosterior with specified attributes.
+
         Args:
             mean: The mean of the posterior.
             variance: The variance of the posterior.
-            samples: Samples to return from `rsample`, unless `base_samples` is
-                provided.
-            base_shape: If given, this is returned as `base_sample_shape`, and also
-                used as the base of the `_extended_shape`.
+            samples: Samples to return from `rsample`,
+                unless `base_samples` is provided.
+            base_shape: If given, this is returned as `base_sample_shape`,
+                and also used as the base of the `_extended_shape`.
             batch_range: If given, this is returned as `batch_range`.
                 Defaults to (0, -2).
         """
@@ -290,6 +408,7 @@ class MockPosterior(Posterior):
 
     @property
     def device(self) -> torch.device:
+        r"""Return the device of the posterior."""
         for t in (self._mean, self._variance, self._samples):
             if torch.is_tensor(t):
                 return t.device
@@ -297,6 +416,7 @@ class MockPosterior(Posterior):
 
     @property
     def dtype(self) -> torch.dtype:
+        r"""Return the data type of the posterior."""
         for t in (self._mean, self._variance, self._samples):
             if torch.is_tensor(t):
                 return t.dtype
@@ -304,6 +424,7 @@ class MockPosterior(Posterior):
 
     @property
     def batch_shape(self) -> torch.Size:
+        r"""Return the batch shape of the posterior."""
         for t in (self._mean, self._variance, self._samples):
             if torch.is_tensor(t):
                 return t.shape[:-2]
@@ -313,10 +434,12 @@ class MockPosterior(Posterior):
         self,
         sample_shape: torch.Size = torch.Size(),  # noqa: B008
     ) -> torch.Size:
+        r"""Return the extended shape of the posterior."""
         return sample_shape + self.base_sample_shape
 
     @property
     def base_sample_shape(self) -> torch.Size:
+        r"""Return the base sample shape of the posterior."""
         if self._base_shape is not None:
             return self._base_shape
         if self._samples is not None:
@@ -329,22 +452,32 @@ class MockPosterior(Posterior):
 
     @property
     def batch_range(self) -> tuple[int, int]:
+        r"""Return the batch range of the posterior."""
         return self._batch_range
 
     @property
     def mean(self):
+        r"""Return the mean of the posterior."""
         return self._mean
 
     @property
     def variance(self):
+        r"""Return the variance of the posterior."""
         return self._variance
 
     def rsample(
         self,
         sample_shape: torch.Size | None = None,
     ) -> Tensor:
-        """Mock sample by repeating self._samples. If base_samples is provided,
-        do a shape check but return the same mock samples."""
+        """Return mock samples by extending the shape
+        of the initially specified samples.
+
+        Args:
+            sample_shape: The shape of the samples to generate.
+
+        Returns:
+            A tensor of samples with the specified shape.
+        """
         if sample_shape is None:
             sample_shape = torch.Size()
         extended_shape = self._extended_shape(sample_shape)
@@ -364,17 +497,35 @@ class MockPosterior(Posterior):
 
 
 @GetSampler.register(MockPosterior)
-def _get_sampler_mock(
+def get_sampler_mock(
     posterior: MockPosterior, sample_shape: torch.Size, **kwargs: Any
 ) -> MCSampler:
-    r"""Get the dummy `StochasticSampler` for `MockPosterior`."""
+    """Get a `StochasticSampler` with the specified `sample_shape`.
+
+    Args:
+        posterior: Used only for dispatching so that `get_sampler`
+            works with a `MockPosterior`.
+        sample_shape: The shape of the samples to generate.
+        kwargs: Passed to `StochasticSampler`
+
+    Returns:
+        A `StochasticSampler` for the mock posterior.
+    """
     return StochasticSampler(sample_shape=sample_shape, **kwargs)
 
 
 class MockModel(Model, FantasizeMixin):
-    r"""Mock object that implements dummy methods and feeds through specified outputs"""
+    """Mock ``Model`` that implements dummy methods and feeds through specified outputs.
+
+    Its ``posterior`` is a ``MockPosterior``.
+    """
 
     def __init__(self, posterior: MockPosterior) -> None:  # noqa: D107
+        r"""Initialize the MockModel with a specified posterior.
+
+        Args:
+            posterior: The mock posterior to use for the model.
+        """
         super(Model, self).__init__()
         self._posterior = posterior
 
@@ -385,6 +536,17 @@ class MockModel(Model, FantasizeMixin):
         posterior_transform: PosteriorTransform | None = None,
         observation_noise: bool | torch.Tensor = False,
     ) -> MockPosterior:
+        r"""Return the posterior of the model.
+
+        Args:
+            X: Ignored; present for compatibility with super class.
+            output_indices: Ignored; present for compatibility with super class.
+            posterior_transform: Optional.
+            observation_noise: Ignored; present for compatibility with super class.
+
+        Returns:
+            The posterior of the model, possibly transformed.
+        """
         if posterior_transform is not None:
             return posterior_transform(self._posterior)
         else:
@@ -392,20 +554,30 @@ class MockModel(Model, FantasizeMixin):
 
     @property
     def num_outputs(self) -> int:
+        r"""Return the number of outputs of the model."""
         extended_shape = self._posterior._extended_shape()
         return extended_shape[-1] if len(extended_shape) > 0 else 0
 
     @property
     def batch_shape(self) -> torch.Size:
+        r"""Return the batch shape of the model."""
         extended_shape = self._posterior._extended_shape()
         return extended_shape[:-2]
 
     def state_dict(self, *args, **kwargs) -> None:
+        """Dummy method, has no effect"""
         pass
 
     def load_state_dict(
         self, state_dict: OrderedDict | None = None, strict: bool = False
     ) -> None:
+        """Dummy method, has no effect.
+
+        Args:
+            state_dict: The state dictionary to load.
+            strict: Whether to strictly enforce that the keys in state_dict match
+                the keys returned by this module's state_dict function.
+        """
         pass
 
 
@@ -423,7 +595,7 @@ class MockAcquisitionFunction:
         self.X_pending = X_pending
 
 
-def _get_random_data(
+def get_random_data(
     batch_shape: torch.Size, m: int, d: int = 1, n: int = 10, **tkwargs
 ) -> tuple[Tensor, Tensor]:
     r"""Generate random data for testing purposes.
@@ -449,7 +621,7 @@ def _get_random_data(
     return train_x, train_y
 
 
-def _get_test_posterior(
+def get_test_posterior(
     batch_shape: torch.Size,
     q: int = 1,
     m: int = 1,
@@ -495,7 +667,7 @@ def _get_test_posterior(
     return GPyTorchPosterior(mtmvn)
 
 
-def _get_max_violation_of_bounds(samples: torch.Tensor, bounds: torch.Tensor) -> float:
+def get_max_violation_of_bounds(samples: torch.Tensor, bounds: torch.Tensor) -> float:
     """
     The maximum value by which samples lie outside bounds.
 
@@ -515,7 +687,7 @@ def _get_max_violation_of_bounds(samples: torch.Tensor, bounds: torch.Tensor) ->
     return max(lower_dist, upper_dist)
 
 
-def _get_max_violation_of_constraints(
+def get_max_violation_of_constraints(
     samples: torch.Tensor,
     constraints: list[tuple[Tensor, Tensor, float]] | None,
     equality: bool,

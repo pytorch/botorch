@@ -48,9 +48,9 @@ from botorch.optim.initializers import (
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.sampling import manual_seed, unnormalize
 from botorch.utils.testing import (
-    _get_max_violation_of_bounds,
-    _get_max_violation_of_constraints,
     BotorchTestCase,
+    get_max_violation_of_bounds,
+    get_max_violation_of_constraints,
     MockAcquisitionFunction,
     MockModel,
     MockPosterior,
@@ -61,11 +61,11 @@ class TestBoundsAndConstraintCheckers(BotorchTestCase):
     def test_bounds_check(self) -> None:
         bounds = torch.tensor([[1, 2], [3, 4]], device=self.device)
         samples = torch.tensor([[2, 3], [2, 3.1]], device=self.device)[None, :, :]
-        result = _get_max_violation_of_bounds(samples, bounds)
+        result = get_max_violation_of_bounds(samples, bounds)
         self.assertAlmostEqual(result, -0.9, delta=1e-6)
 
         samples = torch.tensor([[2, 3], [2, 4.1]], device=self.device)[None, :, :]
-        result = _get_max_violation_of_bounds(samples, bounds)
+        result = get_max_violation_of_bounds(samples, bounds)
         self.assertAlmostEqual(result, 0.1, delta=1e-6)
 
     def test_constraint_check(self) -> None:
@@ -77,10 +77,10 @@ class TestBoundsAndConstraintCheckers(BotorchTestCase):
             )
         ]
         samples = torch.tensor([[2, 3], [2, 3.1]], device=self.device)[None, :, :]
-        result = _get_max_violation_of_constraints(samples, constraints, equality=True)
+        result = get_max_violation_of_constraints(samples, constraints, equality=True)
         self.assertAlmostEqual(result, 0.1, delta=1e-6)
 
-        result = _get_max_violation_of_constraints(samples, constraints, equality=False)
+        result = get_max_violation_of_constraints(samples, constraints, equality=False)
         self.assertAlmostEqual(result, 0.0, delta=1e-6)
 
 
@@ -268,7 +268,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
             self.assertEqual(batch_initial_conditions.device, bounds.device)
             self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
             self.assertLess(
-                _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                get_max_violation_of_bounds(batch_initial_conditions, bounds),
                 1e-6,
             )
             batch_shape = (
@@ -347,7 +347,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
             self.assertEqual(batch_initial_conditions.device, bounds.device)
             self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
             self.assertLess(
-                _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                get_max_violation_of_bounds(batch_initial_conditions, bounds),
                 1e-6,
             )
             batch_shape = (
@@ -409,7 +409,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
             self.assertEqual(batch_initial_conditions.device, bounds.device)
             self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
             self.assertLess(
-                _get_max_violation_of_bounds(batch_initial_conditions, bounds), 1e-6
+                get_max_violation_of_bounds(batch_initial_conditions, bounds), 1e-6
             )
             if ffs is not None:
                 for idx, val in ffs.items():
@@ -637,18 +637,18 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     return None if x is None else x.to(device=self.device)
 
                 self.assertLess(
-                    _get_max_violation_of_bounds(_to_self_device(samples), bounds), tol
+                    get_max_violation_of_bounds(_to_self_device(samples), bounds), tol
                 )
 
                 self.assertLess(
-                    _get_max_violation_of_constraints(
+                    get_max_violation_of_constraints(
                         _to_self_device(samples), constraints=equalities, equality=True
                     ),
                     tol,
                 )
 
                 self.assertLess(
-                    _get_max_violation_of_constraints(
+                    get_max_violation_of_constraints(
                         _to_self_device(samples),
                         constraints=inequalities,
                         equality=False,
@@ -708,11 +708,11 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 self.assertEqual(batch_initial_conditions.device, bounds.device)
                 self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
                 self.assertLess(
-                    _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                    get_max_violation_of_bounds(batch_initial_conditions, bounds),
                     1e-6,
                 )
                 self.assertLess(
-                    _get_max_violation_of_constraints(
+                    get_max_violation_of_constraints(
                         batch_initial_conditions,
                         inequality_constraints,
                         equality=False,
@@ -720,7 +720,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     1e-6,
                 )
                 self.assertLess(
-                    _get_max_violation_of_constraints(
+                    get_max_violation_of_constraints(
                         batch_initial_conditions,
                         equality_constraints,
                         equality=True,
@@ -821,7 +821,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     batch_initial_conditions[1, 2, 0],
                 )
                 self.assertLess(
-                    _get_max_violation_of_constraints(
+                    get_max_violation_of_constraints(
                         batch_initial_conditions,
                         inequality_constraints,
                         equality=False,
@@ -886,7 +886,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
                 self.assertTrue((batch_initial_conditions[..., -1] == 0.42).all())
                 self.assertLess(
-                    _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                    get_max_violation_of_bounds(batch_initial_conditions, bounds),
                     1e-6,
                 )
                 if ffs is not None:
@@ -981,7 +981,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                 self.assertEqual(batch_initial_conditions.device, bounds.device)
                 self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
                 self.assertLess(
-                    _get_max_violation_of_bounds(batch_initial_conditions, bounds),
+                    get_max_violation_of_bounds(batch_initial_conditions, bounds),
                     1e-6,
                 )
                 batch_shape = (

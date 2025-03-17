@@ -14,7 +14,7 @@ from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.latent_kronecker_gp import LatentKroneckerGP, MinMaxStandardize
 from botorch.models.transforms import Normalize
-from botorch.utils.testing import _get_random_data, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, get_random_data
 from botorch.utils.types import DEFAULT
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
@@ -27,7 +27,7 @@ from linear_operator.utils.warnings import NumericalWarning, PerformanceWarning
 def _get_data_with_missing_entries(
     n_train: int, d: int, m: int, batch_shape: torch.Size, tkwargs: dict
 ):
-    train_X, train_Y = _get_random_data(
+    train_X, train_Y = get_random_data(
         batch_shape=batch_shape, m=m, d=d, n=n_train, **tkwargs
     )
 
@@ -586,7 +586,7 @@ class TestLatentKroneckerGP(BotorchTestCase):
             (torch.float, torch.double),  # dtype
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            train_X, train_Y = _get_random_data(
+            train_X, train_Y = get_random_data(
                 batch_shape=batch_shape, m=m, d=d, n=n_train, **tkwargs
             )
 
@@ -619,7 +619,7 @@ class TestLatentKroneckerGP(BotorchTestCase):
     def test_not_implemented(self):
         batch_shape = torch.Size([])
         tkwargs = {"device": self.device, "dtype": torch.double}
-        train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=1, **tkwargs)
+        train_X, train_Y = get_random_data(batch_shape=batch_shape, m=1, **tkwargs)
 
         model = LatentKroneckerGP(
             train_X=train_X,

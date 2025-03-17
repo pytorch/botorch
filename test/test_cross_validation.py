@@ -15,7 +15,7 @@ from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
-from botorch.utils.testing import _get_random_data, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, get_random_data
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 
@@ -29,7 +29,7 @@ class TestFitBatchCrossValidation(BotorchTestCase):
             (False, True),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            train_X, train_Y = _get_random_data(
+            train_X, train_Y = get_random_data(
                 batch_shape=batch_shape, m=m, n=n, **tkwargs
             )
             if m == 1:
@@ -111,7 +111,7 @@ class TestFitBatchCrossValidation(BotorchTestCase):
                 self.assertIs(cv_results.posterior.mean.dtype, dtype)
 
     def test_mtgp(self):
-        train_X, train_Y = _get_random_data(
+        train_X, train_Y = get_random_data(
             batch_shape=torch.Size(), m=1, n=3, device=self.device
         )
         cv_folds = gen_loo_cv_folds(train_X=train_X, train_Y=train_Y)

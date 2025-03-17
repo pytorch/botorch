@@ -12,7 +12,7 @@ from unittest import mock
 import torch
 from botorch.exceptions import BotorchTensorDimensionError
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
-from botorch.utils.testing import _get_test_posterior, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, get_test_posterior
 from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from linear_operator.operators import to_linear_operator
@@ -201,7 +201,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             while torch.any(weights.abs() < 0.1):
                 weights = torch.randn(m, **tkwargs)
             # test q=1
-            posterior = _get_test_posterior(batch_shape, m=m, lazy=lazy, **tkwargs)
+            posterior = get_test_posterior(batch_shape, m=m, lazy=lazy, **tkwargs)
             mean, covar = (
                 posterior.distribution.mean,
                 posterior.distribution.covariance_matrix,
@@ -218,7 +218,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             )
             # test q=2, interleaved
             q = 2
-            posterior = _get_test_posterior(
+            posterior = get_test_posterior(
                 batch_shape, q=q, m=m, lazy=lazy, interleaved=True, **tkwargs
             )
             mean, covar = (
@@ -243,7 +243,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
             # test q=2, non-interleaved
             # test independent special case as well
             for independent in (False, True) if m > 1 else (False,):
-                posterior = _get_test_posterior(
+                posterior = get_test_posterior(
                     batch_shape,
                     q=q,
                     m=m,
