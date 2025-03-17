@@ -987,8 +987,9 @@ def initialize_q_batch(
     ).permute(-1, *range(len(batch_shape)))
 
     # make sure we get the maximum
-    if max_idx not in idcs:
-        idcs[-1] = max_idx
+    has_max = (max_idx == idcs).any(dim=0)
+    idcs[-1, ~has_max] = max_idx[~has_max]
+
     if batch_shape == torch.Size():
         return X[idcs], acq_vals[idcs]
     else:
