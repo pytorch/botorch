@@ -261,6 +261,7 @@ class TestModelListGP(BotorchTestCase):
                 )
 
     def test_ModelListGP_fixed_noise(self) -> None:
+        torch.manual_seed(0)
         for dtype, outcome_transform in itertools.product(
             (torch.float, torch.double), ("None", "Standardize")
         ):
