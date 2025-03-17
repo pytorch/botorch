@@ -134,6 +134,7 @@ class TestInitializeQBatch(BotorchTestCase):
             (torch.float, (2,)),
             (torch.double, torch.Size([2, 3, 4])),
             (torch.float, []),
+            (torch.float, [100]),
         ):
             # basic test
             X = torch.rand(5, *batch_shape, 3, 4, device=self.device, dtype=dtype)
@@ -145,10 +146,16 @@ class TestInitializeQBatch(BotorchTestCase):
             self.assertEqual(ics_acq_vals.shape, torch.Size([2, *batch_shape]))
             self.assertEqual(ics_acq_vals.device, acq_vals.device)
             self.assertEqual(ics_acq_vals.dtype, acq_vals.dtype)
+            # check that the max value for every batch is returned
+            max_values = acq_vals.max(dim=0).values
+            contains_max = (ics_acq_vals == max_values).any(dim=0)
+            self.assertTrue(contains_max.all())
+
             # ensure nothing happens if we want all samples
             ics_X, ics_acq_vals = initialize_q_batch(X=X, acq_vals=acq_vals, n=5)
             self.assertTrue(torch.equal(X, ics_X))
             self.assertTrue(torch.equal(acq_vals, ics_acq_vals))
+
             # ensure raises correct warning
             acq_vals = torch.zeros(5, device=self.device, dtype=dtype)
             with self.assertWarns(BadInitialCandidatesWarning):
