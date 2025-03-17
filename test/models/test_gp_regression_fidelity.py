@@ -16,7 +16,7 @@ from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.datasets import SupervisedDataset
-from botorch.utils.testing import _get_random_data, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, get_random_data
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 from gpytorch.means import ConstantMean
@@ -30,7 +30,7 @@ def _get_random_data_with_fidelity(
     r"""Construct test data.
     For this test, by convention the trailing dimensions are the fidelity dimensions
     """
-    train_x, train_y = _get_random_data(
+    train_x, train_y = get_random_data(
         batch_shape=batch_shape, m=m, d=d, n=n, **tkwargs
     )
     s = torch.rand(n, n_fidelity, **tkwargs).repeat(batch_shape + torch.Size([1, 1]))
