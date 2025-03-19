@@ -1046,40 +1046,89 @@ class TestGenOneShotKGInitialConditions(BotorchTestCase):
                     raw_samples=raw_samples,
                     options={"frac_random": 2.0},
                 )
+
+            forbidden_indices = torch.tensor([[0, 1], [0, 1]])
+            for constraint_type in [
+                "inequality_constraints",
+                "equality_constraints",
+            ]:
+                constraint_kwarg = {
+                    constraint_type: [
+                        (
+                            forbidden_indices,
+                            torch.ones(2).to(mean),
+                            0.5,
+                        )
+                    ]
+                }
+                with self.subTest(
+                    f"intra-point {constraint_type} not supported"
+                ), self.assertRaisesRegex(
+                    NotImplementedError,
+                    "Indices must be one-dimensional "
+                    "in gen_one_shot_kg_initial_conditions. "
+                    "Received indices",
+                ):
+                    gen_one_shot_kg_initial_conditions(
+                        acq_function=mock_kg,
+                        bounds=bounds,
+                        q=1,
+                        num_restarts=num_restarts,
+                        raw_samples=raw_samples,
+                        **constraint_kwarg,
+                    )
+
             # test generation logic
             q = 2
             mock_random_ics = torch.rand(num_restarts, q + num_fantasies, 2)
             mock_fantasy_cands = torch.ones(20, 1, 2)
             mock_fantasy_vals = torch.randn(20)
-            with ExitStack() as es:
-                mock_gbics = es.enter_context(
-                    mock.patch(
-                        "botorch.optim.initializers.gen_batch_initial_conditions",
-                        return_value=mock_random_ics,
+            for constraint_kwargs in [
+                {},
+                {
+                    "inequality_constraints": [
+                        (torch.tensor([0, 1]), torch.ones(2).to(mean), 0.5)
+                    ]
+                },  # test that no error is raised
+                {
+                    "equality_constraints": [
+                        (torch.tensor([0, 1]), torch.ones(2).to(mean), 0.5)
+                    ]
+                    # test that no error is raised
+                },
+            ]:
+                with ExitStack() as es:
+                    mock_gbics = es.enter_context(
+                        mock.patch(
+                            "botorch.optim.initializers.gen_batch_initial_conditions",
+                            return_value=mock_random_ics,
+                        )
                     )
-                )
-                mock_optacqf = es.enter_context(
-                    mock.patch(
-                        "botorch.optim.optimize.optimize_acqf",
-                        return_value=(mock_fantasy_cands, mock_fantasy_vals),
+                    mock_optacqf = es.enter_context(
+                        mock.patch(
+                            "botorch.optim.optimize.optimize_acqf",
+                            return_value=(mock_fantasy_cands, mock_fantasy_vals),
+                        )
                     )
-                )
-                ics = gen_one_shot_kg_initial_conditions(
-                    acq_function=mock_kg,
-                    bounds=bounds,
-                    q=q,
-                    num_restarts=num_restarts,
-                    raw_samples=raw_samples,
-                )
-                mock_gbics.assert_called_once()
-                mock_optacqf.assert_called_once()
-                n_value = int((1 - 0.1) * num_fantasies)
-                self.assertTrue(
-                    torch.equal(
-                        ics[..., :-n_value, :], mock_random_ics[..., :-n_value, :]
-                    )
-                )
-                self.assertTrue(torch.all(ics[..., -n_value:, :] == 1))
+                    with self.subTest(f"Main test with {constraint_kwargs}"):
+                        ics = gen_one_shot_kg_initial_conditions(
+                            acq_function=mock_kg,
+                            bounds=bounds,
+                            q=q,
+                            num_restarts=num_restarts,
+                            raw_samples=raw_samples,
+                            **constraint_kwargs,
+                        )
+                        mock_gbics.assert_called_once()
+                        mock_optacqf.assert_called_once()
+                        n_value = int((1 - 0.1) * num_fantasies)
+                        self.assertTrue(
+                            torch.equal(
+                                ics[..., :-n_value, :],
+                                mock_random_ics[..., :-n_value, :],
+                            )
+                        )
+                        self.assertTrue(torch.all(ics[..., -n_value:, :] == 1))
 
 
 class TestGenOneShotHVKGInitialConditions(BotorchTestCase):
