@@ -97,6 +97,11 @@ Safe Math
 .. automodule:: botorch.utils.safe_math
 		:members:
 
+Quadrature
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.quadrature
+		:members:
+
 Multi-Objective Utilities
 -------------------------------------------
 
