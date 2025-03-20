@@ -180,6 +180,18 @@ def compute_smoothed_feasibility_indicator(
     return is_feasible if log else is_feasible.exp()
 
 
+def compute_probabilities_of_feasibility_indicator(
+    probabilties_of_feasibility: list[Callable[[Tensor], Tensor]],
+    samples: Tensor,
+    log: bool = False,
+) -> Tensor:
+    is_feasible = torch.zeros_like(samples[..., 0])
+    for constraint in probabilties_of_feasibility:
+        # 1 means feasible, zero means not feasible
+        is_feasible = is_feasible + constraint(samples).log()
+    return is_feasible if log else is_feasible.exp()
+
+
 def apply_constraints(
     obj: Tensor,
     constraints: list[Callable[[Tensor], Tensor]],
