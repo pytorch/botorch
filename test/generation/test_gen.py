@@ -11,10 +11,7 @@ from unittest import mock
 
 import torch
 from botorch.acquisition import qExpectedImprovement, qKnowledgeGradient
-from botorch.exceptions.errors import (
-    CandidateGenerationError,
-    OptimizationGradientError,
-)
+from botorch.exceptions.errors import OptimizationGradientError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.generation.gen import (
@@ -387,27 +384,6 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 options={"method": "Newton-CG"},
                 lower_bounds=0,
                 upper_bounds=1,
-            )
-
-    def test_gen_candidates_scipy_infeasible_candidates(self) -> None:
-        # Check for error when infeasible candidates are generated.
-        ics = torch.rand(2, 3, 1, device=self.device)
-        with mock.patch(
-            "botorch.generation.gen.minimize_with_timeout",
-            return_value=OptimizeResult(x=ics.view(-1).cpu().numpy()),
-        ), self.assertRaisesRegex(
-            CandidateGenerationError, "infeasible candidates. 2 out of 2"
-        ):
-            gen_candidates_scipy(
-                initial_conditions=ics,
-                acquisition_function=MockAcquisitionFunction(),
-                inequality_constraints=[
-                    (  # X[..., 0] >= 2.0, which is infeasible.
-                        torch.tensor([0], device=self.device),
-                        torch.tensor([1.0], device=self.device),
-                        2.0,
-                    )
-                ],
             )
 
 

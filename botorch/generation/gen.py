@@ -20,16 +20,12 @@ import numpy as np
 import numpy.typing as npt
 import torch
 from botorch.acquisition import AcquisitionFunction
-from botorch.exceptions.errors import (
-    CandidateGenerationError,
-    OptimizationGradientError,
-)
+from botorch.exceptions.errors import OptimizationGradientError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.utils import _remove_fixed_features_from_optimization
 from botorch.logging import logger
 from botorch.optim.parameter_constraints import (
     _arrayify,
-    evaluate_feasibility,
     make_scipy_bounds,
     make_scipy_linear_constraints,
     make_scipy_nonlinear_inequality_constraints,
@@ -263,23 +259,6 @@ def gen_candidates_scipy(
         X=torch.from_numpy(res.x).to(initial_conditions).reshape(shapeX),
         fixed_features=fixed_features,
     )
-
-    # SLSQP can sometimes fail to produce a feasible candidate. Check for
-    # feasibility and error out if necessary.
-    if not (
-        is_feasible := evaluate_feasibility(
-            X=candidates,
-            inequality_constraints=inequality_constraints,
-            equality_constraints=equality_constraints,
-            nonlinear_inequality_constraints=nonlinear_inequality_constraints,
-        )
-    ).all():
-        raise CandidateGenerationError(
-            f"The {method} optimizer produced infeasible candidates. "
-            f"{(~is_feasible).sum().item()} out of {is_feasible.numel()} batches "
-            "of candidates were infeasible. Please make sure the constraints are "
-            "satisfiable and relax them if needed. "
-        )
 
     clamped_candidates = columnwise_clamp(
         X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True
