@@ -35,6 +35,7 @@ from botorch.optim.initializers import (
     gen_one_shot_kg_initial_conditions,
     TGenInitialConditions,
 )
+from botorch.optim.parameter_constraints import evaluate_feasibility
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from torch import Tensor
 
@@ -354,6 +355,15 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
         ),
     )
 
+    gen_kwargs = {}
+    for constraint_name in [
+        "inequality_constraints",
+        "equality_constraints",
+        "nonlinear_inequality_constraints",
+    ]:
+        if (constraint := getattr(opt_inputs, constraint_name)) is not None:
+            gen_kwargs[constraint_name] = constraint
+
     def _optimize_batch_candidates() -> tuple[Tensor, Tensor, list[Warning]]:
         batch_candidates_list: list[Tensor] = []
         batch_acq_values_list: list[Tensor] = []
@@ -369,15 +379,6 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
         lower_bounds = None if bounds[0].isinf().all() else bounds[0]
         upper_bounds = None if bounds[1].isinf().all() else bounds[1]
         gen_options = {k: v for k, v in options.items() if k not in INIT_OPTION_KEYS}
-
-        gen_kwargs = {}
-        for constraint_name in [
-            "inequality_constraints",
-            "equality_constraints",
-            "nonlinear_inequality_constraints",
-        ]:
-            if (constraint := getattr(opt_inputs, constraint_name)) is not None:
-                gen_kwargs[constraint_name] = constraint
 
         for i, batched_ics_ in enumerate(batched_ics):
             # optimize using random restart optimization
@@ -471,7 +472,27 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
             ]
             batch_acq_values = torch.cat(acq_values_list, dim=0)
 
+    # SLSQP can sometimes fail to produce a feasible candidate. Check for
+    # feasibility and error out if necessary.
+    is_feasible = evaluate_feasibility(
+        X=batch_candidates,
+        inequality_constraints=gen_kwargs.get("inequality_constraints"),
+        equality_constraints=gen_kwargs.get("equality_constraints"),
+        nonlinear_inequality_constraints=gen_kwargs.get(
+            "nonlinear_inequality_constraints"
+        ),
+    )
+    infeasible = ~is_feasible
+    if (opt_inputs.return_best_only and (not is_feasible.any())) or infeasible.all():
+        raise CandidateGenerationError(
+            f"The optimizer produced infeasible candidates. "
+            f"{(~is_feasible).sum().item()} out of {is_feasible.numel()} batches "
+            "of candidates were infeasible. Please make sure the constraints are "
+            "satisfiable and relax them if needed. "
+        )
     if opt_inputs.return_best_only:
+        # filter for feasible candidates
+        batch_acq_values[infeasible] = -float("inf")
         best = torch.argmax(batch_acq_values.view(-1), dim=0)
         batch_candidates = batch_candidates[best]
         batch_acq_values = batch_acq_values[best]
