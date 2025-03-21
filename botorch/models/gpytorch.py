@@ -47,7 +47,7 @@ from botorch.utils.transforms import is_ensemble
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from linear_operator.operators import BlockDiagLinearOperator, CatLinearOperator
-from torch import Tensor
+from torch import broadcast_shapes, Tensor
 
 if TYPE_CHECKING:
     from botorch.posteriors.posterior_list import PosteriorList  # pragma: no cover
@@ -858,15 +858,23 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             # get task features for training points
             train_task_features = self.train_inputs[0][..., self._task_feature]
             train_task_features = self._map_tasks(train_task_features).long()
-            noise_by_task = torch.zeros(self.num_tasks, dtype=X.dtype, device=X.device)
+            noise_by_task = torch.zeros(
+                *self.batch_shape, self.num_tasks, dtype=X.dtype, device=X.device
+            )
             for task_feature in unique_test_task_features:
                 mask = train_task_features == task_feature
-                noise_by_task[task_feature] = self.likelihood.noise[mask].mean(
-                    dim=-1, keepdim=True
-                )
+                noise_by_task[..., task_feature] = self.likelihood.noise[
+                    ..., mask
+                ].mean(dim=-1)
             # noise_shape is `broadcast(test_batch_shape, model.batch_shape) x q`
-            noise_shape = X.shape[:-1]
-            observation_noise = noise_by_task[test_task_features].expand(noise_shape)
+            noise_shape = (
+                broadcast_shapes(X.shape[:-2], self.batch_shape) + X.shape[-2:-1]
+            )
+            # Expand and gather ensures we pick correct noise dimensions for
+            # batch evaluations of batched models.
+            observation_noise = noise_by_task.expand(*noise_shape[:-1], -1).gather(
+                dim=-1, index=test_task_features.expand(noise_shape)
+            )
             return self.likelihood(
                 mvn,
                 X,
