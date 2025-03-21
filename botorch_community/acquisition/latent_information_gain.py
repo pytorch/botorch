@@ -18,7 +18,9 @@ Contributor: eibarolle
 """
 
 from __future__ import annotations
-from typing import Type, Any
+
+from typing import Any, Type
+
 import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch_community.models.np_regression import NeuralProcessModel
@@ -42,7 +44,7 @@ class LatentInformationGain(AcquisitionFunction):
 
         Args:
             model: The model class to be used, defaults to NeuralProcessModel.
-            num_samples (int): Number of samples for calculation, defaults to 10.
+            num_samples: Int showing the # of samples for calculation, defaults to 10.
             min_std: Float representing the minimum possible standardized std,
                 defaults to 0.01.
             scaler: Float scaling the std, defaults to 0.5.
@@ -74,26 +76,18 @@ class LatentInformationGain(AcquisitionFunction):
 
         if isinstance(self.model, NeuralProcessModel):
             x_c, y_c, x_t, y_t = self.model.random_split_context_target(
-                self.model.train_X[:, 0], self.model.train_Y
+                self.model.train_X,
+                self.model.train_Y,
+                self.model.n_context
             )
-            print(x_c.shape)
-            print(y_c.shape)
-            print(self.model.train_X)
-            print(self.model.train_X[:, 0])
-            print(self.model.train_Y)
-            print(self.model.train_Y[:, 0])
-            z_mu_context, z_logvar_context = self.model.data_to_z_params(x_c, y_c, xy_dim = -1)
-            print(z_mu_context)
-            print(z_logvar_context)
+            z_mu_context, z_logvar_context = self.model.data_to_z_params(x_c, y_c)
             for _ in range(self.num_samples):
                 # Taking Samples/Predictions
                 samples = self.model.sample_z(z_mu_context, z_logvar_context)
                 y_pred = self.model.decoder(candidate_x.view(-1, D), samples)
                 # Combining the data
-                combined_x = torch.cat(
-                    [x_c, candidate_x.view(-1, D)], dim=0
-                ).to(device)
-                combined_y = torch.cat([self.y_c, y_pred], dim=0).to(device)
+                combined_x = torch.cat([x_c, candidate_x.view(-1, D)], dim=0).to(device)
+                combined_y = torch.cat([y_c, y_pred], dim=0).to(device)
                 # Computing posterior variables
                 z_mu_posterior, z_logvar_posterior = self.model.data_to_z_params(
                     combined_x, combined_y
