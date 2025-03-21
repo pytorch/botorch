@@ -361,7 +361,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         """
         self._check_if_fitted()
         posterior = super().posterior(
-            X=X,
+            X=X.unsqueeze(MCMC_DIM),
             output_indices=output_indices,
             observation_noise=observation_noise,
             posterior_transform=posterior_transform,
@@ -372,14 +372,14 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
 
     def forward(self, X: Tensor) -> MultivariateNormal:
         self._check_if_fitted()
-        X = X.unsqueeze(MCMC_DIM)
-
         x_basic, task_idcs = self._split_inputs(X)
 
         mean_x = self.mean_module(x_basic)
         covar_x = self.covar_module(x_basic)
 
-        tsub_idcs = task_idcs.squeeze(-3).squeeze(-1)
+        tsub_idcs = task_idcs.squeeze(-1)
+        if tsub_idcs.ndim > 1:
+            tsub_idcs = tsub_idcs.squeeze(-2)
         latent_features = self.latent_features[:, tsub_idcs, :]
 
         if X.ndim > 3:
