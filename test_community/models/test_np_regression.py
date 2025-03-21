@@ -1,4 +1,5 @@
 import unittest
+
 import torch
 from botorch.posteriors import GPyTorchPosterior
 from botorch_community.models.np_regression import NeuralProcessModel
@@ -15,6 +16,7 @@ class TestNeuralProcessModel(unittest.TestCase):
         self.y_dim = 1
         self.r_dim = 8
         self.z_dim = 8
+        self.n_context = 20
         self.model = NeuralProcessModel(
             torch.rand(100, self.x_dim),
             torch.rand(100, self.y_dim),
@@ -25,6 +27,7 @@ class TestNeuralProcessModel(unittest.TestCase):
             self.y_dim,
             self.r_dim,
             self.z_dim,
+            self.n_context
         )
 
     def test_r_encoder(self):
@@ -71,10 +74,7 @@ class TestNeuralProcessModel(unittest.TestCase):
 
     def test_data_to_z_params(self):
         self.initialize()
-        mu, logvar = self.model.data_to_z_params(
-            self.model.train_X,
-            self.model.train_Y
-        )
+        mu, logvar = self.model.data_to_z_params(self.model.train_X, self.model.train_Y)
         self.assertEqual(mu.shape, (self.z_dim,))
         self.assertEqual(logvar.shape, (self.z_dim,))
         self.assertTrue(torch.is_tensor(mu))
@@ -88,7 +88,7 @@ class TestNeuralProcessModel(unittest.TestCase):
     def test_random_split_context_target(self):
         self.initialize()
         x_c, y_c, x_t, y_t = self.model.random_split_context_target(
-            self.model.train_X[:, 0], self.model.train_Y
+            self.model.train_X[:, 0], self.model.train_Y, self.model.n_context
         )
         self.assertEqual(x_c.shape[0], 20)
         self.assertEqual(y_c.shape[0], 20)
