@@ -10,7 +10,7 @@ class TestLatentInformationGain(unittest.TestCase):
         self.x_dim = 2
         self.y_dim = 1
         self.r_dim = 8
-        self.z_dim = 8
+        self.z_dim = 3
         self.r_hidden_dims = [16, 16]
         self.z_hidden_dims = [32, 32]
         self.decoder_hidden_dims = [16, 16]
