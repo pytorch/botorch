@@ -291,18 +291,13 @@ class NeuralProcessModel(Model):
         self.input_transform = input_transform
 
     def data_to_z_params(
-        self,
-        x: torch.Tensor,
-        y: torch.Tensor,
-        xy_dim: int = 1,
-        r_dim: int = 0,
+        self, x: torch.Tensor, y: torch.Tensor, r_dim: int = 0
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         r"""Compute latent parameters from inputs as a latent distribution.
 
         Args:
             x: Input tensor
             y: Target tensor
-            xy_dim: Combined Input Dimension as int, defaults as 1
             r_dim: Combined Target Dimension as int, defaults as 0.
 
         Returns:
@@ -314,7 +309,7 @@ class NeuralProcessModel(Model):
         """
         x = x.to(device)
         y = y.to(device)
-        xy = torch.cat([x, y], dim=xy_dim).to(device).to(device)
+        xy = torch.cat([x, y], dim=-1).to(device).to(device)
         rs = self.r_encoder(xy)
         r_agg = rs.mean(dim=r_dim).to(device)
         return self.z_encoder(r_agg)
@@ -463,14 +458,12 @@ class NeuralProcessModel(Model):
         self.z_mu_all, self.z_logvar_all = self.data_to_z_params(
             self.train_X, self.train_Y
         )
-        self.z_mu_context, self.z_logvar_context = self.data_to_z_params(
-            x_c, y_c
-        )
+        self.z_mu_context, self.z_logvar_context = self.data_to_z_params(x_c, y_c)
         x_t = self.transform_inputs(x_t)
         return self.posterior(x_t).distribution
 
     def random_split_context_target(
-        self, x: torch.Tensor, y: torch.Tensor, n_context: int, axis: int
+        self, x: torch.Tensor, y: torch.Tensor, n_context, axis: int = 0
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         r"""Helper function to split randomly into context and target.
 
@@ -478,39 +471,7 @@ class NeuralProcessModel(Model):
             x: A `batch_shape x n x d` tensor of training features.
             y: A `batch_shape x n x m` tensor of training observations.
             n_context (int): Number of context points.
-            axis: Dimension axis as int
-
-        Returns:
-            Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-                - x_c: Context input data.
-                - y_c: Context target data.
-                - x_t: Target input data.
-                - y_t: Target target data.
-        """
-        self.n_context = n_context
-        mask = torch.randperm(x.shape[axis])[:n_context]
-        x_c = torch.from_numpy(x[mask]).to(device)
-        y_c = torch.from_numpy(y[mask]).to(device)
-        splitter = torch.zeros(x.shape[axis], dtype=torch.bool)
-        splitter[mask] = True
-        x_t = torch.from_numpy(x[~splitter]).to(device)
-        y_t = torch.from_numpy(y[~splitter]).to(device)
-        return x_c, y_c, x_t, y_t
-
-    def random_split_context_target(
-        self, 
-        x: torch.Tensor, 
-        y: torch.Tensor, 
-        n_context: int = 20, 
-        axis: int = 0
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        r"""Helper function to split randomly into context and target.
-
-        Args:
-            x: A `batch_shape x n x d` tensor of training features.
-            y: A `batch_shape x n x m` tensor of training observations.
-            n_context (int): Number of context points.
-            axis: Dimension axis as int
+            axis: Dimension axis as int, defaults to 0.
 
         Returns:
             Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
