@@ -282,9 +282,11 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior, GaussianMixturePosterior)
             self.assertIsInstance(posterior, GaussianMixturePosterior)
 
-            test_X = torch.rand(*batch_shape, d, **tkwargs)
-            posterior = model.posterior(test_X)
-            self.assertIsInstance(posterior, GaussianMixturePosterior)
+            # Test with observation noise.
+            noisy_posterior = model.posterior(test_X, observation_noise=True)
+            self.assertAllClose(noisy_posterior.mean, posterior.mean)
+            self.assertTrue(torch.all(noisy_posterior.variance > posterior.variance))
+
             # Mean/variance
             expected_shape = (
                 *batch_shape[: MCMC_DIM + 2],
