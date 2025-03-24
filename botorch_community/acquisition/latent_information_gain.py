@@ -33,7 +33,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class LatentInformationGain(AcquisitionFunction):
     def __init__(
         self,
-        model: Type[Any] = NeuralProcessModel,
+        model: Type[Any],
         num_samples: int = 10,
         min_std: float = 0.01,
         scaler: float = 0.5,
