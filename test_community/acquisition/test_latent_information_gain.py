@@ -25,9 +25,7 @@ class TestLatentInformationGain(unittest.TestCase):
             r_dim=self.r_dim,
             z_dim=self.z_dim,
         )
-        self.acquisition_function = LatentInformationGain(
-            model=self.model,
-        )
+        self.acquisition_function = LatentInformationGain(self.model)
         self.candidate_x = torch.rand(5, self.x_dim)
 
     def test_initialization(self):
