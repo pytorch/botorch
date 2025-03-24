@@ -242,13 +242,16 @@ class NeuralProcessModel(Model):
         Args:
             train_X: A `batch_shape x n x d` tensor of training features.
             train_Y: A `batch_shape x n x m` tensor of training observations.
-            r_hidden_dims: Hidden Dimensions/Layer list for REncoder
-            z_hidden_dims: Hidden Dimensions/Layer list for ZEncoder
-            decoder_hidden_dims: Hidden Dimensions/Layer for Decoder
-            x_dim: Int dimensionality of input data x.
-            y_dim: Int dimensionality of target data y.
-            r_dim: Int dimensionality of representation r.
-            z_dim: Int dimensionality of latent variable z.
+            r_hidden_dims: Hidden Dimensions/Layer list for REncoder, defaults to
+                [16, 16]
+            z_hidden_dims: Hidden Dimensions/Layer list for ZEncoder, defaults to
+                [32, 32]
+            decoder_hidden_dims: Hidden Dimensions/Layer for Decoder, defaults to
+                [16, 16]
+            x_dim: Int dimensionality of input data x, defaults to 2.
+            y_dim: Int dimensionality of target data y, defaults to 1.
+            r_dim: Int dimensionality of representation r, defaults to 64.
+            z_dim: Int dimensionality of latent variable z, defaults to 8.
             n_context (int): Number of context points, defaults to 20.
             activation: Activation function applied between layers, defaults to nn.
             Sigmoid.
