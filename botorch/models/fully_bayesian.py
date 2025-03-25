@@ -629,11 +629,20 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
         return aug_batch_shape
 
     def train(
-        self: TFullyBayesianSingleTaskGP, mode: bool = True
+        self: TFullyBayesianSingleTaskGP, mode: bool = True, reset: bool = True
     ) -> TFullyBayesianSingleTaskGP:
-        r"""Puts the model in `train` mode."""
+        r"""Puts the model in `train` mode.
+
+        Args:
+            mode: A boolean indicating whether to put the model in training mode.
+            reset: A boolean indicating whether to reset the model to its initial
+                state if mode is True. If `mode` is False, this argument is ignored.
+
+        Returns:
+            The model itself.
+        """
         super().train(mode=mode)
-        if mode:
+        if mode and reset:
             self.mean_module = None
             self.covar_module = None
             self.likelihood = None
