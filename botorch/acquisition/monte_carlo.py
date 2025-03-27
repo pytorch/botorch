@@ -27,7 +27,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from copy import deepcopy
 from functools import partial
-from typing import Protocol
+from typing import List, Protocol
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
@@ -189,7 +189,7 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
         q_reduction: SampleReductionProtocol = torch.amax,
         constraints: list[Callable[[Tensor], Tensor]] | None = None,
         eta: Tensor | float = 1e-3,
-        fat: bool = False,
+        fat: List[bool | None] | bool = False,
     ):
         r"""Constructor of SampleReducingMCAcquisitionFunction.
 
@@ -228,7 +228,9 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
                 approximation to the constraint indicators. For more details, on this
                 parameter, see the docs of `compute_smoothed_feasibility_indicator`.
             fat: Wether to apply a fat-tailed smooth approximation to the feasibility
-                indicator or the canonical sigmoid approximation.
+                indicator or the canonical sigmoid approximation. For more details,
+                on this parameter, see the docs of
+                `compute_smoothed_feasibility_indicator`.
         """
         if constraints is not None and isinstance(objective, ConstrainedMCObjective):
             raise ValueError(
