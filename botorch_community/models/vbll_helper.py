@@ -32,26 +32,6 @@ def sym(M):
     return (M + tp(M)) / 2.0
 
 
-# def cholesky_inverse(u: torch.Tensor, upper: bool = False) -> torch.Tensor:
-#     """Alternative to `torch.cholesky_inverse()`, with support for batch dimensions.
-
-#     Relevant issue tracker: https://github.com/pytorch/pytorch/issues/7500
-
-#     Args:
-#         u: Triangular Cholesky factor. Shape should be `(*, N, N)`.
-#         upper (bool, optional): Whether to consider the Cholesky factor as a lower or
-#             upper triangular matrix.
-
-#     Returns:
-#         torch.Tensor:
-#     """
-#     if u.dim() == 2 and not u.requires_grad:
-#         return torch.cholesky_inverse(u, upper=upper)
-#     return torch.cholesky_solve(
-#         torch.eye(u.size(-1), dtype=torch.float64).expand(u.size()), u, upper=upper
-#     )
-
-
 class Normal(torch.distributions.Normal):
     def __init__(self, loc: Tensor, chol: Tensor):
         """Normal distribution.

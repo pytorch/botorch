@@ -26,10 +26,10 @@ class BLLPosterior(Posterior):
         """A posterior for Bayesian last layer models.
 
         Args:
-            posterior (GPyTorchPosterior): _description_
-            model (AbstractBLLModel): _description_
-            X (Tensor): _description_
-            output_dim (int): _description_
+            posterior: A posterior object.
+            model: A BLL model
+            X: Input data on which the posterior was computed.
+            output_dim: Output dimension of the model.
         """
         super().__init__()
         self.posterior = posterior
