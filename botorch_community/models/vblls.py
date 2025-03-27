@@ -19,15 +19,13 @@ Contributor: brunzema
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-
 import torch
 import torch.nn as nn
 
 from botorch.logging import logger
-from botorch.models.model import Model
 from botorch.posteriors import Posterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch_community.models.blls import AbstractBLLModel
 
 from botorch_community.models.vbll_helper import DenseNormal, Normal, Regression
 from botorch_community.posteriors.bll_posterior import BLLPosterior
@@ -223,28 +221,42 @@ def _get_optimizer(
     return optimizer_class(model_parameters, lr=lr, **kwargs)
 
 
-class AbstractBLLModel(Model, ABC):
-    def __init__(self):
-        """Abstract class for Bayesian Last Layer (BLL) models."""
+class VBLLModel(AbstractBLLModel):
+    def __init__(self, *args, **kwargs):
+        """BoTorch compatible VBLL model."""
         super().__init__()
-        self.model = None
-        self.old_model = None  # Used for continual learning
-
-    @property
-    def num_outputs(self) -> int:
-        return self.model.num_outputs
-
-    @property
-    def num_inputs(self):
-        return self.model.num_inputs
-
-    @property
-    def device(self):
-        return self.model.device
+        self.model = VBLLNetwork(*args, **kwargs)
 
     @property
     def backbone(self):
         return self.model.backbone
+
+    def sample(self, sample_shape: torch.Size | None = None) -> nn.Module:
+        """Create posterior sample networks of the VBLL model. Note that posterior
+        samples, we first sample from the posterior distribution of the last layer and
+        then create a generalized linear model to get the posterior samples.
+
+        Args:
+            sample_shape: Number of samples to draw from the posterior distribution.
+                If None, a single sample is drawn. Defaults to None.
+
+        Returns:
+            A module that takes an input tensor `x` of shape (batch_size, num_inputs)
+            and returns an output of shape ((sample_shape), batch_size, num_outputs).
+        """
+        return self.model.sample_posterior_function(sample_shape)
+
+    def __call__(self, X: Tensor) -> Normal | DenseNormal:
+        """Forward pass through the VBLL model.
+
+        Args:
+            X: Input with dimensions (batch_size, num_inputs).
+
+        Returns:
+            Normal distribution with (batch_size, num_outputs) as the mean and
+            (batch_size, num_outputs) as variance.
+        """
+        return self.model(X).predictive
 
     def fit(
         self,
@@ -396,10 +408,6 @@ class AbstractBLLModel(Model, ABC):
     def set_reg_weight(self, new_weight: float):
         self.model.head.regularization_weight = new_weight
 
-    @abstractmethod
-    def __call__(self, X: Tensor) -> Normal | DenseNormal:
-        raise NotImplementedError
-
     def posterior(
         self,
         X: Tensor,
@@ -446,44 +454,6 @@ class AbstractBLLModel(Model, ABC):
         return BLLPosterior(
             posterior=post_pred, model=self, X=X, output_dim=self.num_outputs
         )
-
-    @abstractmethod
-    def sample(self, sample_shape: torch.Size | None = None) -> nn.Module:
-        raise NotImplementedError
-
-
-class VBLLModel(AbstractBLLModel):
-    def __init__(self, *args, **kwargs):
-        """BoTorch compatible VBLL model."""
-        super().__init__()
-        self.model = VBLLNetwork(*args, **kwargs)
-
-    def sample(self, sample_shape: torch.Size | None = None) -> nn.Module:
-        """Create posterior sample networks of the VBLL model. Note that posterior
-        samples, we first sample from the posterior distribution of the last layer and
-        then create a generalized linear model to get the posterior samples.
-
-        Args:
-            sample_shape: Number of samples to draw from the posterior distribution.
-                If None, a single sample is drawn. Defaults to None.
-
-        Returns:
-            A module that takes an input tensor `x` of shape (batch_size, num_inputs)
-            and returns an output of shape ((sample_shape), batch_size, num_outputs).
-        """
-        return self.model.sample_posterior_function(sample_shape)
-
-    def __call__(self, X: Tensor) -> Normal | DenseNormal:
-        """Forward pass through the VBLL model.
-
-        Args:
-            X: Input with dimensions (batch_size, num_inputs).
-
-        Returns:
-            Normal distribution with (batch_size, num_outputs) as the mean and
-            (batch_size, num_outputs) as variance.
-        """
-        return self.model(X).predictive
 
     def __str__(self) -> str:
         return self.model.__str__()

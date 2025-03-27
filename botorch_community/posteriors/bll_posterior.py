@@ -7,13 +7,10 @@ from __future__ import annotations
 
 import math
 
-from typing import TYPE_CHECKING
-
 import torch
 from botorch.posteriors import GPyTorchPosterior, Posterior
 
-if TYPE_CHECKING:
-    from botorch_community.models.vblls import AbstractBLLModel
+from botorch_community.models.blls import AbstractBLLModel
 
 from torch import Tensor
 
@@ -22,7 +19,7 @@ class BLLPosterior(Posterior):
     def __init__(
         self,
         posterior: GPyTorchPosterior,
-        model: "AbstractBLLModel",
+        model: AbstractBLLModel,
         X: Tensor,
         output_dim: int,
     ):

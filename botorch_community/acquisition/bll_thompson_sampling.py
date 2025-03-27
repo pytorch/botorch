@@ -78,12 +78,10 @@ class BLLMaxPosteriorSampling:
         self, X_cand: torch.Tensor = None, num_samples: int = 1
     ) -> torch.Tensor:
         if self.discrete_inputs and X_cand is None:
-            raise ValueError("X_cand must be provided if `discrete` is True.")
+            raise ValueError("X_cand must be provided if `discrete_inputs` is True.")
 
         if X_cand is not None and not self.discrete_inputs:
-            logger.warning(
-                "X_cand provided but self.discrete_inputs is False. Ignoring X_cand."
-            )
+            raise ValueError("X_cand is provided but `discrete_inputs` is False.")
 
         X_next = torch.empty(
             num_samples, self.model.num_inputs, dtype=torch.float64, device=self.device
@@ -93,9 +91,10 @@ class BLLMaxPosteriorSampling:
         for i in range(num_samples):
             f = self.model.sample()
 
-            # NOTE: If self.discrete_inputs is False, we will always numerically
-            # optimize the sample path for X_next. X_cand is ignored in this case.
-            if not self.discrete_inputs:
+            if self.discrete_inputs:
+                # evaluate sample path at candidate points and select best
+                Y_cand = f(X_cand)
+            else:
                 # optimize sample path
                 X_cand, Y_cand = _optimize_sample_path(
                     f=f,
@@ -105,9 +104,6 @@ class BLLMaxPosteriorSampling:
                     ub=self.ub,
                     device=self.device,
                 )
-            else:
-                # evaluate sample path at candidate points and select best
-                Y_cand = f(X_cand)
 
             # select the best candidate
             X_next[i, :] = X_cand[Y_cand.argmax()]
