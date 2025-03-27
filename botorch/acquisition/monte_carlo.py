@@ -27,7 +27,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from copy import deepcopy
 from functools import partial
-from typing import Protocol
+from typing import List, Protocol
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
@@ -47,10 +47,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import legacy_ei_numerics_warning
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
-from botorch.utils.objective import (
-    compute_probabilities_of_feasibility_indicator,
-    compute_smoothed_feasibility_indicator,
-)
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from botorch.utils.transforms import (
     concatenate_pending_points,
     match_batch_shape,
@@ -191,9 +188,8 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
         sample_reduction: SampleReductionProtocol = torch.mean,
         q_reduction: SampleReductionProtocol = torch.amax,
         constraints: list[Callable[[Tensor], Tensor]] | None = None,
-        probabilities_of_feasibility: list[Callable[[Tensor], Tensor]] | None = None,
         eta: Tensor | float = 1e-3,
-        fat: bool = False,
+        fat: List[bool | None] | bool = False,
     ):
         r"""Constructor of SampleReducingMCAcquisitionFunction.
 
@@ -232,7 +228,9 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
                 approximation to the constraint indicators. For more details, on this
                 parameter, see the docs of `compute_smoothed_feasibility_indicator`.
             fat: Wether to apply a fat-tailed smooth approximation to the feasibility
-                indicator or the canonical sigmoid approximation.
+                indicator or the canonical sigmoid approximation. For more details,
+                on this parameter, see the docs of
+                `compute_smoothed_feasibility_indicator`.
         """
         if constraints is not None and isinstance(objective, ConstrainedMCObjective):
             raise ValueError(
@@ -252,7 +250,6 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
         self._sample_reduction = partial(sample_reduction, dim=sample_dim)
         self._q_reduction = partial(q_reduction, dim=-1)
         self._constraints = constraints
-        self._probabilities_of_feasibility = probabilities_of_feasibility
         self._eta = eta
         self._fat = fat
 
@@ -331,18 +328,6 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
                 eta=self._eta,
                 log=self._log,
                 fat=self._fat,
-            )
-            acqval = acqval.add(ind) if self._log else acqval.mul(ind)
-        if self._probabilities_of_feasibility is not None:
-            if not self._log and (acqval < 0).any():
-                raise ValueError(
-                    "Constraint-weighting requires unconstrained "
-                    "acquisition values to be non-negative."
-                )
-            ind = compute_probabilities_of_feasibility_indicator(
-                probabilities_of_feasibility=self._probabilities_of_feasibility,
-                samples=samples,
-                log=self._log,
             )
             acqval = acqval.add(ind) if self._log else acqval.mul(ind)
         return acqval
