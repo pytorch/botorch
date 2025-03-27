@@ -110,7 +110,8 @@ class TestVBLLModel(BotorchTestCase):
                         break
                 self.assertTrue(
                     changed,
-                    "Expected at least one parameter to change, but all remained the same with freeze_backbone=False",
+                    "Expected at least one parameter to change, but all remained the"
+                    f"same with {freeze_backbone=}",
                 )
 
     def test_update_of_reg_weight(self) -> None:
@@ -137,7 +138,8 @@ class TestVBLLModel(BotorchTestCase):
         self.assertEqual(
             model.model.head.regularization_weight,
             kl_scale / len(y),
-            f"Regularization weight should be {kl_scale}/{len(y)}, but got {model.model.head.regularization_weight}.",
+            f"Regularization weight should be {kl_scale}/{len(y)}, but got"
+            f"{model.model.head.regularization_weight}.",
         )
 
     def test_shape_of_sampling(self) -> None:
@@ -161,7 +163,8 @@ class TestVBLLModel(BotorchTestCase):
                 self.assertEqual(
                     y_hat.shape,
                     expected_shape,
-                    f"Expected samples to have shape {expected_shape}, but got {y_hat.shape}.",
+                    f"Expected samples to have shape {expected_shape},"
+                    f"but got {y_hat.shape}.",
                 )
 
     def test_shape_of_forward(self) -> None:
@@ -184,12 +187,14 @@ class TestVBLLModel(BotorchTestCase):
             self.assertEqual(
                 y_hat.shape,
                 expected_shape,
-                f"Expected forward pass to have shape {expected_shape}, but got {y_hat.shape}.",
+                f"Expected forward pass to have shape {expected_shape},"
+                f"but got {y_hat.shape}.",
             )
             self.assertEqual(
                 y_var.shape,
                 expected_shape,
-                f"Expected forward pass to have shape {expected_shape}, but got {y_var.shape}.",
+                f"Expected forward pass to have shape {expected_shape},"
+                f"but got {y_var.shape}.",
             )
 
     def test_shape_of_predictions(self) -> None:
@@ -219,12 +224,14 @@ class TestVBLLModel(BotorchTestCase):
             self.assertEqual(
                 post.mean.shape,
                 expected_shape,
-                f"Expected mean predictions to have shape {expected_shape}, but got {post.mean.shape}.",
+                f"Expected mean predictions to have shape {expected_shape},"
+                f"but got {post.mean.shape}.",
             )
 
             # variance prediction
             self.assertEqual(
                 post.variance.shape,
                 expected_shape,
-                f"Expected variance predictions to have shape {expected_shape}, but got {post.mean.shape}.",
+                f"Expected variance predictions to have shape {expected_shape},"
+                f"but got {post.mean.shape}.",
             )

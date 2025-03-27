@@ -3,17 +3,19 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import math
-
-import torch
-from torch import Tensor
-
-from botorch.posteriors import Posterior, GPyTorchPosterior
 
 from typing import TYPE_CHECKING
 
+import torch
+from botorch.posteriors import GPyTorchPosterior, Posterior
+
 if TYPE_CHECKING:
     from botorch_community.models.vblls import AbstractBLLModel
+
+from torch import Tensor
 
 
 class BLLPosterior(Posterior):
@@ -24,6 +26,14 @@ class BLLPosterior(Posterior):
         X: Tensor,
         output_dim: int,
     ):
+        """A posterior for Bayesian last layer models.
+
+        Args:
+            posterior (GPyTorchPosterior): _description_
+            model (AbstractBLLModel): _description_
+            X (Tensor): _description_
+            output_dim (int): _description_
+        """
         super().__init__()
         self.posterior = posterior
         self.model = model

@@ -3,60 +3,71 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import numpy as np
+from __future__ import annotations
 
+import numpy as np
 import scipy
 
 import torch
-from torch.func import grad
 
 from botorch.logging import logger
+
 from botorch_community.models.vblls import AbstractBLLModel
+from torch.func import grad
 
 
 class BLLMaxPosteriorSampling:
     def __init__(
         self,
-        model: AbstractBLLModel,
+        model: "AbstractBLLModel",
         num_restarts: int = 10,
         bounds: torch.Tensor | None = None,
-        discrete: bool = False,
+        discrete_inputs: bool = False,
     ):
         """
         Implements Maximum Posterior Sampling for Bayesian Linear Last (VBLL) models.
 
-        This class provides functionality to sample from the posterior distribution of a BLL model,
-        with optional optimization to refine the sampling process.
+        This class provides functionality to sample from the posterior distribution of a
+        BLL model, with optional optimization to refine the sampling process.
 
         Args:
-            model: The VBLL model from which posterior samples are drawn. Must be an instance of `AbstractBLLModel`.
-            num_restarts: Number of restarts for optimization-based sampling. Defaults to 10.
-            bounds: Tensor of shape (2, num_inputs) specifying the lower and upper bounds for sampling.
-                If None, defaults to [(0, 1)] for each input dimension.
-            discrete: If True, assumes the input space is discrete and will be provided in __call__. Defaults to False.
+            model: The VBLL model from which posterior samples are drawn. Must be an
+                instance of `AbstractBLLModel`.
+            num_restarts: Number of restarts for optimization-based sampling.
+                Defaults to 10.
+            bounds: Tensor of shape (2, num_inputs) specifying the lower and upper
+                bounds for sampling. If None, defaults to [(0, 1)] for each input
+                dimension.
+            discrete_inputs: If True, assumes the input space is discrete and will be
+                provided in __call__. Defaults to False.
 
         Raises:
             ValueError:
                 If the provided `model` is not an instance of `AbstractBLLModel`.
 
         Notes:
-            - If `bounds` is not provided, the default range [0,1] is assumed for each input dimension.
-            - The lower (`lb`) and upper (`ub`) bounds are stored as CPU tensors for compatibility
-            with initial condition generation and `scipy.optimize.minimize`.
+            - If `bounds` is not provided, the default range [0,1] is assumed for each
+            input dimension.
         """
         if not isinstance(model, AbstractBLLModel):
-            raise ValueError("Model must be an instance of AbstractBLLModel")
+            raise ValueError(
+                f"Model must be an instance of AbstractBLLModel, is {type(model)}"
+            )
 
         self.model = model
         self.device = model.device
-        self.discrete = discrete
+        self.discrete_inputs = discrete_inputs
         self.num_restarts = num_restarts
 
         if bounds is None:
             # Default bounds [0,1] for each input dimension
             self.bounds = [(0, 1)] * self.model.num_inputs
-            self.lb = torch.zeros(self.model.num_inputs, dtype=torch.float64).cpu()
-            self.ub = torch.ones(self.model.num_inputs, dtype=torch.float64).cpu()
+            self.lb = torch.zeros(
+                self.model.num_inputs, dtype=torch.float64, device=torch.device("cpu")
+            )
+            self.ub = torch.ones(
+                self.model.num_inputs, dtype=torch.float64, device=torch.device("cpu")
+            )
         else:
             # Ensure bounds are on CPU for compatibility with scipy.optimize.minimize
             self.lb = bounds[0, :].cpu()
@@ -66,12 +77,12 @@ class BLLMaxPosteriorSampling:
     def __call__(
         self, X_cand: torch.Tensor = None, num_samples: int = 1
     ) -> torch.Tensor:
-        if self.discrete and X_cand is None:
+        if self.discrete_inputs and X_cand is None:
             raise ValueError("X_cand must be provided if `discrete` is True.")
 
-        if X_cand is not None and not self.discrete:
+        if X_cand is not None and not self.discrete_inputs:
             logger.warning(
-                "X_cand provided but self.discrete is False. Ignoring X_cand."
+                "X_cand provided but self.discrete_inputs is False. Ignoring X_cand."
             )
 
         X_next = torch.empty(
@@ -82,12 +93,17 @@ class BLLMaxPosteriorSampling:
         for i in range(num_samples):
             f = self.model.sample()
 
-            # NOTE: If self.discrete is False, we will always numerically optimize the sample
-            # path for X_next. X_cand is ignored in this case.
-            if not self.discrete:
+            # NOTE: If self.discrete_inputs is False, we will always numerically
+            # optimize the sample path for X_next. X_cand is ignored in this case.
+            if not self.discrete_inputs:
                 # optimize sample path
                 X_cand, Y_cand = _optimize_sample_path(
-                    f, self.num_restarts, self.bounds, self.lb, self.ub, self.device
+                    f=f,
+                    num_restarts=self.num_restarts,
+                    bounds=self.bounds,
+                    lb=self.lb,
+                    ub=self.ub,
+                    device=self.device,
                 )
             else:
                 # evaluate sample path at candidate points and select best
@@ -115,7 +131,8 @@ def _optimize_sample_path(
     Args:
         f: The sample to optimize.
         num_restarts: Number of restarts for optimization-based sampling.
-        bounds: List of tuples specifying the lower and upper bounds for each input dimension.
+        bounds: List of tuples specifying the lower and upper bounds for each input
+            dimension.
         lb: Lower bounds for each input dimension.
         ub: Upper bounds for each input dimension.
         device: Device on which to store the candidate points.
@@ -138,10 +155,12 @@ def _optimize_sample_path(
     def grad_func(x):
         return -grad_f(torch.from_numpy(x).to(device)).detach().cpu().numpy()
 
+    # generate random initial conditions
+    x0s = np.random.rand(num_restarts, f.num_inputs)
+
     for j in range(num_restarts):
-        # generate initial condition from within the bounds
-        x0 = np.random.rand(f.num_inputs)
-        x0 = lb + (ub - lb) * x0
+        # map to bounds
+        x0 = lb + (ub - lb) * x0s[j]
 
         # optimize sample path
         res = scipy.optimize.minimize(

@@ -5,8 +5,8 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-This file contains an implemenation of a Variational Bayesian Last Layer (VBLL) model that can be used within BoTorch
-for Bayesian optimization.
+This file contains an implemenation of a Variational Bayesian Last Layer (VBLL) model
+that can be used within BoTorch for Bayesian optimization.
 
 References:
 
@@ -17,23 +17,25 @@ References:
 Contributor: brunzema
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 
 import torch
 import torch.nn as nn
+
+from botorch.logging import logger
+from botorch.models.model import Model
+from botorch.posteriors import Posterior
+from botorch.posteriors.gpytorch import GPyTorchPosterior
+
+from botorch_community.models.vbll_helper import DenseNormal, Normal, Regression
+from botorch_community.posteriors.bll_posterior import BLLPosterior
+
+from gpytorch.distributions import MultivariateNormal
 from torch import Tensor
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-
-from gpytorch.distributions import MultivariateNormal
-
-from botorch.logging import logger
-from botorch.posteriors import Posterior
-from botorch.models.model import Model
-from botorch.posteriors.gpytorch import GPyTorchPosterior
-
-from botorch_community.posteriors.bll_posterior import BLLPosterior
-from botorch_community.models.vbll_helper import Regression, DenseNormal, Normal
 
 
 class SampleModel(nn.Module):
@@ -43,8 +45,16 @@ class SampleModel(nn.Module):
         sampled_params: Tensor,
         num_inputs: int,
         num_outputs: int,
-        sample_shape: torch.Size | None = None,
     ):
+        """Network for posterior samples of BLL models.
+
+        Args:
+            backbone: Backbone of the original model BLL model
+            sampled_params: Sampled parameters from the posterior distribution
+                of the last layer.
+            num_inputs: Number of inputs to the backbone.
+            num_outputs: Number of outputs
+        """
         super().__init__()
         self.backbone = backbone
         self.sampled_params = sampled_params
@@ -92,18 +102,24 @@ class VBLLNetwork(nn.Module):
             hidden_features: Number of hidden units per layer. Defaults to 50.
             out_features: Number of output features. Defaults to 1.
             num_layers: Number of hidden layers in the MLP. Defaults to 3.
-            parameterization: Parameterization of the posterior covariance of the last layer. Currently supports {'dense', 'diagonal', 'lowrank', 'dense_precision'}.
-            prior_scale: Scaling factor for the prior distribution in the Bayesian last layer. Defaults to 1.0.
-            wishart_scale: Scaling factor for the Wishart prior in the Bayesian last layer. Defaults to 0.01.
-            kl_scale: Weighting factor for the Kullback-Leibler (KL) divergence term in the loss. Defaults to 1.0.
-            backbone: A predefined feature extractor to be used before the MLP layers. If None,
-                a default MLP structure is used. Defaults to None.
-            activation: Activation function applied between hidden layers. Defaults to `nn.ELU()`.
-            device: The device on which the model is stored. If None, the device is inferred based on availability.
-                Defaults to None.
+            parameterization: Parameterization of the posterior covariance of the last
+                layer. Supports {'dense', 'diagonal', 'lowrank', 'dense_precision'}.
+            prior_scale: Scaling factor for the prior distribution in the Bayesian last
+                layer. Defaults to 1.0.
+            wishart_scale: Scaling factor for the Wishart prior in the Bayesian last
+                layer. Defaults to 0.01.
+            kl_scale: Weighting factor for the Kullback-Leibler (KL) divergence term in
+                the loss. Defaults to 1.0.
+            backbone: A predefined feature extractor to be used before the MLP layers.
+                If None, a default MLP structure is used. Defaults to None.
+            activation: Activation function applied between hidden layers.
+                Defaults to `nn.ELU()`.
+            device: The device on which the model is stored. If None, the device is
+                inferred based on availability. Defaults to None.
 
         Notes:
-            - If a `backbone` module is provided, it is applied before the variational last layer. If not, we use a default MLP structure.
+            - If a `backbone` module is provided, it is applied before the variational
+            last layer. If not, we use a default MLP structure.
         """
         super().__init__()
         self.num_inputs = in_features
@@ -137,7 +153,7 @@ class VBLLNetwork(nn.Module):
         self.head = Regression(
             hidden_features,
             out_features,
-            regularization_weight=1.0,  # will be adjusted dynamically at each iteration based on the number of data points
+            regularization_weight=1.0,  # will be adjusted dynamically
             prior_scale=prior_scale,
             wishart_scale=wishart_scale,
             parameterization=parameterization,
@@ -159,11 +175,12 @@ class VBLLNetwork(nn.Module):
         self, sample_shape: torch.Size | None = None
     ) -> nn.Module:
         """
-        Samples a posterior function by drawing parameters from the model's learned distribution.
+        Samples a posterior function by drawing parameters from the model's learned
+        distribution.
 
         Args:
-            sample_shape: The desired shape for the sampled parameters. If None, a single sample is drawn.
-                Defaults to None.
+            sample_shape: The desired shape for the sampled parameters. If None, a
+                single sample is drawn. Defaults to None.
 
         Returns:
             A nn.Module that takes an input tensor `x` and returns the corresponding
@@ -171,9 +188,9 @@ class VBLLNetwork(nn.Module):
             and computes the final output using the sampled parameters.
 
         Notes:
-            - If `sample_shape` is None, a single set of parameters is sampled.
-            - If `sample_shape` is provided, multiple parameter samples are drawn, and the function
-              will return a batched output where the first dimension corresponds to different samples.
+            - If `sample_shape` is provided, multiple samples are drawn, and the
+            function will return a batched output where the first dimension corresponds
+            to different samples.
         """
         sample_shape = sample_shape or torch.Size()
         sampled_params = self.head.W().rsample(sample_shape).to(self.device)
@@ -182,7 +199,6 @@ class VBLLNetwork(nn.Module):
             sampled_params=sampled_params,
             num_inputs=self.num_inputs,
             num_outputs=self.num_outputs,
-            sample_shape=sample_shape,
         )
 
 
@@ -209,6 +225,7 @@ def _get_optimizer(
 
 class AbstractBLLModel(Model, ABC):
     def __init__(self):
+        """Abstract class for Bayesian Last Layer (BLL) models."""
         super().__init__()
         self.model = None
         self.old_model = None  # Used for continual learning
@@ -237,25 +254,32 @@ class AbstractBLLModel(Model, ABC):
         initialization_params: dict | None = None,
     ):
         """
-        Fits the model to the given training data. Note that for continual learning, we assume that the last point in the training data is the new point.
+        Fits the model to the given training data. Note that for continual learning, we
+        assume that the last point in the training data is the new point.
 
         Args:
-            train_X: The input training data, expected to be a PyTorch tensor of shape (num_samples, num_features).
+            train_X: The input training data, expected to be a PyTorch tensor of shape
+                (num_samples, num_features).
 
-            train_y: The target values for training, expected to be a PyTorch tensor of shape (num_samples, num_outputs).
+            train_y: The target values for training, expected to be a PyTorch tensor of
+                shape (num_samples, num_outputs).
 
-            optimization_settings: A dictionary containing optimization-related settings. If a key is missing, default values will be used.
-                Available settings:
-                    - "num_epochs" (int, default=100): The maximum number of training epochs.
-                    - "patience" (int, default=10): Number of epochs to wait before early stopping.
-                    - "freeze_backbone" (bool, default=False): If True, the backbone of the model is frozen.
+            optimization_settings: A dict containing optimization-related settings.
+                If a key is missing, default values will be used. Available settings:
+                    - "num_epochs" (int, default=100): The maximum number of epochs.
+                    - "patience" (int, default=10): Epochs before early stopping.
+                    - "freeze_backbone" (bool, default=False): If True, the backbone of
+                    the model is frozen.
                     - "batch_size" (int, default=32): Batch size for the training.
-                    - "optimizer" (torch.optim.Optimizer, default=torch.optim.AdamW): Optimizer for training.
-                    - "wd" (float, default=1e-4): Weight decay (L2 regularization) coefficient.
+                    - "optimizer" (torch.optim.Optimizer, default=torch.optim.AdamW):
+                    Optimizer for training.
+                    - "wd" (float, default=1e-4): Weight decay (L2 regularization)
+                    coefficient.
                     - "clip_val" (float, default=1.0): Gradient clipping threshold.
 
-            initialization_params: A dictionary containing the initial parameters of the model for feature reuse.
-                If None, the optimization will start from from the random initialization in the __init__ method.
+            initialization_params: A dictionary containing the initial parameters of the
+                model for feature reuse. If None, the optimization will start from from
+                the random initialization in the __init__ method.
 
         Returns:
             The function trains the model in place and does not return a value.
@@ -271,7 +295,7 @@ class AbstractBLLModel(Model, ABC):
             "lr": 1e-3,
             "wd": 1e-4,
             "clip_val": 1.0,
-            "optimizer_kwargs": {},  # Extra optimizer-specific args (e.g., betas for Adam)
+            "optimizer_kwargs": {},  # Optimizer-specific args (e.g., betas for Adam)
         }
 
         # Merge defaults with provided settings
@@ -430,19 +454,22 @@ class AbstractBLLModel(Model, ABC):
 
 class VBLLModel(AbstractBLLModel):
     def __init__(self, *args, **kwargs):
+        """BoTorch compatible VBLL model."""
         super().__init__()
         self.model = VBLLNetwork(*args, **kwargs)
 
     def sample(self, sample_shape: torch.Size | None = None) -> nn.Module:
-        """Create posterior sample networks of the VBLL model. Note that posterior samples, we first sample from
-        the posterior distribution of the last layer and then create a generalized linear model to get the posterior samples.
+        """Create posterior sample networks of the VBLL model. Note that posterior
+        samples, we first sample from the posterior distribution of the last layer and
+        then create a generalized linear model to get the posterior samples.
 
         Args:
-            sample_shape: Number of samples to draw from the posterior distribution. If None, a single sample is drawn.
-                Defaults to None.
+            sample_shape: Number of samples to draw from the posterior distribution.
+                If None, a single sample is drawn. Defaults to None.
 
         Returns:
-            A module that takes an input tensor `x` of shape (batch_size, num_inputs) and returns an output of shape ((sample_shape), batch_size, num_outputs).
+            A module that takes an input tensor `x` of shape (batch_size, num_inputs)
+            and returns an output of shape ((sample_shape), batch_size, num_outputs).
         """
         return self.model.sample_posterior_function(sample_shape)
 
@@ -453,7 +480,8 @@ class VBLLModel(AbstractBLLModel):
             X: Input with dimensions (batch_size, num_inputs).
 
         Returns:
-            Normal distribution with (batch_size, num_outputs) as the mean and (batch_size, num_outputs) as variance.
+            Normal distribution with (batch_size, num_outputs) as the mean and
+            (batch_size, num_outputs) as variance.
         """
         return self.model(X).predictive
 

@@ -5,26 +5,23 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-The following code is from the repository vbll (https://github.com/VectorInstitute/vbll) which is under the MIT license
-The code is from the paper "Variational Bayesian Last Layers" by Harrison et al., ICLR 2024
+The following code is from the repository vbll (https://github.com/VectorInstitute/vbll)
+which is under the MIT license.
+Paper: "Variational Bayesian Last Layers" by Harrison et al., ICLR 2024
 """
 
-from typing import Callable
+from __future__ import annotations
+
 from dataclasses import dataclass
-import warnings
+from typing import Callable
 
 import numpy as np
 
 import torch
 import torch.nn as nn
 
-
-# following functions/classes are from https://github.com/VectorInstitute/vbll/blob/main/vbll/utils/distributions.py
-def get_parameterization(p):
-    if p in cov_param_dict:
-        return cov_param_dict[p]
-    else:
-        raise ValueError("Must specify a valid covariance parameterization.")
+from botorch.logging import logger
+from torch import Tensor
 
 
 def tp(M):
@@ -35,30 +32,35 @@ def sym(M):
     return (M + tp(M)) / 2.0
 
 
-# Credit to https://github.com/brentyi/fannypack/blob/2888aa5d969824ac1e1a528264674ece3f4703f9/fannypack/utils/_math.py
-def cholesky_inverse(u: torch.Tensor, upper: bool = False) -> torch.Tensor:
-    """Alternative to `torch.cholesky_inverse()`, with support for batch dimensions.
+# def cholesky_inverse(u: torch.Tensor, upper: bool = False) -> torch.Tensor:
+#     """Alternative to `torch.cholesky_inverse()`, with support for batch dimensions.
 
-    Relevant issue tracker: https://github.com/pytorch/pytorch/issues/7500
+#     Relevant issue tracker: https://github.com/pytorch/pytorch/issues/7500
 
-    Args:
-        u: Triangular Cholesky factor. Shape should be `(*, N, N)`.
-        upper (bool, optional): Whether to consider the Cholesky factor as a lower or
-            upper triangular matrix.
+#     Args:
+#         u: Triangular Cholesky factor. Shape should be `(*, N, N)`.
+#         upper (bool, optional): Whether to consider the Cholesky factor as a lower or
+#             upper triangular matrix.
 
-    Returns:
-        torch.Tensor:
-    """
-    if u.dim() == 2 and not u.requires_grad:
-        return torch.cholesky_inverse(u, upper=upper)
-    return torch.cholesky_solve(
-        torch.eye(u.size(-1), dtype=torch.float64).expand(u.size()), u, upper=upper
-    )
+#     Returns:
+#         torch.Tensor:
+#     """
+#     if u.dim() == 2 and not u.requires_grad:
+#         return torch.cholesky_inverse(u, upper=upper)
+#     return torch.cholesky_solve(
+#         torch.eye(u.size(-1), dtype=torch.float64).expand(u.size()), u, upper=upper
+#     )
 
 
 class Normal(torch.distributions.Normal):
-    def __init__(self, loc, chol):
-        super(Normal, self).__init__(loc, chol)
+    def __init__(self, loc: Tensor, chol: Tensor):
+        """Normal distribution.
+
+        Args:
+            loc (_type_): _description_
+            chol (_type_): _description_
+        """
+        super().__init__(loc, chol)
 
     @property
     def mean(self):
@@ -136,8 +138,14 @@ class Normal(torch.distributions.Normal):
 
 
 class DenseNormal(torch.distributions.MultivariateNormal):
-    def __init__(self, loc, cholesky):
-        super(DenseNormal, self).__init__(loc, scale_tril=cholesky)
+    def __init__(self, loc: Tensor, cholesky: Tensor):
+        """Dense Normal distribution.
+
+        Args:
+            loc: Location of the distribution.
+            cholesky: Lower triangular Cholesky factor of the covariance matrix.
+        """
+        super().__init__(loc, scale_tril=cholesky)
 
     @property
     def mean(self):
@@ -153,10 +161,17 @@ class DenseNormal(torch.distributions.MultivariateNormal):
 
     @property
     def inverse_covariance(self):
-        warnings.warn(
-            "Direct matrix inverse for dense covariances is O(N^3), consider using eg inverse weighted inner product"
+        logger.warning(
+            "Direct matrix inverse for dense covariances is O(N^3),"
+            "consider using eg inverse weighted inner product"
         )
-        return tp(torch.linalg.inv(self.scale_tril)) @ torch.linalg.inv(self.scale_tril)
+        Eye = torch.eye(
+            self.scale_tril.shape[-1],
+            device=self.scale_tril.device,
+            dtype=self.scale_tril.dtype,
+        )
+        W = torch.linalg.solve_triangular(self.scale_tril, Eye, upper=False)
+        return tp(W) @ W
 
     @property
     def logdet_covariance(self):
@@ -173,7 +188,9 @@ class DenseNormal(torch.distributions.MultivariateNormal):
 
     def precision_weighted_inner_prod(self, b, reduce_dim=True):
         assert b.shape[-1] == 1
-        prod = (torch.linalg.solve(self.scale_tril, b) ** 2).sum(-2)
+        prod = (
+            torch.linalg.solve_triangular(self.scale_tril, b, upper=False) ** 2
+        ).sum(-2)
         return prod.squeeze(-1) if reduce_dim else prod
 
     def __matmul__(self, inp):
@@ -189,8 +206,15 @@ class DenseNormal(torch.distributions.MultivariateNormal):
 
 
 class LowRankNormal(torch.distributions.LowRankMultivariateNormal):
-    def __init__(self, loc, cov_factor, diag):
-        super(LowRankNormal, self).__init__(loc, cov_factor=cov_factor, cov_diag=diag)
+    def __init__(self, loc: Tensor, cov_factor: Tensor, diag: Tensor):
+        """Low Rank Normal distribution.
+
+        Args:
+            loc: Location of the distribution.
+            cov_factor: Low rank factor of the covariance matrix.
+            diag: Diagonal of the covariance matrix.
+        """
+        super().__init__(loc, cov_factor=cov_factor, cov_diag=diag)
 
     @property
     def mean(self):
@@ -252,17 +276,24 @@ class LowRankNormal(torch.distributions.LowRankMultivariateNormal):
 
 
 class DenseNormalPrec(torch.distributions.MultivariateNormal):
-    """A DenseNormal parameterized by the mean and the cholesky decomp of the precision matrix.
+    """A DenseNormal parameterized by the mean and the cholesky decomp of the precision
+    matrix.
 
     This function also includes a recursive_update function which performs a recursive
     linear regression update with effecient cholesky factor updates.
     """
 
-    def __init__(self, loc, cholesky, validate_args=False):
+    def __init__(self, loc: Tensor, cholesky: Tensor, validate_args=False):
+        """A DenseNormal parameterized by the mean and the cholesky decomp of the
+        precision.
+
+        Args:
+            loc: Location of the distribution.
+            cholesky: Lower triangular Cholesky factor of the precision matrix.
+            validate_args: Whether to validate the input arguments.
+        """
         prec = cholesky @ tp(cholesky)
-        super(DenseNormalPrec, self).__init__(
-            loc, precision_matrix=prec, validate_args=validate_args
-        )
+        super().__init__(loc, precision_matrix=prec, validate_args=validate_args)
         self.tril = cholesky
 
     @property
@@ -275,10 +306,11 @@ class DenseNormalPrec(torch.distributions.MultivariateNormal):
 
     @property
     def covariance(self):
-        warnings.warn(
-            "Direct matrix inverse for dense covariances is O(N^3), consider using eg inverse weighted inner product"
+        logger.warning(
+            "Direct matrix inverse for dense covariances is O(N^3)"
+            "consider using eg inverse weighted inner product"
         )
-        return cholesky_inverse(self.tril)
+        return torch.cholesky_inverse(self.tril)
 
     @property
     def inverse_covariance(self):
@@ -316,15 +348,22 @@ class DenseNormalPrec(torch.distributions.MultivariateNormal):
         return DenseNormalPrec(self.loc.squeeze(idx), self.tril.squeeze(idx))
 
 
-cov_param_dict = {
-    "dense": DenseNormal,
-    "dense_precision": DenseNormalPrec,
-    "diagonal": Normal,
-    "lowrank": LowRankNormal,
-}
+def get_parameterization(p):
+    COV_PARAM_DICT = {
+        "dense": DenseNormal,
+        "dense_precision": DenseNormalPrec,
+        "diagonal": Normal,
+        "lowrank": LowRankNormal,
+    }
+
+    if p in COV_PARAM_DICT:
+        return COV_PARAM_DICT[p]
+    else:
+        raise ValueError("Must specify a valid covariance parameterization.")
 
 
-# following functions/classes are from https://github.com/VectorInstitute/vbll/blob/main/vbll/layers/regression.py
+# following functions/classes are from
+# https://github.com/VectorInstitute/vbll/blob/main/vbll/layers/regression.py
 def gaussian_kl(p, q_scale):
     feat_dim = p.mean.shape[-1]
     mse_term = (p.mean**2).sum(-1).sum(-1) / q_scale
@@ -351,6 +390,7 @@ class Regression(nn.Module):
         prior_scale=1.0,
         wishart_scale=1e-2,
         cov_rank=None,
+        clamp_noise_init=True,
         dof=1.0,
     ):
         """
@@ -365,7 +405,8 @@ class Regression(nn.Module):
         regularization_weight : float
             Weight on regularization term in ELBO
         parameterization : str
-            Parameterization of covariance matrix. Currently supports {'dense', 'diagonal', 'lowrank', 'dense_precision'}
+            Parameterization of covariance matrix.
+            Currently supports {'dense', 'diagonal', 'lowrank', 'dense_precision'}
         prior_scale : float
             Scale of prior covariance matrix
         wishart_scale : float
@@ -373,7 +414,7 @@ class Regression(nn.Module):
         dof : float
             Degrees of freedom of Wishart prior on noise covariance
         """
-        super(Regression, self).__init__()
+        super().__init__()
 
         self.wishart_scale = wishart_scale
         self.dof = (dof + out_features + 1.0) / 2.0
@@ -390,6 +431,10 @@ class Regression(nn.Module):
         self.noise_logdiag = nn.Parameter(
             torch.randn(out_features, dtype=self.dtype) * (np.log(wishart_scale))
         )
+
+        # ensure that log noise is positive
+        if clamp_noise_init:
+            self.noise_logdiag.data = torch.clamp(self.noise_logdiag.data, min=0)
 
         # last layer distribution
         self.W_dist = get_parameterization(parameterization)
@@ -473,7 +518,8 @@ class Regression(nn.Module):
                 - 0.5 * self.wishart_scale * noise.trace_precision
             )
             total_elbo = torch.mean(pred_likelihood - trace_term)
-            total_elbo += self.regularization_weight * (wishart_term - kl_term)
+            regularization_term = self.regularization_weight * (wishart_term - kl_term)
+            total_elbo = total_elbo + regularization_term
             return -total_elbo
 
         return loss_fn
