@@ -7,7 +7,7 @@
 r"""Multi-task Gaussian Process Regression models with fully Bayesian inference."""
 
 from collections.abc import Mapping
-from typing import Any, NoReturn
+from typing import Any, NoReturn, TypeVar
 
 import pyro
 import torch
@@ -29,6 +29,11 @@ from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.means.mean import Mean
 from torch import Tensor
 from torch.nn.parameter import Parameter
+
+# Can replace with Self type once 3.11 is the minimum version
+TSaasFullyBayesianMultiTaskGP = TypeVar(
+    "TSaasFullyBayesianMultiTaskGP", bound="SaasFullyBayesianMultiTaskGP"
+)
 
 
 class MultitaskSaasPyroModel(SaasPyroModel):
@@ -289,14 +294,26 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         if input_transform is not None:
             self.input_transform = input_transform
 
-    def train(self, mode: bool = True) -> None:
-        r"""Puts the model in `train` mode."""
+    def train(
+        self, mode: bool = True, reset: bool = True
+    ) -> TSaasFullyBayesianMultiTaskGP:
+        r"""Puts the model in `train` mode.
+
+        Args:
+            mode: A boolean indicating whether to put the model in training mode.
+            reset: A boolean indicating whether to reset the model to its initial
+                state. If `mode` is False, this argument is ignored.
+
+        Returns:
+            The model itself.
+        """
         super().train(mode=mode)
-        if mode:
+        if mode and reset:
             self.mean_module = None
             self.covar_module = None
             self.likelihood = None
             self.task_covar_module = None
+        return self
 
     @property
     def median_lengthscale(self) -> Tensor:
@@ -361,7 +378,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         """
         self._check_if_fitted()
         posterior = super().posterior(
-            X=X,
+            X=X.unsqueeze(MCMC_DIM),
             output_indices=output_indices,
             observation_noise=observation_noise,
             posterior_transform=posterior_transform,
@@ -372,14 +389,14 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
 
     def forward(self, X: Tensor) -> MultivariateNormal:
         self._check_if_fitted()
-        X = X.unsqueeze(MCMC_DIM)
-
         x_basic, task_idcs = self._split_inputs(X)
 
         mean_x = self.mean_module(x_basic)
         covar_x = self.covar_module(x_basic)
 
-        tsub_idcs = task_idcs.squeeze(-3).squeeze(-1)
+        tsub_idcs = task_idcs.squeeze(-1)
+        if tsub_idcs.ndim > 1:
+            tsub_idcs = tsub_idcs.squeeze(-2)
         latent_features = self.latent_features[:, tsub_idcs, :]
 
         if X.ndim > 3:

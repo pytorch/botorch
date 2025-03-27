@@ -541,6 +541,21 @@ def gen_one_shot_kg_initial_conditions(
         )
     q_aug = acq_function.get_augmented_q_batch_size(q=q)
 
+    # Check for inter-point (in)equality constraints
+    for constraints, type_of_constraints in [
+        (inequality_constraints, "inequality"),
+        (equality_constraints, "equality"),
+    ]:
+        if constraints is not None and len(constraints) > 0:
+            for indices, _, _ in constraints:
+                if len(indices.shape) > 1:
+                    raise NotImplementedError(
+                        "Indices must be one-dimensional "
+                        "in gen_one_shot_kg_initial_conditions. "
+                        f"Received indices {indices} "
+                        f"for {type_of_constraints} constrained."
+                    )
+
     # TODO: Avoid unnecessary computation by not generating all candidates
     ics = gen_batch_initial_conditions(
         acq_function=acq_function,
@@ -636,10 +651,12 @@ def gen_one_shot_hvkg_initial_conditions(
             restarts and raw samples for solving the posterior objective
             maximization problem, respectively) and `eta` (temperature parameter
             for sampling heuristic from posterior objective maximizers).
-        inequality constraints: A list of tuples (indices, coefficients, rhs),
+        inequality constraints: Optionally, list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
-        equality constraints: A list of tuples (indices, coefficients, rhs),
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. Each
+            tensor of indices must be one-dimensional, since inter-point
+            constraints are not supported here.
+        equality constraints: Optionally, a list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
 
@@ -987,8 +1004,13 @@ def initialize_q_batch(
     ).permute(-1, *range(len(batch_shape)))
 
     # make sure we get the maximum
-    if max_idx not in idcs:
-        idcs[-1] = max_idx
+    if batch_shape == torch.Size():
+        if max_idx not in idcs:
+            idcs[-1] = max_idx
+    else:
+        has_max = (max_idx == idcs).any(dim=0)
+        idcs[-1, ~has_max] = max_idx[~has_max]
+
     if batch_shape == torch.Size():
         return X[idcs], acq_vals[idcs]
     else:

@@ -21,7 +21,7 @@ from botorch.models.utils.gpytorch_modules import (
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.test_helpers import get_pvar_expected
-from botorch.utils.testing import _get_random_data, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, get_random_data
 from botorch_community.models.gp_regression_multisource import (
     _get_reliable_observations,
     get_random_x_for_agp,
@@ -257,7 +257,7 @@ class TestAugmentedSingleTaskGP(BotorchTestCase):
             # test condition_on_observations
             fant_shape = torch.Size([2])
             # fantasize at different input points
-            X_fant, Y_fant = _get_random_data(
+            X_fant, Y_fant = get_random_data(
                 batch_shape=fant_shape, m=1, d=d, n=3, **tkwargs
             )
             c_kwargs = (

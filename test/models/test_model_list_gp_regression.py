@@ -23,7 +23,7 @@ from botorch.posteriors import GPyTorchPosterior, PosteriorList, TransformedPost
 from botorch.sampling.base import MCSampler
 from botorch.sampling.list_sampler import ListSampler
 from botorch.sampling.normal import IIDNormalSampler
-from botorch.utils.testing import _get_random_data, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, get_random_data
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import LikelihoodList
@@ -41,13 +41,9 @@ from torch import Tensor
 def _get_model(
     fixed_noise=False, outcome_transform: str = "None", use_intf=False, **tkwargs
 ) -> ModelListGP:
-    train_x1, train_y1 = _get_random_data(
-        batch_shape=torch.Size(), m=1, n=10, **tkwargs
-    )
+    train_x1, train_y1 = get_random_data(batch_shape=torch.Size(), m=1, n=10, **tkwargs)
     train_y1 = torch.exp(train_y1)
-    train_x2, train_y2 = _get_random_data(
-        batch_shape=torch.Size(), m=1, n=11, **tkwargs
-    )
+    train_x2, train_y2 = get_random_data(batch_shape=torch.Size(), m=1, n=11, **tkwargs)
     if outcome_transform == "Standardize":
         octfs = [Standardize(m=1), Standardize(m=1)]
     elif outcome_transform == "Log":
@@ -261,6 +257,7 @@ class TestModelListGP(BotorchTestCase):
                 )
 
     def test_ModelListGP_fixed_noise(self) -> None:
+        torch.manual_seed(0)
         for dtype, outcome_transform in itertools.product(
             (torch.float, torch.double), ("None", "Standardize")
         ):
@@ -279,7 +276,7 @@ class TestModelListGP(BotorchTestCase):
 
     def test_ModelListGP_single(self):
         tkwargs = {"device": self.device, "dtype": torch.float}
-        train_x1, train_y1 = _get_random_data(
+        train_x1, train_y1 = get_random_data(
             batch_shape=torch.Size(), m=1, n=10, **tkwargs
         )
         model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
@@ -295,7 +292,7 @@ class TestModelListGP(BotorchTestCase):
         outcome_transform_kwargs = (
             {} if use_outcome_transform else {"outcome_transform": None}
         )
-        train_x_raw, train_y = _get_random_data(
+        train_x_raw, train_y = get_random_data(
             batch_shape=torch.Size(), m=1, n=10, **tkwargs
         )
         task_idx = torch.cat(

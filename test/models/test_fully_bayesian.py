@@ -440,7 +440,22 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
             # Make sure the model shapes are set correctly
             self.assertEqual(model.pyro_model.train_X.shape, torch.Size([n, d]))
             self.assertAllClose(model.pyro_model.train_X, train_X)
-            trained_model = model.train()  # Put the model in train mode
+            # Put the model in eval mode with reset=True (reset should be ignored)
+            trained_model = model.train(mode=False, reset=True)
+            self.assertIs(trained_model, model)
+            self.assertAllClose(train_X, model.pyro_model.train_X)
+            self.assertIsNotNone(model.mean_module)
+            self.assertIsNotNone(model.covar_module)
+            self.assertIsNotNone(model.likelihood)
+            # Put the model in train mode, without resetting
+            trained_model = model.train(reset=False)
+            self.assertIs(trained_model, model)
+            self.assertAllClose(train_X, model.pyro_model.train_X)
+            self.assertIsNotNone(model.mean_module)
+            self.assertIsNotNone(model.covar_module)
+            self.assertIsNotNone(model.likelihood)
+            # Put the model in train mode, with resetting
+            trained_model = model.train()
             self.assertIs(trained_model, model)
             self.assertAllClose(train_X, model.pyro_model.train_X)
             self.assertIsNone(model.mean_module)

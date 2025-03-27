@@ -15,7 +15,7 @@ repos:
     hooks:
     -   id: ufmt
         additional_dependencies:
-        - black==24.4.2
+        - black==24.10.0
         - usort==1.0.8.post1
         - ruff-api==0.1.0
         - stdlibs==2024.1.28
