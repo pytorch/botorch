@@ -12,14 +12,14 @@ import torch
 
 from botorch.logging import logger
 
-from botorch_community.models.vblls import AbstractBLLModel
+from botorch_community.models.blls import AbstractBLLModel
 from torch.func import grad
 
 
 class BLLMaxPosteriorSampling:
     def __init__(
         self,
-        model: "AbstractBLLModel",
+        model: AbstractBLLModel,
         num_restarts: int = 10,
         bounds: torch.Tensor | None = None,
         discrete_inputs: bool = False,
