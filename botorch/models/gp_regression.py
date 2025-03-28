@@ -116,6 +116,9 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         ... )
     """
 
+    train_targets: Tensor
+    train_inputs: tuple[Tensor]
+
     def __init__(
         self,
         train_X: Tensor,
