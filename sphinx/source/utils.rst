@@ -32,6 +32,11 @@ Dispatcher
 .. automodule:: botorch.utils.dispatcher
 		:members:
 
+Evaluation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.evaluation
+		:members:
+
 Low-Rank Cholesky Update Utils
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.low_rank
