@@ -18,6 +18,7 @@ from botorch.acquisition.acquisition import (
     AcquisitionFunction,
     OneShotAcquisitionFunction,
 )
+from botorch.acquisition.joint_entropy_search import qJointEntropySearch
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
@@ -32,6 +33,7 @@ from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.optim.initializers import (
     gen_one_shot_hvkg_initial_conditions,
     gen_one_shot_kg_initial_conditions,
+    gen_optimal_input_initial_conditions,
 )
 from botorch.optim.optimize import (
     _combine_initial_conditions,
@@ -2149,6 +2151,15 @@ class TestOptimizeAcqfInputs(BotorchTestCase):
         )
         ic_generator = opt_inputs.get_ic_generator()
         self.assertIs(ic_generator, gen_one_shot_kg_initial_conditions)
+
+        acqf = qJointEntropySearch(
+            model=m1, optimal_inputs=torch.rand(5, 3), optimal_outputs=torch.rand(5, 1)
+        )
+        opt_inputs = OptimizeAcqfInputs(
+            acq_function=acqf, bounds=bounds, q=1, num_restarts=1, **kwargs
+        )
+        ic_generator = opt_inputs.get_ic_generator()
+        self.assertIs(ic_generator, gen_optimal_input_initial_conditions)
 
         def my_gen():
             pass
