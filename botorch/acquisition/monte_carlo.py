@@ -27,7 +27,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from copy import deepcopy
 from functools import partial
-from typing import List, Protocol
+from typing import Protocol
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction, MCSamplerMixin
