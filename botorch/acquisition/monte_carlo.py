@@ -189,7 +189,7 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
         q_reduction: SampleReductionProtocol = torch.amax,
         constraints: list[Callable[[Tensor], Tensor]] | None = None,
         eta: Tensor | float = 1e-3,
-        fat: List[bool | None] | bool = False,
+        fat: list[bool | None] | bool = False,
     ):
         r"""Constructor of SampleReducingMCAcquisitionFunction.
 

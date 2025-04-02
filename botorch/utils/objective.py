@@ -137,7 +137,7 @@ def compute_smoothed_feasibility_indicator(
     samples: Tensor,
     eta: Tensor | float,
     log: bool = False,
-    fat: List[bool | None] | bool = False,
+    fat: list[bool | None] | bool = False,
 ) -> Tensor:
     r"""Computes the smoothed feasibility indicator of a list of constraints.
 
@@ -152,12 +152,12 @@ def compute_smoothed_feasibility_indicator(
         constraints: A list of callables, each mapping a Tensor of size `b x q x m`
             to a Tensor of size `b x q`. The `fat` keyword defines how the callable
             is further processed. By default a sigmoid or fatmoid transformation is
-            applied where negative values where negative values imply feasibility.
+            applied where negative values imply feasibility.
             The applied transformation maps the feasibility indicator of the
             constraint from the interval [-inf, inf] to the interval [0, 1].
             If `None` is provided for `fat`, no transformation is applied and it
             is expected that the constraint callable delivers values in the
-            interval [0, 1] without further processing. This is especially useful
+            interval [0, 1] without further processing that can be interpreted as probabilities of feasibility directly. This is especially useful
             for using classifiers as constraints. The callable must support
             broadcasting. Only relevant for multi-output models (`m` > 1).
         samples: A `n_samples x b x q x m` Tensor of samples drawn from the posterior.
@@ -198,12 +198,12 @@ def compute_smoothed_feasibility_indicator(
         raise ValueError("eta must be positive.")
     is_feasible = torch.zeros_like(samples[..., 0])
 
-    for constraint, e, f in zip(constraints, eta, fat):
-        if f is None:
+    for constraint, eta_, fat_ in zip(constraints, eta, fat):
+        if fat_ is None:
             is_feasible = is_feasible + constraint(samples).log()
         else:
-            log_sigmoid = log_fatmoid if fat is True else logexpit
-            is_feasible = is_feasible + log_sigmoid(-constraint(samples) / e)
+            log_sigmoid = log_fatmoid if fat_ else logexpit
+            is_feasible = is_feasible + log_sigmoid(-constraint(samples) / eta_)
 
     return is_feasible if log else is_feasible.exp()
 
