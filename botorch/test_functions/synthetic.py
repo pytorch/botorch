@@ -1168,6 +1168,7 @@ class SpeedReducer(ConstrainedSyntheticTestFunction):
         (2.9, 3.9),
         (5.0, 5.5),
     ]
+    _optimal_value = 2996.3482  # from [Lemonge2010constrained]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4, x5, x6, x7 = X.unbind(-1)
