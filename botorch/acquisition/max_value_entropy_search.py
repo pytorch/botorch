@@ -328,6 +328,8 @@ class qMaxValueEntropy(MaxValueBase, MCSamplerMixin):
             self.model = init_model
         super().set_X_pending(X_pending)
 
+    # NOTE: This may not work with m > 1, and currently the only supported use
+    # cases are with m=1.
     def _compute_information_gain(
         self, X: Tensor, mean_M: Tensor, variance_M: Tensor, covar_mM: Tensor
     ) -> Tensor:
@@ -440,10 +442,7 @@ class qMaxValueEntropy(MaxValueBase, MCSamplerMixin):
         beta = cov / (h0.var(dim=dim) * h1.var(dim=dim)).sqrt()
         H1_hat = H1_bar - beta * (H0_bar - H0)
         ig = H0 - H1_hat  # batch_shape x num_fantasies x (m)
-        if self.posterior_max_values.ndim == 2:
-            permute_idcs = [-1, *range(ig.ndim - 1)]
-        else:
-            permute_idcs = [-2, *range(ig.ndim - 2), -1]
+        permute_idcs = [-1, *range(ig.ndim - 1)]
         ig = ig.permute(*permute_idcs)  # num_fantasies x batch_shape x (m)
         return ig
 
