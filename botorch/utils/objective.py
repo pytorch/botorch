@@ -11,7 +11,6 @@ Helpers for handling objectives.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import List
 
 import torch
 from botorch.utils.safe_math import log_fatmoid, logexpit
@@ -157,7 +156,8 @@ def compute_smoothed_feasibility_indicator(
             constraint from the interval [-inf, inf] to the interval [0, 1].
             If `None` is provided for `fat`, no transformation is applied and it
             is expected that the constraint callable delivers values in the
-            interval [0, 1] without further processing that can be interpreted as probabilities of feasibility directly. This is especially useful
+            interval [0, 1] without further processing that can be interpreted as
+            probabilities of feasibility directly. This is especially useful
             for using classifiers as constraints. The callable must support
             broadcasting. Only relevant for multi-output models (`m` > 1).
         samples: A `n_samples x b x q x m` Tensor of samples drawn from the posterior.
@@ -176,7 +176,9 @@ def compute_smoothed_feasibility_indicator(
             the i-th fat value is `None`, no fatmoid/sigmoid transformation is
             applied to the i-th constraint and it is assumed that the constraint
             by itself delivers values in the interval [0, 1]. This is especially useful
-            for using classifiers as constraints.
+            for using classifiers as constraints. If a boolean is provided and its
+            value is `True`, a fatmoid transformation is applied, if its value is
+            `False`, a sigmoid transformation is applied.
 
 
     Returns:
