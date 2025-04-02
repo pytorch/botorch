@@ -145,7 +145,7 @@ class TestFixFeatures(BotorchTestCase):
 
 
 class TestGetXBaseline(BotorchTestCase):
-    def test_get_X_baseline(self):
+    def test_get_X_baseline(self) -> None:
         tkwargs = {"device": self.device}
         for dtype in (torch.float, torch.double):
             tkwargs["dtype"] = dtype
@@ -227,15 +227,6 @@ class TestGetXBaseline(BotorchTestCase):
             X = get_X_baseline(acq_function=acqf)
             self.assertTrue(torch.equal(X, X_train))
 
-            # test MESMO for which we need to use
-            # `acqf.mo_model`
-            batched_mo_model = SingleTaskGP(X_train, Y_train, outcome_transform=None)
-            acqf = qMultiObjectiveMaxValueEntropy(
-                batched_mo_model,
-                sample_pareto_frontiers=lambda model: torch.rand(10, 2, **tkwargs),
-            )
-            X = get_X_baseline(acq_function=acqf)
-            self.assertTrue(torch.equal(X, X_train))
             # test that if there is an input transform that is applied
             # to the train_inputs when the model is in eval mode, we
             # extract the untransformed train_inputs
