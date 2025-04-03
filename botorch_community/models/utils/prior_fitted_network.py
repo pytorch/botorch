@@ -61,9 +61,7 @@ def download_model(
     if isinstance(model_path, ModelPaths):
         model_path = model_path.value
 
-    if cache_dir is None:
-        cache_dir = "/tmp/botorch_pfn_models"
-
+    cache_dir = cache_dir if cache_dir is not None else "/tmp/botorch_pfn_models"
     os.makedirs(cache_dir, exist_ok=True)
     cache_path = os.path.join(cache_dir, model_path.split("/")[-1])
 

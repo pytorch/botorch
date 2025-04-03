@@ -16,11 +16,9 @@ from __future__ import annotations
 from typing import Optional, Union
 
 import torch.nn as nn
-
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
-
 from botorch_community.posteriors.riemann import BoundedRiemannPosterior
 from torch import Tensor
 

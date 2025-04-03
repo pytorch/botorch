@@ -78,8 +78,7 @@ class BoundedRiemannPosterior(Posterior):
             Samples from the posterior, a tensor of shape
             `self._extended_shape(sample_shape=sample_shape)`.
         """
-        if sample_shape is None:
-            sample_shape = torch.Size([1])
+        sample_shape = sample_shape if sample_shape is not None else torch.Size([1])
         z = torch.rand(sample_shape)
         return self.rsample_from_base_samples(sample_shape, z)
 
