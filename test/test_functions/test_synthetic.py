@@ -22,6 +22,7 @@ from botorch.test_functions.synthetic import (
     Griewank,
     Hartmann,
     HolderTable,
+    KeaneBumpFunction,
     Levy,
     Michalewicz,
     Powell,
@@ -419,4 +420,15 @@ class TestWeldedBeamSO(
     functions = [
         WeldedBeamSO(),
         WeldedBeamSO(noise_std=0.1, constraint_noise_std=[0.2] * 6),
+    ]
+
+
+class TestKeaneBumpFunction(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    functions = [
+        KeaneBumpFunction(dim=2),
+        KeaneBumpFunction(dim=4, noise_std=0.1, constraint_noise_std=[0.1, 0.2]),
     ]
