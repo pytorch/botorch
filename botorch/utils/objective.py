@@ -136,7 +136,7 @@ def compute_smoothed_feasibility_indicator(
     samples: Tensor,
     eta: Tensor | float,
     log: bool = False,
-    fat: bool = False,
+    fat: list[bool | None] | bool = False,
 ) -> Tensor:
     r"""Computes the smoothed feasibility indicator of a list of constraints.
 
@@ -149,33 +149,63 @@ def compute_smoothed_feasibility_indicator(
 
     Args:
         constraints: A list of callables, each mapping a Tensor of size `b x q x m`
-            to a Tensor of size `b x q`, where negative values imply feasibility.
-            This callable must support broadcasting. Only relevant for multi-
-            output models (`m` > 1).
+            to a Tensor of size `b x q`. The `fat` keyword defines how the callable
+            is further processed. By default a sigmoid or fatmoid transformation is
+            applied where negative values imply feasibility.
+            The applied transformation maps the feasibility indicator of the
+            constraint from the interval [-inf, inf] to the interval [0, 1].
+            If `None` is provided for `fat`, no transformation is applied and it
+            is expected that the constraint callable delivers values in the
+            interval [0, 1] without further processing that can be interpreted as
+            probabilities of feasibility directly. This is especially useful
+            for using classifiers as constraints. The callable must support
+            broadcasting. Only relevant for multi-output models (`m` > 1).
         samples: A `n_samples x b x q x m` Tensor of samples drawn from the posterior.
-        eta: The temperature parameter for the sigmoid function. Can be either a float
-            or a 1-dim tensor. In case of a float the same eta is used for every
-            constraint in constraints. In case of a tensor the length of the tensor
-            must match the number of provided constraints. The i-th constraint is
-            then estimated with the i-th eta value.
+        eta: The temperature parameter for the sigmoid/fatmoid function. Can be either
+            a float or a 1-dim tensor. In case of a float the same eta is used for
+            every constraint in constraints. In case of a tensor the length of the
+            tensor must match the number of provided constraints. The i-th constraint
+            is then estimated with the i-th eta value. In case no fatmoid/sigmoid is
+            applied, eta is ignored.
         log: Toggles the computation of the log-feasibility indicator.
         fat: Toggles the computation of the fat-tailed feasibility indicator.
+            Can be either a list or a boolean. If case of a boolean, the same
+            feasibility indicator is used for all constraints. If a list is provided,
+            the length of the list must match the number of provided constraints.
+            The i-th constraint is then associated with the i-th fat value. In case,
+            the i-th fat value is `None`, no fatmoid/sigmoid transformation is
+            applied to the i-th constraint and it is assumed that the constraint
+            by itself delivers values in the interval [0, 1]. This is especially useful
+            for using classifiers as constraints. If a boolean is provided and its
+            value is `True`, a fatmoid transformation is applied, if its value is
+            `False`, a sigmoid transformation is applied.
+
 
     Returns:
         A `n_samples x b x q`-dim tensor of feasibility indicator values.
     """
     if type(eta) is not Tensor:
         eta = torch.full((len(constraints),), eta)
+    if type(fat) is not list:
+        fat = [fat] * len(constraints)
     if len(eta) != len(constraints):
         raise ValueError(
             "Number of provided constraints and number of provided etas do not match."
         )
+    if len(fat) != len(constraints):
+        raise ValueError(
+            "Number of provided constraints and number of provided fats do not match."
+        )
     if not (eta > 0).all():
         raise ValueError("eta must be positive.")
     is_feasible = torch.zeros_like(samples[..., 0])
-    log_sigmoid = log_fatmoid if fat else logexpit
-    for constraint, e in zip(constraints, eta):
-        is_feasible = is_feasible + log_sigmoid(-constraint(samples) / e)
+
+    for constraint, eta_, fat_ in zip(constraints, eta, fat):
+        if fat_ is None:
+            is_feasible = is_feasible + constraint(samples).log()
+        else:
+            log_sigmoid = log_fatmoid if fat_ else logexpit
+            is_feasible = is_feasible + log_sigmoid(-constraint(samples) / eta_)
 
     return is_feasible if log else is_feasible.exp()
 
