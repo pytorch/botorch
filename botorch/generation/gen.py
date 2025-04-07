@@ -205,7 +205,7 @@ def gen_candidates_scipy(
                 if initial_conditions.dtype != torch.double:
                     msg += " Consider using `dtype=torch.double`."
                 raise OptimizationGradientError(msg, current_x=x)
-            fval = loss.item()
+            fval = loss.detach().item()
             return fval, gradf
 
     else:
@@ -215,7 +215,7 @@ def gen_candidates_scipy(
             with torch.no_grad():
                 X_fix = fix_features(X=X, fixed_features=fixed_features)
                 loss = f(X_fix).sum()
-            fval = loss.item()
+            fval = loss.detach().item()
             return fval
 
     if nonlinear_inequality_constraints:

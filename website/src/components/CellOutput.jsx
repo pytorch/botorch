@@ -6,32 +6,17 @@
  */
 
 import React from 'react';
-import {v4 as uuidv4} from 'uuid';
+import CodeBlock from '@theme/CodeBlock';
 
 const CellOutput = (props) => {
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--ifm-pre-background)',
-        marginBottom: '10px',
-        borderRadius: 'var(--ifm-global-radius)',
-        overflow: 'hidden',
-        padding: '5px',
-        font: 'var(--ifm-code-font-size) / var(--ifm-pre-line-height) var(--ifm-font-family-monospace)',
-      }}
+    <CodeBlock
+      language="python"
+      title="Output:"
     >
-      <span style={{color: 'red'}}>Out: </span>
-      <pre style={{margin: '0px', backgroundColor: 'inherit', padding: '8px'}}>
-        {props.children.split('\n').map((line) => {
-          return (
-            <p key={uuidv4()} style={{marginBottom: '0px'}}>
-              {line}
-            </p>
-          );
-        })}
-      </pre>
-    </div>
-  );
+      {props.children}
+    </CodeBlock>
+  )
 };
 
 export default CellOutput;

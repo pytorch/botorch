@@ -38,6 +38,11 @@ References:
     Optimization with Noisy Experiments. Bayesian Analysis, Bayesian Anal.
     14(2), 495-519, 2019.
 
+.. [Mishra2007]
+    S. K. Mishra. Minimization of Keane's Bump Function by the Repulsive
+    Particle Swarm and the Differential Evolution Methods (May 1, 2007).
+    Available at SSRN: https://ssrn.com/abstract=983836.
+
 .. [Gramacy2016]
     R. Gramacy, G. Gray, S. Le Digabel, H. Lee, P. Ranjan, G. Wells & S. Wild.
     Modeling an Augmented Lagrangian for Blackbox Constrained Optimization,
@@ -1168,6 +1173,7 @@ class SpeedReducer(ConstrainedSyntheticTestFunction):
         (2.9, 3.9),
         (5.0, 5.5),
     ]
+    _optimal_value = 2996.3482  # from [Lemonge2010constrained]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4, x5, x6, x7 = X.unbind(-1)
@@ -1199,6 +1205,80 @@ class SpeedReducer(ConstrainedSyntheticTestFunction):
                 x1 / x2 - 12,
                 (1.5 * x6 + 1.9) / x4 - 1,
                 (1.1 * x7 + 1.9) / x5 - 1,
+            ],
+            dim=-1,
+        )
+
+
+class KeaneBumpFunction(ConstrainedSyntheticTestFunction):
+    r"""Keane Bump Function problem with constraints.
+
+    This is a challenging d-dimensional minimization problem with two
+    constraints that is evaluated on the domain [0, 10]^d.
+
+    There is no known global optimum for this problem, but the aproximate
+    global optimal value for a few different dimensionalities can be found in
+    [Mishra2007]_.
+    """
+
+    num_constraints = 2
+    _optimal_value_lookup = {
+        2: -0.365,
+        10: -0.6737,
+        15: -0.781647601,
+        20: -0.803619104,
+        30: -0.818056222,
+        40: -0.826624404,
+        50: -0.83078783,
+    }
+
+    def __init__(
+        self,
+        dim: int,
+        noise_std: None | float = None,
+        constraint_noise_std: None | float | list[float] = None,
+        negate: bool = False,
+        bounds: list[tuple[float, float]] | None = None,
+        dtype: torch.dtype = torch.double,
+    ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension.
+            noise_std: Standard deviation of the observation noise.
+            constraint_noise_std: Standard deviation of the constraint noise.
+                If a list is provided, specifies separate noise standard
+                deviations for each constraint.
+            negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
+            dtype: The dtype that is used for the bounds of the function.
+        """
+        self.dim = dim
+        if bounds is None:
+            bounds = [(0.0, 10.0) for _ in range(dim)]
+        if dim in self._optimal_value_lookup.keys():
+            self._optimal_value = self._optimal_value_lookup[dim]
+        super().__init__(
+            noise_std=noise_std,
+            constraint_noise_std=constraint_noise_std,
+            negate=negate,
+            bounds=bounds,
+            dtype=dtype,
+        )
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        Xcos = X.cos()
+        num = Xcos.pow(4).sum(dim=-1) - 2 * Xcos.pow(2).prod(dim=-1)
+        den = torch.sqrt(
+            (torch.arange(1, self.dim + 1, device=X.device) * X.pow(2)).sum(dim=-1)
+        )
+        # clamp to avoid den=0, which happens when X=0.
+        return -(num / den.clamp(min=1e-3)).abs()
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        return torch.cat(
+            [
+                X.prod(dim=-1, keepdims=True) - 0.75,
+                7.5 * self.dim - X.sum(dim=-1, keepdims=True),
             ],
             dim=-1,
         )

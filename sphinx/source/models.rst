@@ -186,10 +186,6 @@ GPyTorch Module Constructors
 .. automodule:: botorch.models.utils.gpytorch_modules
     :members:
 
-Model Conversion
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.converter
-    :members:
 
 Inducing Point Allocators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
