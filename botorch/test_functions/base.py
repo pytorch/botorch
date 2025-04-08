@@ -20,12 +20,70 @@ from torch import Tensor
 from torch.nn import Module
 
 
+def validate_parameter_indices(
+    dim: int,
+    bounds: Tensor,
+    continuous_inds: list[int],
+    discrete_inds: list[int],
+    categorical_inds: list[int],
+) -> None:
+    r"""Check that the parameter indices are valid.
+
+    Args:
+        dim: Number of search space dimensions.
+        bounds: A `2 x d`-dim tensor of lower and upper bounds.
+        continuous_inds: List of unique integers corresponding to continuous parameters.
+        discrete_inds: List of unique integers corresponding to discrete parameters.
+        categorical_inds: List of unique integers corresponding to categorical
+            parameters.
+
+    Raises:
+        ValueError: If the parameter indices are invalid.
+    """
+    for inds in [continuous_inds, discrete_inds, categorical_inds]:
+        if len(inds) == 0:
+            continue  # Nothing to check
+        if not (
+            isinstance(inds, list)
+            and all(isinstance(x, int) for x in inds)
+            and len(set(inds)) == len(inds)
+            and min(inds) >= 0
+            and max(inds) <= dim - 1
+        ):
+            raise ValueError(
+                "All parameter indices must be a list with unique integers between "
+                f"0 and dim - 1. Got {inds=}."
+            )
+    # Let's make sure all parameters are covered.
+    all_inds = continuous_inds + discrete_inds + categorical_inds
+    if (len(all_inds) != dim) or (set(all_inds) != set(range(dim))):
+        raise ValueError(
+            f"All parameter indices must be present, got {dim=}, {continuous_inds=}, "
+            f"{discrete_inds=}, {categorical_inds=}"
+        )
+    # Check the shape of the bounds
+    if not bounds.shape == (2, dim):
+        raise ValueError(
+            f"Expected `bounds` to have shape `2 x d`. Got {bounds.shape=}, {dim=}."
+        )
+    # Check that the bounds are integer valued for discrete and categorical parameters.
+    for inds in [discrete_inds, categorical_inds]:
+        if len(inds) > 0 and (not (bounds[:, inds] == bounds[:, inds].round()).all()):
+            raise ValueError(
+                "Expected the lower and upper bounds of the discrete and categorical "
+                "parameters to be integer-valued."
+            )
+
+
 class BaseTestProblem(Module, ABC):
     r"""Base class for test functions."""
 
     dim: int
     _bounds: list[tuple[float, float]]
     _check_grad_at_opt: bool = True
+    continuous_inds: list[int] = []  # Float-valued range parameters (bounds inclusive)
+    discrete_inds: list[int] = []  # Ordered integer parameters (bounds inclusive)
+    categorical_inds: list[int] = []  # Unordered integer parameters (bounds inclusive)
 
     def __init__(
         self,
@@ -53,6 +111,13 @@ class BaseTestProblem(Module, ABC):
         self.register_buffer(
             "bounds",
             torch.tensor(self._bounds, dtype=dtype).transpose(-1, -2),
+        )
+        validate_parameter_indices(
+            dim=self.dim,
+            bounds=self.bounds,
+            continuous_inds=self.continuous_inds,
+            discrete_inds=self.discrete_inds,
+            categorical_inds=self.categorical_inds,
         )
 
     def forward(self, X: Tensor, noise: bool = True) -> Tensor:
@@ -291,6 +356,9 @@ class CorruptedTestProblem(BaseTestProblem, SeedingMixin):
                 provided, it will first be converted to an iterator.
         """
         self.dim: int = base_test_problem.dim
+        self.continuous_inds = base_test_problem.continuous_inds
+        self.discrete_inds = base_test_problem.discrete_inds
+        self.categorical_inds = base_test_problem.categorical_inds
         self._bounds: list[tuple[float, float]] = (
             bounds if bounds is not None else base_test_problem._bounds
         )

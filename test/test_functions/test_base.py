@@ -5,14 +5,30 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from botorch.test_functions.base import BaseTestProblem, ConstrainedBaseTestProblem
+from botorch.test_functions.base import (
+    BaseTestProblem,
+    ConstrainedBaseTestProblem,
+    validate_parameter_indices,
+)
 from botorch.utils.testing import BotorchTestCase, TestCorruptedProblemsMixin
 from torch import Tensor
 
 
 class DummyTestProblem(BaseTestProblem):
     dim = 2
+    continuous_inds = list(range(dim))
     _bounds = [(0.0, 1.0), (2.0, 3.0)]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        return -X.pow(2).sum(dim=-1)
+
+
+class DummyMixedTestProblem(BaseTestProblem):
+    dim = 4
+    continuous_inds = [1, 3]
+    discrete_inds = [0]
+    categorical_inds = [2]
+    _bounds = [(0.0, 1.0), (2.0, 3.0), (0.0, 2.0), (3.0, 4.0)]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         return -X.pow(2).sum(dim=-1)
@@ -23,6 +39,71 @@ class DummyConstrainedTestProblem(DummyTestProblem, ConstrainedBaseTestProblem):
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
         return 0.25 - X.sum(dim=-1, keepdim=True)
+
+
+class TestValidation(BotorchTestCase):
+    def test_validation(self):
+        for dtype in (torch.float, torch.double):
+            lb = torch.zeros(3, device=self.device, dtype=dtype)
+            ub = torch.arange(1, 4, device=self.device, dtype=dtype)
+            bounds = torch.stack([lb, ub])
+            for continuous_inds, categorical_inds, discrete_inds in [
+                ([0, 1, 0], [], [2]),
+                ([0], [2, 2], [1]),
+                ([1], [0], [3]),
+            ]:
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "All parameter indices must be a list with unique integers "
+                    "between 0 and dim - 1",
+                ):
+                    validate_parameter_indices(
+                        dim=3,
+                        bounds=bounds,
+                        continuous_inds=continuous_inds,
+                        categorical_inds=categorical_inds,
+                        discrete_inds=discrete_inds,
+                    )
+            for continuous_inds, categorical_inds, discrete_inds in [
+                ([0, 1], [0], []),
+                ([1], [], [2]),
+                ([0], [1], [0]),
+            ]:
+                with self.assertRaisesRegex(
+                    ValueError, "All parameter indices must be present"
+                ):
+                    validate_parameter_indices(
+                        dim=3,
+                        bounds=bounds,
+                        continuous_inds=continuous_inds,
+                        categorical_inds=categorical_inds,
+                        discrete_inds=discrete_inds,
+                    )
+            for i in [1, 2]:
+                new_bounds = bounds.clone()
+                new_bounds[0, i] = 1.1
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "Expected the lower and upper bounds of the discrete and "
+                    "categorical parameters to be integer-valued.",
+                ):
+                    validate_parameter_indices(
+                        dim=3,
+                        bounds=new_bounds,
+                        continuous_inds=[0],
+                        categorical_inds=[1],
+                        discrete_inds=[2],
+                    )
+            with self.assertRaisesRegex(
+                ValueError, "Expected `bounds` to have shape `2 x d`"
+            ):
+                validate_parameter_indices(
+                    dim=2,
+                    bounds=bounds,
+                    continuous_inds=[0],
+                    categorical_inds=[1],
+                    discrete_inds=[],
+                )
 
 
 class TestBaseTestProblems(BotorchTestCase):

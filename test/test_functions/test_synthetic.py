@@ -49,6 +49,7 @@ from torch import Tensor
 
 class DummySyntheticTestFunction(SyntheticTestFunction):
     dim = 2
+    continuous_inds = list(range(dim))
     _bounds = [(-1, 1), (-1, 1)]
     _optimal_value = 0
 
@@ -116,6 +117,7 @@ class TestCustomBounds(BotorchTestCase):
 
 class DummyConstrainedSyntheticTestFunction(ConstrainedSyntheticTestFunction):
     dim = 2
+    continuous_inds = list(range(dim))
     num_constraints = 1
     _bounds = [(-1, 1), (-1, 1)]
     _optimal_value = 0
