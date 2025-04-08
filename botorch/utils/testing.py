@@ -144,6 +144,8 @@ class BaseTestProblemTestCaseMixIn:
             f.to(device=self.device, dtype=dtype)
             X = torch.rand(*batch_shape, f.dim, device=self.device, dtype=dtype)
             X = f.bounds[0] + X * (f.bounds[1] - f.bounds[0])
+            for inds in [f.discrete_inds, f.categorical_inds]:
+                X[..., inds] = X[..., inds].round()
             res_forward = f(X)
             res_evaluate_true = f.evaluate_true(X)
             for method, res in {

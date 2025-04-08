@@ -110,6 +110,7 @@ class BraninCurrin(MultiObjectiveTestProblem):
     """
 
     dim = 2
+    continuous_inds = list(range(2))
     num_objectives = 2
     _bounds = [(0.0, 1.0), (0.0, 1.0)]
     _ref_point = [18.0, 6.0]
@@ -193,6 +194,7 @@ class DH(MultiObjectiveTestProblem, ABC):
         if dim < self._min_dim:
             raise ValueError(f"dim must be >= {self._min_dim}, but got dim={dim}!")
         self.dim = dim
+        self.continuous_inds = list(range(dim))
         self._bounds = [(0.0, 1.0), (self._x_1_lb, 1.0)] + [
             (-1.0, 1.0) for _ in range(dim - 2)
         ]
@@ -359,6 +361,7 @@ class DTLZ(MultiObjectiveTestProblem):
             )
         self.num_objectives = num_objectives
         self.dim = dim
+        self.continuous_inds = list(range(dim))
         self.k = self.dim - self.num_objectives + 1
         self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
         self._ref_point = [self._ref_val for _ in range(num_objectives)]
@@ -607,6 +610,7 @@ class GMM(MultiObjectiveTestProblem):
     """
 
     dim = 2
+    continuous_inds = list(range(dim))
     _bounds = [(0.0, 1.0), (0.0, 1.0)]
 
     def __init__(
@@ -710,6 +714,7 @@ class Penicillin(MultiObjectiveTestProblem):
 
     _max_hv = 2183455.909507436
     dim = 7
+    continuous_inds = list(range(dim))
     num_objectives = 3
     _bounds = [
         (60.0, 120.0),
@@ -844,6 +849,7 @@ class ToyRobust(MultiObjectiveTestProblem):
     """
 
     dim = 1
+    continuous_inds = list(range(dim))
     _bounds = [(0.0, 0.7)]
     _ref_point = [-6.1397, -8.1942]
     num_objectives = 2
@@ -888,6 +894,7 @@ class VehicleSafety(MultiObjectiveTestProblem):
     _max_hv = 246.81607081187002
     _bounds = [(1.0, 3.0)] * 5
     dim = 5
+    continuous_inds = list(range(dim))
     num_objectives = 3
 
     def evaluate_true(self, X: Tensor) -> Tensor:
@@ -964,6 +971,7 @@ class ZDT(MultiObjectiveTestProblem):
             )
         self.num_objectives = num_objectives
         self.dim = dim
+        self.continuous_inds = list(range(dim))
         self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
         super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
 
@@ -1114,6 +1122,7 @@ class CarSideImpact(MultiObjectiveTestProblem):
 
     num_objectives: int = 4
     dim: int = 7
+    continuous_inds = list(range(dim))
     _bounds = [
         (0.5, 1.5),
         (0.45, 1.35),
@@ -1198,6 +1207,7 @@ class BNH(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     """
 
     dim = 2
+    continuous_inds = list(range(dim))
     num_objectives = 2
     num_constraints = 2
     _bounds = [(0.0, 5.0), (0.0, 3.0)]
@@ -1222,6 +1232,7 @@ class CONSTR(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     """
 
     dim = 2
+    continuous_inds = list(range(dim))
     num_objectives = 2
     num_constraints = 2
     _bounds = [(0.1, 10.0), (0.0, 5.0)]
@@ -1245,6 +1256,7 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
     """
 
     dim = 2
+    continuous_inds = list(range(dim))
     num_objectives = 2
     num_constraints = 1
     _bounds = [(0.0, 1.0), (0.0, 1.0)]
@@ -1319,6 +1331,7 @@ class DiscBrake(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     """
 
     dim = 4
+    continuous_inds = list(range(dim))
     num_objectives = 2
     num_constraints = 4
     _bounds = [(55.0, 80.0), (75.0, 110.0), (1000.0, 3000.0), (11.0, 20.0)]
@@ -1384,6 +1397,7 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         if dim < 2:
             raise ValueError("dim must be greater than or equal to 2.")
         self.dim = dim
+        self.continuous_inds = list(range(dim))
         self._bounds = [(0.0, 1.0) for _ in range(self.dim)]
         super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
         self.constraint_noise_std = constraint_noise_std
@@ -1421,6 +1435,7 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     """
 
     dim = 6
+    continuous_inds = list(range(dim))
     num_constraints = 6
     num_objectives = 2
     _bounds = [
@@ -1462,6 +1477,7 @@ class SRN(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     """
 
     dim = 2
+    continuous_inds = list(range(dim))
     num_objectives = 2
     num_constraints = 2
     _bounds = [(-20.0, 20.0), (-20.0, 20.0)]
@@ -1490,6 +1506,7 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     """
 
     dim = 4
+    continuous_inds = list(range(dim))
     num_constraints = 4
     num_objectives = 2
     _bounds = [
