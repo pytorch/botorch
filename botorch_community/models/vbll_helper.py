@@ -28,10 +28,6 @@ def tp(M):
     return M.transpose(-1, -2)
 
 
-def sym(M):
-    return (M + tp(M)) / 2.0
-
-
 class Normal(torch.distributions.Normal):
     def __init__(self, loc: Tensor, chol: Tensor):
         """Normal distribution.
@@ -119,7 +115,8 @@ class Normal(torch.distributions.Normal):
 
 class DenseNormal(torch.distributions.MultivariateNormal):
     def __init__(self, loc: Tensor, cholesky: Tensor):
-        """Dense Normal distribution.
+        """Dense Normal distribution. Note that this is a multivariate normal used for
+        the distribution of the weights in the last layer of a neural network.
 
         Args:
             loc: Location of the distribution.
@@ -187,7 +184,8 @@ class DenseNormal(torch.distributions.MultivariateNormal):
 
 class LowRankNormal(torch.distributions.LowRankMultivariateNormal):
     def __init__(self, loc: Tensor, cov_factor: Tensor, diag: Tensor):
-        """Low Rank Normal distribution.
+        """Low Rank Normal distribution. Note that this is a multivariate normal used
+        for the distribution of the weights in the last layer of a neural network.
 
         Args:
             loc: Location of the distribution.
@@ -203,10 +201,6 @@ class LowRankNormal(torch.distributions.LowRankMultivariateNormal):
     @property
     def chol_covariance(self):
         raise NotImplementedError()
-
-    @property
-    def covariance(self):
-        return self.cov_factor @ tp(self.cov_factor) + torch.diag_embed(self.cov_diag)
 
     @property
     def inverse_covariance(self):
@@ -257,7 +251,8 @@ class LowRankNormal(torch.distributions.LowRankMultivariateNormal):
 
 class DenseNormalPrec(torch.distributions.MultivariateNormal):
     """A DenseNormal parameterized by the mean and the cholesky decomp of the precision
-    matrix.
+    matrix. Low Rank Normal distribution. Note that this is a multivariate normal used
+    for the distribution of the weights in the last layer of a neural network.
 
     This function also includes a recursive_update function which performs a recursive
     linear regression update with effecient cholesky factor updates.
@@ -336,10 +331,10 @@ def get_parameterization(p):
         "lowrank": LowRankNormal,
     }
 
-    if p in COV_PARAM_DICT:
+    try:
         return COV_PARAM_DICT[p]
-    else:
-        raise ValueError("Must specify a valid covariance parameterization.")
+    except KeyError:
+        raise ValueError(f"Invalid covariance parameterization: {p!r}")
 
 
 # following functions/classes are from
@@ -357,7 +352,6 @@ class VBLLReturn:
     predictive: Normal | DenseNormal
     train_loss_fn: Callable[[torch.Tensor], torch.Tensor]
     val_loss_fn: Callable[[torch.Tensor], torch.Tensor]
-    ood_scores: None | Callable[[torch.Tensor], torch.Tensor] = None
 
 
 class Regression(nn.Module):
@@ -446,6 +440,9 @@ class Regression(nn.Module):
                 * 0.0
             )
         elif parameterization == "lowrank":
+            if cov_rank is None:
+                raise ValueError("Must specify cov_rank for lowrank parameterization")
+
             self.W_logdiag = nn.Parameter(
                 torch.randn(out_features, in_features, dtype=self.dtype)
                 - 0.5 * np.log(in_features)

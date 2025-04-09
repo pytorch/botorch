@@ -69,50 +69,57 @@ class TestVBLLModel(BotorchTestCase):
                 f"Mismatch of backbone state_dict for key: {key}",
             )
 
-    def test_freezing_backbone(self) -> None:
+    def test_training(self) -> None:
         d, num_hidden = 4, 3
-        for freeze_backbone in (True, False):
-            test_backbone = torch.nn.Sequential(
-                torch.nn.Linear(d, num_hidden),
-                torch.nn.ReLU(),
-                torch.nn.Linear(num_hidden, num_hidden),
-                torch.nn.ELU(),
-            ).to(dtype=torch.float64)
+        # test for all parameterizations of the VBLL head
+        for covar_type in ("diagonal", "dense", "lowrank", "dense_precision"):
+            # test for both, frozen and unfrozen backbone
+            for freeze_backbone in (True, False):
+                test_backbone = torch.nn.Sequential(
+                    torch.nn.Linear(d, num_hidden),
+                    torch.nn.ReLU(),
+                    torch.nn.Linear(num_hidden, num_hidden),
+                    torch.nn.ELU(),
+                ).to(dtype=torch.float64)
 
-            model = VBLLModel(
-                backbone=copy.deepcopy(test_backbone),
-                hidden_features=num_hidden,  # match the output of the backbone
-            )
-
-            X, y = _reg_data_singletask(d)
-            optim_settings = {
-                "num_epochs": 1,
-                "lr": 10.0,  # large lr to make sure that the weights change
-                "freeze_backbone": freeze_backbone,
-            }
-            model.fit(X, y, optimization_settings=optim_settings)
-
-            if freeze_backbone:
-                # Ensure all parameters remain unchanged
-                model_bb_sdict = model.backbone.state_dict()
-                for key, val in test_backbone.state_dict().items():
-                    self.assertTrue(
-                        torch.allclose(val, model_bb_sdict[key], atol=1e-6),
-                        f"Parameter {key} changed with freeze_backbone=True",
-                    )
-            else:
-                # Ensure at least one parameter has changed
-                model_bb_sdict = model.backbone.state_dict()
-                changed = False
-                for key, val in test_backbone.state_dict().items():
-                    if not torch.allclose(val, model_bb_sdict[key], atol=1e-6):
-                        changed = True
-                        break
-                self.assertTrue(
-                    changed,
-                    "Expected at least one parameter to change, but all remained the"
-                    f"same with {freeze_backbone=}",
+                model = VBLLModel(
+                    backbone=copy.deepcopy(test_backbone),
+                    hidden_features=num_hidden,  # match the output of the backbone
+                    parameterization=covar_type,
+                    cov_rank=3 if covar_type == "lowrank" else None,
                 )
+
+                X, y = _reg_data_singletask(d)
+                optim_settings = {
+                    "num_epochs": 1,
+                    "lr": 10.0,  # large lr to make sure that the weights change
+                    "freeze_backbone": freeze_backbone,
+                }
+                model.fit(X, y, optimization_settings=optim_settings)
+
+                if freeze_backbone:
+                    # Ensure all parameters remain unchanged
+                    model_bb_sdict = model.backbone.state_dict()
+                    for key, val in test_backbone.state_dict().items():
+                        self.assertTrue(
+                            torch.allclose(val, model_bb_sdict[key], atol=1e-6),
+                            f"Parameter {key} changed with freeze_backbone=True."
+                            f"(Parameterization: {covar_type})",
+                        )
+                else:
+                    # Ensure at least one parameter has changed
+                    model_bb_sdict = model.backbone.state_dict()
+                    changed = False
+                    for key, val in test_backbone.state_dict().items():
+                        if not torch.allclose(val, model_bb_sdict[key], atol=1e-6):
+                            changed = True
+                            break
+                    self.assertTrue(
+                        changed,
+                        "Expected at least one parameter to change, but all remained "
+                        f"the same with {freeze_backbone=}"
+                        f"(Parameterization: {covar_type})",
+                    )
 
     def test_update_of_reg_weight(self) -> None:
         kl_scale = 2.0

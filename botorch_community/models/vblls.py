@@ -63,10 +63,10 @@ class SampleModel(nn.Module):
         """Forward pass through the sample network.
 
         Args:
-            x: Input of shape (batch_size, in_features).
+            x: Input as `batch_size x d`-dim Tensor.
 
         Returns:
-            Output of shape ((sample_shape), batch_size, out_features).
+            Output as `(sample_shape), batch_size, output_dim`-dim Tensor.
         """
         x = self.backbone(x)
 
@@ -80,13 +80,15 @@ class SampleModel(nn.Module):
 class VBLLNetwork(nn.Module):
     def __init__(
         self,
-        in_features: int = 2,
+        in_features: int = None,
         hidden_features: int = 64,
         out_features: int = 1,
         num_layers: int = 3,
         parameterization: str = "dense",
+        cov_rank: int | None = None,
         prior_scale: float = 1.0,
         wishart_scale: float = 0.01,
+        clamp_noise_init: bool = True,
         kl_scale: float = 1.0,
         backbone: nn.Module | None = None,
         activation: nn.Module = nn.ELU(),
@@ -108,7 +110,7 @@ class VBLLNetwork(nn.Module):
                 layer. Defaults to 0.01.
             kl_scale: Weighting factor for the Kullback-Leibler (KL) divergence term in
                 the loss. Defaults to 1.0.
-            backbone: A predefined feature extractor to be used before the MLP layers.
+            backbone: A predefined feature extractor to be used before the VBLL layer.
                 If None, a default MLP structure is used. Defaults to None.
             activation: Activation function applied between hidden layers.
                 Defaults to `nn.ELU()`.
@@ -120,7 +122,6 @@ class VBLLNetwork(nn.Module):
             last layer. If not, we use a default MLP structure.
         """
         super().__init__()
-        self.num_inputs = in_features
         self.num_outputs = out_features
 
         if device is None:
@@ -132,6 +133,11 @@ class VBLLNetwork(nn.Module):
         self.kl_scale = kl_scale
 
         if backbone is None:
+            if in_features is None:
+                raise ValueError(
+                    "Please specify the input dimension in the constructor."
+                )
+
             hidden_layers = [
                 nn.Sequential(
                     nn.Linear(hidden_features, hidden_features),
@@ -143,9 +149,24 @@ class VBLLNetwork(nn.Module):
                 nn.Linear(in_features, hidden_features),
                 self.activation,
                 *hidden_layers,
-            ).to(dtype=torch.float64)
+            ).to(dtype=torch.float64, device=self.device)
+            self.num_inputs = in_features
+
         else:
             self.backbone = backbone
+
+            # Try to infer input size if backbone is a Sequential and starts with Linear
+            if isinstance(backbone, nn.Sequential) and isinstance(
+                backbone[0], nn.Linear
+            ):
+                self.num_inputs = backbone[0].in_features
+            elif in_features is not None:
+                self.num_inputs = in_features
+            else:
+                raise ValueError(
+                    "Cannot infer input dimension from provided backbone. "
+                    "Please specify `in_features` explicitly."
+                )
 
         # could be changed to other vbll regression layers
         self.head = Regression(
@@ -155,16 +176,18 @@ class VBLLNetwork(nn.Module):
             prior_scale=prior_scale,
             wishart_scale=wishart_scale,
             parameterization=parameterization,
-        )
+            cov_rank=cov_rank,
+            clamp_noise_init=clamp_noise_init,
+        ).to(dtype=torch.float64, device=self.device)
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward pass through the VBLL network.
 
         Args:
-            x: Input tensor of shape (batch_size, in_features).
+            x: Input as `batch_shape x in_features`-dim Tensor.
 
         Returns:
-            Output tensor of shape (batch_size, out_features).
+            Output as `batch_shape x out_features`-dim Tensor.
         """
         x = self.backbone(x)
         return self.head(x)
@@ -241,8 +264,8 @@ class VBLLModel(AbstractBLLModel):
                 If None, a single sample is drawn. Defaults to None.
 
         Returns:
-            A module that takes an input tensor `x` of shape (batch_size, num_inputs)
-            and returns an output of shape ((sample_shape), batch_size, num_outputs).
+            A nn.Module that takes an input as `batch_size x num_inputs`-dim Tensor and
+            returns a `(sample_shape), batch_size, output_dim`-dim Tensor.
         """
         return self.model.sample_posterior_function(sample_shape)
 
@@ -250,11 +273,11 @@ class VBLLModel(AbstractBLLModel):
         """Forward pass through the VBLL model.
 
         Args:
-            X: Input with dimensions (batch_size, num_inputs).
+            X: Input as `batch_size x num_inputs`-dim Tensor.
 
         Returns:
-            Normal distribution with (batch_size, num_outputs) as the mean and
-            (batch_size, num_outputs) as variance.
+            Normal distribution with `batch_size x num_outputs` as the mean and
+            `batch_size x num_outputs` as variance.
         """
         return self.model(X).predictive
 
@@ -270,11 +293,11 @@ class VBLLModel(AbstractBLLModel):
         assume that the last point in the training data is the new point.
 
         Args:
-            train_X: The input training data, expected to be a PyTorch tensor of shape
-                (num_samples, num_features).
+            train_X: The input training data, expected to be a Tensor of shape
+                `num_samples x d`.
 
-            train_y: The target values for training, expected to be a PyTorch tensor of
-                shape (num_samples, num_outputs).
+            train_y: The target values for training, expected to be a Tensor of
+                shape `num_samples x num_outputs`.
 
             optimization_settings: A dict containing optimization-related settings.
                 If a key is missing, default values will be used. Available settings:
