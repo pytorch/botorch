@@ -34,9 +34,9 @@ class BLLPosterior(Posterior):
         super().__init__()
         self.posterior = posterior
         self.model = model
-        self.old_model = model
         self.output_dim = output_dim
         self.X = X
+        self._is_mt = output_dim > 1
 
     def rsample(
         self,
@@ -45,26 +45,35 @@ class BLLPosterior(Posterior):
         """
         For VBLLs, we need to sample from W and then create the
         generalized linear model to get posterior samples.
+
+        Args:
+            sample_shape: The shape of the samples to be drawn. If None, a single
+                sample is drawn. Otherwise, the shape should be a tuple of integers
+                representing the desired dimensions.
+
+        Returns:
+            A `(sample_shape) x N x output_dim`-dim Tensor of maximum posterior samples.
         """
         n_samples = 1 if sample_shape is None else math.prod(sample_shape)
         samples_list = [self.model.sample()(self.X) for _ in range(n_samples)]
         samples = torch.stack(samples_list, dim=0)
-        new_shape = samples.shape[:-1]
-        return samples.reshape(*new_shape, -1, self.output_dim)
+
+        # reshape to [sample_shape, n, output_dim]
+        sample_shape = torch.Size([1]) if sample_shape is None else sample_shape
+        new_shape = sample_shape + samples.shape[-2:]
+        return samples.reshape(new_shape)
 
     @property
     def mean(self) -> Tensor:
         """The posterior mean."""
-        post_mean = self.posterior.mean.squeeze(-1)
-        shape = post_mean.shape
-        return post_mean.reshape(*shape[:-1], -1, self.output_dim)
+        # Directly return the mean from the underlying posterior
+        return self.posterior.mean
 
     @property
     def variance(self) -> Tensor:
         """The posterior variance."""
-        post_var = self.posterior.variance.squeeze(-1)
-        shape = post_var.shape
-        return post_var.reshape(*shape[:-1], -1, self.output_dim)
+        # Directly return the variance from the underlying posterior
+        return self.posterior.variance
 
     @property
     def device(self) -> torch.device:
