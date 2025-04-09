@@ -426,7 +426,7 @@ class VBLLModel(AbstractBLLModel):
         # load best model
         if best_model_state is not None:
             self.model.load_state_dict(best_model_state)
-            logger.info("Early stopping at epoch ", epoch, " with loss ", best_loss)
+            logger.info(f"Early stopping at epoch {epoch} with loss {best_loss}.")
 
     def set_reg_weight(self, new_weight: float):
         self.model.head.regularization_weight = new_weight

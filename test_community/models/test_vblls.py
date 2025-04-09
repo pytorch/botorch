@@ -8,6 +8,7 @@ import copy
 
 import torch
 from botorch.utils.testing import BotorchTestCase
+from botorch_community.models.blls import AbstractBLLModel
 from botorch_community.models.vblls import VBLLModel
 from botorch_community.posteriors.bll_posterior import BLLPosterior
 
@@ -25,6 +26,13 @@ def _get_fast_training_settings():
     }
 
 
+class TestAbstractBLLClass(BotorchTestCase):
+    def test_cannot_instantiate_abstract_class(self) -> None:
+        # Instantiating AbstractBLLModel directly should raise TypeError
+        with self.assertRaises(TypeError):
+            _ = AbstractBLLModel()
+
+
 class TestVBLLModel(BotorchTestCase):
     def test_initialization(self) -> None:
         d, num_hidden, num_outputs, num_layers = 2, 3, 1, 4
@@ -33,9 +41,11 @@ class TestVBLLModel(BotorchTestCase):
             hidden_features=num_hidden,
             num_layers=num_layers,
             out_features=num_outputs,
+            device=self.device,
         )
         self.assertEqual(model.num_inputs, d)
         self.assertEqual(model.num_outputs, num_outputs)
+        self.assertEqual(model.device, self.device)
 
         hidden_layer_count = sum(
             isinstance(layer, torch.nn.Linear)
@@ -48,6 +58,18 @@ class TestVBLLModel(BotorchTestCase):
             hidden_layer_count,
             num_layers,
             f"Expected {num_layers} hidden layers, but got {hidden_layer_count}.",
+        )
+
+        with self.assertRaises(ValueError):
+            _ = VBLLModel(
+                in_features=None,
+            )
+
+        # test printing
+        self.assertEqual(
+            str(model),
+            str(model.model),
+            "model is a wrapper hence str(model) should be equal to str(model.model).",
         )
 
     def test_backbone_initialization(self) -> None:
@@ -68,6 +90,20 @@ class TestVBLLModel(BotorchTestCase):
                 ),
                 f"Mismatch of backbone state_dict for key: {key}",
             )
+
+        # no Linear layer -> need explicit input size
+        test_backbone = torch.nn.Sequential(
+            torch.nn.ReLU(),
+            torch.nn.Linear(d, num_hidden),
+            torch.nn.ReLU(),
+            torch.nn.Linear(num_hidden, num_hidden),
+        )
+        model = VBLLModel(
+            backbone=test_backbone, in_features=d, hidden_features=num_hidden
+        )
+
+        with self.assertRaises(ValueError):
+            _ = VBLLModel(backbone=test_backbone, hidden_features=num_hidden)
 
     def test_training(self) -> None:
         d, num_hidden = 4, 3
@@ -118,6 +154,104 @@ class TestVBLLModel(BotorchTestCase):
                         changed,
                         "Expected at least one parameter to change, but all remained "
                         f"the same with {freeze_backbone=}"
+                        f"(Parameterization: {covar_type})",
+                    )
+
+    def test_early_stopping(self) -> None:
+        d, num_hidden = 4, 3
+        # test for all parameterizations of the VBLL head
+        for covar_type in ("diagonal", "dense", "lowrank", "dense_precision"):
+            # test for both, frozen and unfrozen backbone
+            test_backbone = torch.nn.Sequential(
+                torch.nn.Linear(d, num_hidden),
+                torch.nn.ReLU(),
+                torch.nn.Linear(num_hidden, num_hidden),
+                torch.nn.ELU(),
+            ).to(dtype=torch.float64)
+
+            model = VBLLModel(
+                backbone=copy.deepcopy(test_backbone),
+                hidden_features=num_hidden,  # match the output of the backbone
+                parameterization=covar_type,
+                cov_rank=3 if covar_type == "lowrank" else None,
+            )
+
+            X, y = _reg_data_singletask(d)
+            optim_settings = {
+                "num_epochs": 3,
+                "patience": 1,
+                "lr": 0.0,  # no learning rate
+            }
+            with self.assertLogs(logger="botorch", level="INFO") as logs_cm:
+                model.fit(X, y, optimization_settings=optim_settings)
+
+            msg_contained = False
+            for msg in logs_cm.output:
+                if "Early stopping at epoch" in msg:
+                    msg_contained = True
+                    break
+
+            self.assertTrue(
+                msg_contained,
+                "Expected early stopping log message not found.",
+            )
+
+    def test_initialization_of_model_parameters(self) -> None:
+        d, num_hidden = 4, 3
+        for covar_type in ("diagonal", "dense", "lowrank", "dense_precision"):
+            # test for both, frozen and unfrozen backbone
+            for freeze_backbone in (True, False):
+                test_backbone = torch.nn.Sequential(
+                    torch.nn.Linear(d, num_hidden),
+                    torch.nn.ReLU(),
+                    torch.nn.Linear(num_hidden, num_hidden),
+                    torch.nn.ELU(),
+                ).to(dtype=torch.float64)
+
+                model = VBLLModel(
+                    backbone=copy.deepcopy(test_backbone),
+                    hidden_features=num_hidden,  # match the output of the backbone
+                    parameterization=covar_type,
+                    cov_rank=3 if covar_type == "lowrank" else None,
+                )
+
+                X, y = _reg_data_singletask(d)
+                optim_settings = {
+                    "num_epochs": 1,
+                    "lr": 10.0,  # large lr to make sure that the weights change
+                    "freeze_backbone": freeze_backbone,
+                }
+                model.fit(X, y, optimization_settings=optim_settings)
+
+                # store the initial state dict
+                state_dict = model.model.state_dict()
+
+                # use state_dict when fitting new model
+                model2 = VBLLModel(
+                    backbone=copy.deepcopy(test_backbone),
+                    hidden_features=num_hidden,  # match the output of the backbone
+                    parameterization=covar_type,
+                    cov_rank=3 if covar_type == "lowrank" else None,
+                )
+
+                optim_settings = {
+                    "num_epochs": 0,  # skip training
+                    "lr": 10.0,
+                    "freeze_backbone": freeze_backbone,
+                }
+                model2.fit(
+                    X,
+                    y,
+                    optimization_settings=optim_settings,
+                    initialization_params=state_dict,
+                )
+
+                # check that the parameters are the same
+                model2_sdict = model2.model.state_dict()
+                for key, val in state_dict.items():
+                    self.assertTrue(
+                        torch.allclose(val, model2_sdict[key], atol=1e-6),
+                        f"Parameter {key} changed with freeze_backbone=True."
                         f"(Parameterization: {covar_type})",
                     )
 
@@ -242,3 +376,9 @@ class TestVBLLModel(BotorchTestCase):
                 f"Expected variance predictions to have shape {expected_shape},"
                 f"but got {post.mean.shape}.",
             )
+
+        # test invalid shape
+        X = torch.rand(torch.Size([2, 5]) + torch.Size([3, d]), dtype=torch.float64)
+
+        with self.assertRaises(ValueError):
+            _ = model.posterior(X)

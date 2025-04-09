@@ -34,12 +34,12 @@ class AbstractBLLModel(Model, ABC):
 
     @abstractmethod
     def __call__(self, X: Tensor) -> Normal | DenseNormal:
-        raise NotImplementedError
+        pass  # pragma: no cover
 
     @abstractmethod
     def fit(self, *args, **kwargs):
-        raise NotImplementedError
+        pass  # pragma: no cover
 
     @abstractmethod
     def sample(self, sample_shape: torch.Size | None = None) -> nn.Module:
-        raise NotImplementedError
+        pass  # pragma: no cover
