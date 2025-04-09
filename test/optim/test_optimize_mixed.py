@@ -93,7 +93,7 @@ class QuadraticDeterministicModel(DeterministicModel):
         return -(X - self.root).square().sum(dim=-1, keepdim=True)
 
 
-class TestOptimizeAcqfMixed( BotorchTestCase):
+class TestOptimizeAcqfMixed(BotorchTestCase):
     def setUp(self):
         super().setUp()
         self.single_bound = torch.tensor([[0.0], [1.0]], device=self.device)
