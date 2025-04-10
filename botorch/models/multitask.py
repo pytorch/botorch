@@ -186,6 +186,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         if outcome_transform == DEFAULT:
             outcome_transform = Standardize(m=1, batch_shape=train_X.shape[:-2])
         if outcome_transform is not None:
+            outcome_transform.train()
             train_Y, train_Yvar = outcome_transform(
                 Y=train_Y, Yvar=train_Yvar, X=transformed_X
             )
@@ -433,6 +434,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
+            outcome_transform.train()
             train_Y, _ = outcome_transform(train_Y, X=transformed_X)
 
         self._validate_tensor_args(X=transformed_X, Y=train_Y)

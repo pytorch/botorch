@@ -230,6 +230,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                     output_shape=train_Y.shape[-num_output_dims:],
                     batch_shape=batch_shape,
                 )
+            outcome_transform.train()
             train_Y, _ = outcome_transform(train_Y, X=train_X)
 
         self._aug_batch_shape = batch_shape

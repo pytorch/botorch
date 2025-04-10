@@ -240,6 +240,7 @@ class LatentKroneckerGP(GPyTorchModel, ExactGP, FantasizeMixin):
         if outcome_transform == DEFAULT:
             outcome_transform = MinMaxStandardize(batch_shape=batch_shape)
         if outcome_transform is not None:
+            outcome_transform.train()
             # transform outputs once and keep the results
             train_Y = outcome_transform(train_Y.unsqueeze(-1), X=transformed_X)[
                 0

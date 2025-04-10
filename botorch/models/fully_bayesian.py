@@ -570,6 +570,7 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
+            outcome_transform.train()
             train_Y, train_Yvar = outcome_transform(
                 Y=train_Y, Yvar=train_Yvar, X=transformed_X
             )
