@@ -149,7 +149,8 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 inference (that is, the `Posterior` obtained by calling
                 `.posterior` on the model will be on the original scale). We use a
                 `Standardize` transform if no `outcome_transform` is specified.
-                Pass down `None` to use no outcome transform.
+                Pass down `None` to use no outcome transform. Note that `.train()` will
+                be called on the outcome transform during instantiation of the model.
             input_transform: An input transform that is applied in the model's
                 forward pass.
         """

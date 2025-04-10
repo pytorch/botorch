@@ -153,6 +153,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
                 `Standardize` transform if no `outcome_transform` is specified.
                 Pass down `None` to use no outcome transform. NOTE: Standardization
                 should be applied in a stratified fashion, separately for each task.
+                Note that `.train()` will be called on the outcome transform during
+                instantiation of the model.
             input_transform: An input transform that is applied in the model's
                 forward pass.
 
@@ -401,8 +403,8 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
         data_covar_module: Module | None = None,
         task_covar_prior: Prior | None = None,
         rank: int | None = None,
-        input_transform: InputTransform | None = None,
         outcome_transform: OutcomeTransform | None = None,
+        input_transform: InputTransform | None = None,
         **kwargs: Any,
     ) -> None:
         r"""
@@ -419,6 +421,17 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel, FantasizeMixin):
                 omitted, uses `LKJCovariancePrior` with `eta` parameter as specified
                 in the keyword arguments (if not specified, use `eta=1.5`).
             rank: The rank of the ICM kernel. If omitted, use a full rank kernel.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform. NOTE: Standardization
+                should be applied in a stratified fashion, separately for each task.
+                Note that `.train()` will be called on the outcome transform during
+                instantiation of the model.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
             kwargs: Additional arguments to override default settings of priors,
                 including:
                 - eta: The eta parameter on the default LKJ task_covar_prior.
