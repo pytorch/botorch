@@ -224,6 +224,8 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
                 `.posterior` on the model will be on the original scale).
+                Note that `.train()` will be called on the outcome transform during
+                instantiation of the model.
             input_transform: An input transform that is applied to the inputs `X`
                 in the model's forward pass.
             pyro_model: Optional `PyroModel` that has the same signature as

@@ -324,6 +324,7 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP, FantasizeMixin):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
+            outcome_transform.train()
             train_Y, _ = outcome_transform(train_Y)
         self._validate_tensor_args(transformed_X, train_Y)
         train_Y = train_Y.squeeze(-1)

@@ -203,6 +203,10 @@ class LatentKroneckerGP(GPyTorchModel, ExactGP, FantasizeMixin):
                 If omitted, use a `MaternKernel`.
             input_transform: An input transform that is applied to X.
             outcome_transform: An outcome transform that is applied to Y.
+                Note that `.train()` will be called on the outcome transform during
+                instantiation of the model.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
         """
         with torch.no_grad():
             # transform inputs here to check resulting shapes
@@ -240,6 +244,7 @@ class LatentKroneckerGP(GPyTorchModel, ExactGP, FantasizeMixin):
         if outcome_transform == DEFAULT:
             outcome_transform = MinMaxStandardize(batch_shape=batch_shape)
         if outcome_transform is not None:
+            outcome_transform.train()
             # transform outputs once and keep the results
             train_Y = outcome_transform(train_Y.unsqueeze(-1), X=transformed_X)[
                 0
