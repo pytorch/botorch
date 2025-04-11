@@ -694,3 +694,40 @@ class TestGetAcquisitionFunction(BotorchTestCase):
                 mc_samples=self.mc_samples,
                 seed=self.seed,
             )
+
+    @mock.patch(f"{logei.__name__}.qLogProbabilityOfFeasibility")
+    def test_GetQLogPF(self, mock_acqf):
+        acqf_name = "qLogPF"
+        # basic test
+        n = len(self.X_observed)
+        mean = torch.arange(n, dtype=torch.double).view(-1, 1)
+        var = torch.ones_like(mean)
+        self.model = MockModel(MockPosterior(mean=mean, variance=var))
+        common_kwargs = {
+            "model": self.model,
+            "objective": self.objective,
+            "X_observed": self.X_observed,
+            "X_pending": self.X_pending,
+            "mc_samples": self.mc_samples,
+            "seed": self.seed,
+        }
+        # with constraints
+        upper_bound = self.Y[0, 0] + 1 / 2  # = 1.5
+        constraints = [lambda samples: samples[..., 0] - upper_bound]
+        eta = math.pi * 1e-2  # testing non-standard eta
+        acqf = get_acquisition_function(
+            acquisition_function_name=acqf_name,
+            **common_kwargs,
+            constraints=constraints,
+            eta=eta,
+        )
+        self.assertEqual(acqf, mock_acqf.return_value)
+        mock_acqf.assert_called_with(
+            model=self.model,
+            constraints=constraints,
+            sampler=mock.ANY,
+            objective=self.objective,
+            posterior_transform=None,
+            X_pending=self.X_pending,
+            eta=eta,
+        )
