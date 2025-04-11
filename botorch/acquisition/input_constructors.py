@@ -31,6 +31,7 @@ from botorch.acquisition.analytic import (
 from botorch.acquisition.bayesian_active_learning import (
     qBayesianActiveLearningByDisagreement,
 )
+from botorch.acquisition.cached_cholesky import supports_cache_root
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.joint_entropy_search import qJointEntropySearch
@@ -644,7 +645,7 @@ def construct_inputs_qLogNEI(
     sampler: MCSampler | None = None,
     X_baseline: Tensor | None = None,
     prune_baseline: bool | None = True,
-    cache_root: bool | None = True,
+    cache_root: bool | None = None,
     constraints: list[Callable[[Tensor], Tensor]] | None = None,
     eta: Tensor | float = 1e-3,
     fat: bool = True,
@@ -692,6 +693,8 @@ def construct_inputs_qLogNEI(
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
+    if cache_root is None:
+        cache_root = supports_cache_root(model)
     return {
         **construct_inputs_qNEI(
             model=model,
