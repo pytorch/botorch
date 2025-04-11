@@ -355,9 +355,19 @@ def compute_log_prob_feas_from_bounds(
             equal in dimension to con_upper_inds.
         con_both: 2d Tensor of "both" bounds on the constraints
             equal in length to con_both_inds.
+
     Returns:
         A `b`-dim tensor of log feasibility probabilities
     """
+    # indices are integers, so we don't cast the type
+    con_upper_inds = con_upper_inds.to(device=means.device)
+    con_lower_inds = con_lower_inds.to(device=means.device)
+    con_both_inds = con_both_inds.to(device=means.device)
+
+    con_lower = con_lower.to(device=means.device, dtype=means.dtype)
+    con_upper = con_upper.to(device=means.device, dtype=means.dtype)
+    con_both = con_both.to(device=means.device, dtype=means.dtype)
+
     log_prob = torch.zeros_like(means[..., 0])
     if len(con_lower_inds) > 0:
         i = con_lower_inds
