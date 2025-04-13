@@ -53,6 +53,7 @@ class DummyMOProblem(MultiObjectiveTestProblem):
     _num_objectives = 2
     _bounds = [(0.0, 1.0)] * 2
     dim = 2
+    continuous_inds = list(range(dim))
 
     def evaluate_true(self, X):
         f_X = X + 2

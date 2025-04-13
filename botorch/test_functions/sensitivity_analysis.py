@@ -41,6 +41,7 @@ class Ishigami(SyntheticTestFunction):
         if b not in (0.1, 0.05):
             raise ValueError("b parameter should be 0.1 or 0.05")
         self.dim = 3
+        self.continuous_inds = list(range(self.dim))
         if b == 0.1:
             self.si = [0.3138, 0.4424, 0]
             self.si_t = [0.558, 0.442, 0.244]
@@ -144,6 +145,7 @@ class Gsobol(SyntheticTestFunction):
         """
         self._optimizers = None
         self.dim = dim
+        self.continuous_inds = list(range(dim))
         self._bounds = [(0, 1) for _ in range(self.dim)]
         if self.dim == 6:
             self.a = [0, 0.5, 3, 9, 99, 99]
@@ -228,6 +230,7 @@ class Morris(SyntheticTestFunction):
         """
         self._optimizers = None
         self.dim = 20
+        self.continuous_inds = list(range(self.dim))
         self._bounds = [(0, 1) for _ in range(self.dim)]
         self.si = [
             0.005,

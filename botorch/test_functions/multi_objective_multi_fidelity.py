@@ -50,6 +50,7 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
     """
 
     dim = 3
+    continuous_inds = list(range(3))
     num_objectives = 2
     _bounds = [(0.0, 1.0) for _ in range(dim)]
     _ref_point = [0, 0]
@@ -110,6 +111,7 @@ class MOMFPark(MultiObjectiveTestProblem):
     """
 
     dim = 5
+    continuous_inds = list(range(5))
     num_objectives = 2
     _bounds = [(0.0, 1.0) for _ in range(dim)]
     _ref_point = [0, 0]

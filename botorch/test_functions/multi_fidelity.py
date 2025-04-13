@@ -40,6 +40,7 @@ class AugmentedBranin(SyntheticTestFunction):
     """
 
     dim = 3
+    continuous_inds = list(range(dim))
     _bounds = [(-5.0, 10.0), (0.0, 15.0), (0.0, 1.0)]
     _optimal_value = 0.397887
     _optimizers = [  # this is a subset, ther are infinitely many optimizers
@@ -76,7 +77,8 @@ class AugmentedHartmann(SyntheticTestFunction):
     """
 
     dim = 7
-    _bounds = [(0.0, 1.0) for _ in range(7)]
+    continuous_inds = list(range(dim))
+    _bounds = [(0.0, 1.0) for _ in range(dim)]
     _optimal_value = -3.32237
     _optimizers = [(0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573, 1.0)]
     _check_grad_at_opt = False
@@ -157,6 +159,7 @@ class AugmentedRosenbrock(SyntheticTestFunction):
                 "AugmentedRosenbrock must be defined it at least 3 dimensions"
             )
         self.dim = dim
+        self.continuous_inds = list(range(dim))
         self._bounds = [(-5.0, 10.0) for _ in range(self.dim)]
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
@@ -194,6 +197,7 @@ class WingWeightMultiFidelity(SyntheticTestFunction):
     """
 
     dim = 11
+    continuous_inds = list(range(dim))
     _num_fidelities = 1
     _bounds = [
         (150.0, 200.0),  # s_w
@@ -284,6 +288,7 @@ class BoreholeMultiFidelity(SyntheticTestFunction):
     """
 
     dim = 9
+    continuous_inds = list(range(dim))
     _num_fidelities = 1
     _bounds = [
         (0.05, 0.15),  # r_w
