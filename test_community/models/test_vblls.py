@@ -72,6 +72,16 @@ class TestVBLLModel(BotorchTestCase):
             "model is a wrapper hence str(model) should be equal to str(model.model).",
         )
 
+        with self.assertRaises(ValueError):
+            model = VBLLModel(
+                in_features=d,
+                hidden_features=num_hidden,
+                num_layers=num_layers,
+                out_features=num_outputs,
+                device=self.device,
+                parameterization="lowrank",  # lowrank requires cov_rank
+            )
+
     def test_backbone_initialization(self) -> None:
         d, num_hidden = 4, 3
         test_backbone = torch.nn.Sequential(
@@ -106,7 +116,7 @@ class TestVBLLModel(BotorchTestCase):
             _ = VBLLModel(backbone=test_backbone, hidden_features=num_hidden)
 
     def test_training(self) -> None:
-        d, num_hidden = 4, 3
+        d, num_hidden = 4, 4
         # test for all parameterizations of the VBLL head
         for covar_type in ("diagonal", "dense", "lowrank", "dense_precision"):
             # test for both, frozen and unfrozen backbone
@@ -122,7 +132,7 @@ class TestVBLLModel(BotorchTestCase):
                     backbone=copy.deepcopy(test_backbone),
                     hidden_features=num_hidden,  # match the output of the backbone
                     parameterization=covar_type,
-                    cov_rank=3 if covar_type == "lowrank" else None,
+                    cov_rank=2 if covar_type == "lowrank" else None,
                 )
 
                 X, y = _reg_data_singletask(d)
@@ -158,7 +168,7 @@ class TestVBLLModel(BotorchTestCase):
                     )
 
     def test_early_stopping(self) -> None:
-        d, num_hidden = 4, 3
+        d, num_hidden = 4, 4
         # test for all parameterizations of the VBLL head
         for covar_type in ("diagonal", "dense", "lowrank", "dense_precision"):
             # test for both, frozen and unfrozen backbone
@@ -173,7 +183,7 @@ class TestVBLLModel(BotorchTestCase):
                 backbone=copy.deepcopy(test_backbone),
                 hidden_features=num_hidden,  # match the output of the backbone
                 parameterization=covar_type,
-                cov_rank=3 if covar_type == "lowrank" else None,
+                cov_rank=2 if covar_type == "lowrank" else None,
             )
 
             X, y = _reg_data_singletask(d)
@@ -197,7 +207,7 @@ class TestVBLLModel(BotorchTestCase):
             )
 
     def test_initialization_of_model_parameters(self) -> None:
-        d, num_hidden = 4, 3
+        d, num_hidden = 4, 4
         for covar_type in ("diagonal", "dense", "lowrank", "dense_precision"):
             # test for both, frozen and unfrozen backbone
             for freeze_backbone in (True, False):
@@ -212,7 +222,7 @@ class TestVBLLModel(BotorchTestCase):
                     backbone=copy.deepcopy(test_backbone),
                     hidden_features=num_hidden,  # match the output of the backbone
                     parameterization=covar_type,
-                    cov_rank=3 if covar_type == "lowrank" else None,
+                    cov_rank=2 if covar_type == "lowrank" else None,
                 )
 
                 X, y = _reg_data_singletask(d)
@@ -231,7 +241,7 @@ class TestVBLLModel(BotorchTestCase):
                     backbone=copy.deepcopy(test_backbone),
                     hidden_features=num_hidden,  # match the output of the backbone
                     parameterization=covar_type,
-                    cov_rank=3 if covar_type == "lowrank" else None,
+                    cov_rank=2 if covar_type == "lowrank" else None,
                 )
 
                 optim_settings = {
@@ -382,3 +392,72 @@ class TestVBLLModel(BotorchTestCase):
 
         with self.assertRaises(ValueError):
             _ = model.posterior(X)
+
+    def test_validation_loss(self) -> None:
+        """Test that the model properly handles validation data during fitting."""
+        d, num_hidden = 4, 4
+
+        # Test for multiple parameterizations of the VBLL head
+        for covar_type in ("diagonal", "dense", "lowrank", "dense_precision"):
+            # Create model
+            model = VBLLModel(
+                in_features=d,
+                hidden_features=num_hidden,
+                out_features=1,
+                num_layers=1,
+                parameterization=covar_type,
+                cov_rank=2 if covar_type == "lowrank" else None,
+            )
+
+            # Generate training and validation data
+            X_train, y_train = _reg_data_singletask(d, n=10)
+            X_val, y_val = _reg_data_singletask(d, n=5)
+
+            # Fast training settings for testing
+            optim_settings = {
+                "num_epochs": 3,
+                "patience": 1,
+                "lr": 0.00,
+            }
+
+            # Test with validation data
+            with self.assertLogs(logger="botorch", level="INFO") as logs_cm:
+                model.fit(
+                    X_train,
+                    y_train,
+                    val_X=X_val,
+                    val_y=y_val,
+                    optimization_settings=optim_settings,
+                )
+
+            # Check for early stopping message in logs
+            msg_contained = False
+            for msg in logs_cm.output:
+                if "Early stopping at epoch" in msg:
+                    msg_contained = True
+                    break
+
+            self.assertTrue(
+                msg_contained,
+                f"Expected early stopping log message not found"
+                f"with parameterization {covar_type}.",
+            )
+
+            # providing only val data X or only y should raise error
+            with self.assertRaises(ValueError):
+                model.fit(
+                    X_train,
+                    y_train,
+                    val_X=X_val,
+                    val_y=None,
+                    optimization_settings=optim_settings,
+                )
+
+            with self.assertRaises(ValueError):
+                model.fit(
+                    X_train,
+                    y_train,
+                    val_X=None,
+                    val_y=y_val,
+                    optimization_settings=optim_settings,
+                )

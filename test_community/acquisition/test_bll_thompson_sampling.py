@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import unittest.mock as mock
+
 import numpy as np
 
 import torch
@@ -137,6 +139,26 @@ class TestBLLMaxPosteriorSampling(BotorchTestCase):
         self.assertEqual(X_next.shape, torch.Size([num_samples, num_inputs]))
 
         # Check that all samples are within bounds
-        for i in range(3):  # Three dimensions
+        for i in range(num_inputs):
             self.assertTrue(torch.all(X_next[:, i] >= bounds[0, i]))
             self.assertTrue(torch.all(X_next[:, i] <= bounds[1, i]))
+
+    def test_scipy_optimization_failures(self) -> None:
+        """Test error handling when all optimization attempts fail."""
+
+        tkwargs = {"device": self.device, "dtype": torch.float64}
+        num_inputs = 2
+        num_hidden = 3
+        model = _get_vbll_model(num_inputs=num_inputs, num_hidden=num_hidden, **tkwargs)
+        sampler = BLLMaxPosteriorSampling(model=model, num_restarts=3)
+
+        # Create a mock with success=False
+        mock_result = mock.Mock()
+        mock_result.success = False
+        mock_result.x = np.zeros(num_inputs)
+        mock_result.fun = 0.0
+
+        # patch for scipy.optimize.minimize
+        with mock.patch("scipy.optimize.minimize", return_value=mock_result):
+            with self.assertRaises(RuntimeError):
+                sampler(num_samples=1)

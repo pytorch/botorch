@@ -285,12 +285,13 @@ class VBLLModel(AbstractBLLModel):
         self,
         train_X: Tensor,
         train_y: Tensor,
+        val_X: Tensor | None = None,
+        val_y: Tensor | None = None,
         optimization_settings: dict | None = None,
         initialization_params: dict | None = None,
     ):
         """
-        Fits the model to the given training data. Note that for continual learning, we
-        assume that the last point in the training data is the new point.
+        Fits the model to the given training data.
 
         Args:
             train_X: The input training data, expected to be a Tensor of shape
@@ -298,6 +299,12 @@ class VBLLModel(AbstractBLLModel):
 
             train_y: The target values for training, expected to be a Tensor of
                 shape `num_samples x num_outputs`.
+
+            val_X: The optional input validation data, expected to be a Tensor of shape
+                `num_val_samples x d`.
+
+            val_y: The optional target values for validation, expected to be a Tensor of
+                shape `num_val_samples x num_outputs`.
 
             optimization_settings: A dict containing optimization-related settings.
                 If a key is missing, default values will be used. Available settings:
@@ -319,6 +326,16 @@ class VBLLModel(AbstractBLLModel):
         Returns:
             The function trains the model in place and does not return a value.
         """
+
+        if (val_X is None) != (val_y is None):
+            missing = "val_X" if val_X is None else "val_y"
+            provided = "val_y" if val_X is None else "val_X"
+
+            raise ValueError(
+                f"Validation error: {missing} is None while {provided} is provided. "
+                "Either both validation inputs (val_X and val_y) must be provided, or"
+                "neither."
+            )
 
         # Default settings
         default_opt_settings = {
@@ -410,11 +427,26 @@ class VBLLModel(AbstractBLLModel):
                 running_loss.append(loss.item())
 
             # Calculate average loss over the epoch
-            avg_loss = sum(running_loss[-len(dataloader) :]) / len(dataloader)
+            avg_train_loss = sum(running_loss[-len(dataloader) :]) / len(dataloader)
+
+            # If validation data is provided, compute validation loss
+            if val_X is not None and val_y is not None:
+                self.model.eval()  # Set model to evaluation mode
+                with torch.no_grad():
+                    out = self.model(x)
+                    val_loss = out.val_loss_fn(val_y)
+
+                self.model.train()  # Set model back to training mode
+
+                # Use validation loss for early stopping
+                current_loss = val_loss.item()
+            else:
+                # If no validation data, use training loss
+                current_loss = avg_train_loss
 
             # Early stopping logic
-            if avg_loss < best_loss:
-                best_loss = avg_loss
+            if current_loss < best_loss:
+                best_loss = current_loss
                 best_model_state = self.model.state_dict()
                 epochs_no_improve = 0
             else:
