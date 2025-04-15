@@ -7,9 +7,7 @@
 import unittest.mock as mock
 
 import numpy as np
-
 import torch
-
 from botorch.utils.testing import BotorchTestCase
 from botorch_community.acquisition.bll_thompson_sampling import BLLMaxPosteriorSampling
 from botorch_community.models.vblls import VBLLModel
@@ -87,6 +85,7 @@ class TestBLLMaxPosteriorSampling(BotorchTestCase):
 
     def test_call_continuous_inputs(self) -> None:
         """Test __call__ method with continuous inputs (optimization)."""
+        torch.manual_seed(0)
         tkwargs = {"device": self.device, "dtype": torch.float64}
         num_inputs = 2
         num_hidden = 3
