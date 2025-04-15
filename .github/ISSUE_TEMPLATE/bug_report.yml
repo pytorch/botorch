@@ -51,7 +51,7 @@ body:
   - type: textarea
     id: suggested-fix
     attributes:
-      label: [Optional] Describe any potential fixes you've considered to the issue outlined above.
+      label: (Optional) Describe any potential fixes you've considered to the issue outlined above.
   - type: dropdown
     id: pull-request
     attributes:
