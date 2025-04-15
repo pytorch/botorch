@@ -48,6 +48,18 @@ body:
       description: What operating system are you using?
     validations:
       required: false
+  - type: textarea
+    id: suggested-fix
+    attributes:
+      label: (Optional) Describe any potential fixes you've considered to the issue outlined above.
+  - type: dropdown
+    id: pull-request
+    attributes:
+      label: Pull Request
+      description: Are you willing to open a pull request fixing the bug outlined in this issue? (See [Contributing to BoTorch](https://github.com/pytorch/botorch/blob/main/CONTRIBUTING.md))
+      options:
+        - "Yes"
+        - "No"
   - type: checkboxes
     id: terms
     attributes:
