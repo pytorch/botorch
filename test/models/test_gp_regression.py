@@ -65,7 +65,11 @@ class TestGPRegressionBase(BotorchTestCase):
             (False, True),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
+            # Putting the outcome transform into eval mode to ensure that it is put into
+            # train mode inside the constructor
+            octf = (
+                Standardize(m=m, batch_shape=batch_shape).eval() if use_octf else None
+            )
             intf = (
                 Normalize(d=1, bounds=bounds.to(**tkwargs), transform_on_train=True)
                 if use_intf
@@ -93,6 +97,8 @@ class TestGPRegressionBase(BotorchTestCase):
             self.assertIsInstance(rbf_kernel.lengthscale_prior, LogNormalPrior)
             if use_octf:
                 self.assertIsInstance(model.outcome_transform, Standardize)
+                # Ensure that the outcome transform was put into train mode.
+                self.assertFalse(torch.all(model.outcome_transform.means == 0))
             if use_intf:
                 self.assertIsInstance(model.input_transform, Normalize)
                 # permute output dim
