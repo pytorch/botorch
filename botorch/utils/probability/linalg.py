@@ -125,7 +125,7 @@ class PivotedCholesky:
         rank1 = L[..., i + 1 :, i : i + 1].clone()
         rank1 = (rank1 * rank1.transpose(-1, -2)).tril()
         L[..., i + 1 :, i + 1 :] = L[..., i + 1 :, i + 1 :].clone() - rank1
-        L[Lii <= i * eps, i:, i] = 0  # numerical stability clause
+        L[..., i:, i][Lii <= i * eps] = 0  # numerical stability clause
         self.step += 1
 
     def pivot_(self, pivot: LongTensor) -> None:
