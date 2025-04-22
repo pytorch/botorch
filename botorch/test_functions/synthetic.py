@@ -164,7 +164,7 @@ class Ackley(SyntheticTestFunction):
         self.b = 0.2
         self.c = 2 * math.pi
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         a, b, c = self.a, self.b, self.c
         part1 = -a * torch.exp(-torch.linalg.norm(X, dim=-1) * b / math.sqrt(self.dim))
         part2 = -(torch.exp(torch.mean(torch.cos(c * X), dim=-1)))
@@ -178,7 +178,7 @@ class Beale(SyntheticTestFunction):
     _bounds = [(-4.5, 4.5), (-4.5, 4.5)]
     _optimizers = [(3.0, 0.5)]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
         part1 = (1.5 - x1 + x1 * x2).pow(2)
         part2 = (2.25 - x1 + x1 * x2.pow(2)).pow(2)
@@ -205,7 +205,7 @@ class Branin(SyntheticTestFunction):
     _optimal_value = 0.397887
     _optimizers = [(-math.pi, 12.275), (math.pi, 2.275), (9.42478, 2.475)]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         t1 = (
             X[..., 1]
             - 5.1 / (4 * math.pi**2) * X[..., 0].pow(2)
@@ -224,7 +224,7 @@ class Bukin(SyntheticTestFunction):
     _optimizers = [(-10.0, 1.0)]
     _check_grad_at_opt: bool = False
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         part1 = 100.0 * torch.sqrt(torch.abs(X[..., 1] - 0.01 * X[..., 0].pow(2)))
         part2 = 0.01 * torch.abs(X[..., 0] + 10.0)
         return part1 + part2
@@ -247,7 +247,7 @@ class Cosine8(SyntheticTestFunction):
     _optimal_value = 0.8
     _optimizers = [tuple(0.0 for _ in range(8))]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return torch.sum(0.1 * torch.cos(5 * math.pi * X) - X.pow(2), dim=-1)
 
 
@@ -259,7 +259,7 @@ class DropWave(SyntheticTestFunction):
     _optimizers = [(0.0, 0.0)]
     _check_grad_at_opt = False
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         norm = torch.linalg.norm(X, dim=-1)
         part1 = 1.0 + torch.cos(12.0 * norm)
         part2 = 0.5 * norm.pow(2) + 2.0
@@ -296,7 +296,7 @@ class DixonPrice(SyntheticTestFunction):
         ]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds, dtype=dtype)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         d = self.dim
         part1 = (X[..., 0] - 1).pow(2)
         i = X.new(range(2, d + 1))
@@ -321,7 +321,7 @@ class EggHolder(SyntheticTestFunction):
     _optimizers = [(512.0, 404.2319)]
     _check_grad_at_opt: bool = False
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
         part1 = -(x2 + 47.0) * torch.sin(torch.sqrt(torch.abs(x2 + x1 / 2.0 + 47.0)))
         part2 = -x1 * torch.sin(torch.sqrt(torch.abs(x1 - (x2 + 47.0))))
@@ -365,7 +365,7 @@ class Griewank(SyntheticTestFunction):
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds, dtype=dtype)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         part1 = torch.sum(X.pow(2) / 4000.0, dim=-1)
         d = X.shape[-1]
         part2 = -(torch.prod(torch.cos(X / torch.sqrt(X.new(range(1, d + 1)))), dim=-1))
@@ -464,7 +464,7 @@ class Hartmann(SyntheticTestFunction):
             raise NotImplementedError()
         return super().optimizers
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
         inner_sum = torch.sum(
             self.A * (X.unsqueeze(-2) - 0.0001 * self.P).pow(2), dim=-1
@@ -501,7 +501,7 @@ class HolderTable(SyntheticTestFunction):
         (8.05502, -9.66459),
     ]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         term = torch.abs(1 - torch.linalg.norm(X, dim=-1) / math.pi)
         return -(
             torch.abs(torch.sin(X[..., 0]) * torch.cos(X[..., 1]) * torch.exp(term))
@@ -548,7 +548,7 @@ class Levy(SyntheticTestFunction):
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds, dtype=dtype)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         w = 1.0 + (X - 1.0) / 4.0
         part1 = torch.sin(math.pi * w[..., 0]).pow(2)
         part2 = torch.sum(
@@ -604,7 +604,7 @@ class Michalewicz(SyntheticTestFunction):
             raise NotImplementedError()
         return super().optimizers
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
         m = 10
         return -(
@@ -655,7 +655,7 @@ class Powell(SyntheticTestFunction):
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds, dtype=dtype)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         result = torch.zeros_like(X[..., 0])
         for i in range(self.dim // 4):
             i_ = i + 1
@@ -693,7 +693,7 @@ class Rastrigin(SyntheticTestFunction):
         self._optimizers = [tuple(0.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds, dtype=dtype)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return 10.0 * self.dim + torch.sum(
             X.pow(2) - 10.0 * torch.cos(2.0 * math.pi * X), dim=-1
         )
@@ -735,7 +735,7 @@ class Rosenbrock(SyntheticTestFunction):
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds, dtype=dtype)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return torch.sum(
             100.0 * (X[..., 1:] - X[..., :-1].pow(2)).pow(2) + (X[..., :-1] - 1).pow(2),
             dim=-1,
@@ -790,7 +790,7 @@ class Shekel(SyntheticTestFunction):
         )
         self.register_buffer("C", C_t.transpose(-1, -2))
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
         beta = self.beta / 10.0
         result = -sum(
@@ -807,7 +807,7 @@ class SixHumpCamel(SyntheticTestFunction):
     _optimal_value = -1.0316
     _optimizers = [(0.0898, -0.7126), (-0.0898, 0.7126)]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
         return (
             (4 - 2.1 * x1.pow(2) + x1.pow(4) / 3) * x1.pow(2)
@@ -850,7 +850,7 @@ class StyblinskiTang(SyntheticTestFunction):
         self._optimizers = [tuple(-2.903534 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, bounds=bounds, dtype=dtype)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return 0.5 * (X.pow(4) - 16 * X.pow(2) + 5 * X).sum(dim=-1)
 
 
@@ -861,7 +861,7 @@ class ThreeHumpCamel(SyntheticTestFunction):
     _optimal_value = 0.0
     _optimizers = [(0.0, 0.0)]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2 = X[..., 0], X[..., 1]
         return (
             2.0 * x1.pow(2) - 1.05 * x1.pow(4) + x1.pow(6) / 6.0 + x1 * x2 + x2.pow(2)
@@ -944,7 +944,7 @@ class ConstrainedGramacy(ConstrainedSyntheticTestFunction):
     _optimizers = [(0.1954, 0.4044)]
     _optimal_value = 0.5998  # approximate from [Gramacy2016]_
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         """
         Evaluate the function (w/o observation noise) on a set of points.
 
@@ -954,7 +954,7 @@ class ConstrainedGramacy(ConstrainedSyntheticTestFunction):
         """
         return X.sum(dim=-1)
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         x1, x2 = X.split(1, dim=-1)
         c1 = 1.5 - x1 - 2 * x2 - 0.5 * torch.sin(2 * math.pi * (x1.pow(2) - 2 * x2))
         c2 = x1.pow(2) + x2.pow(2) - 1.5
@@ -1002,7 +1002,7 @@ class ConstrainedHartmann(Hartmann, ConstrainedSyntheticTestFunction):
             constraint_noise_std
         )
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         return -X.norm(dim=-1, keepdim=True) + 1
 
 
@@ -1047,7 +1047,7 @@ class ConstrainedHartmannSmooth(Hartmann, ConstrainedSyntheticTestFunction):
             constraint_noise_std
         )
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         return -X.pow(2).sum(dim=-1, keepdim=True) + 1
 
 
@@ -1064,7 +1064,7 @@ class PressureVessel(ConstrainedSyntheticTestFunction):
     _bounds = [(0.0, 10.0), (0.0, 10.0), (10.0, 50.0), (150.0, 200.0)]
     _optimal_value = 6059.946341  # from [CoelloCoello2002constraint]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4 = X.unbind(-1)
         x1 = round_nearest(x1, increment=0.0625, bounds=self._bounds[0])
         x2 = round_nearest(x2, increment=0.0625, bounds=self._bounds[1])
@@ -1075,7 +1075,7 @@ class PressureVessel(ConstrainedSyntheticTestFunction):
             + 19.84 * x1.pow(2) * x3
         )
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4 = X.unbind(-1)
         return -torch.stack(
             [
@@ -1104,11 +1104,11 @@ class WeldedBeamSO(ConstrainedSyntheticTestFunction):
     _bounds = [(0.125, 10.0), (0.1, 10.0), (0.1, 10.0), (0.1, 10.0)]
     _optimal_value = 1.728226  # from [CoelloCoello2002constraint]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4 = X.unbind(-1)
         return 1.10471 * x1.pow(2) * x2 + 0.04811 * x3 * x4 * (14.0 + x2)
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4 = X.unbind(-1)
         P = 6000.0
         L = 14.0
@@ -1159,11 +1159,11 @@ class TensionCompressionString(ConstrainedSyntheticTestFunction):
     _bounds = [(0.01, 1.0), (0.01, 1.0), (0.01, 20.0)]
     _optimal_value = 0.012681  # from [CoelloCoello2002constraint]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2, x3 = X.unbind(-1)
         return x1.pow(2) * x2 * (x3 + 2)
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         x1, x2, x3 = X.unbind(-1)
         constraints = torch.stack(
             [
@@ -1200,7 +1200,7 @@ class SpeedReducer(ConstrainedSyntheticTestFunction):
     ]
     _optimal_value = 2996.3482  # from [Lemonge2010constrained]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4, x5, x6, x7 = X.unbind(-1)
         return (
             0.7854 * x1 * x2.pow(2) * (3.3333 * x3.pow(2) + 14.9334 * x3 - 43.0934)
@@ -1209,7 +1209,7 @@ class SpeedReducer(ConstrainedSyntheticTestFunction):
             + 0.7854 * (x4 * x6.pow(2) + x5 * x7.pow(2))
         )
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4, x5, x6, x7 = X.unbind(-1)
         return -torch.stack(
             [
@@ -1291,7 +1291,7 @@ class KeaneBumpFunction(ConstrainedSyntheticTestFunction):
             dtype=dtype,
         )
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         Xcos = X.cos()
         num = Xcos.pow(4).sum(dim=-1) - 2 * Xcos.pow(2).prod(dim=-1)
         den = torch.sqrt(
@@ -1300,7 +1300,7 @@ class KeaneBumpFunction(ConstrainedSyntheticTestFunction):
         # clamp to avoid den=0, which happens when X=0.
         return -(num / den.clamp(min=1e-3)).abs()
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         return torch.cat(
             [
                 X.prod(dim=-1, keepdims=True) - 0.75,

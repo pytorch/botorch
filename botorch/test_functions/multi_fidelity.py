@@ -50,7 +50,7 @@ class AugmentedBranin(SyntheticTestFunction):
         (math.pi, 2.1763039559891064, 0.9),
     ]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         t1 = (
             X[..., 1]
             - (5.1 / (4 * math.pi**2) - 0.1 * (1 - X[..., 2])) * X[..., 0].pow(2)
@@ -112,7 +112,7 @@ class AugmentedHartmann(SyntheticTestFunction):
         self.register_buffer("A", torch.tensor(A))
         self.register_buffer("P", torch.tensor(P))
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
         inner_sum = torch.sum(
             self.A * (X[..., :6].unsqueeze(-2) - 0.0001 * self.P).pow(2), dim=-1
@@ -164,7 +164,7 @@ class AugmentedRosenbrock(SyntheticTestFunction):
         self._optimizers = [tuple(1.0 for _ in range(self.dim))]
         super().__init__(noise_std=noise_std, negate=negate, dtype=dtype)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         X_curr = X[..., :-3]
         X_next = X[..., 1:-2]
         t1 = 100 * (X_next - X_curr.pow(2) + 0.1 * (1 - X[..., -2:-1])).pow(2)
@@ -215,7 +215,7 @@ class WingWeightMultiFidelity(SyntheticTestFunction):
     fidelities = [0, 1, 2, 3]
     _optimal_value = 123.25
 
-    def evaluate_true(self, X: torch.Tensor) -> Tensor:
+    def _evaluate_true(self, X: torch.Tensor) -> Tensor:
         s_w, w_fw, A, Lambda_deg, q, lam, t_c, N_z, w_dg, w_pp, fidelity = X.unbind(
             dim=-1
         )
@@ -304,7 +304,7 @@ class BoreholeMultiFidelity(SyntheticTestFunction):
     fidelities = [0, 1, 2, 3, 4]
     _optimal_value = 3.98
 
-    def evaluate_true(self, X: torch.Tensor) -> torch.Tensor:
+    def _evaluate_true(self, X: torch.Tensor) -> torch.Tensor:
         r_w, r, T_u, T_l, H_u, H_l, L, K_w, fidelity = X.unbind(dim=-1)
         LTu = L * T_u
         two_pi_T_u = 2.0 * math.pi * T_u
