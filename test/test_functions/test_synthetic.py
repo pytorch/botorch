@@ -8,6 +8,7 @@ import torch
 from botorch.exceptions.errors import InputDataError
 from botorch.test_functions.synthetic import (
     Ackley,
+    AckleyMixed,
     Beale,
     Branin,
     Bukin,
@@ -327,6 +328,20 @@ class TestThreeHumpCamel(
         ThreeHumpCamel(negate=True),
         ThreeHumpCamel(noise_std=0.1),
     ]
+
+
+class TestAckleyMixed(
+    BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
+):
+    functions = [
+        AckleyMixed(dim=5),
+        AckleyMixed(dim=5, negate=True, randomize_optimum=True),
+        AckleyMixed(dim=5, noise_std=0.1),
+    ]
+
+    def test_dimension(self):
+        with self.assertRaisesRegex(ValueError, "Expected dim > 3. Got dim=3."):
+            AckleyMixed(dim=3)
 
 
 # ------------------ Constrained synthetic test problems ------------------ #

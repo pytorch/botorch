@@ -868,6 +868,55 @@ class ThreeHumpCamel(SyntheticTestFunction):
         )
 
 
+class AckleyMixed(SyntheticTestFunction):
+    r"""Mixed search space version of the Ackley problem.
+
+    This problem has dim-3 binary parameters and 3 continuous parameters in the
+    range [0, 1]. This means dim > 3 is required. To make the problem a bit more
+    interesting, the optimal value is not at the origin, but rather at `x_opt`
+    which is a randomly generated point.
+
+    The goal is  to minimize f(x) = Ackley(x - x_opt).
+    """
+
+    _optimal_value = 0.0
+
+    def __init__(
+        self,
+        dim=53,
+        noise_std: float | None = None,
+        negate: bool = False,
+        randomize_optimum: bool = False,
+        dtype: torch.dtype = torch.double,
+    ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension. Must be > 3.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+            randomize_optimum: If True, the optimum is a random point in the domain.
+            dtype: The dtype that is used for the bounds of the function.
+        """
+        if dim <= 3:
+            raise ValueError(f"Expected dim > 3. Got {dim=}.")
+        if randomize_optimum:
+            x_opt = torch.rand(dim, dtype=dtype)
+            x_opt[: dim - 3] = x_opt[: dim - 3].round()
+        else:
+            x_opt = torch.zeros(dim, dtype=dtype)
+        self._optimizers = [tuple(x.item() for x in x_opt)]
+        self.dim = dim
+        self.discrete_inds = list(range(0, dim - 3))
+        self.continuous_inds = list(range(dim - 3, dim))
+        bounds = [(0.0, 1.0) for _ in range(self.dim)]
+        super().__init__(bounds=bounds, dtype=dtype, noise_std=noise_std, negate=negate)
+        self.register_buffer("x_opt", x_opt)
+        self._ackley = Ackley(dim=dim, dtype=dtype)
+
+    def _evaluate_true(self, X: Tensor) -> Tensor:
+        return self._ackley.evaluate_true((X - self.x_opt).abs())
+
+
 #  ------------ Constrained synthetic test functions ----------- #
 
 
