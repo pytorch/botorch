@@ -81,7 +81,7 @@ class MOMFBraninCurrin(MultiObjectiveTestProblem):
         C = -y + 14
         return C / 15
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         branin = self._branin(X)
         currin = self._currin(X)
         return torch.stack([-branin, -currin], dim=-1)
@@ -158,7 +158,7 @@ class MOMFPark(MultiObjectiveTestProblem):
             - 0.7
         )
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         X = self._transform(X)
         park1 = self._park1(X)
         park2 = self._park2(X)

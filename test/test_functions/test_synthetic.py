@@ -53,7 +53,7 @@ class DummySyntheticTestFunction(SyntheticTestFunction):
     _bounds = [(-1, 1), (-1, 1)]
     _optimal_value = 0
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return -X.pow(2).sum(dim=-1)
 
 
@@ -122,10 +122,10 @@ class DummyConstrainedSyntheticTestFunction(ConstrainedSyntheticTestFunction):
     _bounds = [(-1, 1), (-1, 1)]
     _optimal_value = 0
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return -X.pow(2).sum(dim=-1)
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         return -X.norm(dim=-1, keepdim=True) + 1
 
 

@@ -6,7 +6,6 @@
 import math
 
 import torch
-
 from botorch.test_functions.synthetic import SyntheticTestFunction
 from torch import Tensor
 
@@ -96,7 +95,7 @@ class Ishigami(SyntheticTestFunction):
         ]
         return gradient_measure, gradient_absolute_measure, gradient_square_measure
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
         t = (
             torch.sin(X[..., 0])
@@ -197,7 +196,7 @@ class Gsobol(SyntheticTestFunction):
             )
         self.si_t = Tensor(si_t)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
         t = 1
         for i in range(self.dim):
@@ -260,7 +259,7 @@ class Morris(SyntheticTestFunction):
     def _optimal_value(self) -> float:
         raise NotImplementedError
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
         W = []
         t1 = 0

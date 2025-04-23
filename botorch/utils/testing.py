@@ -148,6 +148,12 @@ class BaseTestProblemTestCaseMixIn:
                 X[..., inds] = X[..., inds].round()
             res_forward = f(X)
             res_evaluate_true = f.evaluate_true(X)
+            # Evaluating outside bounds should raise
+            X_out_of_bounds = f.bounds[1:, :] + 1
+            with self.assertRaisesRegex(
+                ValueError, "Expected `X` to be within the bounds of the test problem."
+            ):
+                f(X_out_of_bounds)
             for method, res in {
                 "forward": res_forward,
                 "evaluate_true": res_evaluate_true,

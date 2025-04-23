@@ -146,7 +146,7 @@ class BraninCurrin(MultiObjectiveTestProblem):
         denom = 100 * x_0.pow(3) + 500 * x_0.pow(2) + 4 * x_0 + 20
         return factor1 * numer / denom
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         # branin rescaled with inputsto [0,1]^2
         branin = self._rescaled_branin(X=X)
         currin = self._currin(X=X)
@@ -252,7 +252,7 @@ class DH1(DH):
         x_0 = X[..., 0]
         return self.alpha / (0.2 + x_0) + self.beta * x_0.pow(2)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         f_0 = X[..., 0]
         # This may encounter 0 / 0, which we set to 0.
         f_1 = self._h(X) + torch.nan_to_num(self._g(X) * self._S(X))
@@ -306,7 +306,7 @@ class DH3(DH):
     def _S(self, X: Tensor) -> Tensor:
         return 1 - X[..., 0].sqrt()
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         f_0 = X[..., 0]
         f_1 = self._h(X) * (self._g(X) + self._S(X))
         return torch.stack([f_0, f_1], dim=-1)
@@ -391,7 +391,7 @@ class DTLZ1(DTLZ):
     def _max_hv(self) -> float:
         return self._ref_val**self.num_objectives - 1 / 2**self.num_objectives
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         X_m = X[..., -self.k :]
         X_m_minus_half = X_m - 0.5
         sum_term = (
@@ -453,7 +453,7 @@ class DTLZ2(DTLZ):
         )
         return hypercube_vol - pos_hypersphere_vol
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         X_m = X[..., -self.k :]
         g_X = (X_m - 0.5).pow(2).sum(dim=-1)
         g_X_plus1 = 1 + g_X
@@ -503,7 +503,7 @@ class DTLZ3(DTLZ2):
 
     _ref_val = 10000.0
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         X_m = X[..., -self.k :]
         g_X = 100 * (
             X_m.shape[-1]
@@ -549,7 +549,7 @@ class DTLZ5(DTLZ):
 
     _ref_val = 10.0
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         X_m = X[..., -self.k :]
         X_ = X[..., : -self.k]
         g_X = (X_m - 0.5).pow(2).sum(dim=-1)
@@ -585,7 +585,7 @@ class DTLZ7(DTLZ):
 
     _ref_val = 15.0
 
-    def evaluate_true(self, X):
+    def _evaluate_true(self, X):
         f = []
         for i in range(0, self.num_objectives - 1):
             f.append(X[..., i])
@@ -681,7 +681,7 @@ class GMM(MultiObjectiveTestProblem):
         self.register_buffer("gmm_covar", gmm_covar)
         self.register_buffer("gmm_norm", gmm_norm)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         r"""Evaluate the GMMs."""
         # This needs to be reinstantiated because MVN apparently does not
         # have a `to` method to make it device/dtype agnostic.
@@ -825,7 +825,7 @@ class Penicillin(MultiObjectiveTestProblem):
 
         return torch.stack([-P, CO2, t_tensor], dim=-1)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         # This uses in-place operations. Hence, the clone is to avoid modifying
         # the original X in-place.
         return self.penicillin_vectorized(X.view(-1, self.dim).clone()).view(
@@ -855,6 +855,10 @@ class ToyRobust(MultiObjectiveTestProblem):
     num_objectives = 2
     levy = Levy()
 
+    def forward(self, X: Tensor, noise: bool = True) -> Tensor:
+        self.levy.bounds = self.levy.bounds.to(X)
+        return super().forward(X=X, noise=noise)
+
     def f_1(self, X: Tensor) -> Tensor:
         p1 = 2.4 - 10 * X - 0.1 * X.pow(2)
         p2 = 2 * X - 0.1 * X.pow(2)
@@ -874,7 +878,7 @@ class ToyRobust(MultiObjectiveTestProblem):
         Y -= X[..., :1].pow(2) * 0.75
         return Y
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return -torch.cat([self.f_1(X), self.f_2(X)], dim=-1)
 
 
@@ -897,7 +901,7 @@ class VehicleSafety(MultiObjectiveTestProblem):
     continuous_inds = list(range(dim))
     num_objectives = 3
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         X1, X2, X3, X4, X5 = torch.split(X, 1, -1)
         f1 = (
             1640.2823
@@ -996,7 +1000,7 @@ class ZDT1(ZDT):
 
     _max_hv = 120 + 2 / 3
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         f_0 = X[..., 0]
         g = self._g(X=X)
         f_1 = g * (1 - (f_0 / g).sqrt())
@@ -1029,7 +1033,7 @@ class ZDT2(ZDT):
 
     _max_hv = 120 + 1 / 3
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         f_0 = X[..., 0]
         g = self._g(X=X)
         f_1 = g * (1 - (f_0 / g).pow(2))
@@ -1073,7 +1077,7 @@ class ZDT3(ZDT):
     # nugget to make sure linspace returns elements within the specified range
     _eps = 1e-6
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         f_0 = X[..., 0]
         g = self._g(X=X)
         f_1 = 1 - (f_0 / g).sqrt() - f_0 / g * torch.sin(10 * math.pi * f_0)
@@ -1135,7 +1139,7 @@ class CarSideImpact(MultiObjectiveTestProblem):
     _ref_point = [45.4872, 4.5114, 13.3394, 10.3942]
     _max_hv = 484.72654347642793
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         X1, X2, X3, X4, X5, X6, X7 = torch.split(X, 1, -1)
         f1 = (
             1.98
@@ -1213,12 +1217,12 @@ class BNH(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     _bounds = [(0.0, 5.0), (0.0, 3.0)]
     _ref_point = [0.0, 0.0]  # TODO: Determine proper reference point
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return torch.stack(
             [4.0 * X.pow(2).sum(dim=-1), (X - 5.0).pow(2).sum(dim=-1)], dim=-1
         )
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         c1 = 25.0 - (X[..., 0] - 5.0).pow(2) - X[..., 1].pow(2)
         c2 = (X[..., 0] - 8.0).pow(2) + (X[..., 1] + 3.0).pow(2) - 7.7
         return torch.stack([c1, c2], dim=-1)
@@ -1238,12 +1242,12 @@ class CONSTR(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     _bounds = [(0.1, 10.0), (0.0, 5.0)]
     _ref_point = [10.0, 10.0]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         obj1 = X[..., 0]
         obj2 = (1.0 + X[..., 1]) / X[..., 0]
         return torch.stack([obj1, obj2], dim=-1)
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         c1 = 9.0 * X[..., 0] + X[..., 1] - 6.0
         c2 = 9.0 * X[..., 0] - X[..., 1] - 1.0
         return torch.stack([c1, c2], dim=-1)
@@ -1286,7 +1290,7 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
         self.register_buffer("con_bounds", con_bounds)
         self.constraint_noise_std = constraint_noise_std
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         X_tf = unnormalize(X, self.con_bounds)
         return 50 - (X_tf[..., 0:1] - 2.5).pow(2) - (X_tf[..., 1:2] - 7.5).pow(2)
 
@@ -1297,10 +1301,10 @@ class C2DTLZ2(DTLZ2, ConstrainedBaseTestProblem):
     # approximate from nsga-ii, TODO: replace with analytic
     _max_hv = 0.3996406303723544
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         if X.ndim > 2:
             raise NotImplementedError("Batch X is not supported.")
-        f_X = self.evaluate_true(X)
+        f_X = self.evaluate_true(X=X)
         term1 = (f_X - 1).pow(2)
         mask = ~(torch.eye(f_X.shape[-1], device=f_X.device).bool())
         indices = torch.arange(f_X.shape[1], device=f_X.device).repeat(f_X.shape[1], 1)
@@ -1337,7 +1341,7 @@ class DiscBrake(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     _bounds = [(55.0, 80.0), (75.0, 110.0), (1000.0, 3000.0), (11.0, 20.0)]
     _ref_point = [5.7771, 3.9651]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         f = torch.zeros(
             *X.shape[:-1], self.num_objectives, dtype=X.dtype, device=X.device
         )
@@ -1349,7 +1353,7 @@ class DiscBrake(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
 
         return f
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         g = torch.zeros(
             *X.shape[:-1], self.num_constraints, dtype=X.dtype, device=X.device
         )
@@ -1405,7 +1409,7 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     def LA2(self, A, B, C, D, theta) -> Tensor:
         return A * torch.sin(B * theta.pow(C)).pow(D)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         a = X[..., :-1] - 0.5
         contrib = 2 * (X[..., 1:] + a.pow(2) - 1).pow(2)
         g = 1 + contrib.sum(dim=-1)
@@ -1413,8 +1417,8 @@ class MW7(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         f1 = g * torch.sqrt(1 - (f0 / g).pow(2))
         return torch.stack([f0, f1], dim=-1)
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
-        ff = self.evaluate_true(X)
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
+        ff = self.evaluate_true(X=X)
         f0, f1 = ff[..., 0], ff[..., 1]
         atan = torch.arctan(f1 / f0)
         g0 = (
@@ -1448,7 +1452,7 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     ]
     _ref_point = [-75.0, 75.0]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         f1 = -(
             25 * (X[..., 0] - 2).pow(2)
             + (X[..., 1] - 2).pow(2)
@@ -1459,7 +1463,7 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         f2 = X.pow(2).sum(-1)
         return torch.stack([f1, f2], dim=-1)
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         g1 = X[..., 0] + X[..., 1] - 2.0
         g2 = 6.0 - X[..., 0] - X[..., 1]
         g3 = 2.0 - X[..., 1] + X[..., 0]
@@ -1483,12 +1487,12 @@ class SRN(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     _bounds = [(-20.0, 20.0), (-20.0, 20.0)]
     _ref_point = [0.0, 0.0]  # TODO: Determine proper reference point
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         obj1 = 2.0 + (X - 2.0).pow(2).sum(dim=-1)
         obj2 = 9.0 * X[..., 0] - (X[..., 1] - 1.0).pow(2)
         return torch.stack([obj1, obj2], dim=-1)
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         c1 = 225.0 - (X.pow(2)).pow(2).sum(dim=-1)
         c2 = -10.0 - X[..., 0] + 3 * X[..., 1]
         return torch.stack([c1, c2], dim=-1)
@@ -1517,7 +1521,7 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     ]
     _ref_point = [40, 0.015]
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         # We could do the following, but the constraints are using somewhat
         # different numbers (see below).
         # f1 = WeldedBeam.evaluate_true(self, X)
@@ -1526,7 +1530,7 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         f2 = 2.1952 / (x4 * x3.pow(3))
         return torch.stack([f1, f2], dim=-1)
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         x1, x2, x3, x4 = X.unbind(-1)
         P = 6000.0
         L = 14.0

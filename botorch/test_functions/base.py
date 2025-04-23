@@ -75,11 +75,52 @@ def validate_parameter_indices(
             )
 
 
+def validate_inputs(
+    X: Tensor,
+    dim: int,
+    bounds: Tensor,
+    discrete_inds: list[int],
+    categorical_inds: list[int],
+) -> None:
+    r"""Check that the inputs are valid.
+
+    This method checks that the input tensor `X` has the correct shape, is within
+    the bounds, and that the discrete and categorical parameters are integer-valued.
+
+    Args:
+        X: A `(batch_shape) x n x d`-dim tensor of point(s) at which to evaluate
+        dim: Number of search space dimensions.
+        bounds: A `2 x d`-dim tensor of lower and upper bounds.
+        discrete_inds: List of unique integers corresponding to discrete parameters.
+        categorical_inds: List of unique integers corresponding to categorical
+            parameters.
+
+    Raises:
+        ValueError: If the parameter indices are invalid.
+    """
+
+    if not X.shape[-1] == dim:
+        raise ValueError(
+            "Expected `X` to have shape `(batch_shape) x n x d`. "
+            f"Got {X.shape=} and {dim=}"
+        )
+    if not ((X >= bounds[0]).all() and (X <= bounds[1]).all()):
+        raise ValueError("Expected `X` to be within the bounds of the test problem.")
+    for inds in [discrete_inds, categorical_inds]:
+        if not (X[..., inds] == X[..., inds].round()).all():
+            raise ValueError(
+                "Expected `X` to have integer values for the discrete and "
+                "categorical parameters."
+            )
+
+
 class BaseTestProblem(Module, ABC):
     r"""Base class for test functions."""
 
     dim: int
-    _bounds: list[tuple[float, float]]
+    _bounds: list[
+        tuple[float, float]
+    ]  # Bounds, must be integers for discrete/categorical parameters
     _check_grad_at_opt: bool = True
     continuous_inds: list[int] = []  # Float-valued range parameters (bounds inclusive)
     discrete_inds: list[int] = []  # Ordered integer parameters (bounds inclusive)
@@ -139,10 +180,25 @@ class BaseTestProblem(Module, ABC):
             f = -f
         return f
 
-    @abstractmethod
     def evaluate_true(self, X: Tensor) -> Tensor:
         r"""
         Evaluate the function (w/o observation noise) on a set of points.
+
+        Args:
+            X: A `(batch_shape) x d`-dim tensor of point(s) at which to
+                evaluate.
+
+        Returns:
+            A `batch_shape`-dim tensor.
+        """
+        validate_inputs(
+            X, self.dim, self.bounds, self.discrete_inds, self.categorical_inds
+        )
+        return self._evaluate_true(X=X)
+
+    @abstractmethod
+    def _evaluate_true(self, X: Tensor) -> Tensor:
+        r"""Evaluate the function (w/o observation noise) on a set of points.
 
         Args:
             X: A `(batch_shape) x d`-dim tensor of point(s) at which to
@@ -206,7 +262,6 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
         """
         return (self.evaluate_slack(X=X, noise=noise) >= 0.0).all(dim=-1)
 
-    @abstractmethod
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
         r"""Evaluate the constraint slack (w/o observation noise) on a set of points.
 
@@ -217,6 +272,23 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
         Returns:
             A `batch_shape x n_c`-dim tensor of constraint slack (where positive slack
                 corresponds to the constraint being feasible).
+        """
+        validate_inputs(
+            X, self.dim, self.bounds, self.discrete_inds, self.categorical_inds
+        )
+        return self._evaluate_slack_true(X=X)
+
+    @abstractmethod
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
+        r"""Evaluate the constraint slack (w/o observation noise) on a set of points.
+
+        Args:
+            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the
+                constraint slacks: `c_1(X), ...., c_{n_c}(X)`.
+
+        Returns:
+            A `batch_shape x n_c`-dim tensor of constraint slack (where positive slack
+                corresponds
         """
         pass  # pragma: no cover
 
@@ -372,7 +444,7 @@ class CorruptedTestProblem(BaseTestProblem, SeedingMixin):
         self._current_seed: int | None = None
         self._seeds: Iterator[int] | None = None if seeds is None else iter(seeds)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return self.base_test_problem.evaluate_true(X)
 
     def forward(self, X: Tensor, noise: bool = True) -> Tensor:
