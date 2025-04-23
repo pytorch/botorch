@@ -24,6 +24,7 @@ from botorch.test_functions.synthetic import (
     Hartmann,
     HolderTable,
     KeaneBumpFunction,
+    Labs,
     Levy,
     Michalewicz,
     Powell,
@@ -328,6 +329,25 @@ class TestThreeHumpCamel(
         ThreeHumpCamel(negate=True),
         ThreeHumpCamel(noise_std=0.1),
     ]
+
+
+class TestLabs(
+    BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
+):
+    functions = [
+        Labs(),
+        Labs(negate=True),
+        Labs(noise_std=0.1),
+    ]
+
+    def test_labs_optimizers(self):
+        for dim in [10, 20, 30, 40, 50, 60]:
+            labs = Labs(dim=dim)
+            self.assertAllClose(
+                labs.optimal_value,
+                labs.evaluate_true(labs.optimizers).item(),
+                atol=1e-2,
+            )
 
 
 class TestAckleyMixed(

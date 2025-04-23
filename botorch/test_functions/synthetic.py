@@ -22,6 +22,11 @@ References:
     algorithms through the use of dominance-based tournament selection.
     Advanced Engineering Informatics, 16(3):193–203, 2002.
 
+.. [Gramacy2016]
+    R. Gramacy, G. Gray, S. Le Digabel, H. Lee, P. Ranjan, G. Wells & S. Wild.
+    Modeling an Augmented Lagrangian for Blackbox Constrained Optimization,
+    Technometrics, 2016.
+
 .. [Hedar2006derivfree]
     A.-R. Hedar and M. Fukushima. Derivative-free filter simulated annealing
     method for constrained continuous global optimization. Journal of Global
@@ -43,10 +48,9 @@ References:
     Particle Swarm and the Differential Evolution Methods (May 1, 2007).
     Available at SSRN: https://ssrn.com/abstract=983836.
 
-.. [Gramacy2016]
-    R. Gramacy, G. Gray, S. Le Digabel, H. Lee, P. Ranjan, G. Wells & S. Wild.
-    Modeling an Augmented Lagrangian for Blackbox Constrained Optimization,
-    Technometrics, 2016.
+.. [Packebusch2016]
+    T. Packebusch, S. Mertens. Low autocorrelation binary sequences. Journal of
+    Physics A: Mathematical and Theoretical 49.16 (2016).
 """
 
 from __future__ import annotations
@@ -915,6 +919,68 @@ class AckleyMixed(SyntheticTestFunction):
 
     def _evaluate_true(self, X: Tensor) -> Tensor:
         return self._ackley.evaluate_true((X - self.x_opt).abs())
+
+
+class Labs(SyntheticTestFunction):
+    r"""Low Auto-correlation Binary Sequences (LABS) problem.
+
+    This input space is binary and the goal is to maximize the Merit factor.
+    [Packebusch2016]_ provides optimal values and optimizers attained through
+    brute-force for dim <= 66. We include these for dim = 10, 20, 30, 40, 50, 60.
+    """
+
+    _check_grad_at_opt = False
+
+    def __init__(
+        self,
+        dim: int = 30,
+        noise_std: float | None = None,
+        negate: bool = False,
+        dtype: torch.dtype = torch.double,
+    ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
+            dtype: The dtype that is used for the bounds of the function.
+        """
+        self.dim = dim
+        self.discrete_inds = list(range(dim))
+        bounds = [(0.0, 1.0) for _ in range(dim)]
+        optvals = {10: 3.846, 20: 7.692, 30: 7.627, 40: 7.407, 50: 8.170, 60: 8.257}
+        optimizers = {
+            10: "42211",
+            20: "5113112321",
+            30: "551212111113231",
+            40: "44412112131121313131",
+            50: "215131311224112241141142",
+            60: "761112141111131124211322211222",
+        }
+        self._optimal_value = optvals.get(self.dim)
+        _optimizers = optimizers.get(self.dim)
+        if _optimizers is not None:
+            _optimizers = self._optimizer_from_binary_seq(_optimizers)
+        self._optimizers = _optimizers
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds, dtype=dtype)
+
+    def _optimizer_from_binary_seq(self, seq: str) -> list[tuple[float]]:
+        """Converts a binary sequence into a an array."""
+        arr, val = [], 0
+        for s in seq:
+            arr += [val for _ in range(int(s))]
+            val = 1 - val  # alternate between 0 and 1
+        return [tuple(arr)]
+
+    def _evaluate_true(self, X: Tensor) -> Tensor:
+        X = 2 * X - 1  # Map from {0, 1}^d to {-1, 1}^d
+        energy = torch.zeros(X.shape[:-1], dtype=X.dtype, device=X.device)
+        for k in range(1, self.dim):
+            energy += (
+                (X[..., 0 : self.dim - k] * X[..., k : self.dim]).sum(dim=-1).pow(2)
+            )
+        return (self.dim**2) / (2.0 * energy)
 
 
 #  ------------ Constrained synthetic test functions ----------- #
