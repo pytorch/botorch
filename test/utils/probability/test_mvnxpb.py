@@ -11,7 +11,7 @@ from collections.abc import Callable, Sequence
 from copy import deepcopy
 
 from functools import partial
-from itertools import count
+from itertools import count, product
 from typing import Any
 from unittest.mock import patch
 
@@ -178,6 +178,29 @@ class TestMVNXPB(BotorchTestCase):
                     continue
 
                 self.assertAllClose(est, prob, rtol=0, atol=atol)
+
+    def test_solve_batch(self):
+        ndim = 3
+        batch_shape = (3, 4)
+        with torch.random.fork_rng():
+            torch.random.manual_seed(next(self.seed_generator))
+            bounds = self.gen_bounds(ndim, batch_shape, bound_range=(-5.0, +5.0))
+            sqrt_cov = self.gen_covariances(ndim, batch_shape, as_sqrt=True)
+
+        cov = sqrt_cov @ sqrt_cov.mT
+
+        batched_solver = MVNXPB(cov, bounds)
+        batched_solver.solve()
+
+        # solution for each individual batch element is the same as
+        # that of the entire batch
+        for idx in product(*map(range, batch_shape)):
+            solver = MVNXPB(cov[tuple(idx)], bounds[tuple(idx)])
+            solver.solve()
+            self.assertAlmostEqual(
+                batched_solver.log_prob[tuple(idx)].item(),
+                solver.log_prob.item(),
+            )
 
     def test_augment(self):
         r"""Test `augment`."""
