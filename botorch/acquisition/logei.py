@@ -27,6 +27,7 @@ from botorch.acquisition.cached_cholesky import CachedCholeskyMCSamplerMixin
 from botorch.acquisition.monte_carlo import SampleReducingMCAcquisitionFunction
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
+    IdentityMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
 )
@@ -37,6 +38,7 @@ from botorch.acquisition.utils import (
 from botorch.exceptions.errors import BotorchError
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from botorch.utils.safe_math import (
     fatmax,
     log_fatplus,
@@ -86,7 +88,8 @@ class LogImprovementMCAcquisitionFunction(SampleReducingMCAcquisitionFunction):
         fat: bool = True,
         tau_max: float = TAU_MAX,
     ) -> None:
-        r"""
+        r"""Constructor of the base class for LogEI acquisition functions.
+
         Args:
             model: A fitted model.
             sampler: The sampler used to draw base samples. If not given,
@@ -568,6 +571,98 @@ class qLogNoisyExpectedImprovement(
             posterior_transform=self.posterior_transform,
             X_baseline=self.X_baseline,
         )
+
+
+class qLogProbabilityOfFeasibility(LogImprovementMCAcquisitionFunction):
+    r"""MC-based batch LogProbabilityOfFeasibility.
+
+    This computes the log probability of feasibility by
+    (1) sampling the joint posterior over q points
+    (2) evaluating the feasibility of each sample
+    (3) averaging over the sample and batch dimensions.
+
+    `log_prob_feas(X) = log(P(f(X) <= 0)), where f(X) ~ GP`.
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        constraints: list[Callable[[Tensor], Tensor]],
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
+        eta: Tensor | float = 1e-3,
+        fat: bool = True,
+        tau_max: float = TAU_MAX,
+    ):
+        r"""Constructor of the batch log probability of feasibility acquisition
+        function.
+
+        Args:
+            model: A fitted model.
+            constraints: A list of constraint callables which map a Tensor of posterior
+                samples of dimension `sample_shape x batch-shape x q x m`-dim to a
+                `sample_shape x batch-shape x q`-dim Tensor. The associated constraints
+                are satisfied if `constraint(samples) < 0`.
+            sampler: The sampler used to draw base samples. If not given,
+                a sampler is generated using `get_sampler`.
+                NOTE: For posteriors that do not support base samples,
+                a sampler compatible with intended use case must be provided.
+                See `ForkedRNGSampler` and `StochasticSampler` as examples.
+            objective: Not used, kept for compatibility with interface.
+            posterior_transform: A PosteriorTransform (optional).
+            X_pending: A `batch_shape, m x d`-dim Tensor of `m` design points
+                that have points that have been submitted for function evaluation
+                but have not yet been evaluated.
+            eta: Temperature parameter(s) governing the smoothness of the sigmoid
+                approximation to the constraint indicators. See the docs of
+                `compute_(log_)constraint_indicator` for more details on this parameter.
+            fat: Toggles the logarithmic / linear asymptotic behavior of the smooth
+                approximation to the ReLU.
+            tau_max: Temperature parameter controlling the sharpness of the
+                approximation to the `max` operator over the `q` candidate points.
+        """
+        super().__init__(
+            model=model,
+            sampler=sampler,
+            # theoretically we don't need an objective, but MCAcquisitionFunction will
+            # throw an error if the model has multiple outputs and the objective is None
+            objective=IdentityMCObjective(),
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+            constraints=constraints,
+            eta=eta,
+            fat=fat,
+            tau_max=tau_max,
+        )
+
+    def _non_reduced_forward(self, X: Tensor) -> Tensor:
+        """Compute the feasibility values at the MC-sample and batch (q) level.
+
+        Args:
+            X: A `batch_shape x q x d` Tensor of t-batches with `q` `d`-dim
+                design points each.
+
+        Returns:
+            A Tensor with shape `sample_sample x batch_shape x q`.
+        """
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
+        return compute_smoothed_feasibility_indicator(
+            constraints=self._constraints,
+            samples=self.get_posterior_samples(posterior),
+            eta=self._eta,
+            log=self._log,
+            fat=self._fat,
+        )
+
+    def _sample_forward(self, obj: Tensor) -> Tensor:
+        """Not necessary, since we are implementing `_non_reduced_forward` without it.
+        Need to provide an implementation to avoid an abstract method error.
+        """
+        raise NotImplementedError("This should be dead code.")  # pragma: no cover
 
 
 """
