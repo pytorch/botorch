@@ -192,7 +192,11 @@ class BaseTestProblem(Module, ABC):
             A `batch_shape`-dim tensor.
         """
         validate_inputs(
-            X, self.dim, self.bounds, self.discrete_inds, self.categorical_inds
+            X=X,
+            dim=self.dim,
+            bounds=self.bounds,
+            discrete_inds=self.discrete_inds,
+            categorical_inds=self.categorical_inds,
         )
         return self._evaluate_true(X=X)
 
@@ -274,7 +278,11 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
                 corresponds to the constraint being feasible).
         """
         validate_inputs(
-            X, self.dim, self.bounds, self.discrete_inds, self.categorical_inds
+            X=X,
+            dim=self.dim,
+            bounds=self.bounds,
+            discrete_inds=self.discrete_inds,
+            categorical_inds=self.categorical_inds,
         )
         return self._evaluate_slack_true(X=X)
 
