@@ -22,10 +22,8 @@ from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.likelihoods.likelihood import Likelihood
+from gpytorch.models.gp import GP
 from torch.nn import Module
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# Account for different acquisitions
 
 
 # reference: https://chrisorm.github.io/NGP.html
@@ -56,21 +54,21 @@ class MLP(nn.Module):
         prev_dim = input_dim
 
         for hidden_dim in hidden_dims:
-            layer = nn.Linear(prev_dim, hidden_dim).to(device)
+            layer = nn.Linear(prev_dim, hidden_dim)
             if init_func is not None:
                 init_func(layer.weight)
             layers.append(layer)
             layers.append(activation())
             prev_dim = hidden_dim
 
-        final_layer = nn.Linear(prev_dim, output_dim).to(device)
+        final_layer = nn.Linear(prev_dim, output_dim)
         if init_func is not None:
             init_func(final_layer.weight)
         layers.append(final_layer)
-        self.model = nn.Sequential(*layers).to(device)
+        self.model = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model(x.to(device))
+        return self.model(x)
 
 
 class REncoder(nn.Module):
@@ -101,7 +99,7 @@ class REncoder(nn.Module):
             hidden_dims=hidden_dims,
             activation=activation,
             init_func=init_func,
-        ).to(device)
+        )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         r"""Forward pass for representation encoder.
@@ -112,7 +110,7 @@ class REncoder(nn.Module):
         Returns:
             torch.Tensor: Encoded representations
         """
-        return self.mlp(inputs.to(device))
+        return self.mlp(inputs)
 
 
 class ZEncoder(nn.Module):
@@ -144,14 +142,14 @@ class ZEncoder(nn.Module):
             hidden_dims=hidden_dims,
             activation=activation,
             init_func=init_func,
-        ).to(device)
+        )
         self.logvar_net = MLP(
             input_dim=input_dim,
             output_dim=output_dim,
             hidden_dims=hidden_dims,
             activation=activation,
             init_func=init_func,
-        ).to(device)
+        )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         r"""Forward pass for latent encoder.
@@ -164,7 +162,6 @@ class ZEncoder(nn.Module):
                 - Mean of the latent Gaussian distribution.
                 - Log variance of the latent Gaussian distribution.
         """
-        inputs = inputs.to(device)
         return self.mean_net(inputs), self.logvar_net(inputs)
 
 
@@ -197,7 +194,7 @@ class Decoder(torch.nn.Module):
             hidden_dims=hidden_dims,
             activation=activation,
             init_func=init_func,
-        ).to(device)
+        )
 
     def forward(self, x_pred: torch.Tensor, z: torch.Tensor) -> torch.Tensor:
         r"""Forward pass for decoder.
@@ -212,14 +209,17 @@ class Decoder(torch.nn.Module):
             torch.Tensor: Predicted target values of shape (n x z_dim), representing #
             of data points by z_dim.
         """
-        z = z.to(device)
-        z_expanded = z.unsqueeze(0).expand(x_pred.size(0), -1).to(device)
-        x_pred = x_pred.to(device)
+        if z.dim() == 1:
+            z = z.unsqueeze(0)
+        if z.dim() == 3:
+            z = z.squeeze(0)
+        z_expanded = z.expand(x_pred.size(0), -1)
+        x_pred = x_pred
         xz = torch.cat([x_pred, z_expanded], dim=-1)
         return self.mlp(xz)
 
 
-class NeuralProcessModel(Model):
+class NeuralProcessModel(Model, GP):
     def __init__(
         self,
         train_X: torch.Tensor,
@@ -262,25 +262,28 @@ class NeuralProcessModel(Model):
             forward pass.
         """
         super().__init__()
+        self.device = train_X.device
+
+        # self._validate_tensor_args(X=train_X, Y=train_Y)
         self.r_encoder = REncoder(
             x_dim + y_dim,
             r_dim,
             r_hidden_dims,
             activation=activation,
             init_func=init_func,
-        ).to(device)
+        ).to(self.device)
         self.z_encoder = ZEncoder(
             r_dim, z_dim, z_hidden_dims, activation=activation, init_func=init_func
-        ).to(device)
+        ).to(self.device)
         self.decoder = Decoder(
             x_dim + z_dim,
             y_dim,
             decoder_hidden_dims,
             activation=activation,
             init_func=init_func,
-        ).to(device)
-        self.train_X = train_X.to(device)
-        self.train_Y = train_Y.to(device)
+        ).to(self.device)
+        self.train_X = train_X.to(self.device)
+        self.train_Y = train_Y.to(self.device)
         self.n_context = n_context
         self.z_dim = z_dim
         self.z_mu_all = None
@@ -288,9 +291,9 @@ class NeuralProcessModel(Model):
         self.z_mu_context = None
         self.z_logvar_context = None
         if likelihood is None:
-            self.likelihood = GaussianLikelihood().to(device)
+            self.likelihood = GaussianLikelihood().to(self.device)
         else:
-            self.likelihood = likelihood.to(device)
+            self.likelihood = likelihood.to(self.device)
         self.input_transform = input_transform
 
     def data_to_z_params(
@@ -310,11 +313,11 @@ class NeuralProcessModel(Model):
                 - x_t: Target input data.
                 - y_t: Target target data.
         """
-        x = x.to(device)
-        y = y.to(device)
-        xy = torch.cat([x, y], dim=-1).to(device).to(device)
+        x = x.to(self.device)
+        y = y.to(self.device)
+        xy = torch.cat([x, y], dim=-1).to(self.device).to(self.device)
         rs = self.r_encoder(xy)
-        r_agg = rs.mean(dim=r_dim).to(device)
+        r_agg = rs.mean(dim=r_dim).to(self.device)
         return self.z_encoder(r_agg)
 
     def sample_z(
@@ -344,11 +347,11 @@ class NeuralProcessModel(Model):
         shape = [n, self.z_dim]
         if n == 1:
             shape = shape[1:]
-        eps = torch.autograd.Variable(logvar.data.new(*shape).normal_()).to(device)
+        eps = torch.autograd.Variable(logvar.data.new(*shape).normal_()).to(self.device)
 
         std = min_std + scaler * torch.sigmoid(logvar)
-        std = std.to(device)
-        mu = mu.to(device)
+        std = std.to(self.device)
+        mu = mu.to(self.device)
         return mu + std * eps
 
     def KLD_gaussian(self, min_std: float = 0.01, scaler: float = 0.5) -> torch.Tensor:
@@ -365,10 +368,10 @@ class NeuralProcessModel(Model):
 
         if min_std <= 0 or scaler <= 0:
             raise ValueError()
-        std_q = min_std + scaler * torch.sigmoid(self.z_logvar_all).to(device)
-        std_p = min_std + scaler * torch.sigmoid(self.z_logvar_context).to(device)
-        p = torch.distributions.Normal(self.z_mu_context.to(device), std_p)
-        q = torch.distributions.Normal(self.z_mu_all.to(device), std_q)
+        std_q = min_std + scaler * torch.sigmoid(self.z_logvar_all).to(self.device)
+        std_p = min_std + scaler * torch.sigmoid(self.z_logvar_context).to(self.device)
+        p = torch.distributions.Normal(self.z_mu_context.to(self.device), std_p)
+        q = torch.distributions.Normal(self.z_mu_all.to(self.device), std_q)
         return torch.distributions.kl_divergence(p, q).sum()
 
     def posterior(
@@ -378,7 +381,7 @@ class NeuralProcessModel(Model):
         observation_noise: bool = False,
         posterior_transform: PosteriorTransform | None = None,
     ) -> GPyTorchPosterior:
-        r"""Computes the model's posterior distribution for given input tensors.
+        r"""Computes the model's posterior for given input tensors.
 
         Args:
             X: Input Tensor
@@ -391,20 +394,19 @@ class NeuralProcessModel(Model):
                 defaults to None.
 
         Returns:
-            GPyTorchPosterior: The posterior distribution object
-            utilizing MultivariateNormal.
+            GPyTorchPosterior: The posterior utilizing MultivariateNormal.
         """
         X = self.transform_inputs(X)
-        X = X.to(device)
+        X = X.to(self.device)
         mean = self.decoder(
-            X.to(device), self.sample_z(self.z_mu_all, self.z_logvar_all)
+            X.to(self.device), self.sample_z(self.z_mu_all, self.z_logvar_all)
         )
         z_var = torch.exp(self.z_logvar_all)
-        covariance = torch.eye(X.size(0)).to(device) * z_var.mean()
+        covariance = torch.eye(X.size(0)).to(self.device) * z_var.mean()
         if observation_noise:
             covariance = covariance + self.likelihood.noise * torch.eye(
                 covariance.size(0)
-            ).to(device)
+            ).to(self.device)
         mvn = MultivariateNormal(mean, covariance)
         posterior = GPyTorchPosterior(mvn)
         if posterior_transform is not None:
@@ -425,7 +427,7 @@ class NeuralProcessModel(Model):
         Returns:
             torch.Tensor: A tensor of transformed inputs
         """
-        X = X.to(device)
+        X = X.to(self.device)
         if input_transform is not None:
             input_transform.to(X)
             return input_transform(X)
@@ -454,10 +456,10 @@ class NeuralProcessModel(Model):
         x_c, y_c, x_t, y_t = self.random_split_context_target(
             train_X, train_Y, self.n_context, axis=axis
         )
-        x_t = x_t.to(device)
-        x_c = x_c.to(device)
-        y_c = y_c.to(device)
-        y_t = y_t.to(device)
+        x_t = x_t.to(self.device)
+        x_c = x_c.to(self.device)
+        y_c = y_c.to(self.device)
+        y_t = y_t.to(self.device)
         self.z_mu_all, self.z_logvar_all = self.data_to_z_params(
             self.train_X, self.train_Y
         )
@@ -486,9 +488,9 @@ class NeuralProcessModel(Model):
         self.n_context = n_context
         mask = torch.randperm(x.shape[axis])[:n_context]
         splitter = torch.zeros(x.shape[axis], dtype=torch.bool)
-        x_c = x[mask].to(device)
-        y_c = y[mask].to(device)
+        x_c = x[mask].to(self.device)
+        y_c = y[mask].to(self.device)
         splitter[mask] = True
-        x_t = x[~splitter].to(device)
-        y_t = y[~splitter].to(device)
+        x_t = x[~splitter].to(self.device)
+        y_t = y[~splitter].to(self.device)
         return x_c, y_c, x_t, y_t
