@@ -27,7 +27,7 @@ class TestNeuralProcessModel(unittest.TestCase):
             self.y_dim,
             self.r_dim,
             self.z_dim,
-            self.n_context
+            self.n_context,
         )
 
     def test_r_encoder(self):
