@@ -27,8 +27,6 @@ from botorch_community.models.np_regression import NeuralProcessModel
 from torch import Tensor
 # reference: https://arxiv.org/abs/2106.02770
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 class LatentInformationGain(AcquisitionFunction):
     def __init__(
@@ -56,58 +54,58 @@ class LatentInformationGain(AcquisitionFunction):
         self.scaler = scaler
 
     def forward(self, candidate_x: Tensor) -> Tensor:
-        """
-        Conduct the Latent Information Gain acquisition function using the model's
-            posterior.
-
-        Args:
-            candidate_x: Candidate input points, as a Tensor. Ideally in the shape
-                (N, q, D).
-
-        Returns:
-            torch.Tensor: The LIG scores of computed KLDs, in the shape (N, q).
-        """
+        device = candidate_x.device
         candidate_x = candidate_x.to(device)
-        if candidate_x.dim() == 2:
-            candidate_x = candidate_x.unsqueeze(0)  # Ensure (N, q, D) format
         N, q, D = candidate_x.shape
-
-        kl = torch.zeros(N, q, device=device)
-
+        kl = torch.zeros(N, device=device)
         if isinstance(self.model, NeuralProcessModel):
-            x_c, y_c, x_t, y_t = self.model.random_split_context_target(
-                self.model.train_X,
-                self.model.train_Y,
-                self.model.n_context
+            x_c, y_c, _, _ = self.model.random_split_context_target(
+                self.model.train_X, self.model.train_Y, self.model.n_context
             )
             z_mu_context, z_logvar_context = self.model.data_to_z_params(x_c, y_c)
-            for _ in range(self.num_samples):
-                # Taking Samples/Predictions
-                samples = self.model.sample_z(z_mu_context, z_logvar_context)
-                y_pred = self.model.decoder(candidate_x.view(-1, D), samples)
-                # Combining the data
-                combined_x = torch.cat([x_c, candidate_x.view(-1, D)], dim=0).to(device)
-                combined_y = torch.cat([y_c, y_pred], dim=0).to(device)
-                # Computing posterior variables
-                z_mu_posterior, z_logvar_posterior = self.model.data_to_z_params(
-                    combined_x, combined_y
-                )
-                std_prior = self.min_std + self.scaler * torch.sigmoid(z_logvar_context)
-                std_posterior = self.min_std + self.scaler * torch.sigmoid(
-                    z_logvar_posterior
-                )
-                p = torch.distributions.Normal(z_mu_posterior, std_posterior)
-                q = torch.distributions.Normal(z_mu_context, std_prior)
-                kl_divergence = torch.distributions.kl_divergence(p, q).sum(dim=-1)
-                kl += kl_divergence
+
+            for i in range(N):
+                x_i = candidate_x[i]
+                kl_i = 0.0
+
+                for _ in range(self.num_samples):
+                    sample_z = self.model.sample_z(z_mu_context, z_logvar_context)
+                    if sample_z.dim() == 1:
+                        sample_z = sample_z.unsqueeze(0)
+
+                    y_pred = self.model.decoder(x_i, sample_z)
+
+                    combined_x = torch.cat([x_c, x_i], dim=0)
+                    combined_y = torch.cat([y_c, y_pred], dim=0)
+
+                    z_mu_post, z_logvar_post = self.model.data_to_z_params(
+                        combined_x, combined_y
+                    )
+
+                    std_prior = self.min_std + self.scaler * torch.sigmoid(
+                        z_logvar_context
+                    )
+                    std_post = self.min_std + self.scaler * torch.sigmoid(z_logvar_post)
+
+                    p = torch.distributions.Normal(z_mu_post, std_post)
+                    q = torch.distributions.Normal(z_mu_context, std_prior)
+                    kl_sample = torch.distributions.kl_divergence(p, q).sum()
+
+                    kl_i += kl_sample
+
+                kl[i] = kl_i / self.num_samples
+
         else:
-            for _ in range(self.num_samples):
-                posterior_prior = self.model.posterior(self.model.train_X)
-                posterior_candidate = self.model.posterior(candidate_x.view(-1, D))
+            for i in range(N):
+                x_i = candidate_x[i]
+                kl_i = 0.0
+                for _ in range(self.num_samples):
+                    posterior_prior = self.model.posterior(self.model.train_X)
+                    posterior_candidate = self.model.posterior(x_i)
 
-                kl_divergence = torch.distributions.kl_divergence(
-                    posterior_candidate.mvn, posterior_prior.mvn
-                ).sum(dim=-1)
-                kl += kl_divergence
+                    kl_i += torch.distributions.kl_divergence(
+                        posterior_candidate.mvn, posterior_prior.mvn
+                    ).sum()
 
-        return kl / self.num_samples
+                kl[i] = kl_i / self.num_samples
+        return kl
