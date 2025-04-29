@@ -1,6 +1,7 @@
 import unittest
 
 import torch
+from botorch.optim.optimize import optimize_acqf
 from botorch_community.acquisition.latent_information_gain import LatentInformationGain
 from botorch_community.models.np_regression import NeuralProcessModel
 
@@ -32,16 +33,22 @@ class TestLatentInformationGain(unittest.TestCase):
         self.assertEqual(self.acquisition_function.num_samples, 10)
         self.assertEqual(self.acquisition_function.model, self.model)
 
-    def test_acquisition_shape(self):
-        self.model(self.model.train_X, self.model.train_Y)
-        lig_score = self.acquisition_function.forward(candidate_x=self.candidate_x)
-        self.assertTrue(torch.is_tensor(lig_score))
-        self.assertEqual(lig_score.shape, (1, 5))
+    def test_acqf(self):
+        bounds = torch.tensor([[0.0] * self.x_dim, [1.0] * self.x_dim])
+        q = 3
+        raw_samples = 8
+        num_restarts = 2
 
-    def test_acquisition_kl(self):
-        self.model(self.model.train_X, self.model.train_Y)
-        lig_score = self.acquisition_function.forward(candidate_x=self.candidate_x)
-        self.assertGreaterEqual(lig_score.mean().item(), 0)
+        candidate = optimize_acqf(
+            acq_function=self.acquisition_function,
+            bounds=bounds,
+            q=q,
+            raw_samples=raw_samples,
+            num_restarts=num_restarts,
+        )
+        self.assertTrue(isinstance(candidate, tuple))
+        self.assertEqual(candidate[0].shape, (q, self.x_dim))
+        self.assertTrue(torch.all(candidate[1] >= 0))
 
 
 if __name__ == "__main__":
