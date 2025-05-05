@@ -17,10 +17,8 @@ REQUIRED_MINOR = 10
 TEST_REQUIRES = ["pytest", "pytest-cov", "requests"]
 FMT_REQUIRES = ["flake8", "ufmt", "flake8-docstrings"]
 TUTORIALS_REQUIRES = [
-    "ax-platform",
     "cma",
     "jupyter",
-    "kaleido",
     "matplotlib",
     "memory_profiler",
     "papermill",

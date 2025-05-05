@@ -1,14 +1,4 @@
 {
-  "Using BoTorch with Ax": [
-    {
-      "id": "custom_botorch_model_in_ax",
-      "title": "Using a custom BoTorch model"
-    },
-    {
-      "id": "custom_acquisition",
-      "title": "Writing a custom acquisition function"
-    }
-  ],
   "Full Optimization Loops": [
     {
       "id": "closed_loop_botorch_only",
@@ -82,6 +72,10 @@
     }
   ],
   "Bite-Sized Tutorials": [
+    {
+      "id": "custom_acquisition",
+      "title": "Implementing a custom acquisition function"
+    },
     {
       "id": "fit_model_with_torch_optimizer",
       "title": "Fitting a model using torch.optim"
