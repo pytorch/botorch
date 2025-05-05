@@ -7,53 +7,82 @@
 from __future__ import annotations
 
 from math import ceil
-from unittest.mock import patch
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
-from botorch.sampling.pathwise.features import generators
-from botorch.sampling.pathwise.features.generators import gen_kernel_features
-from botorch.sampling.pathwise.features.maps import FeatureMap
+from botorch.sampling.pathwise.features.generators import gen_kernel_feature_map
+from botorch.sampling.pathwise.features.maps import FourierFeatureMap
+from botorch.sampling.pathwise.utils import is_finite_dimensional
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
-from gpytorch.kernels.kernel import Kernel
-from torch import Size, Tensor
+from gpytorch import kernels
 
 
-class TestFeatureGenerators(BotorchTestCase):
-    def setUp(self, seed: int = 0) -> None:
+class TestGenKernelFeatureMap(BotorchTestCase):
+    def setUp(self) -> None:
         super().setUp()
-
-        self.kernels = []
         self.num_inputs = d = 2
-        self.num_features = 4096
+        self.num_random_features = 4096
+        self.kernels = []
+
         for kernel in (
-            MaternKernel(nu=0.5, batch_shape=Size([])),
-            MaternKernel(nu=1.5, ard_num_dims=1, active_dims=[0]),
-            ScaleKernel(MaternKernel(nu=2.5, ard_num_dims=d, batch_shape=Size([2]))),
-            ScaleKernel(
-                RBFKernel(ard_num_dims=1, batch_shape=Size([2, 2])), active_dims=[1]
+            kernels.MaternKernel(nu=0.5, batch_shape=torch.Size([]), ard_num_dims=d),
+            kernels.MaternKernel(nu=1.5, ard_num_dims=1, active_dims=[0]),
+            kernels.ScaleKernel(
+                kernels.MaternKernel(
+                    nu=2.5, ard_num_dims=d, batch_shape=torch.Size([2])
+                )
+            ),
+            kernels.ScaleKernel(
+                kernels.RBFKernel(ard_num_dims=1, batch_shape=torch.Size([2, 2])),
+                active_dims=[1],
+            ),
+            kernels.ProductKernel(
+                kernels.RBFKernel(ard_num_dims=d),
+                kernels.MaternKernel(nu=2.5, ard_num_dims=d),
             ),
         ):
-            kernel.to(
-                dtype=torch.float32 if (seed % 2) else torch.float64, device=self.device
+            kernel.to(dtype=torch.float64, device=self.device)
+            kern = (
+                kernel.base_kernel
+                if isinstance(kernel, kernels.ScaleKernel)
+                else kernel
             )
-            with torch.random.fork_rng():
-                torch.manual_seed(seed)
-                kern = kernel.base_kernel if isinstance(kernel, ScaleKernel) else kernel
-                kern.lengthscale = 0.1 + 0.2 * torch.rand_like(kern.lengthscale)
-                seed += 1
+            if hasattr(kern, "raw_lengthscale"):
+                if isinstance(kern, kernels.MaternKernel):
+                    shape = (
+                        kern.raw_lengthscale.shape
+                        if kern.ard_num_dims is None
+                        else torch.Size([*kern.batch_shape, 1, kern.ard_num_dims])
+                    )
+                    kern.raw_lengthscale = torch.nn.Parameter(
+                        torch.zeros(shape, dtype=torch.float64, device=self.device)
+                    )
+                elif isinstance(kern, kernels.RBFKernel):
+                    shape = (
+                        kern.raw_lengthscale.shape
+                        if kern.ard_num_dims is None
+                        else torch.Size([*kern.batch_shape, 1, kern.ard_num_dims])
+                    )
+                    kern.raw_lengthscale = torch.nn.Parameter(
+                        torch.zeros(shape, dtype=torch.float64, device=self.device)
+                    )
+
+                with torch.random.fork_rng():
+                    torch.manual_seed(0)
+                    kern.raw_lengthscale.data.add_(
+                        torch.rand_like(kern.raw_lengthscale) * 0.2 - 2.0
+                    )  # Initialize to small random values
 
             self.kernels.append(kernel)
 
-    def test_gen_kernel_features(self):
-        for seed, kernel in enumerate(self.kernels):
+    def test_gen_kernel_feature_map(self, slack: float = 3.0):
+        for kernel in self.kernels:
             with torch.random.fork_rng():
-                torch.random.manual_seed(seed)
-                feature_map = gen_kernel_features(
+                torch.random.manual_seed(0)
+                feature_map = gen_kernel_feature_map(
                     kernel=kernel,
-                    num_inputs=self.num_inputs,
-                    num_outputs=self.num_features,
+                    num_ambient_inputs=self.num_inputs,
+                    num_random_features=self.num_random_features,
                 )
 
                 n = 4
@@ -64,49 +93,59 @@ class TestFeatureGenerators(BotorchTestCase):
                         device=kernel.device,
                         dtype=kernel.dtype,
                     )
-                    self._test_gen_kernel_features(kernel, feature_map, X)
 
-    def _test_gen_kernel_features(
-        self, kernel: Kernel, feature_map: FeatureMap, X: Tensor, atol: float = 3.0
-    ):
-        with self.subTest("test_initialization"):
-            self.assertEqual(feature_map.weight.dtype, kernel.dtype)
-            self.assertEqual(feature_map.weight.device, kernel.device)
-            self.assertEqual(
-                feature_map.weight.shape[-1],
-                (
-                    self.num_inputs
-                    if kernel.active_dims is None
-                    else len(kernel.active_dims)
-                ),
-            )
+                    with self.subTest("test_initialization"):
+                        if isinstance(feature_map, FourierFeatureMap):
+                            self.assertEqual(feature_map.weight.dtype, kernel.dtype)
+                            self.assertEqual(feature_map.weight.device, kernel.device)
+                            self.assertEqual(
+                                feature_map.weight.shape[-1],
+                                (
+                                    self.num_inputs
+                                    if kernel.active_dims is None
+                                    else len(kernel.active_dims)
+                                ),
+                            )
 
-        with self.subTest("test_covariance"):
-            features = feature_map(X)
-            test_shape = torch.broadcast_shapes(
-                (*X.shape[:-1], self.num_features), kernel.batch_shape + (1, 1)
-            )
-            self.assertEqual(features.shape, test_shape)
-            K0 = features @ features.transpose(-2, -1)
-            K1 = kernel(X).to_dense()
-            self.assertTrue(
-                K0.allclose(K1, atol=atol * self.num_features**-0.5, rtol=0)
-            )
+                    with self.subTest("test_covariance"):
+                        features = feature_map(X)
+                        test_shape = torch.broadcast_shapes(
+                            (*X.shape[:-1], feature_map.output_shape[0]),
+                            kernel.batch_shape + (1, 1),
+                        )
+                        self.assertEqual(features.shape, test_shape)
 
-        # Test passing the wrong dimensional shape to `weight_generator`
-        with self.assertRaisesRegex(UnsupportedError, "2-dim"), patch.object(
-            generators,
-            "_gen_fourier_features",
-            side_effect=lambda **kwargs: kwargs["weight_generator"](Size([])),
-        ):
-            gen_kernel_features(
-                kernel=kernel,
-                num_inputs=self.num_inputs,
-                num_outputs=self.num_features,
-            )
+                        K0 = features @ features.transpose(-2, -1)
+                        K1 = kernel(X).to_dense()
+
+                        # Normalize by prior standard deviations
+                        istd = K1.diagonal(dim1=-2, dim2=-1).rsqrt()
+                        K0 = istd.unsqueeze(-1) * K0 * istd.unsqueeze(-2)
+                        K1 = istd.unsqueeze(-1) * K1 * istd.unsqueeze(-2)
+
+                        allclose_kwargs = {
+                            "atol": slack * self.num_random_features**-0.5
+                        }
+                        if not is_finite_dimensional(kernel):
+                            num_random_features_per_map = self.num_random_features / (
+                                1
+                                if not is_finite_dimensional(kernel, max_depth=0)
+                                else sum(
+                                    not is_finite_dimensional(k)
+                                    for k in kernel.modules()
+                                    if k is not kernel
+                                )
+                            )
+                            allclose_kwargs["atol"] = (
+                                slack * num_random_features_per_map**-0.5
+                            )
+
+                        self.assertTrue(K0.allclose(K1, **allclose_kwargs))
 
         # Test requesting an odd number of features
         with self.assertRaisesRegex(UnsupportedError, "Expected an even number"):
-            gen_kernel_features(
-                kernel=kernel, num_inputs=self.num_inputs, num_outputs=3
+            gen_kernel_feature_map(
+                kernel=self.kernels[0],
+                num_ambient_inputs=self.num_inputs,
+                num_random_features=3,
             )
