@@ -47,20 +47,6 @@ def gen_kernel_feature_map(
     num_ambient_inputs: Optional[int] = None,
     **kwargs: Any,
 ) -> KernelFeatureMap:
-    r"""Generates a feature map :math:`\phi: \mathcal{X} \to \mathbb{R}^{n}` such that
-    :math:`k(x, x') ≈ \phi(x)^{T} \phi(x')`. For stationary kernels :math:`k`, defaults
-    to the method of random Fourier features. For more details, see [rahimi2007random]_
-    and [sutherland2015error]_.
-
-    Args:
-        kernel: The kernel :math:`k` to be represented via a feature map.
-        num_random_features: The number of random features used to estimate kernels
-            that cannot be exactly represented as finite-dimensional feature maps.
-        num_ambient_inputs: The number of ambient input features. Typically acts as a
-            required argument for kernels with lengthscales whose :code:`active_dims`
-            and :code:`ard_num_dims` attributes are both None.
-        **kwargs: Additional keyword arguments are passed to subroutines.
-    """
     # IMPLEMENTATION NOTE: This function serves as the main entry point for generating
     # feature maps from kernels. It uses the dispatcher to call the appropriate handler
     # based on the kernel type. The function has been updated from the original
@@ -84,24 +70,6 @@ def _gen_fourier_features(
     cosine_only: bool = False,
     **ignore: Any,
 ) -> FourierFeatureMap:
-    r"""Generate a feature map :math:`\phi: \mathcal{X} \to \mathbb{R}^{2l}` that
-    approximates a stationary kernel so that :math:`k(x, x') ≈ \phi(x)^\top \phi(x')`.
-
-    Following [sutherland2015error]_, we default to representing complex exponentials
-    by pairs of basis functions :math:`\phi_{i}(x) = \sin(x^\top w_{i})` and
-    :math:`\phi_{i + l} = \cos(x^\top w_{i}).
-
-    Args:
-        kernel: A stationary kernel :math:`k(x, x') = k(x - x')`.
-        weight_generator: A callable used to generate weight vectors :math:`w`.
-        num_inputs: The number of ambient input features.
-        num_random_features: The number of random Fourier features.
-        random_feature_scale: Multiplicative constant for the feature map :math:`\phi`.
-            Defaults to :code:`num_random_features ** -0.5` so that
-            :math:`\phi(x)^\top \phi(x') ≈ k(x, x')`.
-        cosine_only: Specifies whether or not to use cosine features with a random
-            phase instead of paired sine and cosine features.
-    """
     # IMPLEMENTATION NOTE: This function implements the random Fourier features method
     # from
     # to approximate stationary kernels. It has been enhanced from

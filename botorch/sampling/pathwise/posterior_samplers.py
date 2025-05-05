@@ -54,18 +54,14 @@ DrawMatheronPaths = Dispatcher("draw_matheron_paths")
 class MatheronPath(PathDict):
     r"""Represents function draws from a GP posterior via Matheron's rule:
 
-    .. code-block:: text
 
-                  "Prior path"
-                       v
-        (f | y)(·) = f(·) + Cov(f(·), y) Cov(y, y)^{-1} (y - f(X) - ε),
-                            \_______________________________________/
-                                                v
-                                          "Update path"
+              "Prior path"
+                   v
+    (f | y)(·) = f(·) + Cov(f(·), y) Cov(y, y)^{-1} (y - f(X) - ε),
+                        \_______________________________________/
+                                            v
+                                      "Update path"
 
-    where `=` denotes equality in distribution, :math:`f \sim GP(0, k)`,
-    :math:`y \sim N(f(X), \Sigma)`, and :math:`\epsilon \sim N(0, \Sigma)`.
-    For more information, see [wilson2020sampling]_ and [wilson2021pathwise]_.
     """
 
     def __init__(

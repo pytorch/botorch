@@ -49,16 +49,10 @@ def gaussian_update(
 ) -> GeneralizedLinearPath:
     r"""Computes a Gaussian pathwise update in exact arithmetic:
 
-    .. code-block:: text
-
         (f | y)(·) = f(·) + Cov(f(·), y) Cov(y, y)^{-1} (y - f(X) - ε),
                             \_______________________________________/
                                                 V
                                     "Gaussian pathwise update"
-
-    where `=` denotes equality in distribution, :math:`f \sim GP(0, k)`,
-    :math:`y \sim N(f(X), \Sigma)`, and :math:`\epsilon \sim N(0, \Sigma)`.
-    For more information, see [wilson2020sampling]_ and [wilson2021pathwise]_.
 
     Args:
         model: A Gaussian process prior together with a likelihood.
