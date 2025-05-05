@@ -52,18 +52,16 @@ jobs:
       run: |
         pytest -ra test_community/ --cov botorch_community/ --cov-report term-missing --cov-report xml:botorch_community_cov.xml
 
-  run_tutorials_stable_w_latest_ax:
-    name: Run tutorials without smoke test on min req. versions of PyTorch & GPyTorch and latest Ax
+  run_tutorials_stable:
+    name: Run tutorials without smoke test on min req. versions of PyTorch & GPyTorch
     uses: ./.github/workflows/reusable_tutorials.yml
     with:
       smoke_test: false
       use_stable_pytorch_gpytorch: true
-      use_stable_ax: false
 
   run_tutorials_stable_smoke_test:
-    name: Run tutorials with smoke test on min req. versions of PyTorch & GPyTorch and latest Ax
+    name: Run tutorials with smoke test on min req. versions of PyTorch & GPyTorch
     uses: ./.github/workflows/reusable_tutorials.yml
     with:
       smoke_test: true
       use_stable_pytorch_gpytorch: true
-      use_stable_ax: false

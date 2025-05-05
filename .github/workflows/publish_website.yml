@@ -47,11 +47,8 @@ jobs:
     - name: Install dependencies
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
-        ALLOW_BOTORCH_LATEST: true  # Allow Ax to install w/ new BoTorch release.
       run: |
         uv pip install ."[dev, tutorials]"
-        # There may not be a compatible Ax uv pip version, so we use the development version.
-        uv pip install git+https://github.com/facebook/Ax.git
     - if: ${{ inputs.new_version }}
       name: Create new docusaurus version
       run: |
