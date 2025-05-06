@@ -25,7 +25,7 @@ function to query the next point in the optimization process.
 In general, we recommend using [Ax](https://ax.dev) for a simple BO setup like this one,
 since this will simplify your setup (including the amount of code you need to write)
 considerably. You can use a custom BoTorch model and acquisition function in Ax,
-following the [Using BoTorch with Ax](/docs/tutorials/custom_botorch_model_in_ax)
+following the [Using BoTorch with Ax](../custom_botorch_model_in_ax/index.mdx)
 tutorial. To use the MES acquisition function, it is sufficient to add
 `"botorch_acqf_class": qMaxValueEntropy,` to `model_kwargs`. The linked tutorial shows
 how to use a custom BoTorch model. If you'd like to let Ax choose which model to use
@@ -54,13 +54,13 @@ $\mathcal{D}_t$ can be written as
 
 $$
 \begin{align}
-    \alpha_{\text{MES}}(\textbf{x}) 
+    \alpha_{\text{MES}}(\textbf{x})
     &= v(\mathcal{D}_t\cup {(\textbf{x}, y)}) - v(\mathcal{D}_t) \\
     &= - \mathbb{E}_Y[h(F^* \mid \mathcal{D}_t\cup {(\textbf{x}, Y)})] + h(F^*\mid\mathcal{D}_t) \\
     &= - \mathbb{E}_Y[h(F^* \mid Y)] + h(F^*) \\
     &= I(F^*; Y) \\
     &= I(Y; F^*) \quad \text{(symmetry)} \\
-    &= - \mathbb{E}_{F^*}[h(Y \mid F^*)] + h(Y) \\    
+    &= - \mathbb{E}_{F^*}[h(Y \mid F^*)] + h(Y) \\
 \end{align}
 $$
 
@@ -110,9 +110,9 @@ $$
     \sim \mathcal{N} \left(
     \begin{bmatrix}
         \mu \\ \mu
-    \end{bmatrix} , 
+    \end{bmatrix} ,
     \begin{bmatrix}
-        \sigma_f^2 + \sigma_\epsilon^2 & \sigma_f^2 \\ 
+        \sigma_f^2 + \sigma_\epsilon^2 & \sigma_f^2 \\
         \sigma_f^2 & \sigma_f^2
     \end{bmatrix}
     \right).
@@ -143,7 +143,7 @@ Finally, given $f^*$, we have
 
 $$
 \begin{align}
-    h(Y \mid f^*) 
+    h(Y \mid f^*)
     &= -\int_\mathcal{Y} p(y \mid f^*)\log(p(y \mid f^*)) dy\\
     &= -\int_\mathcal{Y} Zp(y)\log(Zp(y)) dy \\
     &\simeq -\frac{1}{\left|\mathcal{Y}\right|} \Sigma_{\mathcal{Y}} Z\log(Zp(y)), \\
@@ -160,7 +160,7 @@ Putting all together,
 
 $$
 \begin{align}
-    \alpha_{\text{MES}}(\textbf{x}) 
+    \alpha_{\text{MES}}(\textbf{x})
     &= H_0 - H_1 \\
     &\simeq H_0 - H_1^{MC}\\
     &= \log \left(\sqrt{2\pi e (\sigma_f^2 + \sigma_\epsilon^2)}\right) + \frac{1}{\left|\mathcal{F}^*\right|} \Sigma_{\mathcal{F}^*} \frac{1}{\left|\mathcal{Y}\right|} \Sigma_{\mathcal{Y}} (Z\log Z + Z\log p(y))
@@ -182,7 +182,7 @@ estimator for $H_1$, we apply also regression adjustment to get an estimation of
 
 $$
 \begin{align}
-    \widehat{H}_1 &= H_1^{MC} - \beta (H_0^{MC} - H_0) 
+    \widehat{H}_1 &= H_1^{MC} - \beta (H_0^{MC} - H_0)
 \end{align}
 $$
 
@@ -348,4 +348,3 @@ The use of the `qMultiFidelityMaxValueEntropy` acquisition function is very simi
 `qMaxValueEntropy`, but requires additional optional arguments related to the fidelity
 and cost models. We will provide more details on the MF-MES acquisition function in a
 separate tutorial.
-
