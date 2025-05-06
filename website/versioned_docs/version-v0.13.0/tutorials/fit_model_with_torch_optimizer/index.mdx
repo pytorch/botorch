@@ -223,7 +223,7 @@ plt.tight_layout()
 
 It is simple to package up a custom optimizer loop like the one above and use it within
 Ax. As described in the
-[Using BoTorch with Ax tutorial](/docs/tutorials/custom_botorch_model_in_ax), this
+[Using BoTorch with Ax tutorial](../custom_botorch_model_in_ax/index.mdx), this
 requires defining a custom `model_constructor` callable that can then be passed to the
 `get_botorch` factory function.
 
@@ -249,4 +249,3 @@ def _get_and_fit_model(Xs, Ys, **kwargs):
 ```python
 
 ```
-

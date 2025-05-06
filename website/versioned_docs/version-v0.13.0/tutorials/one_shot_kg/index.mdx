@@ -37,7 +37,7 @@ observed at $\mathbf{x}$, and $\mu := \max_{x}\mathbb{E}[g(f(x)) \mid \mathcal{D
 In general, we recommend using [Ax](https://ax.dev) for a simple BO setup like this one,
 since this will simplify your setup (including the amount of code you need to write)
 considerably. You can use a custom BoTorch model and acquisition function in Ax,
-following the [Using BoTorch with Ax](/docs/tutorials/custom_botorch_model_in_ax)
+following the [Using BoTorch with Ax](../custom_botorch_model_in_ax/index.mdx)
 tutorial. To use the KG acquisition function, it is sufficient to add
 `"botorch_acqf_class": qKnowledgeGradient,` to `model_kwargs`. The linked tutorial shows
 how to use a custom BoTorch model. If you'd like to let Ax choose which model to use
@@ -290,4 +290,3 @@ acq_value_proper
   `tensor(0.1131)`
 }
 </CellOutput>
-
