@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable
-from math import ceil
 from typing import Optional, Union
 
 import torch
@@ -43,14 +42,15 @@ from botorch.models.model import Model
 from botorch.optim.utils import fix_features, get_X_baseline
 from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.sampling import (
-    batched_multinomial,
+    boltzmann_sample,
     draw_sobol_samples,
     get_polytope_samples,
     manual_seed,
+    sample_perturbed_subset_dims,
+    sample_truncated_normal_perturbations,
 )
-from botorch.utils.transforms import normalize, standardize, unnormalize
+from botorch.utils.transforms import unnormalize
 from torch import Tensor
-from torch.distributions import Normal
 from torch.quasirandom import SobolEngine
 
 TGenInitialConditions = Callable[
@@ -541,6 +541,21 @@ def gen_one_shot_kg_initial_conditions(
         )
     q_aug = acq_function.get_augmented_q_batch_size(q=q)
 
+    # Check for inter-point (in)equality constraints
+    for constraints, type_of_constraints in [
+        (inequality_constraints, "inequality"),
+        (equality_constraints, "equality"),
+    ]:
+        if constraints is not None and len(constraints) > 0:
+            for indices, _, _ in constraints:
+                if len(indices.shape) > 1:
+                    raise NotImplementedError(
+                        "Indices must be one-dimensional "
+                        "in gen_one_shot_kg_initial_conditions. "
+                        f"Received indices {indices} "
+                        f"for {type_of_constraints} constrained."
+                    )
+
     # TODO: Avoid unnecessary computation by not generating all candidates
     ics = gen_batch_initial_conditions(
         acq_function=acq_function,
@@ -578,10 +593,12 @@ def gen_one_shot_kg_initial_conditions(
 
     # sampling from the optimizers
     n_value = int((1 - frac_random) * (q_aug - q))  # number of non-random ICs
-    eta = options.get("eta", 2.0)
-    weights = torch.exp(eta * standardize(fantasy_vals))
-    idx = torch.multinomial(weights, num_restarts * n_value, replacement=True)
-
+    idx = boltzmann_sample(
+        function_values=fantasy_vals,
+        num_samples=num_restarts * n_value,
+        eta=options.get("eta", 2.0),
+        replacement=True,
+    )
     # set the respective initial conditions to the sampled optimizers
     ics[..., -n_value:, :] = fantasy_cands[idx, 0].view(num_restarts, n_value, -1)
     return ics
@@ -634,10 +651,12 @@ def gen_one_shot_hvkg_initial_conditions(
             restarts and raw samples for solving the posterior objective
             maximization problem, respectively) and `eta` (temperature parameter
             for sampling heuristic from posterior objective maximizers).
-        inequality constraints: A list of tuples (indices, coefficients, rhs),
+        inequality constraints: Optionally, list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
-        equality constraints: A list of tuples (indices, coefficients, rhs),
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. Each
+            tensor of indices must be one-dimensional, since inter-point
+            constraints are not supported here.
+        equality constraints: Optionally, a list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
 
@@ -699,14 +718,14 @@ def gen_one_shot_hvkg_initial_conditions(
         sequential=False,
     )
     # sampling from the optimizers
-    eta = options.get("eta", 2.0)
     if num_optim_restarts > 0:
-        probs = torch.nn.functional.softmax(eta * standardize(fantasy_vals), dim=0)
-        idx = torch.multinomial(
-            probs,
-            num_optim_restarts * acq_function.num_fantasies,
+        idx = boltzmann_sample(
+            function_values=fantasy_vals,
+            num_samples=num_optim_restarts * acq_function.num_fantasies,
+            eta=options.get("eta", 2.0),
             replacement=True,
         )
+
         optim_ics = fantasy_cands[idx]
         if is_mf_hvkg:
             # add fixed features
@@ -885,11 +904,10 @@ def gen_value_function_initial_conditions(
     # sampling from the optimizers
     n_value = int((1 - frac_random) * raw_samples)  # number of non-random ICs
     if n_value > 0:
-        eta = options.get("eta", 2.0)
-        weights = torch.exp(eta * standardize(fantasy_vals))
-        idx = batched_multinomial(
-            weights=weights.expand(*batch_shape, -1),
+        idx = boltzmann_sample(
+            function_values=fantasy_vals.expand(*batch_shape, -1),
             num_samples=n_value,
+            eta=options.get("eta", 2.0),
             replacement=True,
         ).permute(-1, *range(len(batch_shape)))
         resampled = fantasy_cands[idx]
@@ -979,21 +997,20 @@ def initialize_q_batch(
         return X[idcs], acq_vals[idcs]
 
     max_val, max_idx = torch.max(acq_vals, dim=0)
-    Z = (acq_vals - acq_vals.mean(dim=0)) / Ystd
-    etaZ = eta * Z
-    weights = torch.exp(etaZ)
-    while torch.isinf(weights).any():
-        etaZ *= 0.5
-        weights = torch.exp(etaZ)
-    if batch_shape == torch.Size():
-        idcs = torch.multinomial(weights, n)
-    else:
-        idcs = batched_multinomial(
-            weights=weights.permute(*range(1, len(batch_shape) + 1), 0), num_samples=n
-        ).permute(-1, *range(len(batch_shape)))
+    idcs = boltzmann_sample(
+        acq_vals.permute(*range(1, len(batch_shape) + 1), 0),
+        num_samples=n,
+        eta=eta,
+    ).permute(-1, *range(len(batch_shape)))
+
     # make sure we get the maximum
-    if max_idx not in idcs:
-        idcs[-1] = max_idx
+    if batch_shape == torch.Size():
+        if max_idx not in idcs:
+            idcs[-1] = max_idx
+    else:
+        has_max = (max_idx == idcs).any(dim=0)
+        idcs[-1, ~has_max] = max_idx[~has_max]
+
     if batch_shape == torch.Size():
         return X[idcs], acq_vals[idcs]
     else:
@@ -1237,133 +1254,6 @@ def sample_points_around_best(
         perm = torch.randperm(perturbed_X.shape[0], device=X.device)
         perturbed_X = perturbed_X[perm]
     return perturbed_X
-
-
-def sample_truncated_normal_perturbations(
-    X: Tensor,
-    n_discrete_points: int,
-    sigma: float,
-    bounds: Tensor,
-    qmc: bool = True,
-) -> Tensor:
-    r"""Sample points around `X`.
-
-    Sample perturbed points around `X` such that the added perturbations
-    are sampled from N(0, sigma^2 I) and truncated to be within [0,1]^d.
-
-    Args:
-        X: A `n x d`-dim tensor starting points.
-        n_discrete_points: The number of points to sample.
-        sigma: The standard deviation of the additive gaussian noise for
-            perturbing the points.
-        bounds: A `2 x d`-dim tensor containing the bounds.
-        qmc: A boolean indicating whether to use qmc.
-
-    Returns:
-        A `n_discrete_points x d`-dim tensor containing the sampled points.
-    """
-    X = normalize(X, bounds=bounds)
-    d = X.shape[1]
-    # sample points from N(X_center, sigma^2 I), truncated to be within
-    # [0, 1]^d.
-    if X.shape[0] > 1:
-        rand_indices = torch.randint(X.shape[0], (n_discrete_points,), device=X.device)
-        X = X[rand_indices]
-    if qmc:
-        std_bounds = torch.zeros(2, d, dtype=X.dtype, device=X.device)
-        std_bounds[1] = 1
-        u = draw_sobol_samples(bounds=std_bounds, n=n_discrete_points, q=1).squeeze(1)
-    else:
-        u = torch.rand((n_discrete_points, d), dtype=X.dtype, device=X.device)
-    # compute bounds to sample from
-    a = -X
-    b = 1 - X
-    # compute z-score of bounds
-    alpha = a / sigma
-    beta = b / sigma
-    normal = Normal(0, 1)
-    cdf_alpha = normal.cdf(alpha)
-    # use inverse transform
-    perturbation = normal.icdf(cdf_alpha + u * (normal.cdf(beta) - cdf_alpha)) * sigma
-    # add perturbation and clip points that are still outside
-    perturbed_X = (X + perturbation).clamp(0.0, 1.0)
-    return unnormalize(perturbed_X, bounds=bounds)
-
-
-def sample_perturbed_subset_dims(
-    X: Tensor,
-    bounds: Tensor,
-    n_discrete_points: int,
-    sigma: float = 1e-1,
-    qmc: bool = True,
-    prob_perturb: float | None = None,
-) -> Tensor:
-    r"""Sample around `X` by perturbing a subset of the dimensions.
-
-    By default, dimensions are perturbed with probability equal to
-    `min(20 / d, 1)`. As shown in [Regis]_, perturbing a small number
-    of dimensions can be beneificial. The perturbations are sampled
-    from N(0, sigma^2 I) and truncated to be within [0,1]^d.
-
-    Args:
-        X: A `n x d`-dim tensor starting points. `X`
-            must be normalized to be within `[0, 1]^d`.
-        bounds: The bounds to sample perturbed values from
-        n_discrete_points: The number of points to sample.
-        sigma: The standard deviation of the additive gaussian noise for
-            perturbing the points.
-        qmc: A boolean indicating whether to use qmc.
-        prob_perturb: The probability of perturbing each dimension. If omitted,
-            defaults to `min(20 / d, 1)`.
-
-    Returns:
-        A `n_discrete_points x d`-dim tensor containing the sampled points.
-
-    """
-    if bounds.ndim != 2:
-        raise BotorchTensorDimensionError("bounds must be a `2 x d`-dim tensor.")
-    elif X.ndim != 2:
-        raise BotorchTensorDimensionError("X must be a `n x d`-dim tensor.")
-    d = bounds.shape[-1]
-    if prob_perturb is None:
-        # Only perturb a subset of the features
-        prob_perturb = min(20.0 / d, 1.0)
-
-    if X.shape[0] == 1:
-        X_cand = X.repeat(n_discrete_points, 1)
-    else:
-        rand_indices = torch.randint(X.shape[0], (n_discrete_points,), device=X.device)
-        X_cand = X[rand_indices]
-    pert = sample_truncated_normal_perturbations(
-        X=X_cand,
-        n_discrete_points=n_discrete_points,
-        sigma=sigma,
-        bounds=bounds,
-        qmc=qmc,
-    )
-
-    # find cases where we are not perturbing any dimensions
-    mask = (
-        torch.rand(
-            n_discrete_points,
-            d,
-            dtype=bounds.dtype,
-            device=bounds.device,
-        )
-        <= prob_perturb
-    )
-    ind = (~mask).all(dim=-1).nonzero()
-    # perturb `n_perturb` of the dimensions
-    n_perturb = ceil(d * prob_perturb)
-    perturb_mask = torch.zeros(d, dtype=mask.dtype, device=mask.device)
-    perturb_mask[:n_perturb].fill_(1)
-    # TODO: use batched `torch.randperm` when available:
-    # https://github.com/pytorch/pytorch/issues/42502
-    for idx in ind:
-        mask[idx] = perturb_mask[torch.randperm(d, device=bounds.device)]
-    # Create candidate points
-    X_cand[mask] = pert[mask]
-    return X_cand
 
 
 def is_nonnegative(acq_function: AcquisitionFunction) -> bool:

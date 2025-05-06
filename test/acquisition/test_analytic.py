@@ -6,21 +6,23 @@
 
 import itertools
 import math
+from unittest import mock
 from warnings import catch_warnings, simplefilter
 
 import torch
 from botorch.acquisition import qAnalyticProbabilityOfImprovement
 from botorch.acquisition.analytic import (
     _check_noisy_ei_model,
-    _compute_log_prob_feas,
     _ei_helper,
     _log_ei_helper,
     AnalyticAcquisitionFunction,
+    ConstrainedAnalyticAcquisitionFunctionMixin,
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
     LogConstrainedExpectedImprovement,
     LogExpectedImprovement,
     LogNoisyExpectedImprovement,
+    LogProbabilityOfFeasibility,
     LogProbabilityOfImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
@@ -48,6 +50,7 @@ from gpytorch.likelihoods.gaussian_likelihood import (
 )
 from gpytorch.module import Module
 from gpytorch.priors.torch_priors import GammaPrior
+from torch import Tensor
 
 
 NEI_NOISE = [
@@ -613,8 +616,105 @@ class TestUpperConfidenceBound(BotorchTestCase):
                 UpperConfidenceBound(model=mm2, beta=1.0)
 
 
+class ConstrainedAnalyticAcquisitionFunction(
+    ConstrainedAnalyticAcquisitionFunctionMixin
+):
+    """Derivative of the mixin class which implements register_buffer without inheriting
+    from nn.Module, in order to test the methods of the mixin class in isolation.
+    """
+
+    def register_buffer(self, name: str, tensor: Tensor) -> None:
+        setattr(self, name, tensor)
+
+
 class TestConstrainedExpectedImprovement(BotorchTestCase):
-    def test_constrained_expected_improvement(self):
+    def test_constrained_analytic_acquisition_function_mixin(self) -> None:
+        for dtype in (torch.float, torch.double):
+            with self.subTest(dtype=dtype):
+                self._test_constrained_analytic_acquisition_function_mixin(dtype=dtype)
+
+    def _test_constrained_analytic_acquisition_function_mixin(
+        self, dtype: torch.dtype
+    ) -> None:
+        # numerical stress test for _compute_log_prob_feas, which gets added to
+        # log_ei in the forward pass, a quantity we already tested above
+        # the limits here are determined by the largest power of ten x, such that
+        #                          x - (b - a) < x
+        # evaluates to true. In this test, the bounds are a, b = -digits, digits.
+        means, sigmas, X_positive = self._get_numerical_stress_test_data(dtype=dtype)
+        constraints = {0: [-5, 5]}
+
+        mixin = ConstrainedAnalyticAcquisitionFunction(constraints=constraints)
+        # test initialization
+        for k in [
+            "con_lower_inds",
+            "con_upper_inds",
+            "con_both_inds",
+            "con_both",
+            "con_lower",
+            "con_upper",
+        ]:
+            self.assertTrue(hasattr(mixin, k))
+            self.assertIsInstance(getattr(mixin, k), torch.Tensor)
+
+        log_prob = mixin._compute_log_prob_feas(means=means, sigmas=sigmas)
+        log_prob.sum().backward()
+
+        self.assertFalse(log_prob.isnan().any())
+        self.assertFalse(log_prob.isinf().any())
+        self.assertFalse(means.grad.isnan().any())
+        self.assertFalse(means.grad.isinf().any())
+        # probability of feasibility increases until X = 0, decreases from there on
+        prob_diff = log_prob.diff()
+        k = len(X_positive)
+        eps = 1e-6 if dtype == torch.float32 else 1e-15
+        self.assertTrue((prob_diff[:k] > -eps).all())
+        self.assertTrue((means.grad[:k] > -eps).all())
+        # probability has stationary point at zero
+        mean_grad_at_zero = means.grad[len(X_positive)]
+        self.assertTrue(
+            torch.allclose(mean_grad_at_zero, torch.zeros_like(mean_grad_at_zero))
+        )
+        # probability increases again
+        self.assertTrue((prob_diff[-k:] < eps).all())
+        self.assertTrue((means.grad[-k:] < eps).all())
+
+    def _get_numerical_stress_test_data(self, dtype: torch.dtype) -> Tensor:
+        digits = 10 if dtype == torch.float64 else 5
+        zero = torch.tensor([0], dtype=dtype, device=self.device)
+        ten = torch.tensor(10, dtype=dtype, device=self.device)
+        digits_tensor = 1 + torch.arange(
+            -digits, digits, dtype=dtype, device=self.device
+        )
+        X_positive = ten ** (digits_tensor)
+        # flipping -X_positive so that elements are in increasing order
+        means = torch.cat((-X_positive.flip(-1), zero, X_positive)).unsqueeze(-1)
+        means.requires_grad = True
+        sigmas = torch.ones_like(means)
+        return means, sigmas, X_positive
+
+    def test_log_probability_of_feasibility(self) -> None:
+        for dtype in (torch.float, torch.double):
+            with self.subTest(dtype=dtype):
+                self._test_log_probability_of_feasibility(dtype=dtype)
+
+    def _test_log_probability_of_feasibility(self, dtype: torch.dtype) -> None:
+        mean = torch.tensor([[-0.5]], device=self.device)
+        variance = torch.ones(1, 1, device=self.device)
+        model = MockModel(MockPosterior(mean=mean, variance=variance))
+
+        means, sigmas, _ = self._get_numerical_stress_test_data(dtype=dtype)
+        constraints = {0: [-5, 5]}
+        mixin = ConstrainedAnalyticAcquisitionFunction(constraints=constraints)
+        acqf = LogProbabilityOfFeasibility(model=model, constraints=constraints)
+        X = torch.randn_like(means).unsqueeze(-2)  # n x q=1 x d=1
+        with mock.patch.object(acqf, "_mean_and_sigma", return_value=(means, sigmas)):
+            acq_val = acqf(X)
+        log_prob = mixin._compute_log_prob_feas(means=means, sigmas=sigmas)
+
+        self.assertAllClose(acq_val, log_prob, atol=1e-4)
+
+    def test_constrained_expected_improvement(self) -> None:
         mean = torch.tensor([[-0.5]], device=self.device)
         variance = torch.ones(1, 1, device=self.device)
         model = MockModel(MockPosterior(mean=mean, variance=variance))
@@ -648,7 +748,6 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
         }
         module = ConstrainedExpectedImprovement(**kwargs)
         log_module = LogConstrainedExpectedImprovement(**kwargs)
-
         # test initialization
         for k in [
             "con_lower_inds",
@@ -758,50 +857,6 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
                     objective_index=0,
                     constraints={1: [1.0, -1.0]},
                 )
-
-        # numerical stress test for _compute_log_prob_feas, which gets added to
-        # log_ei in the forward pass, a quantity we already tested above
-        # the limits here are determined by the largest power of ten x, such that
-        #                          x - (b - a) < x
-        # evaluates to true. In this test, the bounds are a, b = -digits, digits.
-        digits = 10 if dtype == torch.float64 else 5
-        zero = torch.tensor([0], dtype=dtype, device=self.device)
-        ten = torch.tensor(10, dtype=dtype, device=self.device)
-        digits_tensor = 1 + torch.arange(
-            -digits, digits, dtype=dtype, device=self.device
-        )
-        X_positive = ten ** (digits_tensor)
-        # flipping -X_positive so that elements are in increasing order
-        means = torch.cat((-X_positive.flip(-1), zero, X_positive)).unsqueeze(-1)
-        means.requires_grad = True
-        log_module = LogConstrainedExpectedImprovement(
-            model=mm,
-            best_f=0.0,
-            objective_index=1,
-            constraints={0: [-5, 5]},
-        )
-        log_prob = _compute_log_prob_feas(
-            log_module, means=means, sigmas=torch.ones_like(means)
-        )
-        log_prob.sum().backward()
-        self.assertFalse(log_prob.isnan().any())
-        self.assertFalse(log_prob.isinf().any())
-        self.assertFalse(means.grad.isnan().any())
-        self.assertFalse(means.grad.isinf().any())
-        # probability of feasibility increases until X = 0, decreases from there on
-        prob_diff = log_prob.diff()
-        k = len(X_positive)
-        eps = 1e-6 if dtype == torch.float32 else 1e-15
-        self.assertTrue((prob_diff[:k] > -eps).all())
-        self.assertTrue((means.grad[:k] > -eps).all())
-        # probability has stationary point at zero
-        mean_grad_at_zero = means.grad[len(X_positive)]
-        self.assertTrue(
-            torch.allclose(mean_grad_at_zero, torch.zeros_like(mean_grad_at_zero))
-        )
-        # probability increases again
-        self.assertTrue((prob_diff[-k:] < eps).all())
-        self.assertTrue((means.grad[-k:] < eps).all())
 
     def test_constrained_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):

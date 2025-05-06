@@ -19,7 +19,7 @@ from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.test_helpers import get_pvar_expected
-from botorch.utils.testing import _get_random_data, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, get_random_data
 from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean, ZeroMean
@@ -38,7 +38,7 @@ class TestGPRegressionBase(BotorchTestCase):
         **tkwargs,
     ):
         extra_model_kwargs = extra_model_kwargs or {}
-        train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
+        train_X, train_Y = get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
         model_kwargs = {
             "train_X": train_X,
             "train_Y": train_Y,
@@ -65,7 +65,11 @@ class TestGPRegressionBase(BotorchTestCase):
             (False, True),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
+            # Putting the outcome transform into eval mode to ensure that it is put into
+            # train mode inside the constructor
+            octf = (
+                Standardize(m=m, batch_shape=batch_shape).eval() if use_octf else None
+            )
             intf = (
                 Normalize(d=1, bounds=bounds.to(**tkwargs), transform_on_train=True)
                 if use_intf
@@ -93,6 +97,8 @@ class TestGPRegressionBase(BotorchTestCase):
             self.assertIsInstance(rbf_kernel.lengthscale_prior, LogNormalPrior)
             if use_octf:
                 self.assertIsInstance(model.outcome_transform, Standardize)
+                # Ensure that the outcome transform was put into train mode.
+                self.assertFalse(torch.all(model.outcome_transform.means == 0))
             if use_intf:
                 self.assertIsInstance(model.input_transform, Normalize)
                 # permute output dim
@@ -182,7 +188,7 @@ class TestGPRegressionBase(BotorchTestCase):
             ("Default", "None", "Log"),  # Outcome transform
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
+            train_X, train_Y = get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
 
             model_kwargs = {}
             if octf == "None":
@@ -241,7 +247,7 @@ class TestGPRegressionBase(BotorchTestCase):
             # test condition_on_observations
             fant_shape = torch.Size([2])
             # fantasize at different input points
-            X_fant, Y_fant = _get_random_data(
+            X_fant, Y_fant = get_random_data(
                 batch_shape=fant_shape + batch_shape, m=m, n=3, **tkwargs
             )
             c_kwargs = (
@@ -459,7 +465,7 @@ class TestSingleTaskGPFixedNoise(TestSingleTaskGP):
         **tkwargs,
     ):
         extra_model_kwargs = extra_model_kwargs or {}
-        train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
+        train_X, train_Y = get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
         model_kwargs = {
             "train_X": train_X,
             "train_Y": train_Y,

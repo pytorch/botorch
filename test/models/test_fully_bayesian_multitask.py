@@ -282,9 +282,35 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior, GaussianMixturePosterior)
             self.assertIsInstance(posterior, GaussianMixturePosterior)
 
-            test_X = torch.rand(*batch_shape, d, **tkwargs)
-            posterior = model.posterior(test_X)
-            self.assertIsInstance(posterior, GaussianMixturePosterior)
+            # Test with observation noise.
+            # Add task index to have variability in added noise.
+            task_idcs = torch.tensor(
+                [[i % self.num_tasks] for i in range(batch_shape[-1])],
+                device=self.device,
+            )
+            test_X_w_task = torch.cat(
+                [test_X, task_idcs.expand(*batch_shape, 1)], dim=-1
+            )
+            noise_free_posterior = model.posterior(X=test_X_w_task)
+            noisy_posterior = model.posterior(X=test_X_w_task, observation_noise=True)
+            self.assertAllClose(noisy_posterior.mean, noise_free_posterior.mean)
+            added_noise = noisy_posterior.variance - noise_free_posterior.variance
+            self.assertTrue(torch.all(added_noise > 0.0))
+            if infer_noise is False:
+                # Check that correct noise was added.
+                train_tasks = train_X[..., 4]
+                mean_noise_by_task = torch.tensor(
+                    [
+                        train_Yvar[train_tasks == i].mean(dim=0)
+                        for i in train_tasks.unique(sorted=True)
+                    ],
+                    device=self.device,
+                )
+                expected_noise = mean_noise_by_task[task_idcs]
+                self.assertAllClose(
+                    added_noise, expected_noise.expand_as(added_noise), atol=1e-4
+                )
+
             # Mean/variance
             expected_shape = (
                 *batch_shape[: MCMC_DIM + 2],
@@ -401,7 +427,24 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         # Make sure the model shapes are set correctly
         self.assertEqual(model.pyro_model.train_X.shape, torch.Size([n, d + 1]))
         self.assertAllClose(model.pyro_model.train_X, train_X)
-        model.train()  # Put the model in train mode
+
+        # Put the model in eval mode with reset=True (reset should be ignored)
+        trained_model = model.train(mode=False, reset=True)
+        self.assertIs(trained_model, model)
+        self.assertAllClose(train_X, model.pyro_model.train_X)
+        self.assertIsNotNone(model.mean_module)
+        self.assertIsNotNone(model.covar_module)
+        self.assertIsNotNone(model.likelihood)
+        # Put the model in train mode, without resetting
+        trained_model = model.train(reset=False)
+        self.assertIs(trained_model, model)
+        self.assertAllClose(train_X, model.pyro_model.train_X)
+        self.assertIsNotNone(model.mean_module)
+        self.assertIsNotNone(model.covar_module)
+        self.assertIsNotNone(model.likelihood)
+        # Put the model in train mode, with resetting
+        trained_model = model.train()
+        self.assertIs(trained_model, model)
         self.assertAllClose(train_X, model.pyro_model.train_X)
         self.assertIsNone(model.mean_module)
         self.assertIsNone(model.covar_module)

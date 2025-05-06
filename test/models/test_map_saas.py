@@ -635,8 +635,11 @@ class TestAdditiveMapSaasSingleTaskGP(BotorchTestCase):
                 model.likelihood,
                 GaussianLikelihood if infer_noise else FixedNoiseGaussianLikelihood,
             )
+            expected_Y, expected_Yvar = model.outcome_transform(
+                Y=train_Y, Yvar=train_Yvar
+            )
             expected_X, expected_Y, expected_Yvar = model._transform_tensor_args(
-                X=train_X, Y=train_Y, Yvar=train_Yvar
+                X=train_X, Y=expected_Y, Yvar=expected_Yvar
             )
             self.assertAllClose(expected_X, model.train_inputs[0])
             self.assertAllClose(expected_Y, model.train_targets)

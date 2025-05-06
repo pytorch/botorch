@@ -11,7 +11,6 @@ Utility functions for constrained optimization.
 from __future__ import annotations
 
 from collections.abc import Callable
-
 from functools import partial
 from typing import Union
 
@@ -26,7 +25,7 @@ from torch import Tensor
 ScipyConstraintDict = dict[
     str, Union[str, Callable[[np.ndarray], float], Callable[[np.ndarray], np.ndarray]]
 ]
-NLC_TOL = -1e-6
+CONST_TOL = 1e-6
 
 
 def make_scipy_bounds(
@@ -511,9 +510,12 @@ def _make_f_and_grad_nonlinear_inequality_constraints(
 
 
 def nonlinear_constraint_is_feasible(
-    nonlinear_inequality_constraint: Callable, is_intrapoint: bool, x: Tensor
-) -> bool:
-    """Checks if a nonlinear inequality constraint is fulfilled.
+    nonlinear_inequality_constraint: Callable,
+    is_intrapoint: bool,
+    x: Tensor,
+    tolerance: float = CONST_TOL,
+) -> Tensor:
+    """Checks if a nonlinear inequality constraint is fulfilled (within tolerance).
 
     Args:
         nonlinear_inequality_constraint: Callable to evaluate the
@@ -522,23 +524,27 @@ def nonlinear_constraint_is_feasible(
             is applied pointwise and is broadcasted over the q-batch. Else, the
             constraint has to evaluated over the whole q-batch and is a an
             inter-point constraint.
-        x: Tensor of shape (b x q x d).
+        x: Tensor of shape (batch x q x d).
+        tolerance: Rather than using the exact `const(x) >= 0` constraint, this helper
+            checks feasibility of `const(x) >= -tolerance`. This avoids marking the
+            candidates as infeasible due to tiny violations.
 
     Returns:
-        bool: True if the constraint is fulfilled, else False.
+        A boolean tensor of shape (batch) indicating if the constraint is
+        satified by the corresponding batch of `x`.
     """
 
     def check_x(x: Tensor) -> bool:
-        return _arrayify(nonlinear_inequality_constraint(x)).item() >= NLC_TOL
+        return _arrayify(nonlinear_inequality_constraint(x)).item() >= -tolerance
 
-    for x_ in x:
+    x_flat = x.view(-1, *x.shape[-2:])
+    is_feasible = torch.ones(x_flat.shape[0], dtype=torch.bool, device=x.device)
+    for i, x_ in enumerate(x_flat):
         if is_intrapoint:
-            if not all(check_x(x__) for x__ in x_):
-                return False
+            is_feasible[i] &= all(check_x(x__) for x__ in x_)
         else:
-            if not check_x(x_):
-                return False
-    return True
+            is_feasible[i] &= check_x(x_)
+    return is_feasible.view(x.shape[:-2])
 
 
 def make_scipy_nonlinear_inequality_constraints(
@@ -589,7 +595,7 @@ def make_scipy_nonlinear_inequality_constraints(
         nlc, is_intrapoint = constraint
         if not nonlinear_constraint_is_feasible(
             nlc, is_intrapoint=is_intrapoint, x=x0.reshape(shapeX)
-        ):
+        ).all():
             raise ValueError(
                 "`batch_initial_conditions` must satisfy the non-linear inequality "
                 "constraints."
@@ -602,3 +608,86 @@ def make_scipy_nonlinear_inequality_constraints(
             shapeX=shapeX,
         )
     return scipy_nonlinear_inequality_constraints
+
+
+def evaluate_feasibility(
+    X: Tensor,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None = None,
+    tolerance: float = CONST_TOL,
+) -> Tensor:
+    r"""Evaluate feasibility of candidate points (within a tolerance).
+
+    Args:
+        X: The candidate tensor of shape `batch x q x d`.
+        inequality_constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
+            `coefficients` should be torch tensors. See the docstring of
+            `make_scipy_linear_constraints` for an example. When q=1, or when
+            applying the same constraint to each candidate in the batch
+            (intra-point constraint), `indices` should be a 1-d tensor.
+            For inter-point constraints, in which the constraint is applied to the
+            whole batch of candidates, `indices` must be a 2-d tensor, where
+            in each row `indices[i] =(k_i, l_i)` the first index `k_i` corresponds
+            to the `k_i`-th element of the `q`-batch and the second index `l_i`
+            corresponds to the `l_i`-th feature of that element.
+        equality_constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an equality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`. See the docstring of
+            `make_scipy_linear_constraints` for an example.
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. The first element in the tuple is a callable
+            representing a constraint of the form `callable(x) >= 0`. In case of an
+            intra-point constraint, `callable()`takes in an one-dimensional tensor of
+            shape `d` and returns a scalar. In case of an inter-point constraint,
+            `callable()` takes a two dimensional tensor of shape `q x d` and again
+            returns a scalar. The second element is a boolean, indicating if it is an
+            intra-point or inter-point constraint (`True` for intra-point. `False` for
+            inter-point). For more information on intra-point vs inter-point
+            constraints, see the docstring of the `inequality_constraints` argument.
+        tolerance: The tolerance used to check the feasibility of constraints.
+            For inequality constraints, we check if `const(X) >= rhs - tolerance`.
+            For equality constraints, we check if `abs(const(X) - rhs) < tolerance`.
+            For non-linear inequality constraints, we check if `const(X) >= -tolerance`.
+            This avoids marking the candidates as infeasible due to tiny violations.
+
+    Returns:
+        A boolean tensor of shape `batch` indicating if the corresponding candidate of
+        shape `q x d` is feasible.
+    """
+    is_feasible = torch.ones(X.shape[:-2], device=X.device, dtype=torch.bool)
+    if inequality_constraints is not None:
+        for idx, coef, rhs in inequality_constraints:
+            if idx.ndim == 1:
+                # Intra-point constraints.
+                is_feasible &= (
+                    (X[..., idx] * coef).sum(dim=-1) >= rhs - tolerance
+                ).all(dim=-1)
+            else:
+                # Inter-point constraints.
+                is_feasible &= (X[..., idx[:, 0], idx[:, 1]] * coef).sum(
+                    dim=-1
+                ) >= rhs - tolerance
+    if equality_constraints is not None:
+        for idx, coef, rhs in equality_constraints:
+            if idx.ndim == 1:
+                # Intra-point constraints.
+                is_feasible &= (
+                    ((X[..., idx] * coef).sum(dim=-1) - rhs).abs() < tolerance
+                ).all(dim=-1)
+            else:
+                # Inter-point constraints.
+                is_feasible &= (
+                    (X[..., idx[:, 0], idx[:, 1]] * coef).sum(dim=-1) - rhs
+                ).abs() < tolerance
+    if nonlinear_inequality_constraints is not None:
+        for const, intra in nonlinear_inequality_constraints:
+            is_feasible &= nonlinear_constraint_is_feasible(
+                nonlinear_inequality_constraint=const,
+                is_intrapoint=intra,
+                x=X,
+                tolerance=tolerance,
+            )
+    return is_feasible

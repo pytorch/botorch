@@ -397,9 +397,14 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
                     UserInputWarning,
                     stacklevel=3,
                 )
+                outcome_transform.train()
                 train_Y, _ = outcome_transform(train_Y, X=transformed_X)
             self._validate_tensor_args(X=transformed_X, Y=train_Y)
-            validate_input_scaling(train_X=transformed_X, train_Y=train_Y)
+            validate_input_scaling(
+                train_X=transformed_X,
+                train_Y=train_Y,
+                check_nans_only=covar_module is not None,
+            )
             if train_Y.shape[-1] != num_outputs:
                 num_outputs = train_Y.shape[-1]
 

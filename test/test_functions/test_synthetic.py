@@ -8,6 +8,7 @@ import torch
 from botorch.exceptions.errors import InputDataError
 from botorch.test_functions.synthetic import (
     Ackley,
+    AckleyMixed,
     Beale,
     Branin,
     Bukin,
@@ -22,6 +23,8 @@ from botorch.test_functions.synthetic import (
     Griewank,
     Hartmann,
     HolderTable,
+    KeaneBumpFunction,
+    Labs,
     Levy,
     Michalewicz,
     Powell,
@@ -48,10 +51,11 @@ from torch import Tensor
 
 class DummySyntheticTestFunction(SyntheticTestFunction):
     dim = 2
+    continuous_inds = list(range(dim))
     _bounds = [(-1, 1), (-1, 1)]
     _optimal_value = 0
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return -X.pow(2).sum(dim=-1)
 
 
@@ -115,14 +119,15 @@ class TestCustomBounds(BotorchTestCase):
 
 class DummyConstrainedSyntheticTestFunction(ConstrainedSyntheticTestFunction):
     dim = 2
+    continuous_inds = list(range(dim))
     num_constraints = 1
     _bounds = [(-1, 1), (-1, 1)]
     _optimal_value = 0
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return -X.pow(2).sum(dim=-1)
 
-    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
         return -X.norm(dim=-1, keepdim=True) + 1
 
 
@@ -326,6 +331,39 @@ class TestThreeHumpCamel(
     ]
 
 
+class TestLabs(
+    BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
+):
+    functions = [
+        Labs(),
+        Labs(negate=True),
+        Labs(noise_std=0.1),
+    ]
+
+    def test_labs_optimizers(self):
+        for dim in [10, 20, 30, 40, 50, 60]:
+            labs = Labs(dim=dim)
+            self.assertAllClose(
+                labs.optimal_value,
+                labs.evaluate_true(labs.optimizers).item(),
+                atol=1e-2,
+            )
+
+
+class TestAckleyMixed(
+    BotorchTestCase, BaseTestProblemTestCaseMixIn, SyntheticTestFunctionTestCaseMixin
+):
+    functions = [
+        AckleyMixed(dim=5),
+        AckleyMixed(dim=5, negate=True, randomize_optimum=True),
+        AckleyMixed(dim=5, noise_std=0.1),
+    ]
+
+    def test_dimension(self):
+        with self.assertRaisesRegex(ValueError, "Expected dim > 3. Got dim=3."):
+            AckleyMixed(dim=3)
+
+
 # ------------------ Constrained synthetic test problems ------------------ #
 
 
@@ -419,4 +457,15 @@ class TestWeldedBeamSO(
     functions = [
         WeldedBeamSO(),
         WeldedBeamSO(noise_std=0.1, constraint_noise_std=[0.2] * 6),
+    ]
+
+
+class TestKeaneBumpFunction(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    functions = [
+        KeaneBumpFunction(dim=2),
+        KeaneBumpFunction(dim=4, noise_std=0.1, constraint_noise_std=[0.1, 0.2]),
     ]

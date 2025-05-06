@@ -42,8 +42,8 @@ of surrogate model, or a new type of acquisition function, but leave the rest of
 the the Bayesian Optimization loop untouched. It is then straightforward to plug
 your custom BoTorch model or acquisition function into Ax to take advantage of
 Ax's various loop control APIs, as well as its powerful automated metadata
-management, data storage, etc. See the
-[Using a custom BoTorch model in Ax](tutorials/custom_botorch_model_in_ax)
+management, data storage, etc. See Ax's
+[Modular BoTorch tutorial](https://ax.dev/docs/tutorials/modular_botorch/)
 tutorial for more on how to do this.
 
 

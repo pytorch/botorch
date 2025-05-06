@@ -7,19 +7,9 @@
 r"""
 Acquisition functions for max-value entropy search for multi-objective
 Bayesian optimization (MESMO).
-
-References
-
-.. [Belakaria2019]
-    S. Belakaria, A. Deshwal, J. R. Doppa. Max-value Entropy Search
-    for Multi-Objective Bayesian Optimization. Advances in Neural
-    Information Processing Systems, 32. 2019.
-
 """
 
 from __future__ import annotations
-
-from collections.abc import Callable
 
 from math import pi
 
@@ -29,159 +19,29 @@ from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisition
 from botorch.acquisition.multi_objective.joint_entropy_search import (
     LowerBoundMultiObjectiveEntropySearch,
 )
-from botorch.models.converter import (
-    batched_multi_output_to_single_output,
-    model_list_to_batched,
-)
 from botorch.models.model import Model
-from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.sampling.base import MCSampler
-from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from torch import Tensor
 
 
+# Can be removed in version 0.15.0, or potentially sooner because the code has
+# already been raising deprecation warnings for a long time
 class qMultiObjectiveMaxValueEntropy(
     qMaxValueEntropy, MultiObjectiveMCAcquisitionFunction
 ):
     r"""The acquisition function for MESMO.
 
-    This acquisition function computes the mutual information of
-    Pareto frontier and a candidate point. See [Belakaria2019]_ for
-    a detailed discussion.
-
-    q > 1 is supported through cyclic optimization and fantasies.
-
-    Noisy observations are support by computing information gain with
-    observation noise as in Appendix C in [Takeno2020mfmves]_.
-
-    Note: this only supports maximization.
-
-    Attributes:
-        _default_sample_shape: The `sample_shape` for the default sampler.
-
-    Example:
-        >>> model = SingleTaskGP(train_X, train_Y, outcome_transform=None)
-        >>> MESMO = qMultiObjectiveMaxValueEntropy(model, sample_pfs)
-        >>> mesmo = MESMO(test_X)
+    This is no longer available. We recommend
+    `qLowerBoundMultiObjectiveMaxValueEntropySearch` as a replacement.
     """
 
-    _default_sample_shape = torch.Size([128])
-
-    def __init__(
-        self,
-        model: Model,
-        sample_pareto_frontiers: Callable[[Model], Tensor],
-        num_fantasies: int = 16,
-        X_pending: Tensor | None = None,
-        sampler: MCSampler | None = None,
-    ) -> None:
-        r"""Multi-objective max-value entropy search acquisition function.
-
-        Args:
-            model: A fitted multi-output model.
-            sample_pareto_frontiers: A callable that takes a model and returns a
-                `num_samples x n' x m`-dim tensor of outcomes to use for constructing
-                `num_samples` sampled Pareto frontiers.
-            num_fantasies: Number of fantasies to generate. The higher this
-                number the more accurate the model (at the expense of model
-                complexity, wall time and memory). Ignored if `X_pending` is `None`.
-            X_pending: A `m x d`-dim Tensor of `m` design points that have been
-                submitted for function evaluation, but have not yet been evaluated.
-        """
-        MultiObjectiveMCAcquisitionFunction.__init__(self, model=model, sampler=sampler)
-
-        # Batch GP models (e.g. fantasized models) are not currently supported
-        if isinstance(model, ModelListGP):
-            train_X = model.models[0].train_inputs[0]
-        else:
-            train_X = model.train_inputs[0]
-        if train_X.ndim > 3:
-            raise NotImplementedError(
-                "Batch GP models (e.g. fantasized models) "
-                "are not yet supported by qMultiObjectiveMaxValueEntropy"
-            )
-        # convert to batched MO model
-        batched_mo_model = (
-            model_list_to_batched(model) if isinstance(model, ModelListGP) else model
+    def __init__(self, *args, **kwargs) -> None:
+        """Multi-objective max-value entropy search acquisition function."""
+        raise NotImplementedError(
+            "qMultiObjectiveMaxValueEntropy is no longer available. We suggest "
+            "qLowerBoundMultiObjectiveMaxValueEntropySearch as a replacement."
         )
-        self._init_model = batched_mo_model
-        self.fantasies_sampler = SobolQMCNormalSampler(
-            sample_shape=torch.Size([num_fantasies])
-        )
-        self.num_fantasies = num_fantasies
-        # weight is used in _compute_information_gain
-        self.maximize = True
-        self.weight = 1.0
-        self.sample_pareto_frontiers = sample_pareto_frontiers
-        # Set X_pending, register converted model and sample max values.
-        self.set_X_pending(X_pending)
-        # This avoids attribute errors in qMaxValueEntropy code.
-        self.posterior_transform = None
-
-    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
-        r"""Set pending points.
-
-        Informs the acquisition function about pending design points,
-        fantasizes the model on the pending points and draws max-value samples
-        from the fantasized model posterior.
-
-        Args:
-            X_pending: `m x d` Tensor with `m` `d`-dim design points that have
-                been submitted for evaluation but have not yet been evaluated.
-        """
-        MultiObjectiveMCAcquisitionFunction.set_X_pending(self, X_pending=X_pending)
-        if X_pending is not None:
-            # fantasize the model
-            fantasy_model = self._init_model.fantasize(
-                X=X_pending,
-                sampler=self.fantasies_sampler,
-            )
-            self.mo_model = fantasy_model
-            # convert model to batched single outcome model.
-            self.model = batched_multi_output_to_single_output(
-                batch_mo_model=self.mo_model
-            )
-            self._sample_max_values()
-        else:
-            # This is mainly for setting the model to the original model
-            # after the sequential optimization at q > 1
-            self.mo_model = self._init_model
-            self.model = batched_multi_output_to_single_output(
-                batch_mo_model=self.mo_model
-            )
-            self._sample_max_values()
-
-    def _sample_max_values(self) -> None:
-        """Sample max values for MC approximation of the expectation in MES.
-
-        Sets self.posterior_max_values."""
-        with torch.no_grad():
-            # num_samples x (num_fantasies) x n_pareto_points x m
-            sampled_pfs = self.sample_pareto_frontiers(self.mo_model)
-            if sampled_pfs.ndim == 3:
-                # add fantasy dim
-                sampled_pfs = sampled_pfs.unsqueeze(-3)
-            # take component-wise max value
-            self.posterior_max_values = sampled_pfs.max(dim=-2).values
-
-    @t_batch_mode_transform(expected_q=1)
-    def forward(self, X: Tensor) -> Tensor:
-        r"""Compute max-value entropy at the design points `X`.
-
-        Args:
-            X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
-                with `1` `d`-dim design points each.
-
-        Returns:
-            A `batch_shape`-dim Tensor of MVE values at the given design points `X`.
-        """
-        # `m` dim tensor of information gains
-        # unsqueeze X to add a batch-dim for the batched model
-        igs = qMaxValueEntropy.forward(self, X=X.unsqueeze(-3))
-        # sum over objectives
-        return igs.sum(dim=-1)
 
 
 class qLowerBoundMultiObjectiveMaxValueEntropySearch(

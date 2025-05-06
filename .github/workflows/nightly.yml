@@ -32,7 +32,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Install dependencies
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
@@ -75,9 +75,8 @@ jobs:
       contents: write
 
   run_tutorials:
-    name: Run tutorials without smoke test on latest PyTorch / GPyTorch / Ax
+    name: Run tutorials without smoke test on latest PyTorch / GPyTorch
     uses: ./.github/workflows/reusable_tutorials.yml
     with:
       smoke_test: false
       use_stable_pytorch_gpytorch: false
-      use_stable_ax: false

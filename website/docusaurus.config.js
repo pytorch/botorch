@@ -113,7 +113,7 @@ module.exports={
               },
               {
                 href: 'https://archive.botorch.org/versions',
-                label: '<= 0.11.3',
+                label: '<= 0.12.0',
               },
             ],
         },

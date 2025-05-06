@@ -24,6 +24,7 @@ from botorch.acquisition.analytic import (
     NoisyExpectedImprovement,
 )
 from botorch.acquisition.input_constructors import ACQF_INPUT_CONSTRUCTOR_REGISTRY
+from botorch.acquisition.logei import qLogProbabilityOfFeasibility
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
@@ -45,6 +46,7 @@ from botorch.exceptions.errors import BotorchError
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch.utils.transforms import standardize
 from torch import Tensor
@@ -404,6 +406,7 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
                 "sampler": sampler,
                 "prune_baseline": False,
                 "cache_root": False,
+                "incremental": False,
             }
             # copy for log version
             log_acqf = qLogNoisyExpectedImprovement(**kwargs)
@@ -421,6 +424,40 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
                 log_acqf.set_X_pending(X2)
             self.assertEqual(log_acqf.X_pending, X2)
             self.assertEqual(sum(issubclass(w.category, BotorchWarning) for w in ws), 1)
+
+            # test incremental
+            # Check that adding a pending point is equivalent to adding a point to
+            # X_baseline
+            for cache_root in (True, False):
+                kwargs = {
+                    "model": mm_noisy_pending,
+                    "X_baseline": X_baseline,
+                    "sampler": sampler,
+                    "prune_baseline": False,
+                    "cache_root": cache_root,
+                    "incremental": True,
+                }
+                log_acqf = qLogNoisyExpectedImprovement(**kwargs)
+                log_acqf.set_X_pending(X)
+                self.assertIsNone(log_acqf.X_pending)
+                self.assertTrue(
+                    torch.equal(log_acqf.X_baseline, torch.cat([X_baseline, X], dim=0))
+                )
+                af_val1 = log_acqf(X2)
+                kwargs = {
+                    "model": mm_noisy_pending,
+                    "X_baseline": torch.cat([X_baseline, X], dim=-2),
+                    "sampler": sampler,
+                    "prune_baseline": False,
+                    "cache_root": cache_root,
+                    "incremental": False,
+                }
+                log_acqf2 = qLogNoisyExpectedImprovement(**kwargs)
+                af_val2 = log_acqf2(X2)
+                self.assertAllClose(af_val1.item(), af_val2.item())
+            # test reseting X_pending
+            log_acqf.set_X_pending(None)
+            self.assertTrue(torch.equal(log_acqf.X_baseline, X_baseline))
 
     def test_q_noisy_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -725,6 +762,87 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
         # TODO: Test different objectives (incl. constraints)
 
 
+class TestQLogProbabilityOfFeasibility(BotorchTestCase):
+    def test_q_log_probability_of_feasibility(self):
+        self.assertIn(
+            qLogProbabilityOfFeasibility, ACQF_INPUT_CONSTRUCTOR_REGISTRY.keys()
+        )
+        for dtype in (torch.float, torch.double):
+            with self.subTest(dtype=dtype):
+                self._test_q_log_probability_of_feasibility(dtype=dtype)
+
+    def _test_q_log_probability_of_feasibility(self, dtype=torch.double):
+        tkwargs = {"device": self.device, "dtype": dtype}
+        sample_shape = torch.Size([2])
+        samples = torch.zeros(1, 1, **tkwargs)
+        mm = MockModel(MockPosterior(samples=samples))
+        # X is `q x d` = 1 x 1. X is a dummy and unused b/c of mocking
+        X = torch.zeros(1, 1, **tkwargs)
+
+        # basic test
+        torch.manual_seed(1234)
+        sampler = IIDNormalSampler(sample_shape=sample_shape)
+
+        def satisfied_constraint(Y: Tensor) -> Tensor:
+            return torch.full_like(Y[..., 0], 10.0)
+
+        def barely_satisfied_constraint(Y: Tensor) -> Tensor:
+            return torch.full_like(Y[..., 0], 3 * eta)
+
+        def uncertain_constraint(Y: Tensor) -> Tensor:
+            return torch.full_like(Y[..., 0], 0.0)
+
+        def barely_unsatisfied_constraint(Y: Tensor) -> Tensor:
+            return torch.full_like(Y[..., 0], -torch.pi * eta)
+
+        acqf = qLogProbabilityOfFeasibility(
+            model=mm,
+            constraints=[satisfied_constraint],
+            sampler=sampler,
+        )
+        # test initialization
+        self.assertTrue(acqf._fat)  # default behavior
+        self.assertIn("sampler", acqf._modules)
+        self.assertIn("objective", acqf._modules)
+        # objective is always set to IdentityMCObjective
+        self.assertIsInstance(acqf.objective, IdentityMCObjective)
+        self.assertTrue(acqf._log)
+
+        constraints_list = [
+            [barely_satisfied_constraint, uncertain_constraint],
+            [barely_unsatisfied_constraint, barely_satisfied_constraint],
+            [
+                barely_unsatisfied_constraint,
+                uncertain_constraint,
+                barely_satisfied_constraint,
+            ],
+            [uncertain_constraint],
+            [satisfied_constraint],
+        ]
+
+        eta = torch.pi * 1e-3  # not the default
+        fat = True
+        for constraints in constraints_list:
+            acqf = qLogProbabilityOfFeasibility(
+                model=mm,
+                constraints=constraints,
+                sampler=sampler,
+                eta=eta,
+            )
+            res = acqf(X)
+            log_sample_feasibility = compute_smoothed_feasibility_indicator(
+                constraints=constraints,
+                samples=samples.expand(*sample_shape, *samples.shape),
+                eta=eta,
+                log=True,
+                fat=fat,
+            )
+            log_feasibility = acqf._sample_reduction(
+                acqf._q_reduction(log_sample_feasibility)
+            )
+            self.assertAllClose(res, log_feasibility)
+
+
 class TestIsLog(BotorchTestCase):
     def test_is_log(self):
         # the flag is False by default
@@ -754,6 +872,9 @@ class TestIsLog(BotorchTestCase):
         for acqf_class in [NoisyExpectedImprovement, qNoisyExpectedImprovement]:
             acqf = acqf_class(model, X)
             self.assertFalse(acqf._log)
+
+        # probability of feasibility
+        self.assertTrue(qLogProbabilityOfFeasibility._log)
 
         # multi-objective case
         model_list = ModelListGP(model, model)

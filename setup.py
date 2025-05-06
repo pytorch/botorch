@@ -14,13 +14,11 @@ REQUIRED_MAJOR = 3
 REQUIRED_MINOR = 10
 
 # Requirements for testing, formatting, and tutorials
-TEST_REQUIRES = ["pytest", "pytest-cov"]
+TEST_REQUIRES = ["pytest", "pytest-cov", "requests"]
 FMT_REQUIRES = ["flake8", "ufmt", "flake8-docstrings"]
 TUTORIALS_REQUIRES = [
-    "ax-platform",
     "cma",
     "jupyter",
-    "kaleido",
     "matplotlib",
     "memory_profiler",
     "papermill",

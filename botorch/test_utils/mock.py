@@ -38,11 +38,11 @@ def mock_optimize_context_manager(
             USE RESPONSIBLY.
     """
 
-    def one_iteration_minimize(*args: Any, **kwargs: Any) -> OptimizeResult:
+    def two_iteration_minimize(*args: Any, **kwargs: Any) -> OptimizeResult:
         if kwargs["options"] is None:
             kwargs["options"] = {}
-
-        kwargs["options"]["maxiter"] = 1
+        # Using two iterations here to allow SLSQP to adapt to constraints.
+        kwargs["options"]["maxiter"] = 2
         return minimize_with_timeout(*args, **kwargs)
 
     def minimal_gen_ics(*args: Any, **kwargs: Any) -> Tensor:
@@ -64,7 +64,7 @@ def mock_optimize_context_manager(
         mock_generation = es.enter_context(
             mock.patch(
                 "botorch.generation.gen.minimize_with_timeout",
-                wraps=one_iteration_minimize,
+                wraps=two_iteration_minimize,
             )
         )
 
@@ -73,7 +73,7 @@ def mock_optimize_context_manager(
         mock_fit = es.enter_context(
             mock.patch(
                 "botorch.optim.core.minimize_with_timeout",
-                wraps=one_iteration_minimize,
+                wraps=two_iteration_minimize,
             )
         )
 

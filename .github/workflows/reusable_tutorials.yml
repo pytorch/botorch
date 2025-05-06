@@ -9,9 +9,6 @@ on:
       use_stable_pytorch_gpytorch:
         required: true
         type: boolean
-      use_stable_ax:
-        required: true
-        type: boolean
   workflow_call:
     inputs:
       smoke_test:
@@ -19,10 +16,6 @@ on:
         type: boolean
         default: true
       use_stable_pytorch_gpytorch:
-        required: false
-        type: boolean
-        default: false
-      use_stable_ax:
         required: false
         type: boolean
         default: false
@@ -41,7 +34,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Fetch all history for all tags and branches
       # We need to do this so setuptools_scm knows how to set the BoTorch version.
       run: git fetch --prune --unshallow
@@ -66,19 +59,6 @@ jobs:
         ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
         uv pip install .[tutorials]
-    - if: ${{ !inputs.use_stable_ax }}
-      name: Install latest Ax
-      env:
-        # This is so Ax's setup doesn't install a pinned BoTorch version.
-        ALLOW_BOTORCH_LATEST: true
-      run: |
-        uv pip install git+https://github.com/facebook/Ax.git
-    - if: ${{ inputs.use_stable_ax }}
-      name: Install stable Ax
-      env:
-        ALLOW_BOTORCH_LATEST: true
-      run: |
-        uv pip install ax-platform --no-binary ax-platform
     - if: ${{ inputs.smoke_test }}
       name: Run tutorials with smoke test
       run: |

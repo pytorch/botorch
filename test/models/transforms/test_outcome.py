@@ -372,16 +372,24 @@ class TestOutcomeTransforms(BotorchTestCase):
         n = 5
         seed = randint(0, 100)
         torch.manual_seed(seed)
-        for dtype, batch_shape in itertools.product(
-            (torch.float, torch.double), (torch.Size([]), torch.Size([3]))
+        for dtype, batch_shape, task_values in itertools.product(
+            (torch.float, torch.double),
+            (torch.Size([]), torch.Size([3])),
+            (
+                torch.tensor([0, 1], dtype=torch.long, device=self.device),
+                torch.tensor([0, 3], dtype=torch.long, device=self.device),
+            ),
         ):
             torch.manual_seed(seed)
+            tval = task_values[1].item()
             X = torch.rand(*batch_shape, n, 2, dtype=dtype, device=self.device)
-            X[..., -1] = torch.tensor([0, 1, 0, 1, 0], dtype=dtype, device=self.device)
+            X[..., -1] = torch.tensor(
+                [0, tval, 0, tval, 0], dtype=dtype, device=self.device
+            )
             Y = torch.randn(*batch_shape, n, 1, dtype=dtype, device=self.device)
             Yvar = torch.rand(*batch_shape, n, 1, dtype=dtype, device=self.device)
             strata_tf = StratifiedStandardize(
-                task_values=torch.tensor([0, 1], dtype=torch.long, device=self.device),
+                task_values=task_values,
                 stratification_idx=-1,
                 batch_shape=batch_shape,
             )
@@ -400,9 +408,11 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf_Y1, tf_Yvar1 = tf1(Y=Y1, Yvar=Yvar1, X=X1)
             # check that stratified means are expected
             self.assertAllClose(strata_tf.means[..., :1, :], tf0.means)
-            self.assertAllClose(strata_tf.means[..., 1:, :], tf1.means)
+            # use remapped task values to index
+            self.assertAllClose(strata_tf.means[..., 1:2, :], tf1.means)
             self.assertAllClose(strata_tf.stdvs[..., :1, :], tf0.stdvs)
-            self.assertAllClose(strata_tf.stdvs[..., 1:, :], tf1.stdvs)
+            # use remapped task values to index
+            self.assertAllClose(strata_tf.stdvs[..., 1:2, :], tf1.stdvs)
             # check the transformed values
             self.assertAllClose(tf_Y0, tf_Y[mask0].view(*batch_shape, -1, 1))
             self.assertAllClose(tf_Y1, tf_Y[mask1].view(*batch_shape, -1, 1))

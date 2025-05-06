@@ -116,6 +116,9 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         ... )
     """
 
+    train_targets: Tensor
+    train_inputs: tuple[Tensor]
+
     def __init__(
         self,
         train_X: Tensor,
@@ -146,7 +149,8 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 inference (that is, the `Posterior` obtained by calling
                 `.posterior` on the model will be on the original scale). We use a
                 `Standardize` transform if no `outcome_transform` is specified.
-                Pass down `None` to use no outcome transform.
+                Pass down `None` to use no outcome transform. Note that `.train()` will
+                be called on the outcome transform during instantiation of the model.
             input_transform: An input transform that is applied in the model's
                 forward pass.
         """
@@ -160,6 +164,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
+            outcome_transform.train()
             train_Y, train_Yvar = outcome_transform(
                 Y=train_Y, Yvar=train_Yvar, X=transformed_X
             )
@@ -171,6 +176,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             train_Y=train_Y,
             train_Yvar=train_Yvar,
             ignore_X_dims=ignore_X_dims,
+            check_nans_only=covar_module is not None,
         )
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, train_Yvar = self._transform_tensor_args(
@@ -186,7 +192,6 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                     noise=train_Yvar, batch_shape=self._aug_batch_shape
                 )
         else:
-            # This is used to check if the `model_list_to_batched` can be used
             self._is_custom_likelihood = True
         ExactGP.__init__(
             self, train_inputs=train_X, train_targets=train_Y, likelihood=likelihood

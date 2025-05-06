@@ -114,16 +114,12 @@ def get_X_baseline(acq_function: AcquisitionFunction) -> Tensor | None:
             raise BotorchError
     except (BotorchError, AttributeError):
         try:
-            # for entropy MOO methods
-            model = acq_function.mo_model
+            # some acquisition functions do not have a model attribute
+            # e.g. FixedFeatureAcquisitionFunction
+            model = acq_function.model
         except AttributeError:
-            try:
-                # some acquisition functions do not have a model attribute
-                # e.g. FixedFeatureAcquisitionFunction
-                model = acq_function.model
-            except AttributeError:
-                warn("Failed to extract X_baseline.", BotorchWarning)
-                return
+            warn("Failed to extract X_baseline.", BotorchWarning)
+            return
         try:
             # Make sure we get the original train inputs.
             m = model.models[0] if isinstance(model, ModelListGPyTorchModel) else model

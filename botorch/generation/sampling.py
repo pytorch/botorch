@@ -145,8 +145,10 @@ class MaxPosteriorSampling(SamplingStrategy):
         # to have shape batch_shape x num_samples
         if idcs.ndim > 1:
             idcs = idcs.permute(*range(1, idcs.ndim), 0)
-        # in order to use gather, we need to repeat the index tensor d times
-        idcs = idcs.unsqueeze(-1).expand(*idcs.shape, X.size(-1))
+        # in order to use gather, we need to repeat the index tensor d times.
+        # The contiguous call is needed due to a pytorch issue:
+        # https://github.com/pytorch/pytorch/issues/151978
+        idcs = idcs.unsqueeze(-1).expand(*idcs.shape, X.size(-1)).contiguous()
         # now if the model is batched batch_shape will not necessarily be the
         # batch_shape of X, so we expand X to the proper shape
         Xe = X.expand(*obj.shape[1:], X.size(-1))

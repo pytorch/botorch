@@ -210,6 +210,15 @@ class TestApplyConstraints(BotorchTestCase):
         )
         self.assertAllClose(smoothed_ind, ones_f(samples) * 0.5 * 0.5)
 
+        # test it without fatmoid/sigmoid transformation
+        smoothed_ind = compute_smoothed_feasibility_indicator(
+            constraints=[zeros_f, zeros_f],
+            samples=samples,
+            eta=1e-3,
+            fat=[False, None],
+        )
+        self.assertAllClose(smoothed_ind, ones_f(samples) * 0.5 * 0)
+
         # feasible
         samples = torch.randn(1)
         ind = compute_feasibility_indicator(
@@ -228,6 +237,13 @@ class TestApplyConstraints(BotorchTestCase):
                 constraints=[zeros_f, zeros_f],
                 samples=samples,
                 eta=torch.tensor([0.1], device=self.device),
+            )
+        with self.assertRaisesRegex(ValueError, "Number of provided constraints"):
+            compute_smoothed_feasibility_indicator(
+                constraints=[zeros_f, zeros_f],
+                samples=samples,
+                eta=torch.tensor([0.1, 0.1], device=self.device),
+                fat=[True],
             )
 
         # test marginalize_dim

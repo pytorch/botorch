@@ -100,11 +100,12 @@ def fit_gpytorch_mll_scipy(
         callback=callback,
         timeout_sec=timeout_sec,
     )
-    if result.status != OptimizationStatus.SUCCESS:
+    if result.status not in [OptimizationStatus.SUCCESS, OptimizationStatus.STOPPED]:
         warn(
             f"`scipy_minimize` terminated with status {result.status}, displaying"
             f" original message from `scipy.optimize.minimize`: {result.message}",
             OptimizationWarning,
+            stacklevel=2,
         )
 
     return result

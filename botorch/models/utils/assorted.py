@@ -228,6 +228,7 @@ def validate_input_scaling(
     train_Yvar: Tensor | None = None,
     raise_on_fail: bool = False,
     ignore_X_dims: list[int] | None = None,
+    check_nans_only: bool = False,
 ) -> None:
     r"""Helper function to validate input data to models.
 
@@ -243,6 +244,10 @@ def validate_input_scaling(
             raised if NaN values are present).
         ignore_X_dims: For this subset of dimensions from `{1, ..., d}`, ignore the
             min-max scaling check.
+        check_nans_only: If True, only check for NaN values. Skips min-max scaling
+            and standardization checks. This is used when the model is provided
+            with a custom covariance module, to avoid potentially irrelevant
+            warnings.
 
     This function is typically called inside the constructor of standard BoTorch
     models. It validates the following:
@@ -261,10 +266,11 @@ def validate_input_scaling(
         check_no_nans(train_Yvar)
         if torch.any(train_Yvar < 0):
             raise InputDataError("Input data contains negative variances.")
-    check_min_max_scaling(
-        X=train_X, raise_on_fail=raise_on_fail, ignore_dims=ignore_X_dims
-    )
-    check_standardization(Y=train_Y, raise_on_fail=raise_on_fail)
+    if not check_nans_only:
+        check_min_max_scaling(
+            X=train_X, raise_on_fail=raise_on_fail, ignore_dims=ignore_X_dims
+        )
+        check_standardization(Y=train_Y, raise_on_fail=raise_on_fail)
 
 
 def mod_batch_shape(module: Module, names: list[str], b: int) -> None:
@@ -416,6 +422,8 @@ def get_task_value_remapping(task_values: Tensor, dtype: torch.dtype) -> Tensor 
         return value will be `None`, when the task values are contiguous
         integers starting from zero.
     """
+    if dtype not in (torch.float, torch.double):
+        raise ValueError(f"dtype must be torch.float or torch.double, but got {dtype}.")
     task_range = torch.arange(
         len(task_values), dtype=task_values.dtype, device=task_values.device
     )

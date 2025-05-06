@@ -341,7 +341,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                 gcs_return_vals = [
                     (
                         torch.tensor(
-                            [[[1.1, 2.1, 3.1]]], device=self.device, dtype=dtype
+                            [[[1.1, 2.1, 4.0]]], device=self.device, dtype=dtype
                         ),
                         torch.tensor([i], device=self.device, dtype=dtype),
                     )
@@ -357,11 +357,20 @@ class TestOptimizeAcqf(BotorchTestCase):
                 if mock_gen_candidates is mock_gen_candidates_scipy:
                     # x[2] * 4 >= 5
                     inequality_constraints = [
-                        (torch.tensor([2]), torch.tensor([4]), torch.tensor(5))
+                        (
+                            torch.tensor([2], dtype=torch.long, device=self.device),
+                            torch.tensor([4], device=self.device),
+                            torch.tensor(5, device=self.device),
+                        )
                     ]
                     equality_constraints = [
-                        (torch.tensor([0, 1]), torch.ones(2), torch.tensor(4.0))
+                        (
+                            torch.tensor([0, 1], dtype=torch.long, device=self.device),
+                            torch.ones(2, device=self.device),
+                            torch.tensor(16.0, device=self.device),
+                        )
                     ]
+                    equality_constraints = None
                 # gen_candidates_torch does not support constraints
                 else:
                     inequality_constraints = None
@@ -623,10 +632,10 @@ class TestOptimizeAcqf(BotorchTestCase):
 
         for ic_shape, expected_shape in [((2, 1, dim), 2), ((2, dim), 1)]:
             with self.subTest(gen_candidates=gen_candidates):
+                ics = torch.ones((ic_shape))
                 with self.assertWarnsRegex(
                     RuntimeWarning, "botorch will default to old behavior"
                 ):
-                    ics = torch.ones((ic_shape))
                     _candidates, acq_value_list = optimize_acqf(
                         acq_function=SinOneOverXAcqusitionFunction(),
                         bounds=torch.stack([-1 * torch.ones(dim), torch.ones(dim)]),
@@ -638,8 +647,7 @@ class TestOptimizeAcqf(BotorchTestCase):
                         gen_candidates=gen_candidates,
                         batch_initial_conditions=ics,
                     )
-
-                    self.assertEqual(acq_value_list.shape, (expected_shape,))
+                self.assertEqual(acq_value_list.shape, (expected_shape,))
 
     def test_optimize_acqf_runs_given_batch_initial_conditions(self):
         num_restarts, raw_samples, dim = 1, 2, 3
@@ -915,27 +923,6 @@ class TestOptimizeAcqf(BotorchTestCase):
                 torch.allclose(acq_value, torch.tensor([4], **tkwargs), atol=1e-3)
             )
 
-            # Make sure we return the initial solution if SLSQP fails to return
-            # a feasible point.
-            with mock.patch(
-                "botorch.generation.gen.minimize_with_timeout"
-            ) as mock_minimize:
-                # By setting "success" to True and "status" to 0, we prevent a
-                # warning that `minimize` failed, which isn't the behavior
-                # we're looking to test here.
-                mock_minimize.return_value = OptimizeResult(
-                    x=np.array([4, 4, 4]), success=True, status=0
-                )
-                candidates, acq_value = optimize_acqf(
-                    acq_function=mock_acq_function,
-                    bounds=bounds,
-                    q=1,
-                    nonlinear_inequality_constraints=[(nlc1, True)],
-                    batch_initial_conditions=batch_initial_conditions,
-                    num_restarts=1,
-                )
-                self.assertAllClose(candidates, batch_initial_conditions[0, ...])
-
             # Constrain all variables to be >= 1. The global optimum is 2.45 and
             # is attained by some permutation of [1, 1, 2]
             def nlc2(x):
@@ -1204,6 +1191,77 @@ class TestOptimizeAcqf(BotorchTestCase):
         # Call f_obj on the new input, should use the cache
         self.assertEqual(f_obj(x2), 2.0)
         self.assertEqual(f_np_wrapper.call_count, 2)
+
+    def _test_optimize_acqf_infeasible_candidates(
+        self, mock_gen_batch_initial_conditions, q, num_restarts, ics
+    ):
+        mock_acq_function = MockAcquisitionFunction()
+        mock_gen_batch_initial_conditions.side_effect = [ics for _ in range(2)]
+        with mock.patch(
+            "botorch.generation.gen.minimize_with_timeout",
+            return_value=OptimizeResult(x=ics.view(-1).cpu().numpy()),
+        ):
+            candidates, _ = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=torch.tensor(
+                    [[0.0], [3.0]], dtype=ics.dtype, device=self.device
+                ),
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=1,
+                inequality_constraints=[
+                    (  # X[..., 0] >= 2.0, which is infeasible.
+                        torch.tensor([0], device=self.device),
+                        torch.tensor([1.0], dtype=ics.dtype, device=self.device),
+                        2.0,
+                    )
+                ],
+                sequential=False,
+                gen_candidates=gen_candidates_scipy,
+                initial_conditions=ics,
+                acquisition_function=MockAcquisitionFunction(),
+            )
+            return candidates
+
+    @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
+    def test_optimize_acqf_all_infeasible_candidates(
+        self, mock_gen_batch_initial_conditions
+    ) -> None:
+        # Check for error when all batches of candidates are infeasible w.r.t
+        # parameter constraints.
+        q = 3
+        num_restarts = 2
+        for dtype in (torch.float, torch.double):
+            with self.assertRaisesRegex(
+                CandidateGenerationError, "infeasible candidates. 2 out of 2"
+            ):
+                self._test_optimize_acqf_infeasible_candidates(
+                    mock_gen_batch_initial_conditions=mock_gen_batch_initial_conditions,
+                    q=q,
+                    num_restarts=num_restarts,
+                    ics=torch.rand(num_restarts, q, 1, dtype=dtype, device=self.device),
+                )
+
+    @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
+    def test_optimize_acqf_some_infeasible_candidates(
+        self, mock_gen_batch_initial_conditions
+    ) -> None:
+        # Check that no error is raised when the first batch of candidates
+        # contains points that are infeasible w.r.t parameter constraints, but
+        # second batch is feasible
+        q = 3
+        num_restarts = 2
+
+        for dtype in (torch.float, torch.double):
+            ics = torch.rand(num_restarts, q, 1, dtype=dtype, device=self.device)
+            ics[1, ..., 0] = 3.0  # make second batch feasible
+            candidates = self._test_optimize_acqf_infeasible_candidates(
+                mock_gen_batch_initial_conditions=mock_gen_batch_initial_conditions,
+                q=q,
+                num_restarts=num_restarts,
+                ics=ics,
+            )
+            self.assertTrue(torch.equal(candidates, ics[1]))
 
 
 class TestAllOptimizers(BotorchTestCase):
@@ -1685,10 +1743,10 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             self.assertTrue(torch.equal(acq_value, expected_acq_value))
 
     def test_optimize_acqf_mixed_empty_ff(self):
+        mock_acq_function = MockAcquisitionFunction()
         with self.assertRaisesRegex(
             ValueError, expected_regex="fixed_features_list must be non-empty."
         ):
-            mock_acq_function = MockAcquisitionFunction()
             optimize_acqf_mixed(
                 acq_function=mock_acq_function,
                 q=1,
@@ -1715,9 +1773,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             )
 
     def test_optimize_acqf_one_shot_large_q(self):
-        with self.assertRaises(ValueError):
-            mock_acq_function = MockOneShotAcquisitionFunction()
-            fixed_features_list = [{i: i * 0.1} for i in range(2)]
+        mock_acq_function = MockOneShotAcquisitionFunction()
+        fixed_features_list = [{i: i * 0.1} for i in range(2)]
+        with self.assertRaisesRegex(UnsupportedError, "OneShotAcquisitionFunction"):
             optimize_acqf_mixed(
                 acq_function=mock_acq_function,
                 q=2,
@@ -1730,7 +1788,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
     def test_optimize_acqf_mixed_ff_with_constraint(self):
         mock_acq_function = MockAcquisitionFunction()
         bounds = torch.stack([torch.zeros(3), 4 * torch.ones(3)])
-        ineq_constraints = [(torch.zeros(1), torch.ones(1), 1)]  # x[0] >= 1
+        ineq_constraints = [
+            (torch.zeros(1, dtype=torch.long), torch.ones(1), 1)
+        ]  # x[0] >= 1
         with self.assertWarnsRegex(
             OptimizationWarning,
             "Candidate generation failed for 1 combinations of `fixed_features`. "

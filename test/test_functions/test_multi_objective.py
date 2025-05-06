@@ -53,8 +53,9 @@ class DummyMOProblem(MultiObjectiveTestProblem):
     _num_objectives = 2
     _bounds = [(0.0, 1.0)] * 2
     dim = 2
+    continuous_inds = list(range(dim))
 
-    def evaluate_true(self, X):
+    def _evaluate_true(self, X):
         f_X = X + 2
         return -f_X if self.negate else f_X
 
@@ -139,6 +140,7 @@ class TestDH(
         for i, f in enumerate(self.functions):
             test_X = torch.zeros(2, self.dims[i], device=self.device)
             test_X[1] = 1.0
+            f = f.to(device=self.device)
             actual = f(test_X)
             expected = torch.tensor(self.expected[i], device=self.device)
             self.assertAllClose(actual, expected)
@@ -476,7 +478,7 @@ class TestC2DTLZ2(
     def test_batch_exception(self):
         f = C2DTLZ2(dim=3, num_objectives=2)
         with self.assertRaises(NotImplementedError):
-            f.evaluate_slack_true(torch.empty(1, 1, 3))
+            f.evaluate_slack_true(torch.rand(1, 1, 3))
 
 
 class TestDiscBrake(

@@ -548,6 +548,8 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
                 `.posterior` on the model will be on the original scale).
+                Note that `.train()` will be called on the outcome transform during
+                instantiation of the model.
             input_transform: An input transform that is applied in the model's
                 forward pass.
             pyro_model: The pyro model.
@@ -570,6 +572,7 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
+            outcome_transform.train()
             train_Y, train_Yvar = outcome_transform(
                 Y=train_Y, Yvar=train_Yvar, X=transformed_X
             )
@@ -629,11 +632,20 @@ class FullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel, ABC):
         return aug_batch_shape
 
     def train(
-        self: TFullyBayesianSingleTaskGP, mode: bool = True
+        self: TFullyBayesianSingleTaskGP, mode: bool = True, reset: bool = True
     ) -> TFullyBayesianSingleTaskGP:
-        r"""Puts the model in `train` mode."""
+        r"""Puts the model in `train` mode.
+
+        Args:
+            mode: A boolean indicating whether to put the model in training mode.
+            reset: A boolean indicating whether to reset the model to its initial
+                state if mode is True. If `mode` is False, this argument is ignored.
+
+        Returns:
+            The model itself.
+        """
         super().train(mode=mode)
-        if mode:
+        if mode and reset:
             self.mean_module = None
             self.covar_module = None
             self.likelihood = None
