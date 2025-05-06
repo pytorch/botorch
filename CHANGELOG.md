@@ -2,6 +2,57 @@
 
 The release log for BoTorch.
 
+## [0.14.0] -- May 6, 2025
+
+#### Highlights
+* Prior Fitted Network (PFN) surrogate model integration (#2784).
+* Variational Bayesian last-layer models as surrogate `Model`s (#2754).
+* Probabilities of feasibility for classifier-based constraints in acquisition functions (#2776).
+
+#### New Features
+* Helper for evaluating feasibility of candidate points (#2733).
+  * Check for feasibility in `gen_candidates_scipy` and error out for infeasible candidates (#2737).
+  * Return a feasible candidate if there is one and `return_best_only=True` (#2778).
+* Allow for observation noise without provided `evaluation_mask` mask in `ModelListGP` (#2735).
+* Implement incremental `qLogNEI` via `incremental` argument to `qLogNoisyExpectedImprovement` (#2760).
+* Add utility for computing AIC/BIC/MLL from a model (#2785).
+* New test functions:
+  * Multi-fidelity test functions with discrete fidelities (#2796).
+  * Keane bump function (#2802).
+  * Mixed Ackley test function (#2830).
+  * LABS test function (#2832).
+* Add parameter types to test functions to support problems defined in mixed / discrete spaces (#2809).
+  * Add input validation to test functions (#2829).
+* Add `[q]LogProbabilityOfFeasibility` acquisition functions (#2815).
+
+#### Bug Fixes
+* Remove hard-coded `dtype` from `best_f` buffers (#2725).
+* Fix `dtype/nan` issue in `StratifiedStandardize` (#2757).
+* Properly handle observed noise in `AdditiveMapSaasSingleTaskGP` with outcome transforms (#2763).
+* Do not count STOPPED (due to specified budget) as a model fitting failure (#2767).
+* Ensure that `initialize_q_batch` always includes the maximum value when called in batch mode (#2773).
+* Fix posterior with observation noise in batched MTGP models (#2782).
+* Detach tensor in `gen_candidates_scipy` to avoid test failure due to new warning (#2797).
+* Fix batch computation in Pivoted Cholesky (#2823).
+
+#### Other Changes
+* Add optimal values for synthetic contrained optimization problems (#2730).
+  * Update `max_hv` and reference point for Penicillin problem (#2771).
+  * Add optimal value to SpeedReducer problem (#2799).
+* Update `nonlinear_constraint_is_feasible` to return a boolean tensor (#2731).
+* Restructure sampling methods for info-theoretic acquisition functions (#2753).
+* Prune baseline points in `qLogNEI` by default (#2762).
+* Misc updates to MES-based acqusition functions (#2769).
+* Pass option to reset submodules in train method for fully Bayesian models (#2783).
+* Put outcome transforms into train mode in model constructors (#2817).
+* `LogEI`: select `cache_root` based on model support (#2820).
+* Remove Ax dependency from BoTorch tutorials and reference Ax tutorials instead (#2839).
+
+#### Deprecations and removals
+* Remove deprecated `gp_sampling` module (#2768).
+* Remove `qMultiObjectiveMaxValueEntropy` acquisition function (#2800).
+* Remove model converters (#2801).
+
 
 ## [0.13.0] -- Feb 3, 2025
 
