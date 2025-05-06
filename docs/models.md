@@ -168,9 +168,9 @@ configurable model class whose implementation is difficult to understand.
 
 Instead, we advocate that users implement their own models to cover more
 specialized use cases. The light-weight nature of BoTorch's Model API makes this
-easy to do. See the
-[Using a custom BoTorch model in Ax](tutorials/custom_botorch_model_in_ax)
-tutorial for an example.
+easy to do. See Ax's
+[Modular BoTorch tutorial](https://ax.dev/docs/tutorials/modular_botorch/)
+tutorial for an example for this and how to use such a custom model in Ax.
 
 The BoTorch `Model` interface is light-weight and easy to extend. The only
 requirement for using BoTorch's Monte-Carlo based acquisition functions is that
