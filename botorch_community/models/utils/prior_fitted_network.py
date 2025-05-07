@@ -28,15 +28,11 @@ class ModelPaths(Enum):
 
     pfns4bo_hebo = (
         "https://github.com/automl/PFNs4BO/raw/refs/heads/main/pfns4bo"
-        "/final_models/hebo_morebudget_9_unused_features_3_userpriorperdim2_8.pt.gz"
+        "/final_models/model_hebo_morebudget_9_unused_features_3.pt.gz"
     )
     pfns4bo_bnn = (
         "https://github.com/automl/PFNs4BO/raw/refs/heads/main/pfns4bo"
         "/final_models/model_sampled_warp_simple_mlp_for_hpob_46.pt.gz"
-    )
-    pfns4bo_hebo_userprior = (
-        "https://github.com/automl/PFNs4BO/raw/refs/heads/main/pfns4bo"
-        "/final_models/hebo_morebudget_9_unused_features_3_userpriorperdim2_8.pt.gz"
     )
 
 
