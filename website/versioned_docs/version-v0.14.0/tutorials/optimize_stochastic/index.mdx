@@ -24,7 +24,7 @@ develop below is contained in the `gen_candidates_torch` function in the `botorc
 module. This tutorial should be quite useful if you would like to implement custom
 optimizers beyond what is contained in `gen_candidates_torch`.
 
-As discussed in the [CMA-ES tutorial](/docs/tutorials/optimize_with_cmaes), for
+As discussed in the [CMA-ES tutorial](../optimize_with_cmaes/index.mdx), for
 deterministic acquisition functions BoTorch uses quasi-second order methods (such as
 L-BFGS-B or SLSQP) by default, which provide superior convergence speed in this
 situation.
@@ -108,7 +108,7 @@ Given a set of `q`-batches $X'$ and associated acquisiton function values $Y'$, 
 replacement) from the multinomial distribution
 
 $$
- \mathbb{P}(X = X'_i) \sim \exp (\eta \tilde{Y}_i), \qquad \text{where} \;\; \tilde{Y}_i = \frac{Y'_i - \mu(Y)}{\sigma(Y)} \;\; \text{if} \;\; Y'_i >0 
+ \mathbb{P}(X = X'_i) \sim \exp (\eta \tilde{Y}_i), \qquad \text{where} \;\; \tilde{Y}_i = \frac{Y'_i - \mu(Y)}{\sigma(Y)} \;\; \text{if} \;\; Y'_i >0
 $$
 
 and $\mathbb{P}(X = X'_j) = 0$ for all $j$ such that $Y'_j = 0$.
@@ -202,4 +202,3 @@ Iteration  75/75 - Loss: -1.361`
 ```python
 
 ```
-
