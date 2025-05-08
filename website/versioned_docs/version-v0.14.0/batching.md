@@ -19,7 +19,7 @@ referred to as q-Acquisition Functions. For instance, BoTorch ships with support
 for q-EI, q-UCB, and a few others.
 
 As discussed in the
-[design philosophy](/docs/design_philosophy#parallelism-through-batched-computations),
+[design philosophy](./design_philosophy.md#parallelism-through-batched-computations),
 BoTorch has adopted the convention of referring to batches in the
 batch-acquisition sense as "q-batches", and to batches in the torch
 batch-evaluation sense as "t-batches".
