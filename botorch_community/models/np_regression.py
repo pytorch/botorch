@@ -264,24 +264,23 @@ class NeuralProcessModel(Model, GP):
         super().__init__()
         self.device = train_X.device
 
-        # self._validate_tensor_args(X=train_X, Y=train_Y)
         self.r_encoder = REncoder(
             x_dim + y_dim,
             r_dim,
             r_hidden_dims,
             activation=activation,
             init_func=init_func,
-        ).to(self.device)
+        )
         self.z_encoder = ZEncoder(
             r_dim, z_dim, z_hidden_dims, activation=activation, init_func=init_func
-        ).to(self.device)
+        )
         self.decoder = Decoder(
             x_dim + z_dim,
             y_dim,
             decoder_hidden_dims,
             activation=activation,
             init_func=init_func,
-        ).to(self.device)
+        )
         self.train_X = train_X
         self.train_Y = train_Y
         self.n_context = n_context
@@ -290,11 +289,9 @@ class NeuralProcessModel(Model, GP):
         self.z_logvar_all = None
         self.z_mu_context = None
         self.z_logvar_context = None
-        if likelihood is None:
-            self.likelihood = GaussianLikelihood().to(self.device)
-        else:
-            self.likelihood = likelihood.to(self.device)
+        self.likelihood = likelihood if likelihood is not None else GaussianLikelihood()
         self.input_transform = input_transform
+        self.to(device=self.device)
 
     def data_to_z_params(
         self, x: torch.Tensor, y: torch.Tensor, r_dim: int = 0

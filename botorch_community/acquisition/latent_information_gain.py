@@ -68,33 +68,23 @@ class LatentInformationGain(AcquisitionFunction):
         candidate_x = candidate_x.to(device)
         N, q, D = candidate_x.shape
         kl = torch.zeros(N, device=device, dtype=torch.float32)
-        def normal_dist(mu, logvar, min_std, scaler):
-            r"""Helper function for creating the normal distributions.
 
-            Args:
-                mu: Tensor representing the Gaussian distribution mean.
-                logvar: Tensor representing the log variance of the
-                Gaussian distribution.
-                min_std: Float representing the minimum standardized std.
-                scaler: Float scaling the std.
-
-            Returns:
-                torch.distributions.Normal: The normal distribution.
-            """
-            std = min_std + scaler * torch.sigmoid(logvar)
-            return torch.distributions.Normal(mu, std)
         if isinstance(self.model, NeuralProcessModel):
             x_c, y_c, _, _ = self.model.random_split_context_target(
                 self.model.train_X, self.model.train_Y, self.model.n_context
             )
-            z_mu_context, z_logvar_context = self.model.data_to_z_params(x_c, y_c)
+            self.model.z_mu_context, self.model.z_logvar_context = (
+                self.model.data_to_z_params(x_c, y_c)
+            )
 
             for i in range(N):
                 x_i = candidate_x[i]
                 kl_i = 0.0
 
                 for _ in range(self.num_samples):
-                    sample_z = self.model.sample_z(z_mu_context, z_logvar_context)
+                    sample_z = self.model.sample_z(
+                        self.model.z_mu_context, self.model.z_logvar_context
+                    )
                     if sample_z.dim() == 1:
                         sample_z = sample_z.unsqueeze(0)
 
@@ -103,15 +93,10 @@ class LatentInformationGain(AcquisitionFunction):
                     combined_x = torch.cat([x_c, x_i], dim=0)
                     combined_y = torch.cat([y_c, y_pred], dim=0)
 
-                    z_mu_post, z_logvar_post = self.model.data_to_z_params(
-                        combined_x, combined_y
+                    self.model.z_mu_all, self.model.z_logvar_all = (
+                        self.model.data_to_z_params(combined_x, combined_y)
                     )
-
-                    p = normal_dist(z_mu_post, z_logvar_post, self.min_std, self.scaler)
-                    q = normal_dist(
-                        z_mu_context, z_logvar_context, self.min_std, self.scaler
-                    )
-                    kl_sample = torch.distributions.kl_divergence(p, q).sum()
+                    kl_sample = self.model.KLD_gaussian(self.min_std, self.scaler)
                     kl_i += kl_sample
 
                 kl[i] = kl_i / self.num_samples
