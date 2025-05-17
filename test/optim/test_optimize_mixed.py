@@ -4,13 +4,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from dataclasses import fields
 from itertools import product
 from typing import Any, Callable
 from unittest import mock
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.analytic import ExpectedImprovement
+from botorch.acquisition.analytic import ExpectedImprovement, LogExpectedImprovement
 from botorch.acquisition.logei import qLogNoisyExpectedImprovement
 from botorch.exceptions.errors import CandidateGenerationError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
@@ -426,7 +427,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         bounds = self.single_bound.repeat(1, dim)
         torch.manual_seed(0)
         model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
-        acqf = ExpectedImprovement(model=model, best_f=torch.max(train_Y))
+        acqf = LogExpectedImprovement(model=model, best_f=torch.max(train_Y))
         options = {
             "initialization_strategy": "random",
             "maxiter_alternating": 2,
@@ -479,7 +480,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # get multiple candidates
         root = torch.zeros(dim, device=self.device)
         model = QuadraticDeterministicModel(root)
-        acqf = qLogNoisyExpectedImprovement(model=model, X_baseline=train_X)
+        acqf = qLogNoisyExpectedImprovement(
+            model=model, X_baseline=train_X, prune_baseline=False
+        )
         options["initialization_strategy"] = "equally_spaced"
         candidates, _ = optimize_acqf_mixed_alternating(
             acq_function=acqf,
@@ -542,16 +545,25 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 raw_samples=20,
                 num_restarts=2,
             )
-        wrapped_optimize.assert_called_once_with(
-            opt_inputs=_make_opt_inputs(
-                acq_function=acqf,
-                bounds=bounds,
-                options=options,
-                q=1,
-                raw_samples=20,
-                num_restarts=2,
-            )
+        expected_opt_inputs = _make_opt_inputs(
+            acq_function=acqf,
+            bounds=bounds,
+            options=options,
+            q=1,
+            raw_samples=20,
+            num_restarts=2,
         )
+        # Can't just use `assert_called_once_with` here b/c of tensor ambiguity.
+        wrapped_optimize.assert_called_once()
+        opt_inputs = wrapped_optimize.call_args.kwargs["opt_inputs"]
+        for field in fields(opt_inputs):
+            opt_input = getattr(opt_inputs, field.name)
+            expected_opt_input = getattr(expected_opt_inputs, field.name)
+            if isinstance(opt_input, Tensor):
+                self.assertTrue(torch.equal(opt_input, expected_opt_input))
+            else:
+                self.assertEqual(opt_input, expected_opt_input)
+
         # Only discrete works fine.
         candidates, _ = optimize_acqf_mixed_alternating(
             acq_function=acqf,

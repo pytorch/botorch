@@ -22,6 +22,7 @@ from botorch.acquisition.analytic import (
     ExpectedImprovement,
     LogExpectedImprovement,
     LogNoisyExpectedImprovement,
+    LogProbabilityOfFeasibility,
     LogProbabilityOfImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
@@ -31,6 +32,7 @@ from botorch.acquisition.analytic import (
 from botorch.acquisition.bayesian_active_learning import (
     qBayesianActiveLearningByDisagreement,
 )
+from botorch.acquisition.cached_cholesky import supports_cache_root
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.joint_entropy_search import qJointEntropySearch
@@ -41,6 +43,7 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.logei import (
     qLogExpectedImprovement,
     qLogNoisyExpectedImprovement,
+    qLogProbabilityOfFeasibility,
     TAU_MAX,
     TAU_RELU,
 )
@@ -335,6 +338,30 @@ def construct_inputs_best_f(
     }
 
 
+@acqf_input_constructor(
+    LogProbabilityOfFeasibility,
+)
+def construct_inputs_pof(
+    model: Model,
+    constraints: dict[int, tuple[float | None, float | None]],
+) -> dict[str, Any]:
+    r"""Construct kwargs for the log probability of feasibility acquisition function.
+
+    Args:
+        model: The model to be used in the acquisition function.
+        constraints: A dictionary of the form `{i: [lower, upper]}`, where `i` is the
+            output index, and `lower` and `upper` are lower and upper bounds on that
+            output (resp. interpreted as -Inf / Inf if None).
+
+    Returns:
+        A dict mapping kwarg names of the constructor to values.
+    """
+    return {
+        "model": model,
+        "constraints": constraints,
+    }
+
+
 @acqf_input_constructor(UpperConfidenceBound)
 def construct_inputs_ucb(
     model: Model,
@@ -568,6 +595,55 @@ def construct_inputs_qLogEI(
     }
 
 
+@acqf_input_constructor(qLogProbabilityOfFeasibility)
+def construct_inputs_LogPF(
+    model: Model,
+    constraints: list[Callable[[Tensor], Tensor]],
+    posterior_transform: PosteriorTransform | None = None,
+    X_pending: Tensor | None = None,
+    sampler: MCSampler | None = None,
+    eta: Tensor | float = 1e-3,
+    fat: bool = True,
+    tau_max: float = TAU_MAX,
+) -> dict[str, Any]:
+    r"""Construct kwargs for the `qExpectedImprovement` constructor.
+
+    Args:
+        model: The model to be used in the acquisition function.
+        constraints: A list of constraint callables which map a Tensor of posterior
+            samples of dimension `sample_shape x batch-shape x q x m`-dim to a
+            `sample_shape x batch-shape x q`-dim Tensor. The associated constraints
+            are considered satisfied if the output is less than zero.
+        posterior_transform: The posterior transform to be used in the
+            acquisition function.
+        X_pending: A `m x d`-dim Tensor of `m` design points that have been
+            submitted for function evaluation but have not yet been evaluated.
+            Concatenated into X upon forward call.
+        sampler: The sampler used to draw base samples. If omitted, uses
+            the acquisition functions's default sampler.
+        eta: Temperature parameter(s) governing the smoothness of the sigmoid
+            approximation to the constraint indicators. For more details, on this
+            parameter, see the docs of `compute_smoothed_feasibility_indicator`.
+        fat: Toggles the logarithmic / linear asymptotic behavior of the smooth
+            approximation to the ReLU.
+        tau_max: Temperature parameter controlling the sharpness of the smooth
+            approximations to max.
+
+    Returns:
+        A dictionary mapping kwarg names of the constructor to values.
+    """
+    return {
+        "model": model,
+        "constraints": constraints,
+        "posterior_transform": posterior_transform,
+        "X_pending": X_pending,
+        "sampler": sampler,
+        "eta": eta,
+        "fat": fat,
+        "tau_max": tau_max,
+    }
+
+
 @acqf_input_constructor(qNoisyExpectedImprovement)
 def construct_inputs_qNEI(
     model: Model,
@@ -644,12 +720,13 @@ def construct_inputs_qLogNEI(
     sampler: MCSampler | None = None,
     X_baseline: Tensor | None = None,
     prune_baseline: bool | None = True,
-    cache_root: bool | None = True,
+    cache_root: bool | None = None,
     constraints: list[Callable[[Tensor], Tensor]] | None = None,
     eta: Tensor | float = 1e-3,
     fat: bool = True,
     tau_max: float = TAU_MAX,
     tau_relu: float = TAU_RELU,
+    incremental: bool = True,
 ):
     r"""Construct kwargs for the `qLogNoisyExpectedImprovement` constructor.
 
@@ -684,10 +761,15 @@ def construct_inputs_qLogNEI(
             approximations to max.
         tau_relu: Temperature parameter controlling the sharpness of the smooth
             approximations to ReLU.
+        incremental: Whether to compute incremental EI over the pending points
+            or compute EI of the joint batch improvement (including pending
+            points).
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
+    if cache_root is None:
+        cache_root = supports_cache_root(model)
     return {
         **construct_inputs_qNEI(
             model=model,
@@ -705,6 +787,7 @@ def construct_inputs_qLogNEI(
         "fat": fat,
         "tau_max": tau_max,
         "tau_relu": tau_relu,
+        "incremental": incremental,
     }
 
 

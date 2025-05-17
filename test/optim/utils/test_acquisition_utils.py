@@ -14,9 +14,6 @@ from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
 )
-from botorch.acquisition.multi_objective.max_value_entropy_search import (
-    qMultiObjectiveMaxValueEntropy,
-)
 from botorch.acquisition.multi_objective.monte_carlo import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
@@ -145,7 +142,7 @@ class TestFixFeatures(BotorchTestCase):
 
 
 class TestGetXBaseline(BotorchTestCase):
-    def test_get_X_baseline(self):
+    def test_get_X_baseline(self) -> None:
         tkwargs = {"device": self.device}
         for dtype in (torch.float, torch.double):
             tkwargs["dtype"] = dtype
@@ -227,15 +224,6 @@ class TestGetXBaseline(BotorchTestCase):
             X = get_X_baseline(acq_function=acqf)
             self.assertTrue(torch.equal(X, X_train))
 
-            # test MESMO for which we need to use
-            # `acqf.mo_model`
-            batched_mo_model = SingleTaskGP(X_train, Y_train, outcome_transform=None)
-            acqf = qMultiObjectiveMaxValueEntropy(
-                batched_mo_model,
-                sample_pareto_frontiers=lambda model: torch.rand(10, 2, **tkwargs),
-            )
-            X = get_X_baseline(acq_function=acqf)
-            self.assertTrue(torch.equal(X, X_train))
             # test that if there is an input transform that is applied
             # to the train_inputs when the model is in eval mode, we
             # extract the untransformed train_inputs
@@ -249,3 +237,17 @@ class TestGetXBaseline(BotorchTestCase):
             acqf = qExpectedImprovement(model, best_f=0.0)
             X = get_X_baseline(acq_function=acqf)
             self.assertTrue(torch.equal(X, X_train))
+
+            with self.subTest("Batched X"):
+                model = SingleTaskGP(
+                    train_X=X_train.unsqueeze(0),
+                    train_Y=Y_train[:, :1].unsqueeze(0),
+                )
+                acqf = qNoisyExpectedImprovement(
+                    model,
+                    X_baseline=X_train.unsqueeze(0),
+                    prune_baseline=False,
+                    cache_root=False,
+                )
+                X = get_X_baseline(acq_function=acqf)
+                self.assertTrue(torch.equal(X, X_train))

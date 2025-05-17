@@ -40,7 +40,7 @@ class SinAcqusitionFunction(MockAcquisitionFunction):
         return
 
     def __call__(self, X):
-        return torch.sin(X[..., 0].max(dim=-1).values)
+        return torch.sin(2 * X[..., 0].max(dim=-1).values)
 
 
 class TestMock(BotorchTestCase):
@@ -52,7 +52,7 @@ class TestMock(BotorchTestCase):
                     acquisition_function=SinAcqusitionFunction(),
                 )
             # When not using `mock_optimize`, the value is 1.0. With it, the value is
-            # around 0.84
+            # around 0.9875
             self.assertLess(value.item(), 0.99)
 
         with self.subTest("scipy_minimize"):

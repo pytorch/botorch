@@ -20,26 +20,31 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-14"]
-        python-version: ["3.10", "3.12"]
+        python-version: ["3.10", "3.13"]
+    env:
+      # `uv pip ...` requires venv by default. This skips that requirement.
+      UV_SYSTEM_PYTHON: 1
     steps:
     - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pip install setuptools  # Needed for next line on Python 3.12.
+        uv pip install setuptools  # Needed for next line on Python 3.13.
         python setup.py egg_info
         req_txt="botorch.egg-info/requires.txt"
         min_torch_version=$(grep '\btorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
-        # The earliest PyTorch version on Python 3.12 is 2.2.0.
-        min_torch_version="$(if ${{ matrix.python-version == '3.12' }}; then echo "2.2.0"; else echo "${min_torch_version}"; fi)"
+        # The earliest PyTorch version on Python 3.13 available for all OS is 2.6.0.
+        min_torch_version="$(if ${{ matrix.python-version == '3.13' }}; then echo "2.6.0"; else echo "${min_torch_version}"; fi)"
         min_gpytorch_version=$(grep '\bgpytorch[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
         min_linear_operator_version=$(grep '\blinear_operator[>=]=' ${req_txt} | sed 's/[^0-9.]//g')
-        pip install "numpy<2"  # Numpy >2.0 is not compatible with PyTorch <2.2.
-        pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" "linear_operator==${min_linear_operator_version}"
-        pip install .[test]
+        uv pip install "numpy<2"  # Numpy >2.0 is not compatible with PyTorch <2.2.
+        uv pip install "torch==${min_torch_version}" "gpytorch==${min_gpytorch_version}" "linear_operator==${min_linear_operator_version}"
+        uv pip install .[test]
     - name: Unit tests and coverage -- BoTorch
       run: |
         pytest -ra test/ --cov botorch/ --cov-report term-missing --cov-report xml:botorch_cov.xml
@@ -47,18 +52,16 @@ jobs:
       run: |
         pytest -ra test_community/ --cov botorch_community/ --cov-report term-missing --cov-report xml:botorch_community_cov.xml
 
-  run_tutorials_stable_w_latest_ax:
-    name: Run tutorials without smoke test on min req. versions of PyTorch & GPyTorch and latest Ax
+  run_tutorials_stable:
+    name: Run tutorials without smoke test on min req. versions of PyTorch & GPyTorch
     uses: ./.github/workflows/reusable_tutorials.yml
     with:
       smoke_test: false
       use_stable_pytorch_gpytorch: true
-      use_stable_ax: false
 
   run_tutorials_stable_smoke_test:
-    name: Run tutorials with smoke test on min req. versions of PyTorch & GPyTorch and latest Ax
+    name: Run tutorials with smoke test on min req. versions of PyTorch & GPyTorch
     uses: ./.github/workflows/reusable_tutorials.yml
     with:
       smoke_test: true
       use_stable_pytorch_gpytorch: true
-      use_stable_ax: false

@@ -20,12 +20,111 @@ from torch import Tensor
 from torch.nn import Module
 
 
+def validate_parameter_indices(
+    dim: int,
+    bounds: Tensor,
+    continuous_inds: list[int],
+    discrete_inds: list[int],
+    categorical_inds: list[int],
+) -> None:
+    r"""Check that the parameter indices are valid.
+
+    Args:
+        dim: Number of search space dimensions.
+        bounds: A `2 x d`-dim tensor of lower and upper bounds.
+        continuous_inds: List of unique integers corresponding to continuous parameters.
+        discrete_inds: List of unique integers corresponding to discrete parameters.
+        categorical_inds: List of unique integers corresponding to categorical
+            parameters.
+
+    Raises:
+        ValueError: If the parameter indices are invalid.
+    """
+    for inds in [continuous_inds, discrete_inds, categorical_inds]:
+        if len(inds) == 0:
+            continue  # Nothing to check
+        if not (
+            isinstance(inds, list)
+            and all(isinstance(x, int) for x in inds)
+            and len(set(inds)) == len(inds)
+            and min(inds) >= 0
+            and max(inds) <= dim - 1
+        ):
+            raise ValueError(
+                "All parameter indices must be a list with unique integers between "
+                f"0 and dim - 1. Got {inds=}."
+            )
+    # Let's make sure all parameters are covered.
+    all_inds = continuous_inds + discrete_inds + categorical_inds
+    if (len(all_inds) != dim) or (set(all_inds) != set(range(dim))):
+        raise ValueError(
+            f"All parameter indices must be present, got {dim=}, {continuous_inds=}, "
+            f"{discrete_inds=}, {categorical_inds=}"
+        )
+    # Check the shape of the bounds
+    if not bounds.shape == (2, dim):
+        raise ValueError(
+            f"Expected `bounds` to have shape `2 x d`. Got {bounds.shape=}, {dim=}."
+        )
+    # Check that the bounds are integer valued for discrete and categorical parameters.
+    for inds in [discrete_inds, categorical_inds]:
+        if len(inds) > 0 and (not (bounds[:, inds] == bounds[:, inds].round()).all()):
+            raise ValueError(
+                "Expected the lower and upper bounds of the discrete and categorical "
+                "parameters to be integer-valued."
+            )
+
+
+def validate_inputs(
+    X: Tensor,
+    dim: int,
+    bounds: Tensor,
+    discrete_inds: list[int],
+    categorical_inds: list[int],
+) -> None:
+    r"""Check that the inputs are valid.
+
+    This method checks that the input tensor `X` has the correct shape, is within
+    the bounds, and that the discrete and categorical parameters are integer-valued.
+
+    Args:
+        X: A `(batch_shape) x n x d`-dim tensor of point(s) at which to evaluate
+        dim: Number of search space dimensions.
+        bounds: A `2 x d`-dim tensor of lower and upper bounds.
+        discrete_inds: List of unique integers corresponding to discrete parameters.
+        categorical_inds: List of unique integers corresponding to categorical
+            parameters.
+
+    Raises:
+        ValueError: If the parameter indices are invalid.
+    """
+
+    if not X.shape[-1] == dim:
+        raise ValueError(
+            "Expected `X` to have shape `(batch_shape) x n x d`. "
+            f"Got {X.shape=} and {dim=}"
+        )
+    if not ((X >= bounds[0]).all() and (X <= bounds[1]).all()):
+        raise ValueError("Expected `X` to be within the bounds of the test problem.")
+    for inds in [discrete_inds, categorical_inds]:
+        if not (X[..., inds] == X[..., inds].round()).all():
+            raise ValueError(
+                "Expected `X` to have integer values for the discrete and "
+                "categorical parameters."
+            )
+
+
 class BaseTestProblem(Module, ABC):
     r"""Base class for test functions."""
 
     dim: int
-    _bounds: list[tuple[float, float]]
+    _bounds: list[
+        tuple[float, float]
+    ]  # Bounds, must be integers for discrete/categorical parameters
     _check_grad_at_opt: bool = True
+    continuous_inds: list[int] = []  # Float-valued range parameters (bounds inclusive)
+    discrete_inds: list[int] = []  # Ordered integer parameters (bounds inclusive)
+    categorical_inds: list[int] = []  # Unordered integer parameters (bounds inclusive)
 
     def __init__(
         self,
@@ -54,6 +153,13 @@ class BaseTestProblem(Module, ABC):
             "bounds",
             torch.tensor(self._bounds, dtype=dtype).transpose(-1, -2),
         )
+        validate_parameter_indices(
+            dim=self.dim,
+            bounds=self.bounds,
+            continuous_inds=self.continuous_inds,
+            discrete_inds=self.discrete_inds,
+            categorical_inds=self.categorical_inds,
+        )
 
     def forward(self, X: Tensor, noise: bool = True) -> Tensor:
         r"""Evaluate the function on a set of points.
@@ -74,10 +180,29 @@ class BaseTestProblem(Module, ABC):
             f = -f
         return f
 
-    @abstractmethod
     def evaluate_true(self, X: Tensor) -> Tensor:
         r"""
         Evaluate the function (w/o observation noise) on a set of points.
+
+        Args:
+            X: A `(batch_shape) x d`-dim tensor of point(s) at which to
+                evaluate.
+
+        Returns:
+            A `batch_shape`-dim tensor.
+        """
+        validate_inputs(
+            X=X,
+            dim=self.dim,
+            bounds=self.bounds,
+            discrete_inds=self.discrete_inds,
+            categorical_inds=self.categorical_inds,
+        )
+        return self._evaluate_true(X=X)
+
+    @abstractmethod
+    def _evaluate_true(self, X: Tensor) -> Tensor:
+        r"""Evaluate the function (w/o observation noise) on a set of points.
 
         Args:
             X: A `(batch_shape) x d`-dim tensor of point(s) at which to
@@ -141,7 +266,6 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
         """
         return (self.evaluate_slack(X=X, noise=noise) >= 0.0).all(dim=-1)
 
-    @abstractmethod
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
         r"""Evaluate the constraint slack (w/o observation noise) on a set of points.
 
@@ -152,6 +276,27 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
         Returns:
             A `batch_shape x n_c`-dim tensor of constraint slack (where positive slack
                 corresponds to the constraint being feasible).
+        """
+        validate_inputs(
+            X=X,
+            dim=self.dim,
+            bounds=self.bounds,
+            discrete_inds=self.discrete_inds,
+            categorical_inds=self.categorical_inds,
+        )
+        return self._evaluate_slack_true(X=X)
+
+    @abstractmethod
+    def _evaluate_slack_true(self, X: Tensor) -> Tensor:
+        r"""Evaluate the constraint slack (w/o observation noise) on a set of points.
+
+        Args:
+            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the
+                constraint slacks: `c_1(X), ...., c_{n_c}(X)`.
+
+        Returns:
+            A `batch_shape x n_c`-dim tensor of constraint slack (where positive slack
+                corresponds
         """
         pass  # pragma: no cover
 
@@ -291,6 +436,9 @@ class CorruptedTestProblem(BaseTestProblem, SeedingMixin):
                 provided, it will first be converted to an iterator.
         """
         self.dim: int = base_test_problem.dim
+        self.continuous_inds = base_test_problem.continuous_inds
+        self.discrete_inds = base_test_problem.discrete_inds
+        self.categorical_inds = base_test_problem.categorical_inds
         self._bounds: list[tuple[float, float]] = (
             bounds if bounds is not None else base_test_problem._bounds
         )
@@ -304,7 +452,7 @@ class CorruptedTestProblem(BaseTestProblem, SeedingMixin):
         self._current_seed: int | None = None
         self._seeds: Iterator[int] | None = None if seeds is None else iter(seeds)
 
-    def evaluate_true(self, X: Tensor) -> Tensor:
+    def _evaluate_true(self, X: Tensor) -> Tensor:
         return self.base_test_problem.evaluate_true(X)
 
     def forward(self, X: Tensor, noise: bool = True) -> Tensor:

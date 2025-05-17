@@ -29,7 +29,6 @@ from botorch.optim.parameter_constraints import (
     make_scipy_bounds,
     make_scipy_linear_constraints,
     make_scipy_nonlinear_inequality_constraints,
-    nonlinear_constraint_is_feasible,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import columnwise_clamp, fix_features
@@ -206,7 +205,7 @@ def gen_candidates_scipy(
                 if initial_conditions.dtype != torch.double:
                     msg += " Consider using `dtype=torch.double`."
                 raise OptimizationGradientError(msg, current_x=x)
-            fval = loss.item()
+            fval = loss.detach().item()
             return fval, gradf
 
     else:
@@ -216,7 +215,7 @@ def gen_candidates_scipy(
             with torch.no_grad():
                 X_fix = fix_features(X=X, fixed_features=fixed_features)
                 loss = f(X_fix).sum()
-            fval = loss.item()
+            fval = loss.detach().item()
             return fval
 
     if nonlinear_inequality_constraints:
@@ -237,11 +236,12 @@ def gen_candidates_scipy(
     def f(x):
         return -acquisition_function(x)
 
+    method = options.get("method", "SLSQP" if constraints else "L-BFGS-B")
     res = minimize_with_timeout(
         fun=f_np_wrapper,
         args=(f,),
         x0=x0,
-        method=options.get("method", "SLSQP" if constraints else "L-BFGS-B"),
+        method=method,
         jac=with_grad,
         bounds=bounds,
         constraints=constraints,
@@ -259,23 +259,6 @@ def gen_candidates_scipy(
         X=torch.from_numpy(res.x).to(initial_conditions).reshape(shapeX),
         fixed_features=fixed_features,
     )
-
-    # SLSQP sometimes fails in the line search or may just fail to find a feasible
-    # candidate in which case we just return the starting point. This happens rarely,
-    # so it shouldn't be an issue given enough restarts.
-    if nonlinear_inequality_constraints:
-        for con, is_intrapoint in nonlinear_inequality_constraints:
-            if not nonlinear_constraint_is_feasible(
-                con, is_intrapoint=is_intrapoint, x=candidates
-            ):
-                candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)
-                warnings.warn(
-                    "SLSQP failed to converge to a solution the satisfies the "
-                    "non-linear constraints. Returning the feasible starting point.",
-                    OptimizationWarning,
-                    stacklevel=2,
-                )
-                break
 
     clamped_candidates = columnwise_clamp(
         X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True

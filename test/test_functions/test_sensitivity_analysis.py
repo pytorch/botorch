@@ -37,9 +37,9 @@ class TestGsobol(BotorchTestCase):
             self.assertEqual(len(f.a), dim)
         f = Gsobol(dim=3, a=[1, 2, 3])
         self.assertEqual(f.a, [1, 2, 3])
-        X = torch.tensor([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]])
+        X = torch.tensor([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]) * 0.5
         Z = f.evaluate_true(X)
-        Ztrue = torch.tensor([2.5, 21.0])
+        Ztrue = torch.tensor([0.25, 2.5])
         self.assertAllClose(Z, Ztrue, atol=1e-3)
         self.assertIsNone(f._optimizers)
         with self.assertRaises(NotImplementedError):

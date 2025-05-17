@@ -1,0 +1,84 @@
+name: Publish Website
+
+on:
+  workflow_call:
+    inputs:
+      new_version:
+        required: false
+        type: string
+      run_tutorials:
+        required: false
+        type: boolean
+        default: false
+  workflow_dispatch:
+
+
+jobs:
+
+  build-website:
+    runs-on: ubuntu-latest
+    env:
+      # `uv pip ...` requires venv by default. This skips that requirement.
+      UV_SYSTEM_PYTHON: 1
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: 'docusaurus-versions' # release branch
+        fetch-depth: 0
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Sync release branch with main
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git merge origin/main
+        # To avoid a large number of commits we don't push this sync commit to github until a new release.
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+    - if: ${{ !inputs.new_version }}
+      name: Install latest GPyTorch and Linear Operator
+      run: |
+        uv pip install git+https://github.com/cornellius-gp/linear_operator.git
+        uv pip install git+https://github.com/cornellius-gp/gpytorch.git
+    - name: Install dependencies
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
+      run: |
+        uv pip install ."[dev, tutorials]"
+    - if: ${{ inputs.new_version }}
+      name: Create new docusaurus version
+      run: |
+        python3 scripts/convert_ipynb_to_mdx.py --clean
+        cd website
+        yarn
+        yarn docusaurus docs:version ${{ inputs.new_version }}
+
+        git add versioned_docs/ versioned_sidebars/ versions.json
+        git commit -m "Create version ${{ inputs.new_version }} of site in Docusaurus"
+        git push --force origin HEAD:docusaurus-versions
+    - name: Build website
+      run: |
+        bash scripts/build_docs.sh -b
+    - name: Upload website build as artifact
+      id: deployment
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: website/build/
+
+  deploy-website:
+    needs: build-website
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

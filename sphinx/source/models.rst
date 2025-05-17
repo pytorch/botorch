@@ -39,46 +39,6 @@ Cost Models (for cost-aware optimization)
 .. automodule:: botorch.models.cost
     :members:
 
-GP Regression Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.gp_regression
-    :members:
-
-Multi-Fidelity GP Regression Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.gp_regression_fidelity
-    :members:
-
-GP Regression Models for Mixed Parameter Spaces
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.gp_regression_mixed
-    :members:
-
-Model List GP Regression Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.model_list_gp_regression
-    :members:
-
-Multitask GP Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.multitask
-    :members:
-
-Higher Order GP Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.higher_order_gp
-    :members:
-
-Latent Kronecker GP Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.latent_kronecker_gp
-    :members:
-
-Pairwise GP Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.pairwise_gp
-    :members:
-
 Contextual GP Models with Aggregate Rewards
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.contextual
@@ -87,11 +47,6 @@ Contextual GP Models with Aggregate Rewards
 Contextual GP Models with Context Rewards
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.contextual_multioutput
-    :members:
-
-Variational GP Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.approximate_gp
     :members:
 
 Fully Bayesian GP Models
@@ -104,9 +59,62 @@ Fully Bayesian Multitask GP Models
 .. automodule:: botorch.models.fully_bayesian_multitask
     :members:
 
+GP Regression Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.gp_regression
+    :members:
+
+GP Regression Models for Mixed Parameter Spaces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.gp_regression_mixed
+    :members:
+
+Higher Order GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.higher_order_gp
+    :members:
+
+Latent Kronecker GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.latent_kronecker_gp
+    :members:
+
+Model List GP Regression Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.model_list_gp_regression
+    :members:
+
+Multitask GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.multitask
+    :members:
+
+Multi-Fidelity GP Regression Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.gp_regression_fidelity
+    :members:
+
+Pairwise GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.pairwise_gp
+    :members:
+
 Relevance Pursuit Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.relevance_pursuit
+    :members:
+
+Sparse Axis-Aligned Subspaces (SAAS) GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.map_saas
+    :members:
+
+Variational GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.robust_relevance_pursuit_model
+    :members:
+
+.. automodule:: botorch.models.approximate_gp
     :members:
 
 Model Components
@@ -178,10 +186,6 @@ GPyTorch Module Constructors
 .. automodule:: botorch.models.utils.gpytorch_modules
     :members:
 
-Model Conversion
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.converter
-    :members:
 
 Inducing Point Allocators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

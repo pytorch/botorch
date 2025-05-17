@@ -532,7 +532,7 @@ class StratifiedStandardize(Standardize):
         OutcomeTransform.__init__(self)
         self._stratification_idx = stratification_idx
         task_values = task_values.unique(sorted=True)
-        self.strata_mapping = get_task_value_remapping(task_values, dtype=torch.long)
+        self.strata_mapping = get_task_value_remapping(task_values, dtype=torch.double)
         if self.strata_mapping is None:
             self.strata_mapping = task_values
         n_strata = self.strata_mapping.shape[0]
@@ -576,7 +576,7 @@ class StratifiedStandardize(Standardize):
             strata = X[..., self._stratification_idx].long()
             unique_strata = strata.unique()
             for s in unique_strata:
-                mapped_strata = self.strata_mapping[s]
+                mapped_strata = self.strata_mapping[s].long()
                 mask = strata != s
                 Y_strata = Y.clone()
                 Y_strata[..., mask, :] = float("nan")
@@ -616,7 +616,7 @@ class StratifiedStandardize(Standardize):
             - The per-input stdvs squared.
         """
         strata = X[..., self._stratification_idx].long()
-        mapped_strata = self.strata_mapping[strata].unsqueeze(-1)
+        mapped_strata = self.strata_mapping[strata].unsqueeze(-1).long()
         # get means and stdvs for each strata
         n_extra_batch_dims = mapped_strata.ndim - 2 - len(self._batch_shape)
         expand_shape = mapped_strata.shape[:n_extra_batch_dims] + self.means.shape

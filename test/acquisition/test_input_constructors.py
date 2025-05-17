@@ -26,6 +26,7 @@ from botorch.acquisition.analytic import (
     ExpectedImprovement,
     LogExpectedImprovement,
     LogNoisyExpectedImprovement,
+    LogProbabilityOfFeasibility,
     LogProbabilityOfImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
@@ -56,6 +57,7 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.logei import (
     qLogExpectedImprovement,
     qLogNoisyExpectedImprovement,
+    qLogProbabilityOfFeasibility,
     TAU_MAX,
     TAU_RELU,
 )
@@ -122,6 +124,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from torch import Tensor
 
 
 class DummyAcquisitionFunction(AcquisitionFunction): ...
@@ -596,6 +599,48 @@ class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
         self.assertEqual(acqf.objective.infeasible_cost.item(), 2.0)
 
         # TODO: Test passing through of sampler
+
+    def test_construct_inputs_qLogPOF(self) -> None:
+        c = get_acqf_input_constructor(qLogProbabilityOfFeasibility)
+        mock_model = self.mock_model
+
+        def constraint(Y: Tensor) -> Tensor:
+            return Y[..., 0] - 0.5
+
+        kwargs = c(model=mock_model, constraints=[constraint])
+        self.assertEqual(
+            set(kwargs.keys()),
+            {
+                "model",
+                "constraints",
+                "posterior_transform",
+                "X_pending",
+                "sampler",
+                "eta",
+                "fat",
+                "tau_max",
+            },
+        )
+
+        self.assertIs(kwargs["model"], mock_model)
+        self.assertListEqual(kwargs["constraints"], [constraint])
+        self.assertIsNone(kwargs["posterior_transform"])
+        self.assertIsNone(kwargs["X_pending"])
+        self.assertIsNone(kwargs["sampler"])
+        self.assertIsInstance(kwargs["eta"], float)
+        self.assertGreater(kwargs["eta"], 0.0)
+        self.assertTrue(kwargs["fat"])
+        self.assertIsInstance(kwargs["tau_max"], float)
+        self.assertGreater(kwargs["tau_max"], 0.0)
+
+    def test_construct_inputs_LogPOF(self) -> None:
+        c = get_acqf_input_constructor(LogProbabilityOfFeasibility)
+        mock_model = self.mock_model
+        constraints = {1: [None, 0]}
+        kwargs = c(model=mock_model, constraints=constraints)
+        self.assertEqual(set(kwargs.keys()), {"model", "constraints"})
+        self.assertIs(kwargs["model"], mock_model)
+        self.assertEqual(kwargs["constraints"], constraints)
 
     def test_construct_inputs_qEI(self) -> None:
         c = get_acqf_input_constructor(qExpectedImprovement)
@@ -1768,6 +1813,20 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
             ],
             {"model": st_soo_model, "training_data": self.blockX_blockY},
         )
+
+        self.cases["LogPoF"] = (
+            [LogProbabilityOfFeasibility],
+            {"model": st_soo_model, "constraints": {0: [-5, 5]}},
+        )
+
+        def constraint(X: Tensor) -> Tensor:
+            return X[..., 0].abs() - 5
+
+        self.cases["qLogPoF"] = (
+            [qLogProbabilityOfFeasibility],
+            {"model": st_soo_model, "constraints": [constraint]},
+        )
+
         bounds = torch.ones((1, 2))
         kg_model = SingleTaskGP(train_X=torch.rand((3, 1)), train_Y=torch.rand((3, 1)))
         self.cases["Look-ahead"] = (

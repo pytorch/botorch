@@ -163,11 +163,14 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     NOTE: This model requires the use of specialized Kronecker solves in
     linear operator, which are disabled by default in BoTorch. These are enabled
     by default in the `HigherOrderGP.posterior` call. However, they need to be
-    manually enabled by the user during model fitting.
+    manually enabled by the user during model fitting. Note also that we're using
+    `fit_gpytorch_mll_torch()` here instead of `fit_gpytorch_mll()` since the
+    approximate computations result in a non-smooth MLL that the default
+    L-BFGS-B optimizer invoked by `fit_gpytorch_mll()` does not handle well.
 
     Example:
         >>> from linear_operator.settings import _fast_solves
-        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> model = HigherOrderGP(train_X, train_Y)
         >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
         >>> with _fast_solves(True):
         >>>     fit_gpytorch_mll_torch(mll)
@@ -195,6 +198,15 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             num_latent_dims: Sizes for the latent dimensions.
             learn_latent_pars: If true, learn the latent parameters.
             latent_init: [default or gp] how to initialize the latent parameters.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform. Note that `.train()` will
+                be called on the outcome transform during instantiation of the model.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
         """
         if input_transform is not None:
             input_transform.to(train_X)
@@ -227,6 +239,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                     output_shape=train_Y.shape[-num_output_dims:],
                     batch_shape=batch_shape,
                 )
+            outcome_transform.train()
             train_Y, _ = outcome_transform(train_Y, X=train_X)
 
         self._aug_batch_shape = batch_shape

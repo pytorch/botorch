@@ -211,8 +211,16 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 initial_conditions=self.initial_conditions.reshape(1, 1, -1),
                 acquisition_function=qEI,
                 inequality_constraints=[
-                    (torch.tensor([0]), torch.tensor([1]), 0),
-                    (torch.tensor([1]), torch.tensor([-1]), -1),
+                    (
+                        torch.tensor([0], device=self.device),
+                        torch.tensor([1], device=self.device),
+                        0,
+                    ),
+                    (
+                        torch.tensor([1], device=self.device),
+                        torch.tensor([-1], device=self.device),
+                        -1,
+                    ),
                 ],
                 fixed_features={1: 0.25},
                 options=options,

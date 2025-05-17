@@ -55,7 +55,9 @@ from botorch.acquisition.max_value_entropy_search import (
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
     qExpectedImprovement,
+    qLowerConfidenceBound,
     qNoisyExpectedImprovement,
+    qPosteriorStandardDeviation,
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
@@ -120,6 +122,8 @@ __all__ = [
     "qNegIntegratedPosteriorVariance",
     "qProbabilityOfImprovement",
     "qSimpleRegret",
+    "qPosteriorStandardDeviation",
+    "qLowerConfidenceBound",
     "qUpperConfidenceBound",
     "ConstrainedMCObjective",
     "GenericMCObjective",

@@ -16,11 +16,11 @@ While the analytic acquisition functions assume that the posterior is a
 multivariate Gaussian, the Monte-Carlo (MC) based acquisition functions do not make any
 assumptions about the underlying distribution. Rather, the MC-based acquisition
 functions only require that the posterior can generate samples through an `rsample`
-method. As long as the posterior implements the [`Posterior`](../api/posteriors.html#posterior)
+method. As long as the posterior implements the [`Posterior`](https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.posterior.Posterior)
 interface, it can be used with an MC-based acquisition function. In addition, note that
 gradient-based acquisition function optimization requires the ability to back-propagate
 gradients through the MC samples.
 
 For GP models based on GPyTorch for which the posterior distribution is a
 multivariate Gaussian,
-[`GPyTorchPosterior`](../api/posteriors.html#gpytorchposterior) should be used.
+[`GPyTorchPosterior`](https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior) should be used.

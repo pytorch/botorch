@@ -82,8 +82,8 @@ class TestEnsemblePosterior(BotorchTestCase):
                 sample_shape=torch.Size((16,)), base_samples=torch.arange(16)
             )
             self.assertEqual(samples.shape, p._extended_shape(torch.Size((16,))))
-            self.assertAllClose(p.mean, samples.mean(dim=0))
-            self.assertAllClose(p.variance, samples.var(dim=0))
+            self.assertAllClose(p.mean, samples.mean(dim=0), rtol=1e-04, atol=1e-06)
+            self.assertAllClose(p.variance, samples.var(dim=0), rtol=1e-04, atol=1e-06)
             # test error on base_samples, sample_shape mismatch
             with self.assertRaises(ValueError):
                 p.rsample_from_base_samples(

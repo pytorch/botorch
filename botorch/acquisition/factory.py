@@ -145,6 +145,16 @@ def get_acquisition_function(
             constraints=constraints,
             eta=eta,
         )
+    elif acquisition_function_name == "qLogPF":
+        return logei.qLogProbabilityOfFeasibility(
+            model=model,
+            constraints=constraints,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+            eta=eta,
+        )
     elif acquisition_function_name in ["qNEI", "qLogNEI"]:
         acqf_class = (
             monte_carlo.qNoisyExpectedImprovement

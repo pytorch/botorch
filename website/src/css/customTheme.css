@@ -1,0 +1,16 @@
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+:root{
+  --ifm-color-primary-lightest: #F7C38B;
+  --ifm-color-primary-lighter: #F5AE61;
+  --ifm-color-primary-light: #F4A653;
+  --ifm-color-primary: #F29837;
+  --ifm-color-primary-dark: #F08A1B;
+  --ifm-color-primary-darker: #ED820F;
+  --ifm-color-primary-darkest: #C36B0D;
+}

@@ -14,18 +14,21 @@ REQUIRED_MAJOR = 3
 REQUIRED_MINOR = 10
 
 # Requirements for testing, formatting, and tutorials
-TEST_REQUIRES = ["pytest", "pytest-cov"]
+TEST_REQUIRES = ["pytest", "pytest-cov", "requests"]
 FMT_REQUIRES = ["flake8", "ufmt", "flake8-docstrings"]
 TUTORIALS_REQUIRES = [
-    "ax-platform",
     "cma",
     "jupyter",
-    "kaleido",
     "matplotlib",
     "memory_profiler",
     "papermill",
     "pykeops",
     "torchvision",
+    "mdformat",
+    "pandas",
+    "lxml",
+    "mdformat-myst",
+    "tabulate",
 ]
 
 # Check for python version
@@ -70,7 +73,7 @@ if os.environ.get("ALLOW_LATEST_GPYTORCH_LINOP"):
 # Read in pinned versions of the formatting tools
 FMT_REQUIRES += read_deps_from_file("requirements-fmt.txt")
 # Dev is test + formatting + docs generation
-DEV_REQUIRES = TEST_REQUIRES + FMT_REQUIRES + ["sphinx"]
+DEV_REQUIRES = TEST_REQUIRES + FMT_REQUIRES + ["sphinx", "sphinx-rtd-theme"]
 
 # read in README.md as the long description
 with open(os.path.join(root_dir, "README.md"), "r") as fh:

@@ -29,7 +29,7 @@ from botorch.models.utils import fantasize
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.test_helpers import SimpleGPyTorchModel
-from botorch.utils.testing import _get_random_data, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, get_random_data
 from gpytorch import ExactMarginalLogLikelihood
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
@@ -77,6 +77,7 @@ class SimpleBatchedMultiOutputGPyTorchModel(
                 X=train_X, input_transform=input_transform
             )
         if outcome_transform is not None:
+            outcome_transform.train()
             train_Y, _ = outcome_transform(train_Y)
         self._validate_tensor_args(transformed_X, train_Y)
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
@@ -492,7 +493,7 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
             # test multioutput
-            train_x_raw, train_y = _get_random_data(
+            train_x_raw, train_y = get_random_data(
                 batch_shape=torch.Size(), m=1, n=10, **tkwargs
             )
             task_idx = torch.cat(

@@ -10,7 +10,6 @@ import warnings
 import torch
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.converter import batched_to_model_list
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.transforms import Normalize
@@ -18,7 +17,7 @@ from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.test_helpers import get_pvar_expected
-from botorch.utils.testing import _get_random_data, BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, get_random_data
 from gpytorch.kernels.kernel import AdditiveKernel, ProductKernel
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
@@ -44,7 +43,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             # to test without that transform we need to explicitly pass in `None`.
             outcome_transform_kwargs = {} if use_octf else {"outcome_transform": None}
 
-            train_X, train_Y = _get_random_data(
+            train_X, train_Y = get_random_data(
                 batch_shape=batch_shape, m=m, d=d, **tkwargs
             )
             cat_dims = list(range(ncat))
@@ -140,10 +139,6 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             pvar_exp = get_pvar_expected(posterior=posterior, model=model, X=X, m=m)
             self.assertAllClose(pvar, pvar_exp, rtol=1e-4, atol=1e-5)
 
-            # test that model converter throws an exception
-            with self.assertRaisesRegex(NotImplementedError, "not supported"):
-                batched_to_model_list(model)
-
     def test_condition_on_observations__(self):
         d = 3
         for batch_shape, m, ncat, dtype, observed_noise in (
@@ -151,7 +146,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             (torch.Size([2]), 1, 2, torch.double, False),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            train_X, train_Y = _get_random_data(
+            train_X, train_Y = get_random_data(
                 batch_shape=batch_shape, m=m, d=d, **tkwargs
             )
             cat_dims = list(range(ncat))
@@ -169,7 +164,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             fant_shape = torch.Size([2])
 
             # fantasize at different input points
-            X_fant, Y_fant = _get_random_data(
+            X_fant, Y_fant = get_random_data(
                 fant_shape + batch_shape, m=m, d=d, n=3, **tkwargs
             )
             additional_kwargs = (
@@ -255,7 +250,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             (torch.Size([2]), 1, 2, torch.double, False),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            train_X, train_Y = _get_random_data(
+            train_X, train_Y = get_random_data(
                 batch_shape=batch_shape, m=m, d=d, **tkwargs
             )
             train_Yvar = torch.full_like(train_Y, 0.1) if observed_noise else None
@@ -281,7 +276,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             (torch.float, torch.double),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            train_X, train_Y = _get_random_data(
+            train_X, train_Y = get_random_data(
                 batch_shape=batch_shape, m=m, d=d, **tkwargs
             )
             cat_dims = list(range(ncat))
@@ -307,7 +302,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
             (torch.Size(), torch.Size([2])), (1, 2), (torch.float, torch.double)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            X, Y = _get_random_data(batch_shape=batch_shape, m=1, d=d, **tkwargs)
+            X, Y = get_random_data(batch_shape=batch_shape, m=1, d=d, **tkwargs)
             cat_dims = list(range(ncat))
             training_data = SupervisedDataset(
                 X,

@@ -56,8 +56,8 @@ Optimization simply use Ax.
 **Installation Requirements**
 - Python >= 3.10
 - PyTorch >= 2.0.1
-- gpytorch == 1.13
-- linear_operator == 0.5.3
+- gpytorch == 1.14
+- linear_operator == 0.6
 - pyro-ppl >= 1.8.4
 - scipy
 - multiple-dispatch
@@ -130,7 +130,7 @@ pip install -e ".[dev, tutorials]"
 
 Here's a quick run down of the main components of a Bayesian optimization loop.
 For more details see our [Documentation](https://botorch.org/docs/introduction) and the
-[Tutorials](https://botorch.org/tutorials).
+[Tutorials](https://botorch.org/docs/tutorials).
 
 1. Fit a Gaussian Process model to data
   ```python

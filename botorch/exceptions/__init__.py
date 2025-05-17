@@ -19,8 +19,10 @@ from botorch.exceptions.warnings import (
     BotorchWarning,
     CostAwareWarning,
     InputDataWarning,
+    NumericsWarning,
     OptimizationWarning,
     SamplingWarning,
+    UserInputWarning,
 )
 
 
@@ -36,8 +38,10 @@ __all__ = [
     "BadInitialCandidatesWarning",
     "CandidateGenerationError",
     "ModelFittingError",
+    "NumericsWarning",
     "OptimizationTimeoutError",
     "OptimizationWarning",
     "SamplingWarning",
     "UnsupportedError",
+    "UserInputWarning",
 ]

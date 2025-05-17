@@ -20,23 +20,28 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write # This is required for PyPI OIDC authentication.
+    env:
+      # `uv pip ...` requires venv by default. This skips that requirement.
+      UV_SYSTEM_PYTHON: 1
     steps:
     - uses: actions/checkout@v4
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.10"
+        python-version: "3.13"
     - name: Install dependencies
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
-        pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cpu
-        pip install git+https://github.com/cornellius-gp/linear_operator.git
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install .[test]
-        pip install --upgrade build setuptools setuptools_scm wheel
+        uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cpu
+        uv pip install git+https://github.com/cornellius-gp/linear_operator.git
+        uv pip install git+https://github.com/cornellius-gp/gpytorch.git
+        uv pip install .[test]
+        uv pip install --upgrade build setuptools setuptools_scm wheel
     - name: Extract reduced version and save to env var
       # strip the commit hash from the version to enable upload to pypi
       # env var will persist for subsequent steps
@@ -63,15 +68,15 @@ jobs:
   publish-latest-website:
     name: Publish latest website
     needs: [tests-and-coverage-nightly, package-test-deploy-pypi]
-    uses: ./.github/workflows/reusable_website.yml
-    with:
-      publish_versioned_website: false
-    secrets: inherit
+    uses: ./.github/workflows/publish_website.yml
+    permissions:
+      pages: write
+      id-token: write
+      contents: write
 
   run_tutorials:
-    name: Run tutorials without smoke test on latest PyTorch / GPyTorch / Ax
+    name: Run tutorials without smoke test on latest PyTorch / GPyTorch
     uses: ./.github/workflows/reusable_tutorials.yml
     with:
       smoke_test: false
       use_stable_pytorch_gpytorch: false
-      use_stable_ax: false

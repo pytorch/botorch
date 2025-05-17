@@ -162,6 +162,16 @@ class PosteriorMeanModel(DeterministicModel):
     def forward(self, X: Tensor) -> Tensor:
         return self.model.posterior(X).mean
 
+    @property
+    def num_outputs(self) -> int:
+        r"""The number of outputs of the model."""
+        return self.model.num_outputs
+
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model."""
+        return self.model.batch_shape
+
 
 class FixedSingleSampleModel(DeterministicModel):
     r"""
