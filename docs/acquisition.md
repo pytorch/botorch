@@ -9,7 +9,7 @@ black box function.
 
 BoTorch supports both analytic as well as (quasi-) Monte-Carlo based acquisition
 functions. It provides a generic
-[`AcquisitionFunction`](../api/acquisition.html#acquisitionfunction) API that
+[`AcquisitionFunction`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction) API that
 abstracts away from the particular type, so that optimization can be performed
 on the same objects.
 
@@ -36,7 +36,9 @@ functions that consider multiple design points jointly (i.e. $q > 1$).
 An alternative is to use Monte-Carlo (MC) sampling to approximate the integrals.
 An MC approximation of $\alpha$ at $X$ using $N$ MC samples is
 
-$$ \alpha(X) \approx \frac{1}{N} \sum_{i=1}^N a(\xi_{i}) $$
+$$
+\alpha(X) \approx \frac{1}{N} \sum_{i=1}^N a(\xi_{i})
+$$
 
 where $\xi_i \sim \mathbb{P}(f(X) \mid \mathcal{D})$.
 
@@ -44,17 +46,17 @@ For instance, for q-Expected Improvement (qEI), we have:
 
 $$
 \text{qEI}(X) \approx \frac{1}{N} \sum_{i=1}^N \max_{j=1,..., q}
-\bigl\\{ \max(\xi_{ij} - f^\*, 0) \bigr\\},
+\bigl\{ \max(\xi_{ij} - f^*, 0) \bigr\},
 \qquad \xi_{i} \sim \mathbb{P}(f(X) \mid \mathcal{D})
 $$
 
-where $f^\*$ is the best function value observed so far (assuming noiseless
+where $f^*$ is the best function value observed so far (assuming noiseless
 observations). Using the reparameterization trick ([^KingmaWelling2014],
 [^Rezende2014]),
 
 $$
 \text{qEI}(X) \approx \frac{1}{N} \sum_{i=1}^N \max_{j=1,..., q}
-\bigl\\{ \max\bigl( \mu(X)\_j + (L(X) \epsilon_i)\_j - f^\*, 0 \bigr) \bigr\\},
+\bigl\{ \max\bigl( \mu(X)\_j + (L(X) \epsilon_i)\_j - f^*, 0 \bigr) \bigr\},
 \qquad \epsilon_{i} \sim \mathcal{N}(0, I)
 $$
 
@@ -62,13 +64,13 @@ where $\mu(X)$ is the posterior mean of $f$ at $X$, and $L(X)L(X)^T = \Sigma(X)$
 is a root decomposition of the posterior covariance matrix.
 
 All MC-based acquisition functions in BoTorch are derived from
-[`MCAcquisitionFunction`](../api/acquisition.html#mcacquisitionfunction).
+[`MCAcquisitionFunction`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction).
 
 Acquisition functions expect input tensors $X$ of shape
-$\textit{batch_shape} \times q \times d$, where $d$ is the dimension of the
+$\textit{batch\_shape} \times q \times d$, where $d$ is the dimension of the
 feature space, $q$ is the number of points considered jointly, and
-$\textit{batch_shape}$ is the batch-shape of the input tensor. The output
-$\alpha(X)$ will have shape $\textit{batch_shape}$, with each element
+$\textit{batch\_shape}$ is the batch-shape of the input tensor. The output
+$\alpha(X)$ will have shape $\textit{batch\_shape}$, with each element
 corresponding to the respective $q \times d$ batch tensor in the input $X$.
 Note that for analytic acquisition functions, it must be that $q=1$.
 
@@ -120,30 +122,34 @@ above.
 
 BoTorch also provides implementations of analytic acquisition functions that
 do not depend on MC sampling. These acquisition functions are subclasses of
-[`AnalyticAcquisitionFunction`](../api/acquisition.html#analyticacquisitionfunction)
+[`AnalyticAcquisitionFunction`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction)
 and only exist for the case of a single candidate point ($q = 1$). These
 include classical acquisition functions such as Expected Improvement (EI),
 Upper Confidence Bound (UCB), and Probability of Improvement (PI). An example
-comparing [`ExpectedImprovement`](../api/acquisition.html#expectedimprovement),
+comparing [`ExpectedImprovement`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.analytic.ExpectedImprovement),
 the analytic version of EI, to it's MC counterpart
-[`qExpectedImprovement`](../api/acquisition.html#qexpectedimprovement)
+[`qExpectedImprovement`](https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement)
 can be found in
-[this tutorial](../tutorials/compare_mc_analytic_acquisition).
+[this tutorial](tutorials/compare_mc_analytic_acquisition).
 
 Analytic acquisition functions allow for an explicit expression in terms of the
 summary statistics of the posterior distribution at the evaluated point(s).
 A popular acquisition function is Expected Improvement of a single point
 for a Gaussian posterior, given by
 
-$$ \text{EI}(x) = \mathbb{E}\bigl[
-\max(y - f^\*, 0) \mid y\sim \mathcal{N}(\mu(x), \sigma^2(x))
-\bigr] $$
+$$
+\text{EI}(x) = \mathbb{E}\bigl[
+\max(y - f^*, 0) \mid y\sim \mathcal{N}(\mu(x), \sigma^2(x))
+\bigr]
+$$
 
 where $\mu(x)$ and $\sigma(x)$ are the posterior mean and variance of $f$ at the
-point $x$, and $f^\*$ is again the best function value observed so far (assuming
+point $x$, and $f^*$ is again the best function value observed so far (assuming
 noiseless observations). It can be shown that
 
-$$ \text{EI}(x) = \sigma(x) \bigl( z \Phi(z) + \varphi(z) \bigr)$$
+$$
+\text{EI}(x) = \sigma(x) \bigl( z \Phi(z) + \varphi(z) \bigr)
+$$
 
 where $z = \frac{\mu(x) - f_{\max}}{\sigma(x)}$ and $\Phi$ and $\varphi$ are
 the cdf and pdf of the standard normal distribution, respectively.
@@ -170,38 +176,3 @@ Backpropagation and Approximate Inference in Deep Generative Models. ICML, 2014.
 [^Wilson2017]: J. T. Wilson, R. Moriconi, F. Hutter, M. P. Deisenroth.
 The Reparameterization Trick for Acquisition Functions. NeurIPS Workshop on
 Bayesian Optimization, 2017.
-
-## Latent Information Gain
-
-In the high-dimensional spatiotemporal domain, Expected Information Gain becomes
-less informative for useful observations, and it can be difficult to calculate
-its parameters. To overcome these limitations, we propose a novel acquisition 
-function by computing the expected information gain in the latent space rather
-than the observational space. To design this acquisition function,
-we prove the equivalence between the expected information gain
-in the observational space and the expected KL divergence in the
-latent processes w.r.t. a candidate parameter 𝜃, as illustrated by the
-following proposition.
-
-Proposition 1. The expected information gain (EIG) for Neural
-Process is equivalent to the KL divergence between the prior and
-posterior in the latent process, that is
-
-$$ \text{EIG}(\hat{x}_{1:T}, \theta) := \mathbb{E} \left[ H(\hat{x}_{1:T}) - 
-H(\hat{x}_{1:T} \mid z_{1:T}, \theta) \right] 
-= \mathbb{E}_{p(\hat{x}_{1:T} \mid \theta)} 
-\text{KL} \left( p(z_{1:T} \mid \hat{x}_{1:T}, \theta) \,\|\, p(z_{1:T}) \right)
-$$
-
-
-Inspired by this fact, we propose a novel acquisition function computing the 
-expected KL divergence in the latent processes and name it LIG. Specifically, 
-the trained NP model produces a variational posterior given the current dataset. 
-For every parameter $$\theta$$ remained in the search space, we can predict 
-$$\hat{x}_{1:T}$$ with the decoder. We use $$\hat{x}_{1:T}$$ and $$\theta$$ 
-as input to the encoder to re-evaluate the posterior. LIG computes the 
-distributional difference with respect to the latent process.
-[Wu2023arxiv]:
-   Wu, D., Niu, R., Chinazzi, M., Vespignani, A., Ma, Y.-A., & Yu, R. (2023).
-   Deep Bayesian Active Learning for Accelerating Stochastic Simulation.
-   arXiv preprint arXiv:2106.02770. Retrieved from https://arxiv.org/abs/2106.02770
