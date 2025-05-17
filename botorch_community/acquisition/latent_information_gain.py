@@ -54,10 +54,35 @@ class LatentInformationGain(AcquisitionFunction):
         self.scaler = scaler
 
     def forward(self, candidate_x: Tensor) -> Tensor:
+        """
+        Conduct the Latent Information Gain acquisition function for the inputs.
+
+        Args:
+            candidate_x: Candidate input points, as a Tensor. Ideally in the shape
+                (N, q, D).
+
+        Returns:
+            torch.Tensor: The LIG scores of computed KLDs, in the shape (N, q).
+        """
         device = candidate_x.device
         candidate_x = candidate_x.to(device)
         N, q, D = candidate_x.shape
-        kl = torch.zeros(N, device=device)
+        kl = torch.zeros(N, device=device, dtype=torch.float32)
+        def normal_dist(mu, logvar, min_std, scaler):
+            r"""Helper function for creating the normal distributions.
+
+            Args:
+                mu: Tensor representing the Gaussian distribution mean.
+                logvar: Tensor representing the log variance of the
+                Gaussian distribution.
+                min_std: Float representing the minimum standardized std.
+                scaler: Float scaling the std.
+
+            Returns:
+                torch.distributions.Normal: The normal distribution.
+            """
+            std = min_std + scaler * torch.sigmoid(logvar)
+            return torch.distributions.Normal(mu, std)
         if isinstance(self.model, NeuralProcessModel):
             x_c, y_c, _, _ = self.model.random_split_context_target(
                 self.model.train_X, self.model.train_Y, self.model.n_context
@@ -82,15 +107,11 @@ class LatentInformationGain(AcquisitionFunction):
                         combined_x, combined_y
                     )
 
-                    std_prior = self.min_std + self.scaler * torch.sigmoid(
-                        z_logvar_context
+                    p = normal_dist(z_mu_post, z_logvar_post, self.min_std, self.scaler)
+                    q = normal_dist(
+                        z_mu_context, z_logvar_context, self.min_std, self.scaler
                     )
-                    std_post = self.min_std + self.scaler * torch.sigmoid(z_logvar_post)
-
-                    p = torch.distributions.Normal(z_mu_post, std_post)
-                    q = torch.distributions.Normal(z_mu_context, std_prior)
                     kl_sample = torch.distributions.kl_divergence(p, q).sum()
-
                     kl_i += kl_sample
 
                 kl[i] = kl_i / self.num_samples

@@ -282,8 +282,8 @@ class NeuralProcessModel(Model, GP):
             activation=activation,
             init_func=init_func,
         ).to(self.device)
-        self.train_X = train_X.to(self.device)
-        self.train_Y = train_Y.to(self.device)
+        self.train_X = train_X
+        self.train_Y = train_Y
         self.n_context = n_context
         self.z_dim = z_dim
         self.z_mu_all = None
