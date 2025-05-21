@@ -138,7 +138,7 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         num_mcmc_samples = len(mcmc_samples["mean"])
         batch_shape = torch.Size([num_mcmc_samples])
 
-        mean_module, covar_module, likelihood = super().load_mcmc_samples(
+        mean_module, covar_module, likelihood, _ = super().load_mcmc_samples(
             mcmc_samples=mcmc_samples
         )
 
