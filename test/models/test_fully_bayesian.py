@@ -46,6 +46,7 @@ from botorch.models.fully_bayesian import (
     FullyBayesianLinearSingleTaskGP,
     FullyBayesianSingleTaskGP,
     LinearPyroModel,
+    MaternPyroModel,
     MCMC_DIM,
     MIN_INFERRED_NOISE_LEVEL,
     PyroModel,
@@ -97,15 +98,32 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
 
     @property
     def expected_keys(self) -> list[str]:
-        return [
+        expected_keys = [
             "mean_module.raw_constant",
-            "covar_module.raw_outputscale",
-            "covar_module.base_kernel.raw_lengthscale",
-            "covar_module.base_kernel.raw_lengthscale_constraint.lower_bound",
-            "covar_module.base_kernel.raw_lengthscale_constraint.upper_bound",
-            "covar_module.raw_outputscale_constraint.lower_bound",
-            "covar_module.raw_outputscale_constraint.upper_bound",
         ]
+        if self.model_cls is SaasFullyBayesianSingleTaskGP:
+            expected_keys.extend(
+                [
+                    "covar_module.raw_outputscale",
+                    "covar_module.raw_outputscale_constraint.lower_bound",
+                    "covar_module.raw_outputscale_constraint.upper_bound",
+                ]
+            )
+            covar_prefix = "covar_module.base_kernel"
+        else:
+            covar_prefix = "covar_module"
+
+        expected_keys.extend(
+            [
+                ".".join([covar_prefix, name])
+                for name in (
+                    "raw_lengthscale",
+                    "raw_lengthscale_constraint.lower_bound",
+                    "raw_lengthscale_constraint.upper_bound",
+                )
+            ]
+        )
+        return expected_keys
 
     @property
     def expected_keys_noise(self) -> list[str]:
@@ -168,11 +186,12 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
     ) -> dict[str, torch.Tensor]:
         mcmc_samples = {
             "lengthscale": torch.rand(num_samples, 1, dim, **tkwargs),
-            "outputscale": torch.rand(num_samples, **tkwargs),
             "mean": torch.randn(num_samples, **tkwargs),
         }
         if infer_noise:
             mcmc_samples["noise"] = torch.rand(num_samples, 1, **tkwargs)
+        if self.model_cls is SaasFullyBayesianSingleTaskGP:
+            mcmc_samples["outputscale"] = torch.rand(num_samples, **tkwargs)
         return mcmc_samples
 
     def test_raises(self) -> None:
@@ -224,7 +243,7 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
         )
         with self.assertRaisesRegex(RuntimeError, not_fitted_error_msg):
             model.num_mcmc_samples
-        if self.model_cls is SaasFullyBayesianSingleTaskGP:
+        if issubclass(self.model_cls, FullyBayesianSingleTaskGP):
             with self.assertRaisesRegex(RuntimeError, not_fitted_error_msg):
                 model.median_lengthscale
         else:
@@ -272,14 +291,18 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertEqual(model._aug_batch_shape, torch.Size([3, 2]))
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertEqual(model.mean_module.raw_constant.shape, model.batch_shape)
-            if self.model_cls == SaasFullyBayesianSingleTaskGP:
-                self.assertIsInstance(model.covar_module, ScaleKernel)
+            if issubclass(self.model_cls, FullyBayesianSingleTaskGP):
+                if self.model_cls is SaasFullyBayesianSingleTaskGP:
+                    self.assertIsInstance(model.covar_module, ScaleKernel)
+                    self.assertEqual(
+                        model.covar_module.outputscale.shape, model.batch_shape
+                    )
+                    covar_module = model.covar_module.base_kernel
+                else:
+                    covar_module = model.covar_module
+                self.assertIsInstance(covar_module, MaternKernel)
                 self.assertEqual(
-                    model.covar_module.outputscale.shape, model.batch_shape
-                )
-                self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
-                self.assertEqual(
-                    model.covar_module.base_kernel.lengthscale.shape,
+                    covar_module.lengthscale.shape,
                     torch.Size([3, 1, d]),
                 )
             else:
@@ -408,7 +431,7 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
                 ModelList(model, model2).posterior(test_X).mean
 
             # Check properties
-            if self.model_cls is SaasFullyBayesianSingleTaskGP:
+            if issubclass(self.model_cls, FullyBayesianSingleTaskGP):
                 median_lengthscale = model.median_lengthscale
                 self.assertEqual(median_lengthscale.shape, torch.Size([4]))
             else:
@@ -471,7 +494,7 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
         fit_fully_bayesian_model_nuts(
             model, warmup_steps=2, num_samples=6, thinning=3, disable_progbar=True
         )
-        self.assertEqual(model.covar_module.outputscale.shape, torch.Size([2]))
+        self.assertEqual(model.num_mcmc_samples, 2)
 
     def test_transforms(self) -> None:
         for infer_noise in [True, False]:
@@ -522,7 +545,7 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
             self.assertAllClose(pred_var1, pred_var2)
 
             # check the transforms
-            if self.model_cls is SaasFullyBayesianSingleTaskGP:
+            if issubclass(self.model_cls, FullyBayesianSingleTaskGP):
                 self.assertIsInstance(gp2.input_transform, Normalize)
             else:
                 self.assertIsInstance(gp2.input_transform, ChainedInputTransform)
@@ -701,14 +724,18 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
                     train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL).squeeze(-1).repeat(3, 1),
                 )
 
-            if self.model_cls is SaasFullyBayesianSingleTaskGP:
+            if issubclass(self.model_cls, FullyBayesianSingleTaskGP):
+                if self.model_cls is SaasFullyBayesianSingleTaskGP:
+                    self.assertAllClose(
+                        model.covar_module.outputscale, mcmc_samples["outputscale"]
+                    )
+                    covar_module = model.covar_module.base_kernel
+                else:
+                    covar_module = model.covar_module
                 self.assertAllClose(
-                    model.covar_module.base_kernel.lengthscale,
-                    mcmc_samples["lengthscale"],
+                    covar_module.lengthscale, mcmc_samples["lengthscale"]
                 )
-                self.assertAllClose(
-                    model.covar_module.outputscale, mcmc_samples["outputscale"]
-                )
+
             else:
                 self.assertAllClose(
                     model.covar_module.variance, mcmc_samples["weight_variance"]
@@ -737,57 +764,6 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
                 self.assertTrue("train_Yvar" not in data_dict)
             else:
                 self.assertTrue(Yvar.equal(data_dict["train_Yvar"]))
-
-    def test_custom_pyro_model(self) -> None:
-        for infer_noise, dtype in itertools.product(
-            (True, False), (torch.float, torch.double)
-        ):
-            tkwargs = {"device": self.device, "dtype": dtype}
-            train_X, train_Y, train_Yvar, _ = self._get_unnormalized_data(
-                infer_noise=infer_noise, **tkwargs
-            )
-            model = self.model_cls(
-                train_X=train_X,
-                train_Y=train_Y,
-                train_Yvar=train_Yvar,
-                pyro_model=CustomPyroModel(),
-                **self.model_kwargs,
-            )
-            with self.assertRaisesRegex(
-                NotImplementedError, "load_state_dict only works for SaasPyroModel"
-            ):
-                model.load_state_dict({})
-            self.assertIsInstance(model.pyro_model, CustomPyroModel)
-            self.assertAllClose(model.pyro_model.train_X, train_X)
-            self.assertAllClose(model.pyro_model.train_Y, train_Y)
-            if infer_noise:
-                self.assertIsNone(model.pyro_model.train_Yvar)
-            else:
-                self.assertAllClose(
-                    model.pyro_model.train_Yvar,
-                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL),
-                )
-            # Use transforms
-            model = self.model_cls(
-                train_X=train_X,
-                train_Y=train_Y,
-                train_Yvar=train_Yvar,
-                input_transform=Normalize(d=train_X.shape[-1]),
-                outcome_transform=Standardize(m=1),
-                pyro_model=CustomPyroModel(),
-                **self.model_kwargs,
-            )
-            self.assertIsInstance(model.pyro_model, CustomPyroModel)
-            lb, ub = train_X.min(dim=0).values, train_X.max(dim=0).values
-            self.assertAllClose(model.pyro_model.train_X, (train_X - lb) / (ub - lb))
-            mu, sigma = train_Y.mean(dim=0), train_Y.std(dim=0)
-            self.assertAllClose(model.pyro_model.train_Y, (train_Y - mu) / sigma)
-            if not infer_noise:
-                self.assertAllClose(
-                    model.pyro_model.train_Yvar,
-                    train_Yvar.clamp(MIN_INFERRED_NOISE_LEVEL) / (sigma**2),
-                    atol=5e-4,
-                )
 
     def test_condition_on_observation(self) -> None:
         # The following conditioned data shapes should work (output describes):
@@ -957,6 +933,11 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
         ):
             posterior = FullyBayesianPosterior(distribution=mvn)
         self.assertIsInstance(posterior, GaussianMixturePosterior)
+
+
+class TestFullyBayesianSingleTaskGP(TestSaasFullyBayesianSingleTaskGP):
+    model_cls: type[FullyBayesianSingleTaskGP] = FullyBayesianSingleTaskGP
+    pyro_model_cls: type[PyroModel] = MaternPyroModel
 
 
 class TestPyroCatchNumericalErrors(BotorchTestCase):
