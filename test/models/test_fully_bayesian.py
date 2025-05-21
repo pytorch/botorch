@@ -956,6 +956,36 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
             posterior = FullyBayesianPosterior(distribution=mvn)
         self.assertIsInstance(posterior, GaussianMixturePosterior)
 
+    def test_predict_in_train_mode(self) -> None:
+        torch.manual_seed(16)
+        for infer_noise, dtype in itertools.product(
+            [True, False], [torch.float, torch.double]
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X, train_Y, train_Yvar, _ = self._get_data_and_model(
+                infer_noise=infer_noise, **tkwargs
+            )
+            # Fit a model and check that the hyperparameters have the correct shape
+            model = self.model_cls(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Yvar=train_Yvar,
+                input_transform=Normalize(d=train_X.shape[-1]),
+                outcome_transform=Standardize(m=1),
+                **self.model_kwargs,
+            )
+            fit_fully_bayesian_model_nuts(
+                model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
+            )
+            # check that input transforms are called when calling forward in train mode
+            model.train(reset=False)
+            with mock.patch.object(
+                model.input_transform, "forward", wraps=model.input_transform.forward
+            ) as mock_input_tf:
+                with torch.no_grad():
+                    model(*model.train_inputs)
+                mock_input_tf.assert_called_once()
+
 
 class TestFullyBayesianSingleTaskGP(TestSaasFullyBayesianSingleTaskGP):
     model_cls: type[FullyBayesianSingleTaskGP] = FullyBayesianSingleTaskGP
