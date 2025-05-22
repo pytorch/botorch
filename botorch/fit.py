@@ -23,6 +23,7 @@ from botorch.logging import logger
 from botorch.models import SingleTaskGP
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
 from botorch.models.fully_bayesian import (
+    FullyBayesianLinearSingleTaskGP,
     FullyBayesianSingleTaskGP,
     SaasFullyBayesianSingleTaskGP,
 )
@@ -337,7 +338,9 @@ def _fit_fallback_approximate(
 
 
 def fit_fully_bayesian_model_nuts(
-    model: FullyBayesianSingleTaskGP | SaasFullyBayesianMultiTaskGP,
+    model: FullyBayesianLinearSingleTaskGP
+    | FullyBayesianSingleTaskGP
+    | SaasFullyBayesianMultiTaskGP,
     max_tree_depth: int = 6,
     warmup_steps: int = 512,
     num_samples: int = 256,
