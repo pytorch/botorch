@@ -106,12 +106,23 @@ class LatentInformationGain(AcquisitionFunction):
                 x_i = candidate_x[i]
                 kl_i = 0.0
                 for _ in range(self.num_samples):
-                    posterior_prior = self.model.posterior(self.model.train_X)
+                    posterior_prior = self.model.posterior(self.model.train_inputs[0])
                     posterior_candidate = self.model.posterior(x_i)
 
-                    kl_i += torch.distributions.kl_divergence(
-                        posterior_candidate.mvn, posterior_prior.mvn
-                    ).sum()
+                    mean_prior = posterior_prior.mean.mean(dim=0)
+                    cov_prior = posterior_prior.variance.mean(dim=0)
+                    mvn_prior = torch.distributions.MultivariateNormal(
+                        mean_prior, torch.diag(cov_prior)
+                    )
+
+                    mean_candidate = posterior_candidate.mean.mean(dim=0)
+                    cov_candidate = posterior_candidate.variance.mean(dim=0)
+                    mvn_candidate = torch.distributions.MultivariateNormal(
+                        mean_candidate, torch.diag(cov_candidate)
+                    )
+
+                    kl_i += torch.distributions.kl_divergence(mvn_candidate, mvn_prior)
 
                 kl[i] = kl_i / self.num_samples
+
         return kl

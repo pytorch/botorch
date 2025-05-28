@@ -26,7 +26,6 @@ from gpytorch.models.gp import GP
 from torch.nn import Module
 
 
-# reference: https://chrisorm.github.io/NGP.html
 class MLP(nn.Module):
     def __init__(
         self,
@@ -211,8 +210,6 @@ class Decoder(torch.nn.Module):
         """
         if z.dim() == 1:
             z = z.unsqueeze(0)
-        if z.dim() == 3:
-            z = z.squeeze(0)
         z_expanded = z.expand(x_pred.size(0), -1)
         x_pred = x_pred
         xz = torch.cat([x_pred, z_expanded], dim=-1)
