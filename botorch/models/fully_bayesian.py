@@ -794,6 +794,8 @@ class AbstractFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel
         rest of this method will not run.
         """
         self._check_if_fitted()
+        if self.training:
+            X = self.transform_inputs(X=X)
         mean_x = self.mean_module(X)
         covar_x = self.covar_module(X)
         return MultivariateNormal(mean_x, covar_x)
