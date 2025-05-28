@@ -1,10 +1,16 @@
 import unittest
 
 import torch
+from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch_community.models.np_regression import NeuralProcessModel
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+class Identity:
+    def __call__(self, posterior):
+        return posterior
 
 
 class TestNeuralProcessModel(unittest.TestCase):
@@ -61,6 +67,8 @@ class TestNeuralProcessModel(unittest.TestCase):
         samples = self.model.sample_z(mu, logvar, n=5)
         self.assertEqual(samples.shape, (5, self.z_dim))
         self.assertTrue(torch.is_tensor(samples))
+        with self.assertRaises(ValueError):
+            self.model.sample_z(mu, logvar, n=5, scaler=-1)
 
     def test_KLD_gaussian(self):
         self.initialize()
@@ -71,6 +79,8 @@ class TestNeuralProcessModel(unittest.TestCase):
         kld = self.model.KLD_gaussian()
         self.assertGreaterEqual(kld.item(), 0)
         self.assertTrue(torch.is_tensor(kld))
+        with self.assertRaises(ValueError):
+            self.model.KLD_gaussian(scaler=-1)
 
     def test_data_to_z_params(self):
         self.initialize()
@@ -98,7 +108,11 @@ class TestNeuralProcessModel(unittest.TestCase):
     def test_posterior(self):
         self.initialize()
         self.model(self.model.train_X, self.model.train_Y)
+        identity_posterior = self.model.posterior(
+            self.model.train_X, observation_noise=True, posterior_transform=Identity()
+        )
         posterior = self.model.posterior(self.model.train_X, observation_noise=True)
+        self.assertIsInstance(identity_posterior, GPyTorchPosterior)
         self.assertIsInstance(posterior, GPyTorchPosterior)
         mvn = posterior.mvn
         self.assertEqual(mvn.covariance_matrix.size(), (100, 100, 100))
@@ -107,6 +121,12 @@ class TestNeuralProcessModel(unittest.TestCase):
         self.initialize()
         X = torch.rand(5, 3)
         self.assertTrue(torch.equal(self.model.transform_inputs(X), X.to(device)))
+        self.assertFalse(
+            torch.equal(
+                self.model.transform_inputs(X, input_transform=Normalize(d=3)),
+                X.to(device),
+            )
+        )
 
 
 if __name__ == "__main__":
