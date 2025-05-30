@@ -129,6 +129,38 @@ class PyroModel:
     in combination with Pyro.
     """
 
+    def __init__(
+        self,
+        use_input_warping: bool = False,
+        indices_to_warp: list[int] | None = None,
+        eps: float = 1e-7,
+    ) -> None:
+        r"""Initialize the PyroModel.
+
+        Args:
+            use_input_warping: A boolean indicating whether to use input warping.
+            indices_to_warp: An optional list of indices to warp. The default
+                is to warp all inputs.
+            eps: A small value that is used to ensure inputs are not 0 or 1,
+                when using input warping.
+        """
+        self.use_input_warping = use_input_warping
+        self.indices = indices_to_warp
+        self._eps = eps
+
+    @subset_transform
+    def warp(self, X: Tensor, c0: Tensor, c1: Tensor) -> Tensor:
+        r"""Warp the input through a Kumaraswamy CDF."""
+        return kumaraswamy_warp(X=X, c0=c0, c1=c1, eps=self._eps)
+
+    def _maybe_input_warp(self, X: Tensor, **tkwargs: Any) -> Tensor:
+        if self.use_input_warping:
+            c0, c1 = self.sample_concentrations(**tkwargs)
+            # unnormalize X from [0, 1] to [eps, 1-eps]
+            return self.warp(X=self.train_X, c0=c0, c1=c1)
+        else:
+            return self.train_X
+
     def set_inputs(
         self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor | None = None
     ) -> None:
@@ -186,6 +218,29 @@ class PyroModel:
             ),
         )
 
+    def sample_concentrations(self, **tkwargs: Any) -> tuple[Tensor, Tensor]:
+        r"""Sample concentrations for input warping.
+
+        The prior has a mean value of 1 for each concentration and is very
+        concentrated around the mean.
+        """
+        c0 = pyro.sample(
+            "c0",
+            pyro.distributions.LogNormal(
+                torch.tensor([0.0] * self.ard_num_dims, **tkwargs),
+                torch.tensor([0.1**0.5] * self.ard_num_dims, **tkwargs),
+            ),
+        )
+        c1 = pyro.sample(
+            "c1",
+            pyro.distributions.LogNormal(
+                torch.tensor([0.0] * self.ard_num_dims, **tkwargs),
+                torch.tensor([0.1**0.5] * self.ard_num_dims, **tkwargs),
+            ),
+        )
+
+        return c0, c1
+
 
 class MaternPyroModel(PyroModel):
     r"""Implementation of the a fully Bayesian model with a dimension-scaling prior.
@@ -212,10 +267,11 @@ class MaternPyroModel(PyroModel):
         mean = self.sample_mean(**tkwargs)
         noise = self.sample_noise(**tkwargs)
         lengthscale = self.sample_lengthscale(dim=self.ard_num_dims, **tkwargs)
+        X_tf = self._maybe_input_warp(self.train_X, **tkwargs)
         if self.train_Y.shape[-2] > 0:
             # Do not attempt to sample Y if the data is empty.
             # This leads to errors with empty data.
-            K = matern52_kernel(X=self.train_X, lengthscale=lengthscale)
+            K = matern52_kernel(X=X_tf, lengthscale=lengthscale)
             K = outputscale * K + noise * torch.eye(self.train_X.shape[0], **tkwargs)
             pyro.sample(
                 "Y",
@@ -303,7 +359,7 @@ class MaternPyroModel(PyroModel):
 
     def load_mcmc_samples(
         self, mcmc_samples: dict[str, Tensor]
-    ) -> tuple[Mean, Kernel, Likelihood]:
+    ) -> tuple[Mean, Kernel, Likelihood, Warp | None]:
         r"""Load the MCMC samples into the mean_module, covar_module, and likelihood."""
         tkwargs = {"device": self.train_X.device, "dtype": self.train_X.dtype}
         num_mcmc_samples = len(mcmc_samples["mean"])
@@ -347,7 +403,29 @@ class MaternPyroModel(PyroModel):
             target=mean_module.constant.data,
             new_value=mcmc_samples["mean"],
         )
-        return mean_module, covar_module, likelihood
+        if self.use_input_warping:
+            indices = (
+                list(range(self.ard_num_dims)) if self.indices is None else self.indices
+            )
+            bounds = torch.zeros(2, self.ard_num_dims, **tkwargs)
+            bounds[1] = 1
+            warping_function = Warp(
+                d=self.ard_num_dims,
+                batch_shape=batch_shape,
+                indices=indices,
+                bounds=bounds,
+            ).to(**tkwargs)
+            warping_function.concentration0.data = reshape_and_detach(
+                target=warping_function.concentration0,
+                new_value=mcmc_samples["c0"],
+            )
+            warping_function.concentration1.data = reshape_and_detach(
+                target=warping_function.concentration1,
+                new_value=mcmc_samples["c1"],
+            )
+        else:
+            warping_function = None
+        return mean_module, covar_module, likelihood, warping_function
 
 
 class SaasPyroModel(MaternPyroModel):
@@ -417,38 +495,12 @@ class LinearPyroModel(PyroModel):
     `covar_module`).
     """
 
-    def __init__(
-        self,
-        use_input_warping: bool = True,
-        indices_to_warp: list[int] | None = None,
-        eps: float = 1e-7,
-    ) -> None:
-        r"""Initialize the LinearPyroModel.
-
-        Args:
-            use_input_warping: If True, use input warping.
-        """
-        super().__init__()
-        self.use_input_warping = use_input_warping
-        self.indices = indices_to_warp
-        self._eps = eps
-
-    @subset_transform
-    def warp(self, X: Tensor, c0: Tensor, c1: Tensor) -> Tensor:
-        r"""Warp the input."""
-        return kumaraswamy_warp(X=X, c0=c0, c1=c1, eps=self._eps)
-
     def sample(self) -> None:
         r"""Sample from the model."""
         tkwargs = {"dtype": self.train_X.dtype, "device": self.train_X.device}
         mean = self.sample_mean(**tkwargs)
         weight_variance = self.sample_weight_variance(**tkwargs)
-        if self.use_input_warping:
-            c0, c1 = self.sample_concentrations(**tkwargs)
-            # unnormalize X from [0, 1] to [eps, 1-eps]
-            X_tf = self.warp(X=self.train_X, c0=c0, c1=c1)
-        else:
-            X_tf = self.train_X
+        X_tf = self._maybe_input_warp(X=self.train_X, **tkwargs)
         X_tf = X_tf - 0.5  # center transformed data at 0 (for linear model)
         K = linear_kernel(X=X_tf, weight_variance=weight_variance)
         noise = self.sample_noise(**tkwargs)
@@ -497,29 +549,6 @@ class LinearPyroModel(PyroModel):
         ).sqrt()
         del mcmc_samples["tau_sq"], mcmc_samples["_weight_variance_sq"]
         return mcmc_samples
-
-    def sample_concentrations(self, **tkwargs: Any) -> tuple[Tensor, Tensor]:
-        r"""Sample concentrations for input warping.
-
-        The prior has a mean value of 1 for each concentration and is very
-        concentrated around the mean.
-        """
-        c0 = pyro.sample(
-            "c0",
-            pyro.distributions.LogNormal(
-                torch.tensor([0.0] * self.ard_num_dims, **tkwargs),
-                torch.tensor([0.1**0.5] * self.ard_num_dims, **tkwargs),
-            ),
-        )
-        c1 = pyro.sample(
-            "c1",
-            pyro.distributions.LogNormal(
-                torch.tensor([0.0] * self.ard_num_dims, **tkwargs),
-                torch.tensor([0.1**0.5] * self.ard_num_dims, **tkwargs),
-            ),
-        )
-
-        return c0, c1
 
     def load_mcmc_samples(
         self, mcmc_samples: dict[str, Tensor]
@@ -606,22 +635,23 @@ class AbstractFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel
 
     _is_fully_bayesian = True
     _is_ensemble = True
+    _pyro_model_class: type[PyroModel] = PyroModel
 
     def __init__(
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        pyro_model: PyroModel,
         train_Yvar: Tensor | None = None,
         outcome_transform: OutcomeTransform | None = None,
         input_transform: InputTransform | None = None,
+        use_input_warping: bool = False,
+        indices_to_warp: list[int] = None,
     ) -> None:
         r"""Initialize the fully Bayesian single-task GP model.
 
         Args:
             train_X: Training inputs (n x d)
             train_Y: Training targets (n x 1)
-            pyro_model: The pyro model.
             train_Yvar: Observed noise variance (n x 1). Inferred if None.
             outcome_transform: An outcome transform that is applied to the
                 training data during instantiation and to the posterior during
@@ -631,6 +661,9 @@ class AbstractFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel
                 instantiation of the model.
             input_transform: An input transform that is applied in the model's
                 forward pass.
+            use_input_warping: A boolean indicating whether to use input warping.
+            indices_to_warp: An optional list of indices to warp. The default
+                is to warp all inputs.
         """
         if not (
             train_X.ndim == train_Y.ndim == 2
@@ -670,10 +703,13 @@ class AbstractFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel
         self.mean_module = None
         self.covar_module = None
         self.likelihood = None
-        pyro_model.set_inputs(
+        self.pyro_model = self._pyro_model_class(
+            use_input_warping=use_input_warping,
+            indices_to_warp=indices_to_warp,
+        )
+        self.pyro_model.set_inputs(
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
-        self.pyro_model = pyro_model
         if outcome_transform is not None:
             self.outcome_transform: OutcomeTransform = outcome_transform
         if input_transform is not None:
@@ -688,9 +724,10 @@ class AbstractFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel
             )
 
     @property
-    @abstractmethod
     def num_mcmc_samples(self) -> int:
         r"""Number of MCMC samples in the model."""
+        self._check_if_fitted()
+        return self.covar_module.batch_shape[0]
 
     @property
     def batch_shape(self) -> torch.Size:
@@ -733,11 +770,21 @@ class AbstractFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel
         This method will be called by `fit_fully_bayesian_model_nuts` when the model
         has been fitted in order to create a batched SingleTaskGP model.
         """
-        (
-            self.mean_module,
-            self.covar_module,
-            self.likelihood,
-        ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+        (self.mean_module, self.covar_module, self.likelihood, input_transform) = (
+            self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+        )
+        if input_transform is not None:
+            if hasattr(self, "input_transform"):
+                tfs = [self.input_transform]
+                if isinstance(input_transform, ChainedInputTransform):
+                    tfs.extend(list(input_transform.values()))
+                else:
+                    tfs.append(input_transform)
+                self.input_transform = ChainedInputTransform(
+                    **{f"tf{i}": tf for i, tf in enumerate(tfs)}
+                )
+            else:
+                self.input_transform = input_transform
 
     def forward(self, X: Tensor) -> MultivariateNormal:
         """
@@ -747,6 +794,8 @@ class AbstractFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel
         rest of this method will not run.
         """
         self._check_if_fitted()
+        if self.training:
+            X = self.transform_inputs(X=X)
         mean_x = self.mean_module(X)
         covar_x = self.covar_module(X)
         return MultivariateNormal(mean_x, covar_x)
@@ -825,6 +874,34 @@ class AbstractFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel
 
         return super().condition_on_observations(X, Y, **kwargs)
 
+    @classmethod
+    def construct_inputs(
+        cls,
+        training_data: SupervisedDataset,
+        *,
+        use_input_warping: bool = False,
+        indices_to_warp: list[int] | None = None,
+    ) -> dict[str, BotorchContainer | Tensor | None]:
+        r"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.
+
+        Args:
+            training_data: A `SupervisedDataset`, with attributes `train_X`,
+                `train_Y`, and, optionally, `train_Yvar`.
+            use_input_warping: A boolean indicating whether to use input warping.
+            indices_to_warp: An optional list of indices to warp. The default
+                is to warp all inputs.
+
+        Returns:
+            A dict of keyword arguments that can be used to initialize a
+            `FullyBayesianLinearSingleTaskGP`, with keys `train_X`, `train_Y`,
+            `use_input_warping`, `indices_to_warp`, and, optionally, `train_Yvar`.
+        """
+        return {
+            **super().construct_inputs(training_data=training_data),
+            "use_input_warping": use_input_warping,
+            "indices_to_warp": indices_to_warp,
+        }
+
 
 class FullyBayesianSingleTaskGP(AbstractFullyBayesianSingleTaskGP):
     r"""A fully Bayesian single-task GP model with the SAAS prior.
@@ -844,41 +921,7 @@ class FullyBayesianSingleTaskGP(AbstractFullyBayesianSingleTaskGP):
         >>> posterior = fully_bayesian_gp.posterior(test_X)
     """
 
-    def __init__(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Tensor | None = None,
-        outcome_transform: OutcomeTransform | None = None,
-        input_transform: InputTransform | None = None,
-    ) -> None:
-        r"""Initialize the fully Bayesian single-task GP model.
-
-        Args:
-            train_X: Training inputs (n x d)
-            train_Y: Training targets (n x 1)
-            train_Yvar: Observed noise variance (n x 1). Inferred if None.
-            outcome_transform: An outcome transform that is applied to the
-                training data during instantiation and to the posterior during
-                inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
-            input_transform: An input transform that is applied in the model's
-                forward pass.
-        """
-        super().__init__(
-            train_X=train_X,
-            train_Y=train_Y,
-            train_Yvar=train_Yvar,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            pyro_model=MaternPyroModel(),
-        )
-
-    @property
-    def num_mcmc_samples(self) -> int:
-        r"""Number of MCMC samples in the model."""
-        self._check_if_fitted()
-        return len(self.mean_module.constant)
+    _pyro_model_class: type[PyroModel] = MaternPyroModel
 
     @property
     def median_lengthscale(self) -> Tensor:
@@ -906,6 +949,10 @@ class FullyBayesianSingleTaskGP(AbstractFullyBayesianSingleTaskGP):
         }
         if self.pyro_model.train_Yvar is None:
             mcmc_samples["noise"] = torch.ones(num_mcmc_samples, **tkwargs)
+
+        if self.pyro_model.use_input_warping:
+            mcmc_samples["c0"] = torch.ones(num_mcmc_samples, dim, **tkwargs)
+            mcmc_samples["c1"] = torch.ones(num_mcmc_samples, dim, **tkwargs)
         return mcmc_samples
 
     def load_state_dict(
@@ -929,11 +976,7 @@ class FullyBayesianSingleTaskGP(AbstractFullyBayesianSingleTaskGP):
             dtype=raw_mean.dtype,
             device=raw_mean.device,
         )
-        (
-            self.mean_module,
-            self.covar_module,
-            self.likelihood,
-        ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+        self.load_mcmc_samples(mcmc_samples=mcmc_samples)
         # Load the actual samples from the state dict
         super().load_state_dict(state_dict=state_dict, strict=strict)
 
@@ -956,36 +999,7 @@ class SaasFullyBayesianSingleTaskGP(FullyBayesianSingleTaskGP):
         >>> posterior = saas_gp.posterior(test_X)
     """
 
-    def __init__(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Tensor | None = None,
-        outcome_transform: OutcomeTransform | None = None,
-        input_transform: InputTransform | None = None,
-    ) -> None:
-        r"""Initialize the fully Bayesian single-task GP model.
-
-        Args:
-            train_X: Training inputs (n x d)
-            train_Y: Training targets (n x 1)
-            train_Yvar: Observed noise variance (n x 1). Inferred if None.
-            outcome_transform: An outcome transform that is applied to the
-                training data during instantiation and to the posterior during
-                inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
-            input_transform: An input transform that is applied in the model's
-                forward pass.
-        """
-        AbstractFullyBayesianSingleTaskGP.__init__(
-            self,
-            train_X=train_X,
-            train_Y=train_Y,
-            train_Yvar=train_Yvar,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            pyro_model=SaasPyroModel(),
-        )
+    _pyro_model_class: type[PyroModel] = SaasPyroModel
 
     def _get_dummy_mcmc_samples(
         self,
@@ -1021,49 +1035,7 @@ class FullyBayesianLinearSingleTaskGP(AbstractFullyBayesianSingleTaskGP):
         >>> posterior = gp.posterior(test_X)
     """
 
-    def __init__(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Tensor | None = None,
-        outcome_transform: OutcomeTransform | None = None,
-        input_transform: InputTransform | None = None,
-        use_input_warping: bool = True,
-        indices_to_warp: list[int] = None,
-    ) -> None:
-        r"""Initialize the fully Bayesian single-task GP model.
-
-        Args:
-            train_X: Training inputs (n x d)
-            train_Y: Training targets (n x 1)
-            train_Yvar: Observed noise variance (n x 1). Inferred if None.
-            outcome_transform: An outcome transform that is applied to the
-                training data during instantiation and to the posterior during
-                inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
-            input_transform: An input transform that is applied in the model's
-                forward pass.
-            use_input_warping: A boolean indicating whether to use input warping.
-            indices_to_warp: An optional list of indices to warp. The default
-                is to warp all inputs.
-        """
-        pyro_model = LinearPyroModel(
-            use_input_warping=use_input_warping, indices_to_warp=indices_to_warp
-        )
-        super().__init__(
-            train_X=train_X,
-            train_Y=train_Y,
-            train_Yvar=train_Yvar,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            pyro_model=pyro_model,
-        )
-
-    @property
-    def num_mcmc_samples(self) -> int:
-        r"""Number of MCMC samples in the model."""
-        self._check_if_fitted()
-        return self.covar_module.batch_shape[0]
+    _pyro_model_class: type[PyroModel] = LinearPyroModel
 
     @property
     def median_weight_variance(self) -> Tensor:
@@ -1071,27 +1043,6 @@ class FullyBayesianLinearSingleTaskGP(AbstractFullyBayesianSingleTaskGP):
         self._check_if_fitted()
         weight_variance = self.covar_module.variance.clone()
         return weight_variance.median(0).values.squeeze(0)
-
-    def load_mcmc_samples(self, mcmc_samples: dict[str, Tensor]) -> None:
-        r"""Load the MCMC hyperparameter samples into the model.
-
-        This method will be called by `fit_fully_bayesian_model_nuts` when the model
-        has been fitted in order to create a batched SingleTaskGP model.
-        """
-        (self.mean_module, self.covar_module, self.likelihood, input_transform) = (
-            self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
-        )
-        if hasattr(self, "input_transform"):
-            tfs = [self.input_transform]
-            if isinstance(input_transform, ChainedInputTransform):
-                tfs.extend(list(input_transform.values()))
-            else:
-                tfs.append(input_transform)
-            self.input_transform = ChainedInputTransform(
-                **{f"tf{i}": tf for i, tf in enumerate(tfs)}
-            )
-        else:
-            self.input_transform = input_transform
 
     def load_state_dict(
         self, state_dict: Mapping[str, Any], strict: bool = True
@@ -1125,31 +1076,3 @@ class FullyBayesianLinearSingleTaskGP(AbstractFullyBayesianSingleTaskGP):
         self.load_mcmc_samples(mcmc_samples=mcmc_samples)
         # Load the actual samples from the state dict
         super().load_state_dict(state_dict=state_dict, strict=strict)
-
-    @classmethod
-    def construct_inputs(
-        cls,
-        training_data: SupervisedDataset,
-        *,
-        use_input_warping: bool = True,
-        indices_to_warp: list[int] | None = None,
-    ) -> dict[str, BotorchContainer | Tensor | None]:
-        r"""Construct `SingleTaskGP` keyword arguments from a `SupervisedDataset`.
-
-        Args:
-            training_data: A `SupervisedDataset`, with attributes `train_X`,
-                `train_Y`, and, optionally, `train_Yvar`.
-            use_input_warping: A boolean indicating whether to use input warping.
-            indices_to_warp: An optional list of indices to warp. The default
-                is to warp all inputs.
-
-        Returns:
-            A dict of keyword arguments that can be used to initialize a
-            `FullyBayesianLinearSingleTaskGP`, with keys `train_X`, `train_Y`,
-            `use_input_warping`, `indices_to_warp`, and, optionally, `train_Yvar`.
-        """
-        return {
-            **super().construct_inputs(training_data=training_data),
-            "use_input_warping": use_input_warping,
-            "indices_to_warp": indices_to_warp,
-        }
