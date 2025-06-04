@@ -217,6 +217,7 @@ def get_spray_points(
     X_baseline: Tensor,
     cont_dims: Tensor,
     discrete_dims: Tensor,
+    cat_dims: Tensor,
     bounds: Tensor,
     num_spray_points: int,
     std_cont_perturbation: float = STD_CONT_PERTURBATION,
@@ -231,6 +232,7 @@ def get_spray_points(
         X_baseline: Tensor of best acquired points across BO run.
         cont_dims: Indices of continuous parameters/input dimensions.
         discrete_dims: Indices of binary/integer parameters/input dimensions.
+        cat_dims: Indices of categorical parameters/input dimensions.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         num_spray_points: Number of spray points to return.
         std_cont_perturbation: standard deviation of Normal perturbations of
@@ -255,9 +257,16 @@ def get_spray_points(
         cont_perturbs = cont_perturbs.clamp_(
             min=bounds[0, cont_dims], max=bounds[1, cont_dims]
         )
+        cat_perturbs = get_categorical_neighbors(
+            current_x=x, bounds=bounds, cat_dims=cat_dims
+        )
+        cat_perturbs = cat_perturbs[
+            torch.randint(len(cat_perturbs), (num_spray_points,), device=device)
+        ]
         nbds = torch.zeros(num_spray_points, dim, device=device, dtype=dtype)
         nbds[..., discrete_dims] = discrete_perturbs[..., discrete_dims]
         nbds[..., cont_dims] = cont_perturbs
+        nbds[..., cat_dims] = cat_perturbs[..., cat_dims]
         perturb_nbors = torch.cat([perturb_nbors, nbds], dim=0)
     return perturb_nbors
 
@@ -265,6 +274,7 @@ def get_spray_points(
 def sample_feasible_points(
     opt_inputs: OptimizeAcqfInputs,
     discrete_dims: Tensor,
+    cat_dims: Tensor,
     num_points: int,
 ) -> Tensor:
     r"""Sample feasible points from the optimization domain.
@@ -284,6 +294,7 @@ def sample_feasible_points(
         opt_inputs: Common set of arguments for acquisition optimization.
         discrete_dims: A tensor of indices corresponding to binary and
             integer parameters.
+        cat_dims: A tensor of indices corresponding to categorical parameters.
         num_points: The number of points to sample.
 
     Returns:
@@ -321,7 +332,8 @@ def sample_feasible_points(
         # Generate twice as many, since we're likely to filter out some points.
         base_points = generator(n=num_remaining * 2)
         # Round the discrete dimensions to the nearest integer.
-        base_points[:, discrete_dims] = base_points[:, discrete_dims].round()
+        non_cont_dims = torch.cat((discrete_dims, cat_dims), dim=0)
+        base_points[:, non_cont_dims] = base_points[:, non_cont_dims].round()
         # Fix the fixed features.
         base_points = fix_features(
             X=base_points, fixed_features=opt_inputs.fixed_features
@@ -458,6 +470,7 @@ def generate_starting_points(
             X_baseline=X_baseline,
             cont_dims=cont_dims,
             discrete_dims=discrete_dims,
+            cat_dims=cat_dims,
             bounds=bounds,
             num_spray_points=num_spray_points,
             std_cont_perturbation=assert_is_instance(
@@ -480,6 +493,7 @@ def generate_starting_points(
         new_x_init = sample_feasible_points(
             opt_inputs=opt_inputs,
             discrete_dims=discrete_dims,
+            cat_dims=cat_dims,
             num_points=num_restarts - len(x_init_candts),
         )
         x_init_candts = torch.cat([x_init_candts, new_x_init], dim=0)
