@@ -293,6 +293,7 @@ def sample_feasible_points(
 def generate_starting_points(
     opt_inputs: OptimizeAcqfInputs,
     discrete_dims: Tensor,
+    cat_dims: Tensor,
     cont_dims: Tensor,
 ) -> tuple[Tensor, Tensor]:
     """Generate initial starting points for the alternating optimization.
@@ -307,6 +308,7 @@ def generate_starting_points(
             from `opt_inputs`.
         discrete_dims: A tensor of indices corresponding to integer and
             binary parameters.
+        cat_dims: A tensor of indices corresponding to categorical parameters.
         cont_dims: A tensor of indices corresponding to continuous parameters.
 
     Returns:
@@ -454,6 +456,7 @@ def generate_starting_points(
 def discrete_step(
     opt_inputs: OptimizeAcqfInputs,
     discrete_dims: Tensor,
+    cat_dims: Tensor,
     current_x: Tensor,
 ) -> tuple[Tensor, Tensor]:
     """Discrete nearest neighbour search.
@@ -464,6 +467,7 @@ def discrete_step(
             and constraints from `opt_inputs`.
         discrete_dims: A tensor of indices corresponding to binary and
             integer parameters.
+        cat_dims: A tensor of indices corresponding to categorical parameters.
         current_x: Starting point. A tensor of shape `d`.
 
     Returns:
@@ -508,6 +512,7 @@ def discrete_step(
 def continuous_step(
     opt_inputs: OptimizeAcqfInputs,
     discrete_dims: Tensor,
+    cat_dims: Tensor,
     current_x: Tensor,
 ) -> tuple[Tensor, Tensor]:
     """Continuous search using L-BFGS-B through optimize_acqf.
@@ -518,6 +523,7 @@ def continuous_step(
             `fixed_features` and constraints from `opt_inputs`.
         discrete_dims: A tensor of indices corresponding to binary and
             integer parameters.
+        cat_dims: A tensor of indices corresponding to categorical parameters.
         current_x: Starting point. A tensor of shape `d`.
 
     Returns:
@@ -525,7 +531,9 @@ def continuous_step(
             and a (1)-dim tensor of acquisition values.
     """
     options = opt_inputs.options or {}
-    if len(discrete_dims) == len(current_x):  # nothing continuous to optimize
+    non_cont_dims = torch.cat((discrete_dims, cat_dims), dim=0)
+
+    if len(non_cont_dims) == len(current_x):  # nothing continuous to optimize
         with torch.no_grad():
             return current_x, opt_inputs.acq_function(current_x.unsqueeze(0))
 
@@ -536,7 +544,7 @@ def continuous_step(
         raw_samples=None,
         batch_initial_conditions=current_x.unsqueeze(0),
         fixed_features={
-            **dict(zip(discrete_dims.tolist(), current_x[discrete_dims])),
+            **dict(zip(non_cont_dims.tolist(), current_x[non_cont_dims])),
             **(opt_inputs.fixed_features or {}),
         },
         options={
@@ -552,6 +560,7 @@ def optimize_acqf_mixed_alternating(
     acq_function: AcquisitionFunction,
     bounds: Tensor,
     discrete_dims: list[int],
+    cat_dims: list[int] | None = None,
     options: dict[str, Any] | None = None,
     q: int = 1,
     raw_samples: int = RAW_SAMPLES,
@@ -573,12 +582,12 @@ def optimize_acqf_mixed_alternating(
     `options.get("max_discrete_values", MAX_DISCRETE_VALUES)` values will
     be optimized using continuous relaxation.
 
-    # TODO: Support categorical variables.
-
     Args:
         acq_function: BoTorch Acquisition function.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         discrete_dims: A list of indices corresponding to integer and binary parameters.
+        cat_dims: A list of indices corresponding to categorical parameters.
+            If `None`, no categorical parameters are assumed.
         options: Dictionary specifying optimization options. Supports the following:
         - "initialization_strategy": Strategy used to generate the initial candidates.
             "random", "continuous_relaxation" or "equally_spaced" (linspace style).
@@ -676,22 +685,29 @@ def optimize_acqf_mixed_alternating(
     tkwargs: dict[str, Any] = {"device": bounds.device, "dtype": bounds.dtype}
     # Remove fixed features from dims, so they don't get optimized.
     discrete_dims = [dim for dim in discrete_dims if dim not in fixed_features]
-    if len(discrete_dims) == 0:
+    cat_dims = cat_dims or []
+    cat_dims = [dim for dim in cat_dims if dim not in fixed_features]
+    non_cont_dims = [*discrete_dims, *cat_dims]
+    if len(non_cont_dims) == 0:
         return _optimize_acqf(opt_inputs=opt_inputs)
     if not (
-        isinstance(discrete_dims, list)
-        and len(set(discrete_dims)) == len(discrete_dims)
-        and min(discrete_dims) >= 0
-        and max(discrete_dims) <= dim - 1
+        isinstance(non_cont_dims, list)
+        and len(set(non_cont_dims)) == len(non_cont_dims)
+        and min(non_cont_dims) >= 0
+        and max(non_cont_dims) <= dim - 1
     ):
         raise ValueError(
-            "`discrete_dims` must be a list with unique integers "
+            "`discrete_dims` and `cat_dims` must be lists with unique integers "
             "between 0 and num_dims - 1."
         )
     discrete_dims_t = torch.tensor(
         discrete_dims, dtype=torch.long, device=tkwargs["device"]
     )
-    cont_dims = complement_indices_like(indices=discrete_dims_t, d=dim)
+    cat_dims_t = torch.tensor(cat_dims, dtype=torch.long, device=tkwargs["device"])
+    non_cont_dims = torch.tensor(
+        non_cont_dims, dtype=torch.long, device=tkwargs["device"]
+    )
+    cont_dims = complement_indices_like(indices=non_cont_dims, d=dim)
     # Fixed features are all in cont_dims. Remove them, so they don't get optimized.
     ff_idcs = torch.tensor(
         list(fixed_features.keys()), dtype=torch.long, device=tkwargs["device"]
@@ -703,6 +719,7 @@ def optimize_acqf_mixed_alternating(
         best_X, best_acq_val = generate_starting_points(
             opt_inputs=opt_inputs,
             discrete_dims=discrete_dims_t,
+            cat_dims=cat_dims_t,
             cont_dims=cont_dims,
         )
 
@@ -718,6 +735,7 @@ def optimize_acqf_mixed_alternating(
                     best_X[i], best_acq_val[i] = step(
                         opt_inputs=opt_inputs,
                         discrete_dims=discrete_dims_t,
+                        cat_dims=cat_dims_t,
                         current_x=best_X[i],
                     )
 
