@@ -474,6 +474,11 @@ def generate_starting_points(
         and (X_baseline := get_X_baseline(acq_function=opt_inputs.acq_function))
         is not None
     ):
+        # FIXME: get_X_baseline should return untransformed inputs, but when
+        # OneHotToNumeric is used, it returns the transformed inputs.
+        X_baseline = opt_inputs.acq_function.model.input_transform.untransform(
+            X_baseline
+        )
         perturb_nbors = get_spray_points(
             X_baseline=X_baseline,
             cont_dims=cont_dims,
