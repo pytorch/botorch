@@ -245,28 +245,36 @@ def get_spray_points(
     device, dtype = X_baseline.device, X_baseline.dtype
     perturb_nbors = torch.zeros(0, dim, device=device, dtype=dtype)
     for x in X_baseline:
-        discrete_perturbs = get_nearest_neighbors(
-            current_x=x, bounds=bounds, discrete_dims=discrete_dims
-        )
-        discrete_perturbs = discrete_perturbs[
-            torch.randint(len(discrete_perturbs), (num_spray_points,), device=device)
-        ]
+        if discrete_dims.numel():
+            discrete_perturbs = get_nearest_neighbors(
+                current_x=x, bounds=bounds, discrete_dims=discrete_dims
+            )
+            discrete_perturbs = discrete_perturbs[
+                torch.randint(
+                    len(discrete_perturbs), (num_spray_points,), device=device
+                )
+            ]
+        if cat_dims.numel():
+            cat_perturbs = get_categorical_neighbors(
+                current_x=x, bounds=bounds, cat_dims=cat_dims
+            )
+            cat_perturbs = cat_perturbs[
+                torch.randint(len(cat_perturbs), (num_spray_points,), device=device)
+            ]
+
         cont_perturbs = x[cont_dims] + std_cont_perturbation * torch.randn(
             num_spray_points, len(cont_dims), device=device, dtype=dtype
         )
         cont_perturbs = cont_perturbs.clamp_(
             min=bounds[0, cont_dims], max=bounds[1, cont_dims]
         )
-        cat_perturbs = get_categorical_neighbors(
-            current_x=x, bounds=bounds, cat_dims=cat_dims
-        )
-        cat_perturbs = cat_perturbs[
-            torch.randint(len(cat_perturbs), (num_spray_points,), device=device)
-        ]
         nbds = torch.zeros(num_spray_points, dim, device=device, dtype=dtype)
-        nbds[..., discrete_dims] = discrete_perturbs[..., discrete_dims]
+        if discrete_dims.numel():
+            nbds[..., discrete_dims] = discrete_perturbs[..., discrete_dims]
+        if cat_dims.numel():
+            nbds[..., cat_dims] = cat_perturbs[..., cat_dims]
+
         nbds[..., cont_dims] = cont_perturbs
-        nbds[..., cat_dims] = cat_perturbs[..., cat_dims]
         perturb_nbors = torch.cat([perturb_nbors, nbds], dim=0)
     return perturb_nbors
 

@@ -727,6 +727,136 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # Should request 4 candidates, since all 4 are infeasible.
         self.assertEqual(wrapped_sample_feasible.call_args.kwargs["num_points"], 4)
 
+    def test_optimize_acqf_mixed_categorical(self) -> None:
+        # Testing with integer variables.
+        train_X, train_Y, binary_dims, cont_dims = self._get_data()
+        dim = len(binary_dims) + len(cont_dims)
+        # Update the data to introduce integer dimensions.
+        binary_dims = [0]
+        cat_dims = [3, 4]
+        discrete_dims = binary_dims
+        bounds = self.single_bound.repeat(1, dim)
+        bounds[1, 3:5] = 4.0
+        # Update the model to have a different optimizer.
+        root = torch.tensor([0.0, 0.0, 0.0, 4.0, 4.0], device=self.device)
+        model = QuadraticDeterministicModel(root)
+        acqf = qLogNoisyExpectedImprovement(model=model, X_baseline=train_X)
+        with mock.patch(
+            f"{OPT_MODULE}._optimize_acqf", wraps=_optimize_acqf
+        ) as wrapped_optimize:
+            candidates, _ = optimize_acqf_mixed_alternating(
+                acq_function=acqf,
+                bounds=bounds,
+                discrete_dims=discrete_dims,
+                cat_dims=cat_dims,
+                q=3,
+                raw_samples=32,
+                num_restarts=4,
+                options={
+                    "batch_limit": 5,
+                    "init_batch_limit": 20,
+                    "maxiter_alternating": 1,
+                },
+            )
+        self.assertEqual(candidates.shape, torch.Size([3, dim]))
+        self.assertEqual(candidates.shape[-1], dim)
+        c_binary = candidates[:, binary_dims]
+        self.assertTrue(((c_binary == 0) | (c_binary == 1)).all())
+        c_cat = candidates[:, cat_dims]
+        self.assertTrue(torch.equal(c_cat, c_cat.round()))
+        self.assertTrue((c_cat == 4.0).any())
+        # Check that we used continuous relaxation for initialization.
+        first_call_options = (
+            wrapped_optimize.call_args_list[0].kwargs["opt_inputs"].options
+        )
+        self.assertEqual(
+            first_call_options,
+            {"maxiter": 100, "batch_limit": 5, "init_batch_limit": 20},
+        )
+
+        # Testing that continuous perturbations lead to lower acquisition values.
+        perturbed_candidates = candidates.clone()
+        perturbed_candidates[..., cont_dims] += 1e-2 * torch.randn_like(
+            perturbed_candidates[..., cont_dims], device=self.device
+        )
+        perturbed_candidates[..., cont_dims].clamp_(0, 1)
+        self.assertLess((acqf(perturbed_candidates) - acqf(candidates)).max(), 1e-12)
+        # Testing that integer value change leads to a lower acquisition values.
+        for i, j in product(cat_dims, range(3)):
+            perturbed_candidates = candidates.repeat(2, 1, 1)
+            perturbed_candidates[0, j, i] += 1.0
+            perturbed_candidates[1, j, i] -= 1.0
+            perturbed_candidates.clamp_(bounds[0], bounds[1])
+            self.assertLess(
+                (acqf(perturbed_candidates) - acqf(candidates)).max(), 1e-12
+            )
+
+        # Test gracious fallback when continuous relaxation fails.
+        with mock.patch(
+            f"{OPT_MODULE}._optimize_acqf",
+            side_effect=RuntimeError,
+        ), self.assertWarnsRegex(OptimizationWarning, "Failed to initialize"):
+            candidates, _ = generate_starting_points(
+                opt_inputs=_make_opt_inputs(
+                    acq_function=acqf,
+                    bounds=bounds,
+                    raw_samples=32,
+                    num_restarts=4,
+                    options={"batch_limit": 2, "init_batch_limit": 2},
+                ),
+                discrete_dims=torch.tensor(discrete_dims, device=self.device),
+                cont_dims=torch.tensor(cont_dims, device=self.device),
+            )
+        self.assertEqual(candidates.shape, torch.Size([4, dim]))
+
+        # Test with fixed features and constraints. Using both discrete and continuous.
+        constraint = (  # X[..., 0] + X[..., 1] >= 1.
+            torch.tensor([0, 1], device=self.device),
+            torch.ones(2, device=self.device),
+            1.0,
+        )
+        candidates, _ = optimize_acqf_mixed_alternating(
+            acq_function=acqf,
+            bounds=bounds,
+            discrete_dims=discrete_dims,
+            cat_dims=cat_dims,
+            q=3,
+            raw_samples=32,
+            num_restarts=4,
+            options={"batch_limit": 5, "init_batch_limit": 20},
+            fixed_features={1: 0.5, 3: 2},
+            inequality_constraints=[constraint],
+        )
+        self.assertAllClose(
+            candidates[:, [0, 1, 3]],
+            torch.tensor([0.5, 0.5, 2.0], device=self.device).repeat(3, 1),
+        )
+
+        # Test fallback when initializer cannot generate enough feasible points.
+        with mock.patch(
+            f"{OPT_MODULE}._optimize_acqf",
+            return_value=(
+                torch.zeros(4, 1, dim, **self.tkwargs),
+                torch.zeros(4, **self.tkwargs),
+            ),
+        ), mock.patch(
+            f"{OPT_MODULE}.sample_feasible_points", wraps=sample_feasible_points
+        ) as wrapped_sample_feasible:
+            generate_starting_points(
+                opt_inputs=_make_opt_inputs(
+                    acq_function=acqf,
+                    bounds=bounds,
+                    raw_samples=32,
+                    num_restarts=4,
+                    inequality_constraints=[constraint],
+                ),
+                discrete_dims=torch.tensor(discrete_dims, device=self.device),
+                cont_dims=torch.tensor(cont_dims, device=self.device),
+            )
+        wrapped_sample_feasible.assert_called_once()
+        # Should request 4 candidates, since all 4 are infeasible.
+        self.assertEqual(wrapped_sample_feasible.call_args.kwargs["num_points"], 4)
+
     def test_optimize_acqf_mixed_continuous_relaxation(self) -> None:
         # Testing with integer variables.
         train_X, train_Y, binary_dims, cont_dims = self._get_data()
