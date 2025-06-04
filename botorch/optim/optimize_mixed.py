@@ -543,14 +543,26 @@ def discrete_step(
     for _ in range(
         assert_is_instance(options.get("maxiter_discrete", MAX_ITER_DISCRETE), int)
     ):
-        x_neighbors = get_nearest_neighbors(
+        x_neighbors_discrete = get_nearest_neighbors(
             current_x=current_x.detach(),
             bounds=opt_inputs.bounds,
             discrete_dims=discrete_dims,
         )
-        x_neighbors = _filter_infeasible(
-            X=x_neighbors, inequality_constraints=opt_inputs.inequality_constraints
+        x_neighbors_discrete = _filter_infeasible(
+            X=x_neighbors_discrete,
+            inequality_constraints=opt_inputs.inequality_constraints,
         )
+
+        x_neighbors_cat = get_categorical_neighbors(
+            current_x=current_x.detach(),
+            bounds=opt_inputs.bounds,
+            cat_dims=cat_dims,
+        )
+        x_neighbors_cat = _filter_infeasible(
+            X=x_neighbors_cat, inequality_constraints=opt_inputs.inequality_constraints
+        )
+
+        x_neighbors = torch.cat([x_neighbors_discrete, x_neighbors_cat], dim=0)
         if x_neighbors.numel() == 0:
             # Exit gracefully with last point if there are no feasible neighbors.
             break
