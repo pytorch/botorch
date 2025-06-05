@@ -474,11 +474,9 @@ def generate_starting_points(
         and (X_baseline := get_X_baseline(acq_function=opt_inputs.acq_function))
         is not None
     ):
-        # FIXME: get_X_baseline should return untransformed inputs, but when
-        # OneHotToNumeric is used, it returns the transformed inputs.
-        X_baseline = opt_inputs.acq_function.model.input_transform.untransform(
-            X_baseline
-        )
+        # TODO: get_X_baseline should return untransformed inputs, but when
+        # OneHotToNumeric is used, it returns the transformed inputs. This will
+        # therefore break with certain transforms.
         perturb_nbors = get_spray_points(
             X_baseline=X_baseline,
             cont_dims=cont_dims,
@@ -647,7 +645,7 @@ def continuous_step(
 def optimize_acqf_mixed_alternating(
     acq_function: AcquisitionFunction,
     bounds: Tensor,
-    discrete_dims: list[int],
+    discrete_dims: list[int] | None = None,
     cat_dims: list[int] | None = None,
     options: dict[str, Any] | None = None,
     q: int = 1,
@@ -728,6 +726,14 @@ def optimize_acqf_mixed_alternating(
             "sequential optimization."
         )
 
+    cat_dims = cat_dims or []
+    discrete_dims = discrete_dims or []
+    if not cat_dims and not discrete_dims:
+        raise ValueError(
+            "The provided search space is purely continuous. Please provide "
+            "either/both of `discrete_dims` or `cat_dims`."
+        )
+
     fixed_features = fixed_features or {}
     options = options or {}
     options.setdefault("batch_limit", MAX_BATCH_SIZE)
@@ -773,7 +779,6 @@ def optimize_acqf_mixed_alternating(
     tkwargs: dict[str, Any] = {"device": bounds.device, "dtype": bounds.dtype}
     # Remove fixed features from dims, so they don't get optimized.
     discrete_dims = [dim for dim in discrete_dims if dim not in fixed_features]
-    cat_dims = cat_dims or []
     cat_dims = [dim for dim in cat_dims if dim not in fixed_features]
     non_cont_dims = [*discrete_dims, *cat_dims]
     if len(non_cont_dims) == 0:
@@ -785,8 +790,8 @@ def optimize_acqf_mixed_alternating(
         and max(non_cont_dims) <= dim - 1
     ):
         raise ValueError(
-            "`discrete_dims` and `cat_dims` must be lists with unique, disjoint integers "
-            "between 0 and num_dims - 1."
+            "`discrete_dims` and `cat_dims` must be lists with unique, disjoint "
+            "integers between 0 and num_dims - 1."
         )
     discrete_dims_t = torch.tensor(
         discrete_dims, dtype=torch.long, device=tkwargs["device"]
