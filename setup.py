@@ -30,6 +30,7 @@ TUTORIALS_REQUIRES = [
     "mdformat-myst",
     "tabulate",
 ]
+PYMOO_REQUIRES = ["pymoo"]
 
 # Check for python version
 if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
@@ -107,5 +108,6 @@ setup(
         "dev": DEV_REQUIRES,
         "test": TEST_REQUIRES,
         "tutorials": TUTORIALS_REQUIRES,
+        "pymoo": PYMOO_REQUIRES,
     },
 )

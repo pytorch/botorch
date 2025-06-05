@@ -10,11 +10,14 @@ from itertools import product
 from unittest.mock import patch
 
 import torch
+from botorch.acquisition.multi_objective.objective import WeightedMCMultiOutputObjective
+from botorch.models.deterministic import GenericDeterministicModel
+from botorch.test_functions.multi_objective import DTLZ2
 from botorch.utils.multi_objective.pareto import (
     _is_non_dominated_loop,
     is_non_dominated,
 )
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, skip_if_import_error
 
 
 class TestPareto(BotorchTestCase):
@@ -281,3 +284,64 @@ class TestPareto(BotorchTestCase):
                 self.assertTrue(torch.equal(not_dom, not_dom_expected_dedup))
             else:
                 self.assertTrue(torch.equal(not_dom, not_dom_expected_no_dedup))
+
+
+class TestOptimizeWithNSGAII(BotorchTestCase):
+    @skip_if_import_error
+    def test_optimize_with_nsgaii(self) -> None:
+        from botorch.utils.multi_objective.pareto import optimize_with_nsgaii
+
+        tkwargs = {"device": self.device}
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            prob = DTLZ2(dim=6, num_objectives=2, negate=True).to(**tkwargs)
+
+            model = GenericDeterministicModel(f=prob)
+            bounds = torch.zeros(2, prob.dim, **tkwargs)
+            bounds[1] = 1
+            pareto_X, pareto_Y = optimize_with_nsgaii(
+                model=model,
+                bounds=bounds,
+                num_objectives=2,
+                max_gen=4,
+            )
+
+            self.assertLessEqual(pareto_X.shape[0], 250)
+            self.assertEqual(pareto_X.shape[1], 6)
+            self.assertLessEqual(pareto_Y.shape[0], 250)
+            self.assertEqual(pareto_Y.shape[1], 2)
+            self.assertTrue((prob(pareto_X) == pareto_Y).all())
+            # test with ref_point
+            _, pareto_Y = optimize_with_nsgaii(
+                model=model,
+                bounds=bounds,
+                num_objectives=2,
+                ref_point=prob.ref_point,
+                max_gen=2,
+            )
+            self.assertTrue((pareto_Y >= prob.ref_point).all())
+            # test with objective
+            _, pareto_Y = optimize_with_nsgaii(
+                model=model,
+                bounds=bounds,
+                num_objectives=2,
+                objective=WeightedMCMultiOutputObjective(
+                    weights=-torch.ones(2, **tkwargs)
+                ),
+                max_gen=2,
+            )
+            self.assertTrue((pareto_Y >= 0.0).all())
+
+            # test with constraints
+            def constraint(Y):
+                # first objective should be >= -0.5
+                return -0.5 - Y[..., 0]
+
+            _, pareto_Y = optimize_with_nsgaii(
+                model=model,
+                bounds=bounds,
+                num_objectives=2,
+                constraints=[constraint],
+                max_gen=2,
+            )
+            self.assertTrue((pareto_Y[:, 0] >= -0.5).all())
