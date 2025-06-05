@@ -785,7 +785,7 @@ def optimize_acqf_mixed_alternating(
         and max(non_cont_dims) <= dim - 1
     ):
         raise ValueError(
-            "`discrete_dims` and `cat_dims` must be lists with unique integers "
+            "`discrete_dims` and `cat_dims` must be lists with unique, disjoint integers "
             "between 0 and num_dims - 1."
         )
     discrete_dims_t = torch.tensor(
