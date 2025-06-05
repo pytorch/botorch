@@ -593,7 +593,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # Invalid indices will raise an error.
         with self.assertRaisesRegex(
             ValueError,
-            "with unique integers between 0 and num_dims - 1",
+            "with unique, disjoint integers between 0 and num_dims - 1",
         ):
             optimize_acqf_mixed_alternating(
                 acq_function=acqf,

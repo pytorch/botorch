@@ -749,11 +749,6 @@ def optimize_acqf_mixed_alternating(
 
     cat_dims = cat_dims or []
     discrete_dims = discrete_dims or []
-    if not cat_dims and not discrete_dims:
-        raise ValueError(
-            "The provided search space is purely continuous. Please provide "
-            "either/both of `discrete_dims` or `cat_dims`."
-        )
 
     fixed_features = fixed_features or {}
     options = options or {}
@@ -803,6 +798,7 @@ def optimize_acqf_mixed_alternating(
     cat_dims = [dim for dim in cat_dims if dim not in fixed_features]
     non_cont_dims = [*discrete_dims, *cat_dims]
     if len(non_cont_dims) == 0:
+        # If the problem is fully continuous, fall back to standard optimization.
         return _optimize_acqf(opt_inputs=opt_inputs)
     if not (
         isinstance(non_cont_dims, list)
