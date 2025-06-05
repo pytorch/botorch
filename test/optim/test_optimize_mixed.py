@@ -176,12 +176,14 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             sample_feasible_points(
                 opt_inputs=opt_inputs,
                 discrete_dims=torch.tensor([0, 2], device=self.device),
+                cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
                 num_points=10,
             )
         # Generate a number of points.
         X = sample_feasible_points(
             opt_inputs=opt_inputs,
             discrete_dims=torch.tensor([1], device=self.device),
+            cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
             num_points=10,
         )
         self.assertEqual(X.shape, torch.Size([10, 3]))
@@ -213,6 +215,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
         # each discrete step should reduce the best_f value by exactly 1
         binary_dims = torch.arange(d)
+        cat_dims = torch.tensor([], device=self.device, dtype=torch.long)
         for i in range(k):
             X, ei_val = discrete_step(
                 opt_inputs=_make_opt_inputs(
@@ -221,6 +224,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     options={"maxiter_discrete": 1, "tol": 0, "init_batch_limit": 32},
                 ),
                 discrete_dims=binary_dims,
+                cat_dims=cat_dims,
                 current_x=X,
             )
             ei_x_none = ei(X[None])
@@ -240,6 +244,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     options={"maxiter_discrete": 1, "tol": 0, "init_batch_limit": 2},
                 ),
                 discrete_dims=binary_dims,
+                cat_dims=cat_dims,
                 current_x=X,
             )
             ei_x_none = ei(X[None])
@@ -259,6 +264,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 options={"maxiter_discrete": 1, "tol": 1.5},
             ),
             discrete_dims=binary_dims,
+            cat_dims=cat_dims,
             current_x=X_clone,
         )
         # One call when entering, one call in the loop.
@@ -277,6 +283,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 options={"maxiter_discrete": 1, "tol": 1.5, "init_batch_limit": 2},
             ),
             discrete_dims=binary_dims,
+            cat_dims=cat_dims,
             current_x=X_clone,
         )
         self.assertAllClose(X_clone, X)
@@ -308,6 +315,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     ],
                 ),
                 discrete_dims=binary_dims,
+                cat_dims=cat_dims,
                 current_x=X,
             )
             self.assertAllClose(ei_val, torch.full_like(ei_val, i + 1))
@@ -332,6 +340,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 ],
             ),
             discrete_dims=binary_dims,
+            cat_dims=cat_dims,
             current_x=X,
         )
         # No feasible neighbors, so we should get the same point back.
@@ -364,6 +373,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 options={"maxiter_continuous": 32},
             ),
             discrete_dims=binary_dims,
+            cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
             current_x=X.clone(),
         )
         self.assertAllClose(X_new[cont_dims], root[cont_dims])
@@ -392,6 +402,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 ],
             ),
             discrete_dims=binary_dims,
+            cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
             current_x=X_,
         )
         self.assertTrue(
@@ -416,6 +427,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 options={"maxiter_continuous": 32},
             ),
             discrete_dims=binary_dims,
+            cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
             current_x=X,
         )
         self.assertTrue(X is X_out)  # testing pointer equality for due to short cut
@@ -425,6 +437,8 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         train_X, train_Y, binary_dims, cont_dims = self._get_data()
         dim = len(binary_dims) + len(cont_dims)
         bounds = self.single_bound.repeat(1, dim)
+        binary_dims_t = torch.tensor(binary_dims, device=self.device, dtype=torch.long)
+        cont_dims_t = torch.tensor(cont_dims, device=self.device, dtype=torch.long)
         torch.manual_seed(0)
         model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
         acqf = LogExpectedImprovement(model=model, best_f=torch.max(train_Y))
@@ -441,8 +455,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # testing spray points
         perturb_nbors = get_spray_points(
             X_baseline=X_baseline,
-            discrete_dims=binary_dims,
-            cont_dims=cont_dims,
+            discrete_dims=binary_dims_t,
+            cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
+            cont_dims=cont_dims_t,
             bounds=bounds,
             num_spray_points=assert_is_instance(options["num_spray_points"], int),
         )
@@ -667,6 +682,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     options={"batch_limit": 2, "init_batch_limit": 2},
                 ),
                 discrete_dims=torch.tensor(discrete_dims, device=self.device),
+                cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
                 cont_dims=torch.tensor(cont_dims, device=self.device),
             )
         self.assertEqual(candidates.shape, torch.Size([4, dim]))
@@ -721,6 +737,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     inequality_constraints=[constraint],
                 ),
                 discrete_dims=torch.tensor(discrete_dims, device=self.device),
+                cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
                 cont_dims=torch.tensor(cont_dims, device=self.device),
             )
         wrapped_sample_feasible.assert_called_once()
@@ -805,6 +822,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     options={"batch_limit": 2, "init_batch_limit": 2},
                 ),
                 discrete_dims=torch.tensor(discrete_dims, device=self.device),
+                cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
                 cont_dims=torch.tensor(cont_dims, device=self.device),
             )
         self.assertEqual(candidates.shape, torch.Size([4, dim]))
@@ -818,7 +836,6 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         candidates, _ = optimize_acqf_mixed_alternating(
             acq_function=acqf,
             bounds=bounds,
-            discrete_dims=discrete_dims,
             cat_dims=cat_dims,
             q=3,
             raw_samples=32,
@@ -829,7 +846,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         )
         self.assertAllClose(
             candidates[:, [0, 1, 3]],
-            torch.tensor([0.5, 0.5, 2.0], device=self.device).repeat(3, 1),
+            torch.tensor(
+                [0.5, 0.5, 2.0], device=self.device, dtype=candidates.dtype
+            ).repeat(3, 1),
         )
 
         # Test fallback when initializer cannot generate enough feasible points.
@@ -851,6 +870,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     inequality_constraints=[constraint],
                 ),
                 discrete_dims=torch.tensor(discrete_dims, device=self.device),
+                cat_dims=torch.tensor(cat_dims, device=self.device),
                 cont_dims=torch.tensor(cont_dims, device=self.device),
             )
         wrapped_sample_feasible.assert_called_once()
