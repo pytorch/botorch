@@ -6,13 +6,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from copy import deepcopy
+from typing import Any, Callable, List, Optional
 
-from typing import Any
-
-from botorch.models.approximate_gp import ApproximateGPyTorchModel
-from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.sampling.pathwise.features import gen_kernel_features
+import torch
+from botorch import models
+from botorch.sampling.pathwise.features import gen_kernel_feature_map
 from botorch.sampling.pathwise.features.generators import TKernelFeatureMapGenerator
 from botorch.sampling.pathwise.paths import GeneralizedLinearPath, PathList, SamplePath
 from botorch.sampling.pathwise.utils import (
@@ -47,40 +46,41 @@ def draw_kernel_feature_paths(
     Args:
         model: The prior over functions.
         sample_shape: The shape of the sample paths to be drawn.
+        **kwargs: Additional keyword arguments are passed to subroutines.
     """
     return DrawKernelFeaturePaths(model, sample_shape=sample_shape, **kwargs)
 
 
 def _draw_kernel_feature_paths_fallback(
-    num_inputs: int,
-    mean_module: Module | None,
+    mean_module: Optional[Module],
     covar_module: Kernel,
     sample_shape: Size,
-    num_features: int = 1024,
-    map_generator: TKernelFeatureMapGenerator = gen_kernel_features,
-    input_transform: TInputTransform | None = None,
-    output_transform: TOutputTransform | None = None,
-    weight_generator: Callable[[Size], Tensor] | None = None,
+    map_generator: TKernelFeatureMapGenerator = gen_kernel_feature_map,
+    input_transform: Optional[TInputTransform] = None,
+    output_transform: Optional[TOutputTransform] = None,
+    weight_generator: Optional[Callable[[Size], Tensor]] = None,
+    **kwargs: Any,
 ) -> GeneralizedLinearPath:
     # Generate a kernel feature map
-    feature_map = map_generator(
-        kernel=covar_module,
-        num_inputs=num_inputs,
-        num_outputs=num_features,
-    )
+    feature_map = map_generator(kernel=covar_module, **kwargs)
 
     # Sample random weights with which to combine kernel features
+    weight_shape = (
+        *sample_shape,
+        *covar_module.batch_shape,
+        *feature_map.output_shape,
+    )
     if weight_generator is None:
         weight = draw_sobol_normal_samples(
             n=sample_shape.numel() * covar_module.batch_shape.numel(),
-            d=feature_map.num_outputs,
+            d=feature_map.output_shape.numel(),
             device=covar_module.device,
             dtype=covar_module.dtype,
-        ).reshape(sample_shape + covar_module.batch_shape + (feature_map.num_outputs,))
+        ).reshape(weight_shape)
     else:
-        weight = weight_generator(
-            sample_shape + covar_module.batch_shape + (feature_map.num_outputs,)
-        ).to(device=covar_module.device, dtype=covar_module.dtype)
+        weight = weight_generator(weight_shape).to(
+            device=covar_module.device, dtype=covar_module.dtype
+        )
 
     # Return the sample paths
     return GeneralizedLinearPath(
@@ -98,35 +98,66 @@ def _draw_kernel_feature_paths_ExactGP(
 ) -> GeneralizedLinearPath:
     (train_X,) = get_train_inputs(model, transformed=False)
     return _draw_kernel_feature_paths_fallback(
-        num_inputs=train_X.shape[-1],
         mean_module=model.mean_module,
         covar_module=model.covar_module,
         input_transform=get_input_transform(model),
         output_transform=get_output_transform(model),
+        num_ambient_inputs=train_X.shape[-1],
         **kwargs,
     )
 
 
-@DrawKernelFeaturePaths.register(ModelListGP)
-def _draw_kernel_feature_paths_list(
-    model: ModelListGP,
-    join: Callable[[list[Tensor]], Tensor] | None = None,
+@DrawKernelFeaturePaths.register(models.ModelListGP)
+def _draw_kernel_feature_paths_ModelListGP(
+    model: models.ModelListGP,
+    reducer: Optional[Callable[[List[Tensor]], Tensor]] = None,
     **kwargs: Any,
 ) -> PathList:
     paths = [draw_kernel_feature_paths(m, **kwargs) for m in model.models]
-    return PathList(paths=paths, join=join)
+    return PathList(paths=paths, reducer=reducer)
 
 
-@DrawKernelFeaturePaths.register(ApproximateGPyTorchModel)
+@DrawKernelFeaturePaths.register(models.MultiTaskGP)
+def _draw_kernel_feature_paths_MultiTaskGP(
+    model: models.MultiTaskGP, **kwargs: Any
+) -> GeneralizedLinearPath:
+    (train_X,) = get_train_inputs(model, transformed=False)
+    num_ambient_inputs = train_X.shape[-1]
+    task_index = (
+        num_ambient_inputs + model._task_feature
+        if model._task_feature < 0
+        else model._task_feature
+    )
+
+    base_kernel = deepcopy(model.covar_module)
+    base_kernel.active_dims = torch.LongTensor(
+        [index for index in range(train_X.shape[-1]) if index != task_index],
+        device=base_kernel.device,
+    )
+
+    task_kernel = deepcopy(model.task_covar_module)
+    task_kernel.active_dims = torch.tensor([task_index], device=base_kernel.device)
+
+    return _draw_kernel_feature_paths_fallback(
+        mean_module=model.mean_module,
+        covar_module=base_kernel * task_kernel,
+        input_transform=get_input_transform(model),
+        output_transform=get_output_transform(model),
+        num_ambient_inputs=num_ambient_inputs,
+        **kwargs,
+    )
+
+
+@DrawKernelFeaturePaths.register(models.ApproximateGPyTorchModel)
 def _draw_kernel_feature_paths_ApproximateGPyTorchModel(
-    model: ApproximateGPyTorchModel, **kwargs: Any
+    model: models.ApproximateGPyTorchModel, **kwargs: Any
 ) -> GeneralizedLinearPath:
     (train_X,) = get_train_inputs(model, transformed=False)
     return DrawKernelFeaturePaths(
         model.model,
-        num_inputs=train_X.shape[-1],
         input_transform=get_input_transform(model),
         output_transform=get_output_transform(model),
+        num_ambient_inputs=train_X.shape[-1],
         **kwargs,
     )
 
@@ -140,14 +171,9 @@ def _draw_kernel_feature_paths_ApproximateGP(
 
 @DrawKernelFeaturePaths.register(ApproximateGP, _VariationalStrategy)
 def _draw_kernel_feature_paths_ApproximateGP_fallback(
-    model: ApproximateGP,
-    _: _VariationalStrategy,
-    *,
-    num_inputs: int,
-    **kwargs: Any,
+    model: ApproximateGP, _: _VariationalStrategy, **kwargs: Any
 ) -> GeneralizedLinearPath:
     return _draw_kernel_feature_paths_fallback(
-        num_inputs=num_inputs,
         mean_module=model.mean_module,
         covar_module=model.covar_module,
         **kwargs,
