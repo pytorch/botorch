@@ -168,7 +168,7 @@ def get_categorical_neighbors(
     current_x: Tensor,
     bounds: Tensor,
     cat_dims: Tensor,
-):
+) -> Tensor:
     r"""Generate all 1-Hamming distance neighbors of a given input. The neighbors
     are generated for the categorical dimensions only.
 
