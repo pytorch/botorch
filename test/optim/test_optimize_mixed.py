@@ -25,6 +25,7 @@ from botorch.optim.optimize_mixed import (
     continuous_step,
     discrete_step,
     generate_starting_points,
+    get_categorical_neighbors,
     get_nearest_neighbors,
     get_spray_points,
     MAX_DISCRETE_VALUES,
@@ -142,6 +143,31 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 expected_neighbors.sort(dim=0).values,
                 get_nearest_neighbors(
                     current_x=current_x, bounds=bounds, discrete_dims=discrete_dims
+                )
+                .sort(dim=0)
+                .values,
+            )
+        )
+
+    def test_get_categorical_neighbors(self) -> None:
+        current_x = torch.tensor([1.0, 0.0, 0.5], device=self.device)
+        bounds = torch.tensor([[0.0, 0.0, 0.0], [3.0, 2.0, 1.0]], device=self.device)
+        cat_dims = torch.tensor([0, 1], device=self.device, dtype=torch.long)
+        expected_neighbors = torch.tensor(
+            [
+                [0.0, 0.0, 0.5],
+                [2.0, 0.0, 0.5],
+                [3.0, 0.0, 0.5],
+                [1.0, 1.0, 0.5],
+                [1.0, 2.0, 0.5],
+            ],
+            device=self.device,
+        )
+        self.assertTrue(
+            torch.equal(
+                expected_neighbors.sort(dim=0).values,
+                get_categorical_neighbors(
+                    current_x=current_x, bounds=bounds, cat_dims=cat_dims
                 )
                 .sort(dim=0)
                 .values,
