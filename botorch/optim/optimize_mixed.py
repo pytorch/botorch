@@ -691,7 +691,6 @@ def optimize_acqf_mixed_alternating(
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         discrete_dims: A list of indices corresponding to integer and binary parameters.
         cat_dims: A list of indices corresponding to categorical parameters.
-            If `None`, no categorical parameters are assumed.
         options: Dictionary specifying optimization options. Supports the following:
         - "initialization_strategy": Strategy used to generate the initial candidates.
             "random", "continuous_relaxation" or "equally_spaced" (linspace style).
