@@ -677,16 +677,19 @@ def optimize_acqf_mixed_alternating(
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""
-    Optimizes acquisition function over mixed binary and continuous input spaces.
-    Multiple random restarting starting points are picked by evaluating a large set
-    of initial candidates. From each starting point, alternating discrete local search
-    and continuous optimization via (L-BFGS) is performed for a fixed number of
-    iterations.
+    Optimizes acquisition function over mixed integer, categorical, and continuous
+    input spaces. Multiple random restarting starting points are picked by evaluating
+    a large set of initial candidates. From each starting point, alternating
+    discrete/categorical local search and continuous optimization via (L-BFGS)
+    is performed for a fixed number of iterations.
 
-    NOTE: This method assumes that all discrete variables are integer valued.
+    NOTE: This method assumes that all discrete and categorical variables are
+    integer valued.
     The discrete dimensions that have more than
     `options.get("max_discrete_values", MAX_DISCRETE_VALUES)` values will
     be optimized using continuous relaxation.
+    The categorical dimensions that have more than `MAX_DISCRETE_VALUES` values
+    be optimized by selecting random subsamples of the possible values.
 
     Args:
         acq_function: BoTorch Acquisition function.
