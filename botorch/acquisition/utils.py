@@ -16,8 +16,6 @@ from typing import Any, Union
 
 import torch
 
-from botorch.acquisition import analytic, monte_carlo, multi_objective  # noqa F401
-from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import (
     MCAcquisitionObjective,
     PosteriorTransform,
@@ -260,37 +258,6 @@ def isinstance_af(
     else:
         isinstance_base_af = False
     return isinstance_base_af or isinstance(__obj, __class_or_tuple)
-
-
-def is_nonnegative(acq_function: AcquisitionFunction) -> bool:
-    r"""Determine whether a given acquisition function is non-negative.
-
-    Args:
-        acq_function: The `AcquisitionFunction` instance.
-
-    Returns:
-        True if `acq_function` is non-negative, False if not, or if the behavior
-        is unknown (for custom acquisition functions).
-
-    Example:
-        >>> qEI = qExpectedImprovement(model, best_f=0.1)
-        >>> is_nonnegative(qEI)  # returns True
-    """
-    return isinstance_af(
-        acq_function,
-        (
-            analytic.ExpectedImprovement,
-            analytic.ConstrainedExpectedImprovement,
-            analytic.ProbabilityOfImprovement,
-            analytic.NoisyExpectedImprovement,
-            monte_carlo.qExpectedImprovement,
-            monte_carlo.qNoisyExpectedImprovement,
-            monte_carlo.qProbabilityOfImprovement,
-            multi_objective.analytic.ExpectedHypervolumeImprovement,
-            multi_objective.monte_carlo.qExpectedHypervolumeImprovement,
-            multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement,
-        ),
-    )
 
 
 def _prune_inferior_shared_processing(
