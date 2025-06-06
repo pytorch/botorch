@@ -154,19 +154,7 @@ class FixedFeatureAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
         X_full = self._construct_X_full(X)
         return self.acq_func(X_full)
 
-    @property
-    def X_pending(self):
-        r"""Return the `X_pending` of the base acquisition function."""
-        try:
-            return self.acq_func.X_pending
-        except (ValueError, AttributeError):
-            raise ValueError(
-                f"Base acquisition function {type(self.acq_func).__name__} "
-                "does not have an `X_pending` attribute."
-            )
-
-    @X_pending.setter
-    def X_pending(self, X_pending: Tensor | None):
+    def set_X_pending(self, X_pending: Tensor | None):
         r"""Sets the `X_pending` of the base acquisition function."""
         if X_pending is not None:
             full_X_pending = self._construct_X_full(X_pending)
