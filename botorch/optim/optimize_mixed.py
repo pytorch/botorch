@@ -174,7 +174,7 @@ def get_categorical_neighbors(
     are generated for the categorical dimensions only.
 
     We assume that all categorical values are equidistant. If the number of values
-    is greater than `max_num_cat_values`, we sample uniformly from the range of
+    is greater than `max_num_cat_values`, we sample uniformly from the
     possible values for that dimension.
 
     NOTE: This assumes that `current_x` is detached and uses in-place operations,
