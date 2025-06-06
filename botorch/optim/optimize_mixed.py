@@ -199,7 +199,7 @@ def get_categorical_neighbors(
     def _get_cat_values(dim_bounds: Tensor) -> Sequence[int]:
         r"""Get a tensor of all of the values a categorical feature may take."""
         # dim_bounds is a (2,) tensor containing the lower and upper bounds
-        lb, ub = dim_bounds
+        lb, ub = dim_bounds.long()
         cat_values = range(lb, ub + 1)
         if ub - lb + 1 <= max_num_cat_values:
             return cat_values

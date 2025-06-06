@@ -173,6 +173,24 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             )
         )
 
+        # Test the case where there are too many categorical values,
+        # where we fall back to randomly sampling a subset.
+        current_x = torch.tensor([50.0, 5.0], device=self.device)
+        bounds = torch.tensor([[0.0, 0.0], [100.0, 8.0]], device=self.device)
+        cat_dims = torch.tensor([0, 1], device=self.device, dtype=torch.long)
+
+        neighbors = get_categorical_neighbors(
+            current_x=current_x,
+            bounds=bounds,
+            cat_dims=cat_dims,
+            max_num_cat_values=MAX_DISCRETE_VALUES,
+        )
+        # We expect the maximum number of neighbors in the first dim, and 8
+        # neighbors in the second dim.
+        self.assertTrue(neighbors.shape == torch.Size([MAX_DISCRETE_VALUES + 8, 2]))
+        # Check that neighbors are sampled without replacement.
+        self.assertTrue(neighbors.unique(dim=0).shape[0] == neighbors.shape[0])
+
     def test_sample_feasible_points(self, with_constraints: bool = False) -> None:
         bounds = torch.tensor([[0.0, 2.0, 0.0], [1.0, 5.0, 1.0]], **self.tkwargs)
         opt_inputs = _make_opt_inputs(
