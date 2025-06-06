@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import random
 from dataclasses import fields
 from itertools import product
 from typing import Any, Callable
@@ -175,6 +176,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
         # Test the case where there are too many categorical values,
         # where we fall back to randomly sampling a subset.
+        random.seed(0)
         current_x = torch.tensor([50.0, 5.0], device=self.device)
         bounds = torch.tensor([[0.0, 0.0], [100.0, 8.0]], device=self.device)
         cat_dims = torch.tensor([0, 1], device=self.device, dtype=torch.long)
