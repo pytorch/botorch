@@ -642,6 +642,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         bounds[1, 3:5] = 4.0
         # Update the model to have a different optimizer.
         root = torch.tensor([0.0, 0.0, 0.0, 4.0, 4.0], device=self.device)
+        torch.manual_seed(0)
         model = QuadraticDeterministicModel(root)
         acqf = qLogNoisyExpectedImprovement(model=model, X_baseline=train_X)
         with mock.patch(
@@ -781,6 +782,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         bounds[1, 3:5] = 4.0
         # Update the model to have a different optimizer.
         root = torch.tensor([0.0, 0.0, 0.0, 4.0, 4.0], device=self.device)
+        torch.manual_seed(0)
         model = QuadraticDeterministicModel(root)
         acqf = qLogNoisyExpectedImprovement(model=model, X_baseline=train_X)
         with mock.patch(
@@ -916,6 +918,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         )
         # Update the model to have a different optimizer.
         root = torch.tensor([0.0, 0.0, 0.0, 25.0, 10.0], device=self.device)
+        torch.manual_seed(0)
         model = QuadraticDeterministicModel(root)
         acqf = qLogNoisyExpectedImprovement(model=model, X_baseline=train_X)
 
