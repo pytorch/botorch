@@ -16,10 +16,8 @@ from typing import Any
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.acquisition.objective import GenericMCObjective
 from botorch.acquisition.wrapper import AbstractAcquisitionFunctionWrapper
-from botorch.exceptions.errors import UnsupportedError
 from torch import Tensor
 
 
@@ -233,19 +231,6 @@ class PenalizedAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
         raw_value = self.acq_func(X=X)
         penalty_term = self.penalty_func(X)
         return raw_value - self.regularization_parameter * penalty_term
-
-    @property
-    def X_pending(self) -> Tensor | None:
-        return self.raw_acqf.X_pending
-
-    def set_X_pending(self, X_pending: Tensor | None = None) -> None:
-        if not isinstance(self.raw_acqf, AnalyticAcquisitionFunction):
-            self.raw_acqf.set_X_pending(X_pending=X_pending)
-        else:
-            raise UnsupportedError(
-                "The raw acquisition function is Analytic and does not account "
-                "for X_pending yet."
-            )
 
 
 def group_lasso_regularizer(X: Tensor, groups: list[list[int]]) -> Tensor:
