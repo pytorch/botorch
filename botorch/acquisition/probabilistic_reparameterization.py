@@ -11,7 +11,6 @@ See [Daulton2022bopr]_ for details.
 """
 
 from contextlib import ExitStack
-from typing import Dict, List, Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -42,15 +41,15 @@ class _MCProbabilisticReparameterization(Function):
         X: Tensor,
         acq_function: AcquisitionFunction,
         input_tf: InputTransform,
-        batch_limit: Optional[int],
+        batch_limit: int | None,
         integer_indices: Tensor,
         cont_indices: Tensor,
         categorical_indices: Tensor,
         use_ma_baseline: bool,
-        one_hot_to_numeric: Optional[OneHotToNumeric],
-        ma_counter: Optional[Tensor],
-        ma_hidden: Optional[Tensor],
-        ma_decay: Optional[float],
+        one_hot_to_numeric: OneHotToNumeric | None,
+        ma_counter: Tensor | None,
+        ma_hidden: Tensor | None,
+        ma_decay: float | None,
     ):
         """Evaluate the expectation of the acquisition function under
         probabilistic reparameterization. Compute this in chunks of size
@@ -114,7 +113,8 @@ class _MCProbabilisticReparameterization(Function):
                 ctx.base_samples_categorical = input_tf[
                     "round"
                 ].base_samples_categorical.clone()
-            # compute the acquisition function where inputs are rounded according to base_samples < prob
+            # compute the acquisition function where inputs are rounded according
+            # to base_samples < prob
             ctx.tilde_x_samples = tilde_x_samples
             ctx.use_ma_baseline = use_ma_baseline
             acq_values_list = []
@@ -190,13 +190,14 @@ class _MCProbabilisticReparameterization(Function):
             # use autograd for gradients w.r.t. the continuous parameters
             if ctx.cont_X is not None:
                 auto_grad = torch.autograd.grad(
-                    # note: this multiplies the gradient of mean_acq_values w.r.t to input
-                    # by grad_output
+                    # note: this multiplies the gradient of mean_acq_values
+                    # w.r.t to input by grad_output
                     mean_acq_values,
                     ctx.cont_X,
                     grad_outputs=grad_output,
                 )[0]
-                # overwrite grad_output since the previous step already applied the chain rule
+                # overwrite grad_output since the previous step already
+                # applied the chain rule
                 new_grads[..., cont_indices] = auto_grad
             return (
                 new_grads,
@@ -229,8 +230,8 @@ class AbstractProbabilisticReparameterization(AbstractAcquisitionFunctionWrapper
         self,
         acq_function: AcquisitionFunction,
         one_hot_bounds: Tensor,
-        integer_indices: Optional[List[int]] = None,
-        categorical_features: Optional[Dict[int, int]] = None,
+        integer_indices: list[int] | None = None,
+        categorical_features: dict[int, int] | None = None,
         batch_limit: int = 32,
         apply_numeric: bool = False,
         **kwargs,
@@ -384,8 +385,8 @@ class AnalyticProbabilisticReparameterization(AbstractProbabilisticReparameteriz
         self,
         acq_function: AcquisitionFunction,
         one_hot_bounds: Tensor,
-        integer_indices: Optional[List[int]] = None,
-        categorical_features: Optional[Dict[int, int]] = None,
+        integer_indices: list[int] | None = None,
+        categorical_features: dict[int, int] | None = None,
         batch_limit: int = 32,
         apply_numeric: bool = False,
         tau: float = 0.1,
@@ -442,8 +443,8 @@ class AnalyticProbabilisticReparameterization(AbstractProbabilisticReparameteriz
             unnormalized_X = X
         # this is batch_shape x n_discrete (after squeezing)
         probs = self.input_transform["round"].get_probs(X=unnormalized_X).squeeze(-1)
-        # TODO: filter discrete configs with zero probability
-        # this would require padding because there may be a different number in each batch.
+        # TODO: filter discrete configs with zero probability. This would require
+        # padding because there may be a different number in each batch.
         while start_idx < X_discrete_all.shape[-3]:
             end_idx = min(start_idx + self.batch_limit, X_discrete_all.shape[-3])
             acq_values = self.acq_func(X_discrete_all[..., start_idx:end_idx, :, :])
@@ -465,8 +466,8 @@ class MCProbabilisticReparameterization(AbstractProbabilisticReparameterization)
         self,
         acq_function: AcquisitionFunction,
         one_hot_bounds: Tensor,
-        integer_indices: Optional[List[int]] = None,
-        categorical_features: Optional[Dict[int, int]] = None,
+        integer_indices: list[int] | None = None,
+        categorical_features: dict[int, int] | None = None,
         batch_limit: int = 32,
         apply_numeric: bool = False,
         mc_samples: int = 128,

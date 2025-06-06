@@ -11,7 +11,6 @@ A wrapper classes around AcquisitionFunctions to modify inputs and outputs.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from botorch.acquisition.acquisition import AcquisitionFunction
 from torch import Tensor
@@ -22,11 +21,16 @@ class AbstractAcquisitionFunctionWrapper(AcquisitionFunction, ABC):
     r"""Abstract acquisition wrapper."""
 
     def __init__(self, acq_function: AcquisitionFunction) -> None:
+        r"""Initialize the acquisition function wrapper.
+
+        Args:
+            acq_function: The inner acquisition function to wrap.
+        """
         Module.__init__(self)
         self.acq_func = acq_function
 
     @property
-    def X_pending(self) -> Optional[Tensor]:
+    def X_pending(self) -> Tensor | None:
         r"""Return the `X_pending` of the base acquisition function."""
         try:
             return self.acq_func.X_pending
@@ -36,7 +40,7 @@ class AbstractAcquisitionFunctionWrapper(AcquisitionFunction, ABC):
                 "does not have an `X_pending` attribute."
             )
 
-    def set_X_pending(self, X_pending: Optional[Tensor]) -> None:
+    def set_X_pending(self, X_pending: Tensor | None) -> None:
         r"""Sets the `X_pending` of the base acquisition function."""
         self.acq_func.set_X_pending(X_pending)
 
