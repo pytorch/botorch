@@ -51,6 +51,7 @@ def gen_candidates_scipy(
     options: dict[str, Any] | None = None,
     fixed_features: dict[int, float | None] | None = None,
     timeout_sec: float | None = None,
+    use_parallel_mode: bool = True,
 ) -> tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using `scipy.optimize.minimize`.
 
@@ -170,9 +171,6 @@ def gen_candidates_scipy(
 
     shapeX = clamped_candidates.shape
     x0 = clamped_candidates.view(-1)
-    bounds = make_scipy_bounds(
-        X=initial_conditions, lower_bounds=lower_bounds, upper_bounds=upper_bounds
-    )
     constraints = make_scipy_linear_constraints(
         shapeX=shapeX,
         inequality_constraints=inequality_constraints,
@@ -182,7 +180,7 @@ def gen_candidates_scipy(
     with_grad = options.get("with_grad", True)
     if with_grad:
 
-        def f_np_wrapper(x: npt.NDArray, f: Callable):
+        def f_np_wrapper(x: npt.NDArray, f: Callable, batched=False):
             """Given a torch callable, compute value + grad given a numpy array."""
             if np.isnan(x).any():
                 raise RuntimeError(
@@ -192,14 +190,17 @@ def gen_candidates_scipy(
             X = (
                 torch.from_numpy(x)
                 .to(initial_conditions)
-                .view(shapeX)
+                .view(-1, *shapeX[1:])
                 .contiguous()
                 .requires_grad_(True)
             )
             X_fix = fix_features(X, fixed_features=fixed_features)
-            loss = f(X_fix).sum()
+            losses = f(X_fix)
+            loss = losses.sum()
             # compute gradient w.r.t. the inputs (does not accumulate in leaves)
             gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
+            if batched:
+                gradf = gradf.reshape(-1, shapeX[1] * shapeX[2])
             if np.isnan(gradf).any():
                 msg = (
                     f"{np.isnan(gradf).sum()} elements of the {x.size} element "
@@ -209,7 +210,9 @@ def gen_candidates_scipy(
                 if initial_conditions.dtype != torch.double:
                     msg += " Consider using `dtype=torch.double`."
                 raise OptimizationGradientError(msg, current_x=x)
-            fval = loss.detach().item()
+            fval = (
+                losses.detach().view(-1).numpy() if batched else loss.detach().item()
+            )  # the view(-1) seems necessary as f might return a single scalar
             return fval, gradf
 
     else:
@@ -241,26 +244,88 @@ def gen_candidates_scipy(
         return -acquisition_function(x)
 
     method = options.get("method", "SLSQP" if constraints else "L-BFGS-B")
-    res = minimize_with_timeout(
-        fun=f_np_wrapper,
-        args=(f,),
-        x0=x0,
-        method=method,
-        jac=with_grad,
-        bounds=bounds,
-        constraints=constraints,
-        callback=options.get("callback", None),
-        options={
-            k: v
-            for k, v in options.items()
-            if k not in ["method", "callback", "with_grad"]
-        },
-        timeout_sec=timeout_sec,
-    )
-    _process_scipy_result(res=res, options=options)
+    minimize_options = {
+        k: v for k, v in options.items() if k not in ["method", "callback", "with_grad"]
+    }
+
+    # this if-statement is a homage to pytorch's nn.MultiheadAttentionby by @swolchok
+    why_not_fast_path = []
+    if not method == "L-BFGS-B":
+        why_not_fast_path.append(f"method={method}, method needs to be L-BFGS-B")
+    if not with_grad:
+        why_not_fast_path.append("with_grad=False, it needs to be True")
+    if extra_keys := set(minimize_options.keys()) - {
+        "maxiter",
+        "disp",
+        "iprint",
+        "max_cor",
+        "ftol",
+        "pgtol",
+        "factr",
+    }:
+        why_not_fast_path.append(f"options={extra_keys} are not accepted")
+    if timeout_sec is not None:
+        why_not_fast_path.append(f"timeout_sec={timeout_sec}, it needs to be None")
+
+    if not why_not_fast_path and use_parallel_mode:
+        from .batched_lbfgs_b import fmin_l_bfgs_b_batched
+
+        assert not constraints, "L-BFGS-B does not support constraints"
+
+        batched_x0 = x0.reshape(shapeX[0], -1)
+
+        bounds = [lower_bounds, upper_bounds]
+        for i in range(2):
+            if bounds[i] is None:
+                bounds[i] = batched_x0.shape[1] * [None]
+            elif isinstance(bounds[i], Tensor):
+                bounds[i] = bounds[i].tolist()
+            else:
+                bounds[i] = batched_x0.shape[1] * [bounds[i]]
+
+        from threadpoolctl import threadpool_limits
+
+        with threadpool_limits(limits=1, user_api="blas"):
+            xs, fs, results = fmin_l_bfgs_b_batched(
+                func=partial(f_np_wrapper, f=f, batched=True),
+                # args is not necessary, done via the partial instead
+                x0=batched_x0,
+                # method=method, # method is not necessary as it is only l-bfgs-b
+                # jac=with_grad, this is assumed to be true
+                bounds=list(zip(*bounds)),
+                # constraints=constraints,
+                callback=options.get("callback", None),
+                **minimize_options,
+                # timeout_sec=timeout_sec, # add later? should we natively support it?
+            )
+        for res in results:
+            _process_scipy_result(res=res, options=options)
+
+        xs = xs.reshape(shapeX)
+    else:
+        bounds = make_scipy_bounds(
+            X=initial_conditions, lower_bounds=lower_bounds, upper_bounds=upper_bounds
+        )
+        if use_parallel_mode:
+            print("not doing parallel, as:", ", and ".join(why_not_fast_path))
+
+        res = minimize_with_timeout(
+            fun=f_np_wrapper,
+            args=(f,),
+            x0=x0,
+            method=method,
+            jac=with_grad,
+            bounds=bounds,
+            constraints=constraints,
+            callback=options.get("callback", None),
+            options=minimize_options,
+            timeout_sec=timeout_sec,
+        )
+        _process_scipy_result(res=res, options=options)
+        xs = res.x.reshape(shapeX)
 
     candidates = fix_features(
-        X=torch.from_numpy(res.x).to(initial_conditions).reshape(shapeX),
+        X=torch.from_numpy(xs).to(initial_conditions),
         fixed_features=fixed_features,
     )
 
