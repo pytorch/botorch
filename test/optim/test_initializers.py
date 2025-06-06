@@ -108,7 +108,7 @@ class TestIsNonnegative(BotorchTestCase):
         )
         acq_func = analytic.ExpectedImprovement(model=mm, best_f=-1.0)
         with mock.patch(
-            "botorch.acquisition.utils.isinstance_af", return_value=True
+            "botorch.optim.initializers.isinstance_af", return_value=True
         ) as mock_isinstance_af:
             self.assertTrue(is_nonnegative(acq_function=acq_func))
             mock_isinstance_af.assert_called_once()
