@@ -163,14 +163,13 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             ],
             device=self.device,
         )
+        neighbors = get_categorical_neighbors(
+            current_x=current_x, bounds=bounds, cat_dims=cat_dims
+        )
         self.assertTrue(
             torch.equal(
                 expected_neighbors.sort(dim=0).values,
-                get_categorical_neighbors(
-                    current_x=current_x, bounds=bounds, cat_dims=cat_dims
-                )
-                .sort(dim=0)
-                .values,
+                neighbors.sort(dim=0).values,
             )
         )
 
