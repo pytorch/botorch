@@ -8,7 +8,7 @@ r"""Utilities for maximizing acquisition functions."""
 
 from __future__ import annotations
 
-from typing import Dict, Optional, Union
+from typing import Mapping
 from warnings import warn
 
 import torch
@@ -21,8 +21,8 @@ from torch import Tensor
 
 def columnwise_clamp(
     X: Tensor,
-    lower: Optional[Union[float, Tensor]] = None,
-    upper: Optional[Union[float, Tensor]] = None,
+    lower: float | Tensor | None = None,
+    upper: float | Tensor | None = None,
     raise_on_violation: bool = False,
 ) -> Tensor:
     r"""Clamp values of a Tensor in column-wise fashion (with support for t-batches).
@@ -64,7 +64,7 @@ def columnwise_clamp(
 
 
 def fix_features(
-    X: Tensor, fixed_features: Optional[Dict[int, Optional[float]]] = None
+    X: Tensor, fixed_features: Mapping[int, float | None] | None = None
 ) -> Tensor:
     r"""Fix feature values in a Tensor.
 
@@ -72,7 +72,7 @@ def fix_features(
 
     Args:
         X: input Tensor with shape `... x p`, where `p` is the number of features
-        fixed_features: A dictionary with keys as column indices and values
+        fixed_features: A mapping with keys as column indices and values
             equal to what the feature should be set to in `X`. If the value is
             None, that column is just considered fixed. Keys should be in the
             range `[0, p - 1]`.
@@ -93,7 +93,7 @@ def fix_features(
     return torch.stack(columns, dim=-1)
 
 
-def get_X_baseline(acq_function: AcquisitionFunction) -> Optional[Tensor]:
+def get_X_baseline(acq_function: AcquisitionFunction) -> Tensor | None:
     r"""Extract X_baseline from an acquisition function.
 
     This tries to find the baseline set of points. First, this checks if the
@@ -114,16 +114,12 @@ def get_X_baseline(acq_function: AcquisitionFunction) -> Optional[Tensor]:
             raise BotorchError
     except (BotorchError, AttributeError):
         try:
-            # for entropy MOO methods
-            model = acq_function.mo_model
+            # some acquisition functions do not have a model attribute
+            # e.g. FixedFeatureAcquisitionFunction
+            model = acq_function.model
         except AttributeError:
-            try:
-                # some acquisition functions do not have a model attribute
-                # e.g. FixedFeatureAcquisitionFunction
-                model = acq_function.model
-            except AttributeError:
-                warn("Failed to extract X_baseline.", BotorchWarning)
-                return
+            warn("Failed to extract X_baseline.", BotorchWarning)
+            return
         try:
             # Make sure we get the original train inputs.
             m = model.models[0] if isinstance(model, ModelListGPyTorchModel) else model

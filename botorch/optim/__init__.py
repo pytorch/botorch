@@ -15,8 +15,18 @@ from botorch.optim.core import (
     scipy_minimize,
     torch_minimize,
 )
-from botorch.optim.initializers import initialize_q_batch, initialize_q_batch_nonneg
-from botorch.optim.numpy_converter import module_to_array, set_params_with_array
+from botorch.optim.homotopy import (
+    FixedHomotopySchedule,
+    Homotopy,
+    HomotopyParameter,
+    LinearHomotopySchedule,
+    LogLinearHomotopySchedule,
+)
+from botorch.optim.initializers import (
+    initialize_q_batch,
+    initialize_q_batch_nonneg,
+    initialize_q_batch_topn,
+)
 from botorch.optim.optimize import (
     gen_batch_initial_conditions,
     optimize_acqf,
@@ -25,6 +35,8 @@ from botorch.optim.optimize import (
     optimize_acqf_discrete_local_search,
     optimize_acqf_mixed,
 )
+from botorch.optim.optimize_homotopy import optimize_acqf_homotopy
+from botorch.optim.optimize_mixed import optimize_acqf_mixed_alternating
 from botorch.optim.stopping import ExpMAStoppingCriterion
 
 
@@ -35,6 +47,7 @@ __all__ = [
     "gen_batch_initial_conditions",
     "initialize_q_batch",
     "initialize_q_batch_nonneg",
+    "initialize_q_batch_topn",
     "OptimizationResult",
     "OptimizationStatus",
     "optimize_acqf",
@@ -42,9 +55,14 @@ __all__ = [
     "optimize_acqf_discrete",
     "optimize_acqf_discrete_local_search",
     "optimize_acqf_mixed",
-    "module_to_array",
+    "optimize_acqf_mixed_alternating",
+    "optimize_acqf_homotopy",
     "scipy_minimize",
-    "set_params_with_array",
     "torch_minimize",
     "ExpMAStoppingCriterion",
+    "FixedHomotopySchedule",
+    "Homotopy",
+    "HomotopyParameter",
+    "LinearHomotopySchedule",
+    "LogLinearHomotopySchedule",
 ]

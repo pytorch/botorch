@@ -10,10 +10,8 @@ Posterior module to be used with GPyTorch models.
 
 from __future__ import annotations
 
-import warnings
-
 from contextlib import ExitStack
-from typing import Optional, Tuple, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -23,6 +21,7 @@ from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNorm
 from linear_operator import settings as linop_settings
 from linear_operator.operators import (
     BlockDiagLinearOperator,
+    DenseLinearOperator,
     LinearOperator,
     SumLinearOperator,
 )
@@ -35,36 +34,18 @@ if TYPE_CHECKING:
 
 class GPyTorchPosterior(TorchPosterior):
     r"""A posterior based on GPyTorch's multi-variate Normal distributions."""
+
     distribution: MultivariateNormal
 
-    def __init__(
-        self,
-        distribution: Optional[MultivariateNormal] = None,
-        mvn: Optional[MultivariateNormal] = None,
-    ) -> None:
+    def __init__(self, distribution: MultivariateNormal) -> None:
         r"""A posterior based on GPyTorch's multi-variate Normal distributions.
 
         Args:
             distribution: A GPyTorch MultivariateNormal (single-output case) or
                 MultitaskMultivariateNormal (multi-output case).
-            mvn: Deprecated.
         """
-        if mvn is not None:
-            if distribution is not None:
-                raise RuntimeError(
-                    "Got both a `distribution` and an `mvn` argument. "
-                    "Use the `distribution` only."
-                )
-            warnings.warn(
-                "The `mvn` argument of `GPyTorchPosterior`s has been renamed to "
-                "`distribution` and will be removed in a future version.",
-                DeprecationWarning,
-            )
-            distribution = mvn
-        if distribution is None:
-            raise RuntimeError("GPyTorchPosterior must have a distribution specified.")
         super().__init__(distribution=distribution)
-        self._is_mt = isinstance(distribution, MultitaskMultivariateNormal)
+        self._is_mt: bool = isinstance(distribution, MultitaskMultivariateNormal)
 
     @property
     def mvn(self) -> MultivariateNormal:
@@ -77,7 +58,7 @@ class GPyTorchPosterior(TorchPosterior):
         return self.distribution.batch_shape + self.distribution.base_sample_shape
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         r"""The t-batch range.
 
         This is used in samplers to identify the t-batch component of the
@@ -91,7 +72,8 @@ class GPyTorchPosterior(TorchPosterior):
             return (0, -1)
 
     def _extended_shape(
-        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+        self,
+        sample_shape: torch.Size = torch.Size(),  # noqa: B008
     ) -> torch.Size:
         r"""Returns the shape of the samples produced by the posterior with
         the given `sample_shape`.
@@ -124,7 +106,10 @@ class GPyTorchPosterior(TorchPosterior):
             `self._extended_shape(sample_shape=sample_shape)`.
         """
         if base_samples.shape[: len(sample_shape)] != sample_shape:
-            raise RuntimeError("`sample_shape` disagrees with shape of `base_samples`.")
+            raise RuntimeError(
+                "`sample_shape` disagrees with shape of `base_samples`. "
+                f"Got {sample_shape=} and {base_samples.shape=}."
+            )
         if self._is_mt:
             base_samples = _reshape_base_samples_non_interleaved(
                 mvn=self.distribution,
@@ -141,20 +126,13 @@ class GPyTorchPosterior(TorchPosterior):
             samples = samples.unsqueeze(-1)
         return samples
 
-    def rsample(
-        self,
-        sample_shape: Optional[torch.Size] = None,
-        base_samples: Optional[Tensor] = None,
-    ) -> Tensor:
+    def rsample(self, sample_shape: torch.Size | None = None) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
         Args:
             sample_shape: A `torch.Size` object specifying the sample shape. To
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
                 of `n` samples each, set to `torch.Size([b, n])`.
-            base_samples: An (optional) Tensor of `N(0, I)` base samples of
-                appropriate dimension, typically obtained from a `Sampler`.
-                This is used for deterministic optimization.
 
         Returns:
             Samples from the posterior, a tensor of shape
@@ -162,49 +140,14 @@ class GPyTorchPosterior(TorchPosterior):
         """
         if sample_shape is None:
             sample_shape = torch.Size([1])
-        if base_samples is not None:
-            warnings.warn(
-                "Use of `base_samples` with `rsample` is deprecated. Use "
-                "`rsample_from_base_samples` instead.",
-                DeprecationWarning,
-            )
-            if base_samples.shape[: len(sample_shape)] != sample_shape:
-                raise RuntimeError(
-                    "`sample_shape` disagrees with shape of `base_samples`."
-                )
-            # get base_samples to the correct shape
-            base_samples = base_samples.expand(self._extended_shape(sample_shape))
-            if not self._is_mt:
-                # Remove output dimension in single output case.
-                base_samples = base_samples.squeeze(-1)
-            return self.rsample_from_base_samples(
-                sample_shape=sample_shape, base_samples=base_samples
-            )
         with ExitStack() as es:
             if linop_settings._fast_covar_root_decomposition.is_default():
                 es.enter_context(linop_settings._fast_covar_root_decomposition(False))
-            samples = self.distribution.rsample(
-                sample_shape=sample_shape, base_samples=base_samples
-            )
+            samples = self.distribution.rsample(sample_shape=sample_shape)
         # make sure there always is an output dimension
         if not self._is_mt:
             samples = samples.unsqueeze(-1)
         return samples
-
-    def sample(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
-        r"""Sample from the posterior without gradients.
-
-        Args:
-            sample_shape: A `torch.Size` object specifying the sample shape. To
-                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
-                of `n` samples each, set to `torch.Size([b, n])`.
-
-        Returns:
-            Samples from the posterior, a tensor of shape
-            `self._extended_shape(sample_shape=sample_shape)`.
-        """
-        with torch.no_grad():
-            return self.rsample(sample_shape=sample_shape)
 
     @property
     def mean(self) -> Tensor:
@@ -251,7 +194,7 @@ def scalarize_posterior_gpytorch(
     posterior: GPyTorchPosterior,
     weights: Tensor,
     offset: float = 0.0,
-) -> Tuple[Tensor, Union[Tensor, LinearOperator]]:
+) -> tuple[Tensor, Tensor | LinearOperator]:
     r"""Helper function for `scalarize_posterior`, producing a mean and
     variance.
 
@@ -281,7 +224,7 @@ def scalarize_posterior_gpytorch(
     """
     mean = posterior.mean
     q, m = mean.shape[-2:]
-    _validate_scalarize_inputs(weights, m)
+    _validate_scalarize_inputs(weights=weights, m=m)
     batch_shape = mean.shape[:-2]
     mvn = posterior.distribution
     cov = mvn.lazy_covariance_matrix if mvn.islazy else mvn.covariance_matrix
@@ -323,12 +266,13 @@ def scalarize_posterior_gpytorch(
         if isinstance(cov_scaled, LinearOperator):
             cov_scaled = cov_scaled.to_dense()
         new_cov = cov_scaled.view(sum_shape).sum(dim=sum_dims[0]).sum(dim=sum_dims[1])
+        new_cov = DenseLinearOperator(new_cov)
 
     return new_mean, new_cov
 
 
 def scalarize_posterior(
-    posterior: Union[GPyTorchPosterior, PosteriorList],
+    posterior: GPyTorchPosterior | PosteriorList,
     weights: Tensor,
     offset: float = 0.0,
 ) -> GPyTorchPosterior:

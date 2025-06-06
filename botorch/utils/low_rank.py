@@ -9,7 +9,6 @@ from __future__ import annotations
 import torch
 from botorch.exceptions.errors import BotorchError
 from botorch.posteriors.base_samples import _reshape_base_samples_non_interleaved
-from botorch.posteriors.fully_bayesian import FullyBayesianPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
@@ -62,12 +61,9 @@ def _reshape_base_samples(
     mvn = posterior.distribution
     loc = mvn.loc
     peshape = posterior._extended_shape()
-    is_fully_b = int(isinstance(posterior, FullyBayesianPosterior))
     base_samples = base_samples.view(
-        sample_shape
-        + torch.Size([1 for _ in range(loc.ndim - 1 - is_fully_b)])
-        + peshape[-2 - is_fully_b :]
-    ).expand(sample_shape + loc.shape[: -1 - is_fully_b] + peshape[-2 - is_fully_b :])
+        sample_shape + torch.Size([1] * (loc.ndim - 1)) + peshape[-2:]
+    ).expand(sample_shape + loc.shape[:-1] + peshape[-2:])
     if posterior._is_mt:
         base_samples = _reshape_base_samples_non_interleaved(
             mvn=posterior.distribution,

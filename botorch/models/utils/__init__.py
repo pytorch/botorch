@@ -10,15 +10,14 @@ from botorch.models.utils.assorted import (
     check_min_max_scaling,
     check_no_nans,
     check_standardization,
+    consolidate_duplicates,
+    detect_duplicates,
     fantasize,
     gpt_posterior_settings,
     mod_batch_shape,
     multioutput_to_batch_mode_transform,
     validate_input_scaling,
 )
-
-# # TODO: Omitted to avoid circular dependency created by `Model.construct_inputs`
-# from botorch.models.utils.parse_training_data import parse_training_data
 
 
 __all__ = [
@@ -32,4 +31,6 @@ __all__ = [
     "multioutput_to_batch_mode_transform",
     "mod_batch_shape",
     "validate_input_scaling",
+    "detect_duplicates",
+    "consolidate_duplicates",
 ]

@@ -4,13 +4,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import warnings
+
 import torch
+from botorch.exceptions.warnings import InputDataWarning
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
-class TestMock(BotorchTestCase):
-    def test_MockPosterior(self):
-        # test basic logic
+class TestMockPosterior(BotorchTestCase):
+    def test_basic_logic(self) -> None:
         mp = MockPosterior()
         self.assertEqual(mp.device.type, "cpu")
         self.assertEqual(mp.dtype, torch.float32)
@@ -18,7 +21,8 @@ class TestMock(BotorchTestCase):
         self.assertEqual(
             MockPosterior(variance=torch.rand(2))._extended_shape(), torch.Size([2])
         )
-        # test passing in tensors
+
+    def test_passing_tensors(self) -> None:
         mean = torch.rand(2)
         variance = torch.eye(2)
         samples = torch.rand(1, 2)
@@ -31,10 +35,17 @@ class TestMock(BotorchTestCase):
         self.assertTrue(
             torch.all(mp.rsample(torch.Size([2])) == samples.repeat(2, 1, 1))
         )
-        with self.assertRaises(RuntimeError):
-            mp.rsample(sample_shape=torch.Size([2]), base_samples=torch.rand(3))
 
-    def test_MockModel(self):
+    def test_rsample_from_base_samples(self) -> None:
+        mp = MockPosterior()
+        with self.assertRaisesRegex(
+            RuntimeError, "`sample_shape` disagrees with shape of `base_samples`."
+        ):
+            mp.rsample_from_base_samples(torch.zeros(2, 2), torch.zeros(3))
+
+
+class TestMockModel(BotorchTestCase):
+    def test_basic(self) -> None:
         mp = MockPosterior()
         mm = MockModel(mp)
         X = torch.empty(0)
@@ -42,3 +53,15 @@ class TestMock(BotorchTestCase):
         self.assertEqual(mm.num_outputs, 0)
         mm.state_dict()
         mm.load_state_dict()
+
+
+class TestMisc(BotorchTestCase):
+    def test_warning_filtering(self) -> None:
+        with warnings.catch_warnings(record=True) as ws:
+            # Model with unstandardized float data, which would typically raise
+            # multiple warnings.
+            SingleTaskGP(
+                train_X=torch.rand(5, 2, dtype=torch.float) * 10,
+                train_Y=torch.rand(5, 1, dtype=torch.float) * 10,
+            )
+        self.assertFalse(any(w.category == InputDataWarning for w in ws))

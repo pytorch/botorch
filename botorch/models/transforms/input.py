@@ -13,34 +13,38 @@ rounding functions, and log transformations. The input transformation
 is typically part of a Model and applied within the model.forward()
 method.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, Optional, Union
+from collections.abc import Callable, Iterable
+from typing import Any
 from warnings import warn
 
+import numpy as np
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
-from botorch.models.transforms.utils import subset_transform
+from botorch.exceptions.warnings import UserInputWarning
+from botorch.models.transforms.utils import (
+    interaction_features,
+    inv_kumaraswamy_warp,
+    kumaraswamy_warp,
+    subset_transform,
+)
 from botorch.models.utils import fantasize
 from botorch.utils.rounding import approximate_round, OneHotArgmaxSTE, RoundSTE
 from botorch.utils.sampling import draw_sobol_samples
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
 from gpytorch.priors import Prior
-from torch import nn, Tensor
-from torch.distributions import Kumaraswamy
+from torch import LongTensor, nn, Tensor
 from torch.nn import Module, ModuleDict
 from torch.nn.functional import one_hot
 
 
-class InputTransform(ABC):
+class InputTransform(Module, ABC):
     r"""Abstract base class for input transforms.
-
-    Note: Input transforms must inherit from `torch.nn.Module`. This
-        is deferred to the subclasses to avoid any potential conflict
-        between `gpytorch.module.Module` and `torch.nn.Module` in `Warp`.
 
     Properties:
         is_one_to_many: A boolean denoting whether the transform produces
@@ -51,8 +55,6 @@ class InputTransform(ABC):
             transform in eval() mode.
         transform_on_fantasize: A boolean indicating whether to apply
             the transform when called from within a `fantasize` call.
-
-    :meta private:
     """
 
     is_one_to_many: bool = False
@@ -118,7 +120,7 @@ class InputTransform(ABC):
         """
         other_state_dict = other.state_dict()
         return (
-            type(self) == type(other)
+            type(self) is type(other)
             and (self.transform_on_train == other.transform_on_train)
             and (self.transform_on_eval == other.transform_on_eval)
             and (self.transform_on_fantasize == other.transform_on_fantasize)
@@ -154,6 +156,130 @@ class InputTransform(ABC):
             else:
                 return self.transform(X)
         return X
+
+
+class BatchBroadcastedInputTransform(InputTransform, ModuleDict):
+    r"""An input transform representing a list of transforms to be broadcasted."""
+
+    def __init__(
+        self,
+        transforms: list[InputTransform],
+        broadcast_index: int = -3,
+    ) -> None:
+        r"""A transform list that is broadcasted across a batch dimension specified by
+        `broadcast_index`. This is allows using a batched Gaussian process model when
+        the input transforms are different for different batch dimensions.
+
+        Args:
+            transforms: The transforms to broadcast across the first batch dimension.
+                The transform at position i in the list will be applied to `X[i]` for
+                a given input tensor `X` in the forward pass.
+            broadcast_index: The tensor index at which the transforms are broadcasted.
+
+        Example:
+            >>> tf1 = Normalize(d=2)
+            >>> tf2 = InputStandardize(d=2)
+            >>> tf = BatchBroadcastedTransformList(transforms=[tf1, tf2])
+        """
+        super().__init__()
+        self.transform_on_train = False
+        self.transform_on_eval = False
+        self.transform_on_fantasize = False
+        self.transforms = transforms
+        if broadcast_index in (-2, -1):
+            raise ValueError(
+                "The broadcast index cannot be -2 and -1, as these indices are reserved"
+                " for non-batch, data and input dimensions."
+            )
+        self.broadcast_index = broadcast_index
+        self.is_one_to_many = self.transforms[0].is_one_to_many
+        if not all(tf.is_one_to_many == self.is_one_to_many for tf in self.transforms):
+            raise ValueError(  # output shapes of transforms must be the same
+                "All transforms must have the same is_one_to_many property."
+            )
+        for tf in self.transforms:
+            self.transform_on_train |= tf.transform_on_train
+            self.transform_on_eval |= tf.transform_on_eval
+            self.transform_on_fantasize |= tf.transform_on_fantasize
+
+    def transform(self, X: Tensor) -> Tensor:
+        r"""Transform the inputs to a model.
+
+        Individual transforms are applied in sequence and results are returned as
+        a batched tensor.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
+        """
+        return torch.stack(
+            [t.forward(Xi) for Xi, t in self._Xs_and_transforms(X)],
+            dim=self.broadcast_index,
+        )
+
+    def untransform(self, X: Tensor) -> Tensor:
+        r"""Un-transform the inputs to a model.
+
+        Un-transforms of the individual transforms are applied in reverse sequence.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of transformed inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of un-transformed inputs.
+        """
+        return torch.stack(
+            [t.untransform(Xi) for Xi, t in self._Xs_and_transforms(X)],
+            dim=self.broadcast_index,
+        )
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform.
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        return (
+            super().equals(other=other)
+            and all(t1.equals(t2) for t1, t2 in zip(self.transforms, other.transforms))
+            and (self.broadcast_index == other.broadcast_index)
+        )
+
+    def preprocess_transform(self, X: Tensor) -> Tensor:
+        r"""Apply transforms for preprocessing inputs.
+
+        The main use cases for this method are 1) to preprocess training data
+        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy
+        acquisition functions so that `X_baseline` is "preprocessed" with the
+        same transformations as the cached training inputs.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of (transformed) inputs.
+        """
+        return torch.stack(
+            [t.preprocess_transform(Xi) for Xi, t in self._Xs_and_transforms(X)],
+            dim=self.broadcast_index,
+        )
+
+    def _Xs_and_transforms(self, X: Tensor) -> Iterable[tuple[Tensor, InputTransform]]:
+        r"""Returns an iterable of sub-tensors of X and their associated transforms.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            An iterable containing tuples of sub-tensors of X and their transforms.
+        """
+        Xs = X.unbind(dim=self.broadcast_index)
+        return zip(Xs, self.transforms)
 
 
 class ChainedInputTransform(InputTransform, ModuleDict):
@@ -255,9 +381,8 @@ class ReversibleInputTransform(InputTransform, ABC):
     Properties:
         reverse: A boolean indicating if the functionality of transform
             and untransform methods should be swapped.
-
-    :meta private:
     """
+
     reverse: bool
 
     def transform(self, X: Tensor) -> Tensor:
@@ -318,13 +443,13 @@ class ReversibleInputTransform(InputTransform, ABC):
         return super().equals(other=other) and (self.reverse == other.reverse)
 
 
-class AffineInputTransform(ReversibleInputTransform, Module):
+class AffineInputTransform(ReversibleInputTransform):
     def __init__(
         self,
         d: int,
         coefficient: Tensor,
         offset: Tensor,
-        indices: Optional[List[int]] = None,
+        indices: list[int] | Tensor | None = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -342,7 +467,8 @@ class AffineInputTransform(ReversibleInputTransform, Module):
             offset: Tensor of offset coefficients, shape must to be
                 broadcastable with `(batch_shape x n x d)`-dim input tensors.
             indices: The indices of the inputs to transform. If omitted,
-                take all dimensions of the inputs into account.
+                take all dimensions of the inputs into account. Either a list of ints
+                or a Tensor of type `torch.long`.
             batch_shape: The batch shape of the inputs (assuming input tensors
                 of shape `batch_shape x n x d`). If provided, perform individual
                 transformation per batch, otherwise uses a single transformation.
@@ -359,7 +485,9 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         if (indices is not None) and (len(indices) == 0):
             raise ValueError("`indices` list is empty!")
         if (indices is not None) and (len(indices) > 0):
-            indices = torch.tensor(indices, dtype=torch.long)
+            indices = torch.as_tensor(
+                indices, dtype=torch.long, device=coefficient.device
+            )
             if len(indices) > d:
                 raise ValueError("Can provide at most `d` indices!")
             if (indices > d - 1).any():
@@ -411,8 +539,8 @@ class AffineInputTransform(ReversibleInputTransform, Module):
         Returns:
             A `batch_shape x n x d`-dim tensor of transformed inputs.
         """
+        self._check_shape(X)
         if self.learn_coefficients and self.training:
-            self._check_shape(X)
             self._update_coefficients(X)
         self._to(X)
         return (X - self.offset) / self.coefficient
@@ -449,7 +577,7 @@ class AffineInputTransform(ReversibleInputTransform, Module):
             and self.learn_coefficients == other.learn_coefficients
         )
         if hasattr(self, "indices"):
-            isequal = isequal and (self.indices == other.indices).all()
+            isequal = isequal and bool((self.indices == other.indices).all())
         return isequal
 
     def _check_shape(self, X: Tensor) -> None:
@@ -461,9 +589,13 @@ class AffineInputTransform(ReversibleInputTransform, Module):
                 f"Wrong input dimension. Received {X.size(-1)}, "
                 f"expected {self.offset.size(-1)}."
             )
+        if X.ndim < 2:
+            raise BotorchTensorDimensionError(
+                f"`X` must have at least 2 dimensions, but has {X.ndim}."
+            )
 
         n = len(self.batch_shape) + 2
-        if X.ndim < n:
+        if self.training and X.ndim < n:
             raise ValueError(
                 f"`X` must have at least {n} dimensions, {n - 2} batch and 2 innate"
                 f" , but has {X.ndim}."
@@ -487,7 +619,7 @@ class AffineInputTransform(ReversibleInputTransform, Module):
 
 
 class Normalize(AffineInputTransform):
-    r"""Normalize the inputs to the unit cube.
+    r"""Normalize the inputs have unit range and be centered at 0.5 (by default).
 
     If no explicit bounds are provided this module is stateful: If in train mode,
     calling `forward` updates the module state (i.e. the normalizing bounds). If
@@ -498,14 +630,17 @@ class Normalize(AffineInputTransform):
     def __init__(
         self,
         d: int,
-        indices: Optional[List[int]] = None,
-        bounds: Optional[Tensor] = None,
+        indices: list[int] | Tensor | None = None,
+        bounds: Tensor | None = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
         reverse: bool = False,
         min_range: float = 1e-8,
+        learn_bounds: bool | None = None,
+        almost_zero: float = 1e-12,
+        center: float = 0.5,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
 
@@ -526,9 +661,34 @@ class Normalize(AffineInputTransform):
                 transform when called from within a `fantasize` call. Default: True.
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
-            min_range: Amount of noise to add to the range to ensure no division by
-                zero errors.
+            min_range: If the range of an input dimension is smaller than `min_range`,
+                that input dimension will not be normalized. This is equivalent to
+                using bounds of `[0, 1]` for this dimension, and helps avoid division
+                by zero errors and related numerical issues. See the example below.
+                NOTE: This only applies if `learn_bounds=True`.
+            learn_bounds: Whether to learn the bounds in train mode. Defaults
+                to False if bounds are provided, otherwise defaults to True.
+            center: The center of the range for each parameter. Default: 0.5.
+
+        Example:
+            >>> t = Normalize(d=2)
+            >>> t(torch.tensor([[3., 2.], [3., 6.]]))
+            ... tensor([[3., 2.],
+            ...         [3., 6.]])
+            >>> t.eval()
+            ... Normalize()
+            >>> t(torch.tensor([[3.5, 2.8]]))
+            ... tensor([[3.5, 0.2]])
+            >>> t.bounds
+            ... tensor([[0., 2.],
+            ...         [1., 6.]])
+            >>> t.coefficient
+            ... tensor([[1., 4.]])
         """
+        if learn_bounds is not None:
+            self.learn_coefficients = learn_bounds
+        else:
+            self.learn_coefficients = bounds is None
         transform_dimension = d if indices is None else len(indices)
         if bounds is not None:
             if indices is not None and bounds.size(-1) == d:
@@ -545,11 +705,17 @@ class Normalize(AffineInputTransform):
         else:
             coefficient = torch.ones(*batch_shape, 1, transform_dimension)
             offset = torch.zeros(*batch_shape, 1, transform_dimension)
-            self.learn_coefficients = True
+            if self.learn_coefficients is False:
+                warn(
+                    "learn_bounds is False and no bounds were provided. The bounds "
+                    "will not be updated and the transform will be a no-op.",
+                    UserInputWarning,
+                )
+        self.center = center
         super().__init__(
             d=d,
             coefficient=coefficient,
-            offset=offset,
+            offset=offset + (0.5 - center) * coefficient,
             indices=indices,
             batch_shape=batch_shape,
             transform_on_train=transform_on_train,
@@ -583,9 +749,29 @@ class Normalize(AffineInputTransform):
         # Aggregate mins and ranges over extra batch and marginal dims
         batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
         reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
-        self._offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
-        self._coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - self.offset
-        self._coefficient.clamp_(min=self.min_range)
+        offset = torch.amin(X, dim=reduce_dims).unsqueeze(-2)
+        coefficient = torch.amax(X, dim=reduce_dims).unsqueeze(-2) - offset
+        almost_zero = coefficient < self.min_range
+        self._coefficient = torch.where(almost_zero, 1.0, coefficient)
+        self._offset = (
+            torch.where(almost_zero, 0.0, offset)
+            + (0.5 - self.center) * self._coefficient
+        )
+
+    def get_init_args(self) -> dict[str, Any]:
+        r"""Get the arguments necessary to construct an exact copy of the transform."""
+        return {
+            "d": self._d,
+            "indices": getattr(self, "indices", None),
+            "bounds": self.bounds,
+            "batch_shape": self.batch_shape,
+            "transform_on_train": self.transform_on_train,
+            "transform_on_eval": self.transform_on_eval,
+            "transform_on_fantasize": self.transform_on_fantasize,
+            "reverse": self.reverse,
+            "min_range": self.min_range,
+            "learn_bounds": self.learn_bounds,
+        }
 
 
 class InputStandardize(AffineInputTransform):
@@ -599,7 +785,7 @@ class InputStandardize(AffineInputTransform):
     def __init__(
         self,
         d: int,
-        indices: Optional[List[int]] = None,
+        indices: list[int] | Tensor | None = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -622,8 +808,11 @@ class InputStandardize(AffineInputTransform):
                 transform in eval() mode. Default: True
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
-            min_std: Amount of noise to add to the standard deviation to ensure no
-                division by zero errors.
+            min_std: If the standard deviation of an input dimension is smaller than
+                `min_std`, that input dimension will not be standardized. This is
+                equivalent to using a standard deviation of 1.0 and a mean of 0.0 for
+                this dimension, and helps avoid division by zero errors and related
+                numerical issues.
         """
         transform_dimension = d if indices is None else len(indices)
         super().__init__(
@@ -655,15 +844,24 @@ class InputStandardize(AffineInputTransform):
         # Aggregate means and standard deviations over extra batch and marginal dims
         batch_ndim = min(len(self.batch_shape), X.ndim - 2)  # batch rank of `X`
         reduce_dims = (*range(X.ndim - batch_ndim - 2), X.ndim - 2)
-        coefficient, self._offset = (
+        coefficient, offset = (
             values.unsqueeze(-2)
             for values in torch.std_mean(X, dim=reduce_dims, unbiased=True)
         )
-        self._coefficient = coefficient.clamp_(min=self.min_std)
+        almost_zero = coefficient < self.min_std
+        self._coefficient = torch.where(almost_zero, 1.0, coefficient)
+        self._offset = torch.where(almost_zero, 0.0, offset)
 
 
-class Round(InputTransform, Module):
+class Round(InputTransform):
     r"""A discretization transformation for discrete inputs.
+
+    If `approximate=False` (the default), uses PyTorch's `round`.
+
+    If `approximate=True`, a differentiable approximate rounding function is
+    used, with a temperature parameter of `tau`. This method is a piecewise
+    approximation of a rounding function where each piece is a hyperbolic
+    tangent function.
 
     For integers, this will typically be used in conjunction
     with normalization as follows:
@@ -709,14 +907,13 @@ class Round(InputTransform, Module):
 
     def __init__(
         self,
-        integer_indices: Optional[List[int]] = None,
-        categorical_features: Optional[Dict[int, int]] = None,
+        integer_indices: list[int] | LongTensor | None = None,
+        categorical_features: dict[int, int] | None = None,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
         approximate: bool = False,
         tau: float = 1e-3,
-        **kwargs,
     ) -> None:
         r"""Initialize transform.
 
@@ -735,22 +932,15 @@ class Round(InputTransform, Module):
                 rounding should be used. Default: False.
             tau: The temperature parameter for approximate rounding.
         """
-        indices = kwargs.get("indices")
-        if indices is not None:
-            warn(
-                "`indices` is marked for deprecation in favor of `integer_indices`.",
-                DeprecationWarning,
-            )
-            integer_indices = indices
         if approximate and categorical_features is not None:
             raise NotImplementedError
         super().__init__()
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
         self.transform_on_fantasize = transform_on_fantasize
-        integer_indices = integer_indices or []
+        integer_indices = integer_indices if integer_indices is not None else []
         self.register_buffer(
-            "integer_indices", torch.tensor(integer_indices, dtype=torch.long)
+            "integer_indices", torch.as_tensor(integer_indices, dtype=torch.long)
         )
         self.categorical_features = categorical_features or {}
         self.approximate = approximate
@@ -797,13 +987,25 @@ class Round(InputTransform, Module):
             and self.tau == other.tau
         )
 
+    def get_init_args(self) -> dict[str, Any]:
+        r"""Get the arguments necessary to construct an exact copy of the transform."""
+        return {
+            "integer_indices": self.integer_indices,
+            "categorical_features": self.categorical_features,
+            "transform_on_train": self.transform_on_train,
+            "transform_on_eval": self.transform_on_eval,
+            "transform_on_fantasize": self.transform_on_fantasize,
+            "approximate": self.approximate,
+            "tau": self.tau,
+        }
 
-class Log10(ReversibleInputTransform, Module):
+
+class Log10(ReversibleInputTransform):
     r"""A base-10 log transformation."""
 
     def __init__(
         self,
-        indices: List[int],
+        indices: list[int],
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
@@ -874,15 +1076,17 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
 
     def __init__(
         self,
-        indices: List[int],
+        d: int,
+        indices: list[int],
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
         reverse: bool = False,
         eps: float = 1e-7,
-        concentration1_prior: Optional[Prior] = None,
-        concentration0_prior: Optional[Prior] = None,
-        batch_shape: Optional[torch.Size] = None,
+        concentration1_prior: Prior | None = None,
+        concentration0_prior: Prior | None = None,
+        batch_shape: torch.Size | None = None,
+        bounds: Tensor | None = None,
     ) -> None:
         r"""Initialize transform.
 
@@ -901,7 +1105,11 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
                 of the Kumaraswamy distribution.
             concentration0_prior: A prior distribution on the concentration0 parameter
                 of the Kumaraswamy distribution.
-            batch_shape: The batch shape.
+            batch_shape: An optional batch shape, for learning independent warping
+                parameters for each batch of inputs. This should match the input batch
+                shape of the model (i.e., `train_X.shape[:-2]`).
+                NOTE: This is only supported for single-output models.
+            bounds: A `2 x d`-dim tensor of lower and upper bounds for the inputs.
         """
         super().__init__()
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
@@ -910,8 +1118,11 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
         self.batch_shape = batch_shape or torch.Size([])
-        self._X_min = eps
-        self._X_range = 1 - 2 * eps
+        self._eps = eps
+        # Note: we don't pass batch shape here and assume that the
+        # bounds apply to all batch dims (if batch dims are present).
+        # The warping function can add a batch dim if needed.
+        self._normalize = Normalize(d=d, indices=indices, bounds=bounds)
         if len(self.batch_shape) > 0:
             # Note: this follows the gpytorch shape convention for lengthscales
             # There is ongoing discussion about the extra `1`.
@@ -950,12 +1161,28 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             )
             self.register_constraint(param_name=p_name, constraint=constraint)
 
-    def _set_concentration(self, i: int, value: Union[float, Tensor]) -> None:
+    def _set_concentration(self, i: int, value: float | Tensor) -> None:
         if not torch.is_tensor(value):
             value = torch.as_tensor(value).to(self.concentration0)
         self.initialize(**{f"concentration{i}": value})
 
     @subset_transform
+    def _warp_transform(self, X: Tensor) -> Tensor:
+        r"""Warp the inputs through the Kumaraswamy CDF.
+
+        Args:
+            X: A `input_batch_shape x (batch_shape) x n x d`-dim tensor of inputs.
+                batch_shape here can either be self.batch_shape or 1's such that
+                it is broadcastable with self.batch_shape if self.batch_shape is set.
+
+        Returns:
+            A `input_batch_shape x (batch_shape) x n x d`-dim tensor
+                of transformed inputs.
+        """
+        return kumaraswamy_warp(
+            X=X, c0=self.concentration0, c1=self.concentration1, eps=self._eps
+        )
+
     def _transform(self, X: Tensor) -> Tensor:
         r"""Warp the inputs through the Kumaraswamy CDF.
 
@@ -968,16 +1195,11 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             A `input_batch_shape x (batch_shape) x n x d`-dim tensor of transformed
                 inputs.
         """
+        # Normalize to unit cube
+        X = self._normalize(X=X)
         # normalize to [eps, 1-eps], IDEA: could use Normalize and ChainedTransform.
-        return self._k.cdf(
-            torch.clamp(
-                X * self._X_range + self._X_min,
-                self._X_min,
-                1.0 - self._X_min,
-            )
-        )
+        return self._warp_transform(X=X)
 
-    @subset_transform
     def _untransform(self, X: Tensor) -> Tensor:
         r"""Warp the inputs through the Kumaraswamy inverse CDF.
 
@@ -994,19 +1216,26 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
                     "The right most batch dims of X must match self.batch_shape: "
                     f"({self.batch_shape})."
                 )
-        # unnormalize from [eps, 1-eps] to [0,1]
-        return ((self._k.icdf(X) - self._X_min) / self._X_range).clamp(0.0, 1.0)
+        untransformed_X = self._warp_untransform(X=X)
+        return self._normalize.untransform(X=untransformed_X)
 
-    @property
-    def _k(self) -> Kumaraswamy:
-        """Returns a Kumaraswamy distribution with the concentration parameters."""
-        return Kumaraswamy(
-            concentration1=self.concentration1,
-            concentration0=self.concentration0,
+    @subset_transform
+    def _warp_untransform(self, X: Tensor) -> Tensor:
+        r"""Warp the inputs through the Kumaraswamy inverse CDF.
+
+        Args:
+            X: A `input_batch_shape x batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `input_batch_shape x batch_shape x n x d`-dim tensor of transformed
+                inputs.
+        """
+        return inv_kumaraswamy_warp(
+            X=X, c0=self.concentration0, c1=self.concentration1, eps=self._eps
         )
 
 
-class AppendFeatures(InputTransform, Module):
+class AppendFeatures(InputTransform):
     r"""A transform that appends the input with a given set of features either
     provided beforehand or generated on the fly via a callable.
 
@@ -1014,7 +1243,7 @@ class AppendFeatures(InputTransform, Module):
     `RiskMeasureMCObjective` to optimize risk measures as described in
     [Cakmak2020risk]_. A tutorial notebook implementing the rhoKG acqusition
     function introduced in [Cakmak2020risk]_ can be found at
-    https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables.
+    https://botorch.org/docs/tutorials/risk_averse_bo_with_environmental_variables.
 
     The steps for using this to obtain samples of a risk measure are as follows:
 
@@ -1062,10 +1291,10 @@ class AppendFeatures(InputTransform, Module):
 
     def __init__(
         self,
-        feature_set: Optional[Tensor] = None,
-        f: Optional[Callable[[Tensor], Tensor]] = None,
-        indices: Optional[List[int]] = None,
-        fkwargs: Optional[Dict[str, Any]] = None,
+        feature_set: Tensor | None = None,
+        f: Callable[[Tensor], Tensor] | None = None,
+        indices: list[int] | None = None,
+        fkwargs: dict[str, Any] | None = None,
         skip_expand: bool = False,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
@@ -1174,8 +1403,31 @@ class AppendFeatures(InputTransform, Module):
         return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])
 
 
-class FilterFeatures(InputTransform, Module):
+class InteractionFeatures(AppendFeatures):
+    r"""A transform that appends the first-order interaction terms $x_i * x_j, i < j$,
+    for all or a subset of the input variables."""
 
+    def __init__(
+        self,
+        indices: list[int] | None = None,
+    ) -> None:
+        r"""Initializes the InteractionFeatures transform.
+
+        Args:
+            indices: Indices of the subset of dimensions to compute interaction
+                features on.
+        """
+
+        super().__init__(
+            f=interaction_features,
+            indices=indices,
+            transform_on_train=True,
+            transform_on_eval=True,
+            transform_on_fantasize=True,
+        )
+
+
+class FilterFeatures(InputTransform):
     r"""A transform that filters the input with a given set of features indices.
 
     As an example, this can be used in a multiobjective optimization with `ModelListGP`
@@ -1246,7 +1498,7 @@ class FilterFeatures(InputTransform, Module):
         return super().equals(other=other)
 
 
-class InputPerturbation(InputTransform, Module):
+class InputPerturbation(InputTransform):
     r"""A transform that adds the set of perturbations to the given input.
 
     Similar to `AppendFeatures`, this can be used with `RiskMeasureMCObjective`
@@ -1254,16 +1506,16 @@ class InputPerturbation(InputTransform, Module):
     on optimizing risk measures.
 
     A tutorial notebook using this with `qNoisyExpectedImprovement` can be found at
-    https://botorch.org/tutorials/risk_averse_bo_with_input_perturbations.
+    https://botorch.org/docs/tutorials/risk_averse_bo_with_input_perturbations.
     """
 
     is_one_to_many: bool = True
 
     def __init__(
         self,
-        perturbation_set: Union[Tensor, Callable[[Tensor], Tensor]],
-        bounds: Optional[Tensor] = None,
-        indices: Optional[List[int]] = None,
+        perturbation_set: Tensor | Callable[[Tensor], Tensor],
+        bounds: Tensor | None = None,
+        indices: list[int] | None = None,
         multiplicative: bool = False,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
@@ -1374,16 +1626,13 @@ class InputPerturbation(InputTransform, Module):
         return p.transpose(-3, -2)  # p is batch_shape x n_p x n x d
 
 
-class OneHotToNumeric(InputTransform, Module):
-    r"""Transform categorical parameters from a one-hot to a numeric representation.
-
-    This assumes that the categoricals are the trailing dimensions.
-    """
+class OneHotToNumeric(InputTransform):
+    r"""Transform categorical parameters from a one-hot to a numeric representation."""
 
     def __init__(
         self,
         dim: int,
-        categorical_features: Optional[Dict[int, int]] = None,
+        categorical_features: dict[int, int] | None = None,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
@@ -1416,27 +1665,32 @@ class OneHotToNumeric(InputTransform, Module):
             sorted(categorical_features.items(), key=lambda x: x[0])
         )
         if len(self.categorical_features) > 0:
-            self.categorical_start_idx = min(self.categorical_features.keys())
-            # check that the trailing dimensions are categoricals
-            end = self.categorical_start_idx
-            err_msg = (
-                f"{self.__class__.__name__} requires that the categorical "
-                "parameters are the rightmost elements."
-            )
+            self.onehot_idx = [
+                np.arange(start, start + card)
+                for start, card in self.categorical_features.items()
+            ]
+            idx = np.concatenate(self.onehot_idx)
+
+            if len(idx) != len(set(idx)):
+                raise ValueError("Categorical features overlap.")
+            if max(idx) >= dim:
+                raise ValueError("Categorical features exceed the provided dimension.")
+            self.numerical_idx = list(set(range(dim)) - set(idx))
+
+            offset = 0
+            self.ordinal_idx = []
             for start, card in self.categorical_features.items():
-                # the end of one one-hot representation should be followed
-                # by the start of the next
-                if end != start:
-                    raise ValueError(err_msg)
-                # This assumes that the categoricals are the trailing
-                # dimensions
-                end = start + card
-            if end != dim:
-                # check end
-                raise ValueError(err_msg)
-            # the numeric representation dimension is the total number of parameters
-            # (continuous, integer, and categorical)
-            self.numeric_dim = self.categorical_start_idx + len(categorical_features)
+                self.ordinal_idx.append(start - offset)
+                offset += card - 1
+
+            reduced_dim = len(self.ordinal_idx) + len(self.numerical_idx)
+            self.new_numerical_idx = list(
+                set(range(reduced_dim)) - set(self.ordinal_idx)
+            )
+
+            self.numeric_dim = len(self.new_numerical_idx) + len(
+                self.categorical_features
+            )
 
     def transform(self, X: Tensor) -> Tensor:
         r"""Transform the categorical inputs into integer representation.
@@ -1450,10 +1704,12 @@ class OneHotToNumeric(InputTransform, Module):
         """
         if len(self.categorical_features) > 0:
             X_numeric = X[..., : self.numeric_dim].clone()
-            idx = self.categorical_start_idx
-            for start, card in self.categorical_features.items():
-                X_numeric[..., idx] = X[..., start : start + card].argmax(dim=-1)
-                idx += 1
+            # copy the numerical dims over
+            X_numeric[..., self.new_numerical_idx] = X[..., self.numerical_idx]
+            for i in range(len(self.categorical_features)):
+                X_numeric[..., self.ordinal_idx[i]] = X[..., self.onehot_idx[i]].argmax(
+                    dim=-1
+                )
             return X_numeric
         return X
 
@@ -1469,23 +1725,16 @@ class OneHotToNumeric(InputTransform, Module):
             have been transformed to one-hot representation.
         """
         if len(self.categorical_features) > 0:
-            self.numeric_dim
-            one_hot_categoricals = [
-                # note that self.categorical_features is sorted by the starting index
-                # in one-hot representation
-                one_hot(
-                    X[..., idx - len(self.categorical_features)].long(),
-                    num_classes=cardinality,
-                )
-                for idx, cardinality in enumerate(self.categorical_features.values())
-            ]
-            X = torch.cat(
-                [
-                    X[..., : self.categorical_start_idx],
-                    *one_hot_categoricals,
-                ],
-                dim=-1,
-            )
+            s = list(X.shape)
+            s[-1] = len(self.numerical_idx) + len(np.concatenate(self.onehot_idx))
+            X_onehot = torch.zeros(size=s).to(X)
+            X_onehot[..., self.numerical_idx] = X[..., self.new_numerical_idx]
+            for i in range(len(self.categorical_features)):
+                X_onehot[..., self.onehot_idx[i]] = one_hot(
+                    X[..., self.ordinal_idx[i]].long(),
+                    num_classes=len(self.onehot_idx[i]),
+                ).to(X_onehot)
+            return X_onehot
         return X
 
     def equals(self, other: InputTransform) -> bool:
@@ -1498,7 +1747,7 @@ class OneHotToNumeric(InputTransform, Module):
             A boolean indicating if the other transform is equivalent.
         """
         return (
-            type(self) == type(other)
+            type(self) is type(other)
             and (self.transform_on_train == other.transform_on_train)
             and (self.transform_on_eval == other.transform_on_eval)
             and (self.transform_on_fantasize == other.transform_on_fantasize)
@@ -1528,8 +1777,8 @@ class AnalyticProbabilisticReparameterizationInputTransform(InputTransform, Modu
     def __init__(
         self,
         one_hot_bounds: Tensor = None,
-        integer_indices: Optional[List[int]] = None,
-        categorical_features: Optional[Dict[int, int]] = None,
+        integer_indices: list[int] | None = None,
+        categorical_features: dict[int, int] | None = None,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
@@ -1716,7 +1965,8 @@ class AnalyticProbabilisticReparameterizationInputTransform(InputTransform, Modu
             X: a `batch_shape x n x d`-dim tensor
 
         Returns:
-            A `batch_shape x n_discrete x n`-dim tensors of probabilities of each discrete config under X.
+            A `batch_shape x n_discrete x n`-dim tensors of probabilities of each
+                discrete config under X.
         """
         # note this method should be differentiable
         X_prob = torch.ones(
@@ -1824,8 +2074,8 @@ class MCProbabilisticReparameterizationInputTransform(InputTransform, Module):
     def __init__(
         self,
         one_hot_bounds: Tensor,
-        integer_indices: Optional[List[int]] = None,
-        categorical_features: Optional[Dict[int, int]] = None,
+        integer_indices: list[int] | None = None,
+        categorical_features: dict[int, int] | None = None,
         transform_on_train: bool = False,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,

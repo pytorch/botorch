@@ -8,13 +8,13 @@
 import warnings
 
 import torch
-from botorch import settings
 from botorch.acquisition.cost_aware import (
     CostAwareUtility,
     GenericCostAwareUtility,
     InverseCostWeightedUtility,
 )
 from botorch.exceptions.warnings import CostAwareWarning
+from botorch.models.deterministic import GenericDeterministicModel
 from botorch.sampling import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
@@ -50,6 +50,9 @@ class TestCostAwareUtilities(BotorchTestCase):
 
                 X = torch.randn(*batch_shape, 3, 2, device=self.device, dtype=dtype)
                 deltas = torch.rand(4, *batch_shape, device=self.device, dtype=dtype)
+                neg_deltas = -torch.rand(
+                    4, *batch_shape, device=self.device, dtype=dtype
+                )
 
                 # test that sampler is required if use_mean=False
                 icwu = InverseCostWeightedUtility(mm, use_mean=False)
@@ -59,19 +62,42 @@ class TestCostAwareUtilities(BotorchTestCase):
                 # check warning for negative cost
                 mm = MockModel(MockPosterior(mean=mean.clamp_max(-1e-6)))
                 icwu = InverseCostWeightedUtility(mm)
-                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                with warnings.catch_warnings(record=True) as ws:
                     icwu(X, deltas)
-                    self.assertTrue(
-                        any(issubclass(w.category, CostAwareWarning) for w in ws)
-                    )
+                self.assertTrue(
+                    any(issubclass(w.category, CostAwareWarning) for w in ws)
+                )
 
-                # basic test
+                # basic test for both positive and negative delta values
                 mm = MockModel(MockPosterior(mean=mean))
                 icwu = InverseCostWeightedUtility(mm)
                 ratios = icwu(X, deltas)
                 self.assertTrue(
                     torch.equal(ratios, deltas / mean.squeeze(-1).sum(dim=-1))
                 )
+                neg_ratios = icwu(X, neg_deltas)
+                self.assertTrue(
+                    torch.equal(neg_ratios, neg_deltas * mean.squeeze(-1).sum(dim=-1))
+                )
+
+                # test that ensures candidates of lower cost are preferred when they
+                # have equal, negative delta values
+                low_mean = 1 + torch.rand(
+                    *batch_shape, 2, 1, device=self.device, dtype=dtype
+                )
+                high_mean = 2 + torch.rand(
+                    *batch_shape, 2, 1, device=self.device, dtype=dtype
+                )
+                h_mm = MockModel(MockPosterior(mean=high_mean))
+                h_icwu = InverseCostWeightedUtility(h_mm)
+                # high cost ratios
+                h_ratios = h_icwu(X, neg_deltas)
+                l_mm = MockModel(MockPosterior(mean=low_mean))
+                l_icwu = InverseCostWeightedUtility(l_mm)
+                # low cost ratios
+                l_ratios = l_icwu(X, neg_deltas)
+                # assert that the low cost candidates are preferred
+                self.assertTrue(torch.all(h_ratios < l_ratios))
 
                 # sampling test
                 samples = 1 + torch.rand(  # event shape is q x m
@@ -95,3 +121,32 @@ class TestCostAwareUtilities(BotorchTestCase):
                         ratios, deltas / mean.clamp_min(1.5).squeeze(-1).sum(dim=-1)
                     )
                 )
+
+                # test evaluation_mask
+                multi_output_mean = torch.cat([mean, 2 * mean], dim=-1)
+
+                def cost_fn(X):
+                    return multi_output_mean
+
+                mm = GenericDeterministicModel(f=cost_fn, num_outputs=2)
+                icwu = InverseCostWeightedUtility(mm)
+                eval_mask = torch.zeros(3, 2, dtype=torch.bool, device=self.device)
+                eval_mask[:, 1] = True  # 1 objective is evaluated
+                ratios = icwu(X, deltas, X_evaluation_mask=eval_mask)
+
+                self.assertTrue(
+                    torch.equal(ratios, deltas / multi_output_mean[..., 1].sum(dim=-1))
+                )
+                eval_mask[:, 0] = True  # both objectives are evaluated
+                ratios = icwu(X, deltas, X_evaluation_mask=eval_mask)
+                self.assertAllClose(
+                    ratios, deltas / multi_output_mean.sum(dim=(-1, -2))
+                )
+                # test eval_mask where not all rows are the same
+                eval_mask[0, 1] = False
+                msg = (
+                    "Currently, all candidates must be evaluated "
+                    "on the same outputs."
+                )
+                with self.assertRaisesRegex(NotImplementedError, msg):
+                    icwu(X, deltas, X_evaluation_mask=eval_mask)

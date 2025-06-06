@@ -19,15 +19,15 @@ particular fidelity parameter that directly encodes the fidelity of the
 observation. `GenericDeterministicModel` supports arbitrary deterministic
 functions, while `AffineFidelityCostModel` is a particular cost model for
 multi-fidelity optimization. Other use cases of deterministic models include
-representing approximate GP sample paths, e.g. random Fourier features obtained
-with `get_gp_samples`, which allows them to be substituted in acquisition
+representing approximate GP sample paths, e.g. Matheron paths obtained
+with `get_matheron_path_model`, which allows them to be substituted in acquisition
 functions or in other places where a `Model` is expected.
 """
 
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Callable, List, Optional, Union
+from collections.abc import Callable
 
 import torch
 from botorch.models.ensemble import EnsembleModel
@@ -36,11 +36,7 @@ from torch import Tensor
 
 
 class DeterministicModel(EnsembleModel):
-    r"""
-    Abstract base class for deterministic models.
-
-    :meta private:
-    """
+    """Abstract base class for deterministic models."""
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
@@ -80,7 +76,7 @@ class GenericDeterministicModel(DeterministicModel):
         self._f = f
         self._num_outputs = num_outputs
 
-    def subset_output(self, idcs: List[int]) -> GenericDeterministicModel:
+    def subset_output(self, idcs: list[int]) -> GenericDeterministicModel:
         r"""Subset the model along the output dimension.
 
         Args:
@@ -110,7 +106,7 @@ class GenericDeterministicModel(DeterministicModel):
 class AffineDeterministicModel(DeterministicModel):
     r"""An affine deterministic model."""
 
-    def __init__(self, a: Tensor, b: Union[Tensor, float] = 0.01) -> None:
+    def __init__(self, a: Tensor, b: Tensor | float = 0.01) -> None:
         r"""Affine deterministic model from weights and offset terms.
 
         A simple model of the form
@@ -135,7 +131,7 @@ class AffineDeterministicModel(DeterministicModel):
         self.register_buffer("b", b.expand(a.size(-1)))
         self._num_outputs = a.size(-1)
 
-    def subset_output(self, idcs: List[int]) -> AffineDeterministicModel:
+    def subset_output(self, idcs: list[int]) -> AffineDeterministicModel:
         r"""Subset the model along the output dimension.
 
         Args:
@@ -166,6 +162,16 @@ class PosteriorMeanModel(DeterministicModel):
     def forward(self, X: Tensor) -> Tensor:
         return self.model.posterior(X).mean
 
+    @property
+    def num_outputs(self) -> int:
+        r"""The number of outputs of the model."""
+        return self.model.num_outputs
+
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model."""
+        return self.model.batch_shape
+
 
 class FixedSingleSampleModel(DeterministicModel):
     r"""
@@ -178,18 +184,39 @@ class FixedSingleSampleModel(DeterministicModel):
     We assume the outcomes are uncorrelated here.
     """
 
-    def __init__(self, model: Model, w: Optional[Tensor] = None) -> None:
+    def __init__(
+        self,
+        model: Model,
+        w: Tensor | None = None,
+        dim: int | None = None,
+        jitter: float | None = 1e-8,
+        dtype: torch.dtype | None = None,
+        device: torch.dtype | None = None,
+    ) -> None:
         r"""
         Args:
             model: The base model.
             w: A 1-d tensor with length model.num_outputs.
                 If None, draw it from a standard normal distribution.
+            dim: dimensionality of w.
+                If None and w is not provided, draw w samples of size model.num_outputs.
+            jitter: jitter value to be added for numerical stability, 1e-8 by default.
+            dtype: dtype for w if specified
+            device: device for w if specified
         """
         super().__init__()
         self.model = model
         self._num_outputs = model.num_outputs
-        self.w = torch.randn(model.num_outputs)
+        self.jitter = jitter
+        if w is None:
+            self.w = (
+                torch.randn(model.num_outputs, dtype=dtype, device=device)
+                if dim is None
+                else torch.randn(dim, dtype=dtype, device=device)
+            )
+        else:
+            self.w = w
 
     def forward(self, X: Tensor) -> Tensor:
         post = self.model.posterior(X)
-        return post.mean + post.variance.sqrt() * self.w.to(X)
+        return post.mean + torch.sqrt(post.variance + self.jitter) * self.w.to(X)

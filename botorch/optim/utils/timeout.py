@@ -7,27 +7,30 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+import warnings
+from collections.abc import Callable, Sequence
+from typing import Any
 
-import numpy as np
+import numpy.typing as npt
 from botorch.exceptions.errors import OptimizationTimeoutError
 from scipy import optimize
+from threadpoolctl import threadpool_limits
 
 
 def minimize_with_timeout(
-    fun: Callable[[np.ndarray, *Any], float],
-    x0: np.ndarray,
-    args: Tuple[Any, ...] = (),
-    method: Optional[str] = None,
-    jac: Optional[Union[str, Callable, bool]] = None,
-    hess: Optional[Union[str, Callable, optimize.HessianUpdateStrategy]] = None,
-    hessp: Optional[Callable] = None,
-    bounds: Optional[Union[Sequence[Tuple[float, float]], optimize.Bounds]] = None,
+    fun: Callable[[npt.NDArray, ...], float],
+    x0: npt.NDArray,
+    args: tuple[Any, ...] = (),
+    method: str | None = None,
+    jac: str | Callable | bool | None = None,
+    hess: str | Callable | optimize.HessianUpdateStrategy | None = None,
+    hessp: Callable | None = None,
+    bounds: Sequence[tuple[float, float]] | optimize.Bounds | None = None,
     constraints=(),  # Typing this properly is a s**t job
-    tol: Optional[float] = None,
-    callback: Optional[Callable] = None,
-    options: Optional[Dict[str, Any]] = None,
-    timeout_sec: Optional[float] = None,
+    tol: float | None = None,
+    callback: Callable | None = None,
+    options: dict[str, Any] | None = None,
+    timeout_sec: float | None = None,
 ) -> optimize.OptimizeResult:
     r"""Wrapper around scipy.optimize.minimize to support timeout.
 
@@ -39,12 +42,11 @@ def minimize_with_timeout(
     method that is injected to the scipy.optimize.minimize call and that keeps
     track of the runtime and the optimization variables at the current iteration.
     """
-    if timeout_sec:
-
+    if timeout_sec is not None:
         start_time = time.monotonic()
         callback_data = {"num_iterations": 0}  # update from withing callback below
 
-        def timeout_callback(xk: np.ndarray) -> bool:
+        def timeout_callback(xk: npt.NDArray) -> bool:
             runtime = time.monotonic() - start_time
             callback_data["num_iterations"] += 1
             if runtime > timeout_sec:
@@ -62,14 +64,14 @@ def minimize_with_timeout(
         elif method == "trust-constr":  # special signature
 
             def wrapped_callback(
-                xk: np.ndarray, state: optimize.OptimizeResult
+                xk: npt.NDArray, state: optimize.OptimizeResult
             ) -> bool:
                 # order here is important to make sure base callback gets executed
                 return callback(xk, state) or timeout_callback(xk=xk)
 
         else:
 
-            def wrapped_callback(xk: np.ndarray) -> None:
+            def wrapped_callback(xk: npt.NDArray) -> None:
                 timeout_callback(xk=xk)
                 callback(xk)
 
@@ -77,20 +79,24 @@ def minimize_with_timeout(
         wrapped_callback = callback
 
     try:
-        return optimize.minimize(
-            fun=fun,
-            x0=x0,
-            args=args,
-            method=method,
-            jac=jac,
-            hess=hess,
-            hessp=hessp,
-            bounds=bounds,
-            constraints=constraints,
-            tol=tol,
-            callback=wrapped_callback,
-            options=options,
-        )
+        warnings.filterwarnings("error", message="Method .* cannot handle")
+        # To prevent slowdowns after scipy 1.15.
+        # See https://github.com/scipy/scipy/issues/22438.
+        with threadpool_limits(limits=1, user_api="blas"):
+            return optimize.minimize(
+                fun=fun,
+                x0=x0,
+                args=args,
+                method=method,
+                jac=jac,
+                hess=hess,
+                hessp=hessp,
+                bounds=bounds,
+                constraints=constraints,
+                tol=tol,
+                callback=wrapped_callback,
+                options=options,
+            )
     except OptimizationTimeoutError as e:
         msg = f"Optimization timed out after {e.runtime} seconds."
         current_fun, *_ = fun(e.current_x, *args)

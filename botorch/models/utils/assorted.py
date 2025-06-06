@@ -9,8 +9,8 @@ r"""Assorted helper methods and objects for working with BoTorch models."""
 from __future__ import annotations
 
 import warnings
+from collections.abc import Iterator
 from contextlib import contextmanager, ExitStack
-from typing import List, Optional, Tuple
 
 import torch
 from botorch import settings
@@ -21,7 +21,7 @@ from gpytorch.module import Module
 from torch import Tensor
 
 
-def _make_X_full(X: Tensor, output_indices: List[int], tf: int) -> Tensor:
+def _make_X_full(X: Tensor, output_indices: list[int], tf: int) -> Tensor:
     r"""Helper to construct input tensor with task indices.
 
     Args:
@@ -48,8 +48,8 @@ def multioutput_to_batch_mode_transform(
     train_X: Tensor,
     train_Y: Tensor,
     num_outputs: int,
-    train_Yvar: Optional[Tensor] = None,
-) -> Tuple[Tensor, Tensor, Optional[Tensor]]:
+    train_Yvar: Tensor | None = None,
+) -> tuple[Tensor, Tensor, Tensor | None]:
     r"""Transforms training inputs for a multi-output model.
 
     Used for multi-output models that internally are represented by a
@@ -84,7 +84,7 @@ def multioutput_to_batch_mode_transform(
     return train_X, train_Y, train_Yvar
 
 
-def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> Tuple[Tensor, int]:
+def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> tuple[Tensor, int]:
     r"""Insert the output dimension at the correct location.
 
     The trailing batch dimensions of X must match the original batch dimensions
@@ -111,7 +111,8 @@ def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> Tuple[Tensor,
         except RuntimeError:
             raise RuntimeError(
                 "The trailing batch dimensions of X must match the trailing "
-                "batch dimensions of the training inputs."
+                f"batch dimensions of the training inputs. Got {X.shape=} "
+                f"and {original_batch_shape=}."
             )
     # insert `m` dimension
     X = X.unsqueeze(-3)
@@ -136,7 +137,7 @@ def check_min_max_scaling(
     strict: bool = False,
     atol: float = 1e-2,
     raise_on_fail: bool = False,
-    ignore_dims: Optional[List[int]] = None,
+    ignore_dims: list[int] | None = None,
 ) -> None:
     r"""Check that tensor is normalized to the unit cube.
 
@@ -164,13 +165,15 @@ def check_min_max_scaling(
         if torch.any(Xmin < -atol) or torch.any(Xmax > 1 + atol):
             msg = "contained"
         if msg is not None:
+            # NOTE: If you update this message, update the warning filters as well.
+            # See https://github.com/pytorch/botorch/pull/2508.
             msg = (
-                f"Input data is not {msg} to the unit cube. "
+                f"Data (input features) is not {msg} to the unit cube. "
                 "Please consider min-max scaling the input data."
             )
             if raise_on_fail:
                 raise InputDataError(msg)
-            warnings.warn(msg, InputDataWarning)
+            warnings.warn(msg, InputDataWarning, stacklevel=2)
 
 
 def check_standardization(
@@ -190,23 +193,42 @@ def check_standardization(
         raise_on_fail: If True, raise an exception instead of a warning.
     """
     with torch.no_grad():
-        Ymean, Ystd = torch.mean(Y, dim=-2), torch.std(Y, dim=-2)
-        if torch.abs(Ymean).max() > atol_mean or torch.abs(Ystd - 1).max() > atol_std:
-            msg = (
-                "Input data is not standardized. Please consider scaling the "
-                "input to zero mean and unit variance."
-            )
-            if raise_on_fail:
-                raise InputDataError(msg)
-            warnings.warn(msg, InputDataWarning)
+        Ymean = torch.mean(Y, dim=-2)
+        mean_not_zero = torch.abs(Ymean).max() > atol_mean
+        if Y.shape[-2] <= 1:
+            if mean_not_zero:
+                # NOTE: If you update this message, update the warning filters as well.
+                # See https://github.com/pytorch/botorch/pull/2508.
+                msg = (
+                    f"Data (outcome observations) is not standardized (mean = {Ymean})."
+                    " Please consider scaling the input to zero mean and unit variance."
+                )
+                if raise_on_fail:
+                    raise InputDataError(msg)
+                warnings.warn(msg, InputDataWarning, stacklevel=2)
+        else:
+            Ystd = torch.std(Y, dim=-2)
+            std_not_one = torch.abs(Ystd - 1).max() > atol_std
+            if mean_not_zero or std_not_one:
+                # NOTE: If you update this message, update the warning filters as well.
+                # See https://github.com/pytorch/botorch/pull/2508.
+                msg = (
+                    "Data (outcome observations) is not standardized "
+                    f"(std = {Ystd}, mean = {Ymean})."
+                    "Please consider scaling the input to zero mean and unit variance."
+                )
+                if raise_on_fail:
+                    raise InputDataError(msg)
+                warnings.warn(msg, InputDataWarning, stacklevel=2)
 
 
 def validate_input_scaling(
     train_X: Tensor,
     train_Y: Tensor,
-    train_Yvar: Optional[Tensor] = None,
+    train_Yvar: Tensor | None = None,
     raise_on_fail: bool = False,
-    ignore_X_dims: Optional[List[int]] = None,
+    ignore_X_dims: list[int] | None = None,
+    check_nans_only: bool = False,
 ) -> None:
     r"""Helper function to validate input data to models.
 
@@ -222,6 +244,10 @@ def validate_input_scaling(
             raised if NaN values are present).
         ignore_X_dims: For this subset of dimensions from `{1, ..., d}`, ignore the
             min-max scaling check.
+        check_nans_only: If True, only check for NaN values. Skips min-max scaling
+            and standardization checks. This is used when the model is provided
+            with a custom covariance module, to avoid potentially irrelevant
+            warnings.
 
     This function is typically called inside the constructor of standard BoTorch
     models. It validates the following:
@@ -240,13 +266,14 @@ def validate_input_scaling(
         check_no_nans(train_Yvar)
         if torch.any(train_Yvar < 0):
             raise InputDataError("Input data contains negative variances.")
-    check_min_max_scaling(
-        X=train_X, raise_on_fail=raise_on_fail, ignore_dims=ignore_X_dims
-    )
-    check_standardization(Y=train_Y, raise_on_fail=raise_on_fail)
+    if not check_nans_only:
+        check_min_max_scaling(
+            X=train_X, raise_on_fail=raise_on_fail, ignore_dims=ignore_X_dims
+        )
+        check_standardization(Y=train_Y, raise_on_fail=raise_on_fail)
 
 
-def mod_batch_shape(module: Module, names: List[str], b: int) -> None:
+def mod_batch_shape(module: Module, names: list[str], b: int) -> None:
     r"""Recursive helper to modify gpytorch modules' batch shape attribute.
 
     Modifies the module in-place.
@@ -282,6 +309,133 @@ def gpt_posterior_settings():
         yield
 
 
+def detect_duplicates(
+    X: Tensor,
+    rtol: float = 0,
+    atol: float = 1e-8,
+) -> Iterator[tuple[int, int]]:
+    """Returns an iterator over index pairs `(duplicate index, original index)` for all
+    duplicate entries of `X`. Supporting 2-d Tensor only.
+
+    Args:
+        X: the datapoints tensor with potential duplicated entries
+        rtol: relative tolerance
+        atol: absolute tolerance
+    """
+    if len(X.shape) != 2:
+        raise ValueError("X must have 2 dimensions.")
+
+    tols = atol
+    if rtol:
+        rval = X.abs().max(dim=-1, keepdim=True).values
+        tols = tols + rtol * rval.max(rval.transpose(-1, -2))
+
+    n = X.shape[-2]
+    dist = torch.full((n, n), float("inf"), device=X.device, dtype=X.dtype)
+    dist[torch.triu_indices(n, n, offset=1).unbind()] = torch.nn.functional.pdist(
+        X, p=float("inf")
+    )
+    return (
+        (i, int(j))
+        # pyre-fixme[19]: Expected 1 positional argument.
+        for diff, j, i in zip(*(dist - tols).min(dim=-2), range(n))
+        if diff < 0
+    )
+
+
+def consolidate_duplicates(
+    X: Tensor, Y: Tensor, rtol: float = 0.0, atol: float = 1e-8
+) -> tuple[Tensor, Tensor, Tensor]:
+    """Drop duplicated Xs and update the indices tensor Y accordingly.
+    Supporting 2d Tensor only as in batch mode block design is not guaranteed.
+
+    Args:
+        X: the datapoints tensor
+        Y: the index tensor to be updated (e.g., pairwise comparisons)
+        rtol: relative tolerance
+        atol: absolute tolerance
+
+    Returns:
+        consolidated_X: the consolidated X
+        consolidated_Y: the consolidated Y (e.g., pairwise comparisons indices)
+        new_indices: new index of each original item in X, a tensor of size X.shape[-2]
+    """
+    if len(X.shape) != 2:
+        raise ValueError("X must have 2 dimensions.")
+
+    n = X.shape[-2]
+    dup_map = dict(detect_duplicates(X=X, rtol=rtol, atol=atol))
+
+    # Handle edge cases conservatively
+    # If a item is in both dup set and kept set, do not remove it
+    common_set = set(dup_map.keys()).intersection(dup_map.values())
+    for k in list(dup_map.keys()):
+        if k in common_set or dup_map[k] in common_set:
+            del dup_map[k]
+
+    if dup_map:
+        dup_indices, kept_indices = zip(*dup_map.items())
+
+        unique_indices = sorted(set(range(n)) - set(dup_indices))
+
+        # After dropping the duplicates,
+        # the kept ones' indices may also change by being shifted up
+        new_idx_map = dict(zip(unique_indices, range(len(unique_indices))))
+        new_indices_for_dup = (new_idx_map[idx] for idx in kept_indices)
+        new_idx_map.update(dict(zip(dup_indices, new_indices_for_dup)))
+        consolidated_X = X[list(unique_indices), :]
+        consolidated_Y = torch.tensor(
+            [[new_idx_map[item.item()] for item in row] for row in Y.unbind()],
+            dtype=torch.long,
+            device=Y.device,
+        )
+        new_indices = (
+            torch.arange(n, dtype=torch.long)
+            .apply_(lambda x: new_idx_map[x])
+            .to(Y.device)
+        )
+        return consolidated_X, consolidated_Y, new_indices
+    else:
+        return X, Y, torch.arange(n, device=Y.device, dtype=Y.dtype)
+
+
 class fantasize(_Flag):
     r"""A flag denoting whether we are currently in a `fantasize` context."""
+
     _state: bool = False
+
+
+def get_task_value_remapping(task_values: Tensor, dtype: torch.dtype) -> Tensor | None:
+    """Construct an mapping of discrete task values to contiguous int-valued floats.
+
+    Args:
+        task_values: A sorted long-valued tensor of task values.
+        dtype: The dtype of the model inputs (e.g. `X`), which the new
+            task values should have mapped to (e.g. float, double).
+
+    Returns:
+        A tensor of shape `task_values.max() + 1` that maps task values
+        to new task values. The indexing operation `mapper[task_value]`
+        will produce a tensor of new task values, of the same shape as
+        the original. The elements of the `mapper` tensor that do not
+        appear in the original `task_values` are mapped to `nan`. The
+        return value will be `None`, when the task values are contiguous
+        integers starting from zero.
+    """
+    if dtype not in (torch.float, torch.double):
+        raise ValueError(f"dtype must be torch.float or torch.double, but got {dtype}.")
+    task_range = torch.arange(
+        len(task_values), dtype=task_values.dtype, device=task_values.device
+    )
+    mapper = None
+    if not torch.equal(task_values, task_range):
+        # Create a tensor that maps task values to new task values.
+        # The number of tasks should be small, so this should be quite efficient.
+        mapper = torch.full(
+            (int(task_values.max().item()) + 1,),
+            float("nan"),
+            dtype=dtype,
+            device=task_values.device,
+        )
+        mapper[task_values] = task_range.to(dtype=dtype)
+    return mapper

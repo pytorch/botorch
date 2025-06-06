@@ -61,7 +61,7 @@ class TestPareto(BotorchTestCase):
             ]
         )
         expected_nondom_Y3b = expected_nondom_Y3[1:]
-        for dtype in (torch.float, torch.double):
+        for dtype, maximize in product((torch.float, torch.double), (True, False)):
             tkwargs["dtype"] = dtype
             Y = Y.to(**tkwargs)
             expected_nondom_Y = expected_nondom_Y.to(**tkwargs)
@@ -72,26 +72,31 @@ class TestPareto(BotorchTestCase):
             Y3b = Y3b.to(**tkwargs)
             expected_nondom_Y3b = expected_nondom_Y3b.to(**tkwargs)
 
+            test_Y = Y if maximize else -Y
+
             # test 2d
-            nondom_Y = Y[is_non_dominated(Y)]
+            nondom_Y = Y[is_non_dominated(test_Y, maximize=maximize)]
             self.assertTrue(torch.equal(expected_nondom_Y, nondom_Y))
             # test deduplicate=False
             expected_nondom_Y_no_dedup = torch.cat(
                 [expected_nondom_Y, expected_nondom_Y[-1:]], dim=0
             )
-            nondom_Y = Y[is_non_dominated(Y, deduplicate=False)]
+            nondom_Y = Y[is_non_dominated(test_Y, maximize=maximize, deduplicate=False)]
             self.assertTrue(torch.equal(expected_nondom_Y_no_dedup, nondom_Y))
 
             # test batch
             batch_Y = torch.stack([Y, Yb], dim=0)
-            nondom_mask = is_non_dominated(batch_Y)
+            test_batch_Y = batch_Y if maximize else -batch_Y
+            nondom_mask = is_non_dominated(test_batch_Y, maximize=maximize)
             self.assertTrue(torch.equal(batch_Y[0][nondom_mask[0]], expected_nondom_Y))
             self.assertTrue(torch.equal(batch_Y[1][nondom_mask[1]], expected_nondom_Yb))
             # test deduplicate=False
             expected_nondom_Yb_no_dedup = torch.cat(
                 [expected_nondom_Yb[:-1], expected_nondom_Yb[-2:]], dim=0
             )
-            nondom_mask = is_non_dominated(batch_Y, deduplicate=False)
+            nondom_mask = is_non_dominated(
+                test_batch_Y, maximize=maximize, deduplicate=False
+            )
             self.assertTrue(
                 torch.equal(batch_Y[0][nondom_mask[0]], expected_nondom_Y_no_dedup)
             )
@@ -100,17 +105,21 @@ class TestPareto(BotorchTestCase):
             )
 
             # test 3d
-            nondom_Y3 = Y3[is_non_dominated(Y3)]
+            test_Y3 = Y3 if maximize else -Y3
+            nondom_Y3 = Y3[is_non_dominated(test_Y3, maximize=maximize)]
             self.assertTrue(torch.equal(expected_nondom_Y3, nondom_Y3))
             # test deduplicate=False
             expected_nondom_Y3_no_dedup = torch.cat(
                 [expected_nondom_Y3[:3], expected_nondom_Y3[2:]], dim=0
             )
-            nondom_Y3 = Y3[is_non_dominated(Y3, deduplicate=False)]
+            nondom_Y3 = Y3[
+                is_non_dominated(test_Y3, maximize=maximize, deduplicate=False)
+            ]
             self.assertTrue(torch.equal(expected_nondom_Y3_no_dedup, nondom_Y3))
             # test batch
             batch_Y3 = torch.stack([Y3, Y3b], dim=0)
-            nondom_mask3 = is_non_dominated(batch_Y3)
+            test_batch_Y3 = batch_Y3 if maximize else -batch_Y3
+            nondom_mask3 = is_non_dominated(test_batch_Y3, maximize=maximize)
             self.assertTrue(
                 torch.equal(batch_Y3[0][nondom_mask3[0]], expected_nondom_Y3)
             )
@@ -118,7 +127,9 @@ class TestPareto(BotorchTestCase):
                 torch.equal(batch_Y3[1][nondom_mask3[1]], expected_nondom_Y3b)
             )
             # test deduplicate=False
-            nondom_mask3 = is_non_dominated(batch_Y3, deduplicate=False)
+            nondom_mask3 = is_non_dominated(
+                test_batch_Y3, maximize=maximize, deduplicate=False
+            )
             self.assertTrue(
                 torch.equal(batch_Y3[0][nondom_mask3[0]], expected_nondom_Y3_no_dedup)
             )
@@ -147,6 +158,13 @@ class TestPareto(BotorchTestCase):
                 cargs = mock_is_non_dominated_loop.call_args[0]
                 self.assertTrue(torch.equal(cargs[0], y))
 
+    def test_is_non_dominated_with_nan(self) -> None:
+        # NaN should always evaluate to False.
+        Y = torch.rand(10, 2)
+        Y[3, 1] = float("nan")
+        Y[7, 0] = float("nan")
+        self.assertFalse(is_non_dominated(Y)[[3, 7]].any())
+
     def test_is_non_dominated_loop(self):
         n = 20
         tkwargs = {"device": self.device}
@@ -159,8 +177,7 @@ class TestPareto(BotorchTestCase):
             tkwargs["dtype"] = dtype
             Y = torch.rand(batch_shape + torch.Size([n, m]), **tkwargs)
             pareto_mask = _is_non_dominated_loop(
-                # this is so that we can assume maximization in the test
-                # code
+                # this is so that we can assume maximization in the test code
                 Y=Y if maximize else -Y,
                 maximize=maximize,
             )
@@ -219,3 +236,48 @@ class TestPareto(BotorchTestCase):
                                     )
                                 best_obj_mask[k] = False
                         point_mask[j] = False
+
+    def test_is_non_dominated_loop_no_dedup(self):
+        not_dom_expected_dedup = torch.tensor(
+            [
+                [True, False, False, False, True, False],
+                [False, True, True, False, False, False],
+            ],
+            device=self.device,
+        )
+        not_dom_expected_no_dedup = torch.tensor(
+            [
+                [True, False, True, False, True, False],
+                [False, True, True, False, False, True],
+            ],
+            device=self.device,
+        )
+
+        for dtype, maximize, deduplicate in product(
+            (torch.float, torch.double), (True, False), (True, False)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            y1 = torch.tensor([1.0, 0.75], **tkwargs)
+            y2 = torch.tensor([0.75, 1.0], **tkwargs)
+            y3 = torch.tensor([1.0, 0.3], **tkwargs)
+            # 0.5 ensures all points are dominated by y1/y2
+            Y = 0.5 * torch.rand(2, 6, 2, **tkwargs)
+
+            Y[0, 0] = y1
+            Y[0, 2] = y1
+            Y[0, 4] = y2
+            Y[0, 3] = y3  # weakly Pareto optimal, dominated by y1
+
+            Y[1, 1] = y1
+            Y[1, 2] = y2
+            Y[1, 5] = y2
+
+            Y = Y if maximize else -Y
+            not_dom = _is_non_dominated_loop(
+                Y, maximize=maximize, deduplicate=deduplicate
+            )
+
+            if deduplicate:
+                self.assertTrue(torch.equal(not_dom, not_dom_expected_dedup))
+            else:
+                self.assertTrue(torch.equal(not_dom, not_dom_expected_no_dedup))

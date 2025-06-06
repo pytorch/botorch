@@ -8,102 +8,84 @@ on:
 
 jobs:
 
-  tests-and-coverage-pip:
-    name: Tests and coverage (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.8", "3.10"]
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install (auto-install dependencies)
-      run: |
-        pip install .[test]
-    - name: Unit tests and coverage
-      run: |
-        pytest -ra --cov=. --cov-report term-missing
-    - name: Upload coverage
-      if: ${{ runner.os == 'Linux' && matrix.python-version == 3.8 }}
-      run: |
-        bash <(curl -s https://codecov.io/bash)
+  tests-and-coverage:
+    name: Test & Coverage
+    uses: ./.github/workflows/reusable_test.yml
+    with:
+      use_latest_pytorch_gpytorch: false
+    secrets: inherit
 
   package-deploy-pypi:
     name: Package and deploy to pypi.org
     runs-on: ubuntu-latest
-    needs: tests-and-coverage-pip
-    strategy:
-      fail-fast: true
+    permissions:
+      id-token: write # This is required for PyPI OIDC authentication.
+    env:
+      # `uv pip ...` requires venv by default. This skips that requirement.
+      UV_SYSTEM_PYTHON: 1
+    needs: tests-and-coverage
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.8"
+        python-version: "3.13"
     - name: Install dependencies
       run: |
-        pip install .[test]
-        pip install --upgrade build setuptools setuptools_scm wheel
+        uv pip install .[test]
+        uv pip install --upgrade build setuptools setuptools_scm wheel
     - name: Build packages (wheel and source distribution)
       run: |
         python -m build --sdist --wheel
     - name: Verify packages
       run: |
-        ./scripts/build_and_verify_py_packages.sh
+        ./scripts/verify_py_packages.sh
     - name: Deploy to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        user: __token__
-        password: ${{ secrets.PYPI_TOKEN }}
         verbose: true
 
-  package-deploy-conda:
-    name: Package conda and deploy to anaconda.org
+  check-versions:
+    needs: package-deploy-pypi
+    name: Check if major or minor version changed
     runs-on: ubuntu-latest
-    needs: tests-and-coverage-pip
-    strategy:
-      fail-fast: true
+    outputs:
+      major_minor_changed: ${{ steps.compare.outputs.major_minor_changed }}
     steps:
-    - uses: actions/checkout@v3
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: actions/checkout@v4
       with:
-        miniconda-version: "latest"
-        activate-environment: test
-        python-version: "3.8"
-    - name: Fetch all history for all tags and branches
-      run: git fetch --prune --unshallow
-    - name: Install dependencies
-      shell: bash -l {0}
+        fetch-depth: 0
+        fetch-tags: true
+        ref: ${{ github.sha }}
+    - name: Check if major or minor version changed
+      id: compare
       run: |
-        conda install -y setuptools_scm conda-build conda-verify anaconda-client
-        conda install -y scipy sphinx pytest flake8 multipledispatch
-        conda install -y -c pytorch pytorch cpuonly
-        conda install -y -c gpytorch gpytorch
-        conda install -y -c conda-forge pyro-ppl>=1.8.4
-        conda config --set anaconda_upload no
-    - name: Build and verify conda package
-      shell: bash -l {0}
-      run: |
-        ./scripts/build_and_verify_conda_package.sh
-    - name: Deploy to anaconda.org
-      shell: bash -l {0}
-      run: |
-        botorch_version=$(python -m setuptools_scm)
-        build_dir="$(pwd)/.conda/conda_build/noarch"
-        pkg_file="${build_dir}/botorch-${botorch_version}-0.tar.bz2"
-        anaconda -t ${{ secrets.ANACONDA_UPLOAD_TOKEN }} upload -u pytorch $pkg_file
+        git fetch --tags --force
+        previous_version=$(git describe --tags --abbrev=0 ${{ github.event.release.tag_name }}^)
+        prev=$(cut -d '.' -f 1-2 <<< $previous_version) # remove patch number
+        prev=${prev#v}                                  # remove optional "v" prefix
+        next=$(cut -d '.' -f 1-2 <<< ${{ github.event.release.tag_name }})
+        next=${next#v}
 
-  publish-versioned-website:
-    name: Publish versioned website
-    needs: [package-deploy-pypi, package-deploy-conda]
-    uses: ./.github/workflows/reusable_website.yml
+        echo "Updating from version $previous_version to ${{ github.event.release.tag_name }}"
+        if [[ "$prev" == "$next" ]]; then
+          echo "::warning::Major/Minor version was not changed. Skipping website & docs generation step."
+        else
+          echo major_minor_changed=true >> $GITHUB_OUTPUT
+        fi
+
+  version-and-publish-website:
+    needs: check-versions
+    name: Version and Publish website
+    if: ${{ needs.check-versions.outputs.major_minor_changed == 'true' }}
+    uses: ./.github/workflows/publish_website.yml
     with:
-      publish_versioned_website: true
-      release_tag: ${{ github.event.release.tag_name }}
+      new_version: ${{ github.event.release.tag_name }}
+    permissions:
+      pages: write
+      id-token: write
+      contents: write

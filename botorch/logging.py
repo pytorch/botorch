@@ -6,6 +6,7 @@
 
 import logging
 
+import torch
 
 LOG_LEVEL_DEFAULT = logging.CRITICAL
 
@@ -34,6 +35,10 @@ def _get_logger(
     logger.addHandler(console)
     logger.propagate = False
     return logger
+
+
+def shape_to_str(shape: torch.Size) -> str:
+    return f"`{' x '.join(str(i) for i in shape)}`"
 
 
 logger = _get_logger()

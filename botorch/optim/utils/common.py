@@ -8,37 +8,19 @@ r"""General-purpose optimization utilities."""
 
 from __future__ import annotations
 
-from inspect import signature
+from collections.abc import Callable
+
 from logging import debug as logging_debug
-from typing import Any, Callable, Optional, Tuple
-from warnings import warn, warn_explicit, WarningMessage
+from warnings import warn_explicit, WarningMessage
 
 import numpy as np
+import numpy.typing as npt
 from linear_operator.utils.errors import NanError, NotPSDError
 
 
-def _filter_kwargs(function: Callable, **kwargs: Any) -> Any:
-    r"""Filter out kwargs that are not applicable for a given function.
-    Return a copy of given kwargs dict with only the required kwargs."""
-    allowed_params = signature(function).parameters
-    removed = {k for k in kwargs.keys() if k not in allowed_params}
-    if len(removed) > 0:
-        fn_descriptor = (
-            f" for function {function.__name__}"
-            if hasattr(function, "__name__")
-            else ""
-        )
-        warn(
-            f"Keyword arguments {list(removed)} will be ignored because they are"
-            f" not allowed parameters{fn_descriptor}. Allowed "
-            f"parameters are {list(allowed_params.keys())}."
-        )
-    return {k: v for k, v in kwargs.items() if k not in removed}
-
-
 def _handle_numerical_errors(
-    error: RuntimeError, x: np.ndarray, dtype: Optional[np.dtype] = None
-) -> Tuple[np.ndarray, np.ndarray]:
+    error: RuntimeError, x: npt.NDArray, dtype: np.dtype | None = None
+) -> tuple[npt.NDArray, npt.NDArray]:
     if isinstance(error, NotPSDError):
         raise error
     error_message = error.args[0] if len(error.args) > 0 else ""
@@ -54,8 +36,8 @@ def _handle_numerical_errors(
 
 def _warning_handler_template(
     w: WarningMessage,
-    debug: Optional[Callable[[WarningMessage], bool]] = None,
-    rethrow: Optional[Callable[[WarningMessage], bool]] = None,
+    debug: Callable[[WarningMessage], bool] | None = None,
+    rethrow: Callable[[WarningMessage], bool] | None = None,
 ) -> bool:
     r"""Helper for making basic warning handlers. Typically used with functools.partial.
 

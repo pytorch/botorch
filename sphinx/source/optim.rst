@@ -36,6 +36,16 @@ Stopping Criteria
 .. automodule:: botorch.optim.stopping
     :members:
 
+Acquisition Function Optimization with Homotopy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.optimize_homotopy
+    :members:
+
+Acquisition Function Optimization with Mixed Integer Variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.optimize_mixed
+    :members:
+
 Closures
 -------------------------------------------
 
@@ -78,12 +88,12 @@ Optimization with Timeouts
 .. automodule:: botorch.optim.utils.timeout
     :members:
 
-Numpy - Torch Conversion Tools (OLD)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.optim.numpy_converter
-    :members:
-
 Parameter Constraint Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.optim.parameter_constraints
+    :members:
+
+Homotopy Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.homotopy
     :members:

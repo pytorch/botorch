@@ -17,7 +17,6 @@ q-acquisition functions we evaluate the joint value of the q-batch).
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -25,7 +24,6 @@ from botorch.acquisition.objective import (
     IdentityMCObjective,
     MCAcquisitionObjective,
     PosteriorTransform,
-    ScalarizedPosteriorTransform,
 )
 from botorch.generation.utils import _flip_sub_unique
 from botorch.models.model import Model
@@ -39,21 +37,16 @@ from torch.nn import Module
 
 
 class SamplingStrategy(Module, ABC):
-    r"""
-    Abstract base class for sampling-based generation strategies.
-
-    :meta private:
-    """
+    """Abstract base class for sampling-based generation strategies."""
 
     @abstractmethod
-    def forward(self, X: Tensor, num_samples: int = 1, **kwargs: Any) -> Tensor:
+    def forward(self, X: Tensor, num_samples: int = 1) -> Tensor:
         r"""Sample according to the SamplingStrategy.
 
         Args:
             X: A `batch_shape x N x d`-dim Tensor from which to sample (in the `N`
                 dimension).
             num_samples: The number of samples to draw.
-            kwargs: Additional implementation-specific kwargs.
 
         Returns:
             A `batch_shape x num_samples x d`-dim Tensor of samples from `X`, where
@@ -75,8 +68,8 @@ class MaxPosteriorSampling(SamplingStrategy):
     def __init__(
         self,
         model: Model,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
         replacement: bool = True,
     ) -> None:
         r"""Constructor for the SamplingStrategy base class.
@@ -90,22 +83,7 @@ class MaxPosteriorSampling(SamplingStrategy):
         """
         super().__init__()
         self.model = model
-        if objective is None:
-            objective = IdentityMCObjective()
-        elif not isinstance(objective, MCAcquisitionObjective):
-            # TODO: Clean up once ScalarizedObjective is removed.
-            if posterior_transform is not None:
-                raise RuntimeError(
-                    "A ScalarizedObjective (DEPRECATED) and a posterior transform "
-                    "are not supported at the same time. Use only a posterior "
-                    "transform instead."
-                )
-            else:
-                posterior_transform = ScalarizedPosteriorTransform(
-                    weights=objective.weights, offset=objective.offset
-                )
-                objective = IdentityMCObjective()
-        self.objective = objective
+        self.objective = IdentityMCObjective() if objective is None else objective
         self.posterior_transform = posterior_transform
         self.replacement = replacement
 
@@ -167,8 +145,10 @@ class MaxPosteriorSampling(SamplingStrategy):
         # to have shape batch_shape x num_samples
         if idcs.ndim > 1:
             idcs = idcs.permute(*range(1, idcs.ndim), 0)
-        # in order to use gather, we need to repeat the index tensor d times
-        idcs = idcs.unsqueeze(-1).expand(*idcs.shape, X.size(-1))
+        # in order to use gather, we need to repeat the index tensor d times.
+        # The contiguous call is needed due to a pytorch issue:
+        # https://github.com/pytorch/pytorch/issues/151978
+        idcs = idcs.unsqueeze(-1).expand(*idcs.shape, X.size(-1)).contiguous()
         # now if the model is batched batch_shape will not necessarily be the
         # batch_shape of X, so we expand X to the proper shape
         Xe = X.expand(*obj.shape[1:], X.size(-1))
@@ -244,21 +224,19 @@ class BoltzmannSampling(SamplingStrategy):
 
 
 class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
-    r"""Sample from a set of points according to
-    their max posterior value,
-    which also likely meet a set of constraints
-    c1(x) <= 0, c2(x) <= 0, ..., cm(x) <= 0
-    c1, c2, ..., cm are black-box constraint functions
-    Each constraint function is modeled by a seperate
-    surrogate GP constraint model
-    We sample points for which the posterior value
-    for each constraint model <= 0,
-    as described in https://doi.org/10.48550/arxiv.2002.08526
+    r"""Constrained max posterior sampling.
+
+    Posterior sampling where we try to maximize an objective function while
+    simulatenously satisfying a set of constraints c1(x) <= 0, c2(x) <= 0,
+    ..., cm(x) <= 0 where c1, c2, ..., cm are black-box constraint functions.
+    Each constraint function is modeled by a seperate GP model. We follow the
+    procedure as described in https://doi.org/10.48550/arxiv.2002.08526.
 
     Example:
-        >>> CMPS = ConstrainedMaxPosteriorSampling(model,
-                    constraint_model=ModelListGP(cmodel1, cmodel2,
-                    ..., cmodelm)  # models w/ feature dim d=3
+        >>> CMPS = ConstrainedMaxPosteriorSampling(
+                model,
+                constraint_model=ModelListGP(cmodel1, cmodel2),
+            )
         >>> X = torch.rand(2, 100, 3)
         >>> sampled_X = CMPS(X, num_samples=5)
     """
@@ -266,35 +244,31 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
     def __init__(
         self,
         model: Model,
-        constraint_model: Union[ModelListGP, MultiTaskGP],
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        constraint_model: ModelListGP | MultiTaskGP,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
         replacement: bool = True,
-        minimize_constraints_only: bool = False,
     ) -> None:
         r"""Constructor for the SamplingStrategy base class.
 
         Args:
             model: A fitted model.
-            objective: The MCAcquisitionObjective under
-                which the samples are evaluated.
+            objective: The MCAcquisitionObjective under which the samples are evaluated.
                 Defaults to `IdentityMCObjective()`.
-            posterior_transform: An optional PosteriorTransform.
+            posterior_transform: An optional PosteriorTransform for the objective
+                function (corresponding to `model`).
             replacement: If True, sample with replacement.
-            constraint_model: either a ModelListGP where each submodel
-                is a GP model for one constraint function,
-                or a MultiTaskGP model where each task is one
-                constraint function
-                All constraints are of the form c(x) <= 0.
-                In the case when the constraint model predicts
-                that all candidates violate constraints,
-                we pick the candidates with minimum violation.
-            minimize_constraints_only: False by default, if true,
-                we will automatically return the candidates
-                with minimum posterior constraint values,
-                (minimum predicted c(x) summed over all constraints)
-                reguardless of predicted objective values.
+            constraint_model: either a ModelListGP where each submodel is a GP model for
+                one constraint function, or a MultiTaskGP model where each task is one
+                constraint function. All constraints are of the form c(x) <= 0. In the
+                case when the constraint model predicts that all candidates
+                violate constraints, we pick the candidates with minimum violation.
         """
+        if objective is not None:
+            raise NotImplementedError(
+                "`objective` is not supported for `ConstrainedMaxPosteriorSampling`."
+            )
+
         super().__init__(
             model=model,
             objective=objective,
@@ -302,7 +276,42 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
             replacement=replacement,
         )
         self.constraint_model = constraint_model
-        self.minimize_constraints_only = minimize_constraints_only
+
+    def _convert_samples_to_scores(self, Y_samples, C_samples) -> Tensor:
+        r"""Convert the objective and constraint samples into a score.
+
+        The logic is as follows:
+            - If a realization has at least one feasible candidate we use the objective
+                value as the score and set all infeasible candidates to -inf.
+            - If a realization doesn't have a feasible candidate we set the score to
+                the negative total violation of the constraints to incentivize choosing
+                the candidate with the smallest constraint violation.
+
+        Args:
+            Y_samples: A `num_samples x batch_shape x num_cand x 1`-dim Tensor of
+                samples from the objective function.
+            C_samples: A `num_samples x batch_shape x num_cand x num_constraints`-dim
+                Tensor of samples from the constraints.
+
+        Returns:
+            A `num_samples x batch_shape x num_cand x 1`-dim Tensor of scores.
+        """
+        is_feasible = (C_samples <= 0).all(
+            dim=-1
+        )  # num_samples x batch_shape x num_cand
+        has_feasible_candidate = is_feasible.any(dim=-1)
+
+        scores = Y_samples.clone()
+        scores[~is_feasible] = -float("inf")
+        if not has_feasible_candidate.all():
+            # Use negative total violation for samples where no candidate is feasible
+            total_violation = (
+                C_samples[~has_feasible_candidate]
+                .clamp(min=0)
+                .sum(dim=-1, keepdim=True)
+            )
+            scores[~has_feasible_candidate] = -total_violation
+        return scores
 
     def forward(
         self, X: Tensor, num_samples: int = 1, observation_noise: bool = False
@@ -310,42 +319,39 @@ class ConstrainedMaxPosteriorSampling(MaxPosteriorSampling):
         r"""Sample from the model posterior.
 
         Args:
-            X: A `batch_shape x N x d`-dim Tensor
-                from which to sample (in the `N`
-                dimension) according to the maximum
-                posterior value under the objective.
+            X: A `batch_shape x N x d`-dim Tensor from which to sample (in the `N`
+                dimension) according to the maximum posterior value under the objective.
             num_samples: The number of samples to draw.
             observation_noise: If True, sample with observation noise.
 
         Returns:
-            A `batch_shape x num_samples x d`-dim
-            Tensor of samples from `X`, where
-            `X[..., i, :]` is the `i`-th sample.
+            A `batch_shape x num_samples x d`-dim Tensor of samples from `X`, where
+                `X[..., i, :]` is the `i`-th sample.
         """
-        posterior = self.model.posterior(X, observation_noise=observation_noise)
-        samples = posterior.rsample(sample_shape=torch.Size([num_samples]))
-
-        c_posterior = self.constraint_model.posterior(
-            X, observation_noise=observation_noise
+        posterior = self.model.posterior(
+            X=X,
+            observation_noise=observation_noise,
+            # Note: `posterior_transform` is only used for the objective
+            posterior_transform=self.posterior_transform,
         )
-        constraint_samples = c_posterior.rsample(sample_shape=torch.Size([num_samples]))
-        valid_samples = constraint_samples <= 0
-        if valid_samples.shape[-1] > 1:  # if more than one constraint
-            valid_samples = torch.all(valid_samples, dim=-1).unsqueeze(-1)
-        if (valid_samples.sum() == 0) or self.minimize_constraints_only:
-            # if none of the samples meet the constraints
-            # we pick the one that minimizes total violation
-            constraint_samples = constraint_samples.sum(dim=-1)
-            idcs = torch.argmin(constraint_samples, dim=-1)
-            if idcs.ndim > 1:
-                idcs = idcs.permute(*range(1, idcs.ndim), 0)
-            idcs = idcs.unsqueeze(-1).expand(*idcs.shape, X.size(-1))
-            Xe = X.expand(*constraint_samples.shape[1:], X.size(-1))
-            return torch.gather(Xe, -2, idcs)
-        # replace all violators with -infinty so it will never choose them
-        replacement_infs = -torch.inf * torch.ones(samples.shape).to(X.device).to(
-            X.dtype
-        )
-        samples = torch.where(valid_samples, samples, replacement_infs)
+        Y_samples = posterior.rsample(sample_shape=torch.Size([num_samples]))
 
-        return self.maximize_samples(X, samples, num_samples)
+        # Loop over the constraint models (if possible) to reduce peak memory usage.
+        constraint_models = (
+            self.constraint_model.models
+            if isinstance(self.constraint_model, ModelListGP)
+            else [self.constraint_model]
+        )
+        C_samples_list = []
+        for c_model in constraint_models:
+            c_posterior = c_model.posterior(X=X, observation_noise=observation_noise)
+            C_samples_list.append(
+                c_posterior.rsample(sample_shape=torch.Size([num_samples]))
+            )
+        C_samples = torch.cat(C_samples_list, dim=-1)
+
+        # Convert the objective and constraint samples into a scalar-valued "score"
+        scores = self._convert_samples_to_scores(
+            Y_samples=Y_samples, C_samples=C_samples
+        )
+        return self.maximize_samples(X=X, samples=scores, num_samples=num_samples)

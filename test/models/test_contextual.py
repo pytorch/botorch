@@ -8,34 +8,59 @@
 import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.contextual import LCEAGP, SACGP
-from botorch.models.gp_regression import FixedNoiseGP
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.kernels.contextual_lcea import LCEAKernel
 from botorch.models.kernels.contextual_sac import SACKernel
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
+from gpytorch.likelihoods.gaussian_likelihood import (
+    FixedNoiseGaussianLikelihood,
+    GaussianLikelihood,
+)
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from torch import Tensor
+
+
+def _gen_datasets(
+    infer_noise: bool = False,
+    **tkwargs,
+) -> tuple[dict[int, SupervisedDataset], tuple[Tensor, Tensor, Tensor]]:
+    train_X = torch.tensor(
+        [[0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0], [2.0, 2.0, 2.0, 2.0]], **tkwargs
+    )
+    train_Y = torch.tensor([[1.0], [2.0], [3.0]], **tkwargs)
+    train_Yvar = None if infer_noise else torch.full_like(train_Y, 0.01)
+
+    datasets = SupervisedDataset(
+        X=train_X,
+        Y=train_Y,
+        Yvar=train_Yvar,
+        feature_names=[f"x{i}" for i in range(train_X.shape[-1])],
+        outcome_names=["y"],
+    )
+    return datasets, (train_X, train_Y, train_Yvar)
 
 
 class TestContextualGP(BotorchTestCase):
     def test_SACGP(self):
-        for dtype in (torch.float, torch.double):
-            train_X = torch.tensor(
-                [[0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0], [2.0, 2.0, 2.0, 2.0]],
-                device=self.device,
-                dtype=dtype,
+        for dtype, infer_noise in ((torch.float, False), (torch.double, True)):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(
+                infer_noise, **tkwargs
             )
-            train_Y = torch.tensor(
-                [[1.0], [2.0], [3.0]], device=self.device, dtype=dtype
-            )
-            train_Yvar = 0.01 * torch.ones(3, 1, device=self.device, dtype=dtype)
             self.decomposition = {"1": [0, 3], "2": [1, 2]}
 
             model = SACGP(train_X, train_Y, train_Yvar, self.decomposition)
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             fit_gpytorch_mll(mll, optimizer_kwargs={"options": {"maxiter": 1}})
 
-            self.assertIsInstance(model, FixedNoiseGP)
+            self.assertIsInstance(model, SingleTaskGP)
+            self.assertIsInstance(
+                model.likelihood,
+                GaussianLikelihood if infer_noise else FixedNoiseGaussianLikelihood,
+            )
             self.assertDictEqual(model.decomposition, self.decomposition)
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertIsInstance(model.covar_module, SACKernel)
@@ -59,20 +84,29 @@ class TestContextualGP(BotorchTestCase):
             posterior = model(test_x)
             self.assertIsInstance(posterior, MultivariateNormal)
 
-    def testLCEAGP(self):
+    def test_SACGP_construct_inputs(self):
         for dtype in (torch.float, torch.double):
-            train_X = torch.tensor(
-                [[0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0], [2.0, 2.0, 2.0, 2.0]],
-                device=self.device,
-                dtype=dtype,
+            tkwargs = {"device": self.device, "dtype": dtype}
+            datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(**tkwargs)
+            self.decomposition = {"1": [0, 3], "2": [1, 2]}
+            model = SACGP(train_X, train_Y, train_Yvar, self.decomposition)
+            data_dict = model.construct_inputs(
+                training_data=datasets, decomposition=self.decomposition
             )
-            train_Y = torch.tensor(
-                [[1.0], [2.0], [3.0]], device=self.device, dtype=dtype
+
+            self.assertTrue(train_X.equal(data_dict["train_X"]))
+            self.assertTrue(train_Y.equal(data_dict["train_Y"]))
+            self.assertTrue(train_Yvar.equal(data_dict["train_Yvar"]))
+            self.assertDictEqual(data_dict["decomposition"], self.decomposition)
+
+    def test_LCEAGP(self):
+        for dtype, infer_noise in ((torch.float, False), (torch.double, True)):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(
+                infer_noise, **tkwargs
             )
-            train_Yvar = 0.01 * torch.ones(3, 1, device=self.device, dtype=dtype)
             # Test setting attributes
             decomposition = {"1": [0, 1], "2": [2, 3]}
-
             # test instantiate model
             model = LCEAGP(
                 train_X=train_X,
@@ -86,7 +120,30 @@ class TestContextualGP(BotorchTestCase):
             self.assertIsInstance(model, LCEAGP)
             self.assertIsInstance(model.covar_module, LCEAKernel)
             self.assertDictEqual(model.decomposition, decomposition)
+            self.assertIsInstance(
+                model.likelihood,
+                GaussianLikelihood if infer_noise else FixedNoiseGaussianLikelihood,
+            )
 
             test_x = torch.rand(5, 4, device=self.device, dtype=dtype)
             posterior = model(test_x)
             self.assertIsInstance(posterior, MultivariateNormal)
+
+    def test_LCEAGP_construct_inputs(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            datasets, (train_X, train_Y, train_Yvar) = _gen_datasets(**tkwargs)
+            decomposition = {"1": ["x0", "x1"], "2": ["x2", "x3"]}
+            decomposition_index = {"1": [0, 1], "2": [2, 3]}
+
+            data_dict = LCEAGP.construct_inputs(
+                training_data=datasets,
+                decomposition=decomposition,
+                train_embedding=False,
+            )
+
+            self.assertTrue(train_X.equal(data_dict["train_X"]))
+            self.assertTrue(train_Y.equal(data_dict["train_Y"]))
+            self.assertTrue(train_Yvar.equal(data_dict["train_Yvar"]))
+            self.assertDictEqual(data_dict["decomposition"], decomposition_index)
+            self.assertFalse(data_dict["train_embedding"])

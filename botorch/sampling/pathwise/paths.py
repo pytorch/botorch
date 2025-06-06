@@ -7,18 +7,8 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
-)
+from collections.abc import Callable, Iterable, Iterator, Mapping
+from typing import Any
 
 from botorch.exceptions.errors import UnsupportedError
 from botorch.sampling.pathwise.features import FeatureMap
@@ -40,10 +30,10 @@ class PathDict(SamplePath):
 
     def __init__(
         self,
-        paths: Optional[Mapping[str, SamplePath]] = None,
-        join: Optional[Callable[[List[Tensor]], Tensor]] = None,
-        input_transform: Optional[TInputTransform] = None,
-        output_transform: Optional[TOutputTransform] = None,
+        paths: Mapping[str, SamplePath] | None = None,
+        join: Callable[[list[Tensor]], Tensor] | None = None,
+        input_transform: TInputTransform | None = None,
+        output_transform: TOutputTransform | None = None,
     ) -> None:
         r"""Initializes a PathDict instance.
 
@@ -66,11 +56,11 @@ class PathDict(SamplePath):
             else ModuleDict({} if paths is None else paths)
         )
 
-    def forward(self, x: Tensor, **kwargs: Any) -> Union[Tensor, Dict[str, Tensor]]:
+    def forward(self, x: Tensor, **kwargs: Any) -> Tensor | dict[str, Tensor]:
         out = [path(x, **kwargs) for path in self.paths.values()]
         return dict(zip(self.paths, out)) if self.join is None else self.join(out)
 
-    def items(self) -> Iterable[Tuple[str, SamplePath]]:
+    def items(self) -> Iterable[tuple[str, SamplePath]]:
         return self.paths.items()
 
     def keys(self) -> Iterable[str]:
@@ -100,10 +90,10 @@ class PathList(SamplePath):
 
     def __init__(
         self,
-        paths: Optional[Iterable[SamplePath]] = None,
-        join: Optional[Callable[[List[Tensor]], Tensor]] = None,
-        input_transform: Optional[TInputTransform] = None,
-        output_transform: Optional[TOutputTransform] = None,
+        paths: Iterable[SamplePath] | None = None,
+        join: Callable[[list[Tensor]], Tensor] | None = None,
+        input_transform: TInputTransform | None = None,
+        output_transform: TOutputTransform | None = None,
     ) -> None:
         r"""Initializes a PathList instance.
 
@@ -127,7 +117,7 @@ class PathList(SamplePath):
             else ModuleList({} if paths is None else paths)
         )
 
-    def forward(self, x: Tensor, **kwargs: Any) -> Union[Tensor, List[Tensor]]:
+    def forward(self, x: Tensor, **kwargs: Any) -> Tensor | list[Tensor]:
         out = [path(x, **kwargs) for path in self.paths]
         return out if self.join is None else self.join(out)
 
@@ -153,10 +143,10 @@ class GeneralizedLinearPath(SamplePath):
     def __init__(
         self,
         feature_map: FeatureMap,
-        weight: Union[Parameter, Tensor],
-        bias_module: Optional[Module] = None,
-        input_transform: Optional[TInputTransform] = None,
-        output_transform: Optional[TOutputTransform] = None,
+        weight: Parameter | Tensor,
+        bias_module: Module | None = None,
+        input_transform: TInputTransform | None = None,
+        output_transform: TOutputTransform | None = None,
     ):
         r"""Initializes a GeneralizedLinearPath instance.
 
@@ -174,6 +164,8 @@ class GeneralizedLinearPath(SamplePath):
         """
         super().__init__()
         self.feature_map = feature_map
+        if not isinstance(weight, Parameter):
+            self.register_buffer("weight", weight)
         self.weight = weight
         self.bias_module = bias_module
         self.input_transform = input_transform

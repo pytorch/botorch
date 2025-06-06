@@ -8,14 +8,12 @@ r"""Utilities for interfacing Numpy and Torch."""
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
 from itertools import tee
-from math import prod
-from typing import Callable, Dict, Iterator, Optional, Tuple, Union
 
 import numpy as np
+import numpy.typing as npt
 import torch
-from botorch.utils.types import NoneType
-from numpy import ndarray
 from torch import Tensor
 
 
@@ -35,8 +33,8 @@ torch_to_numpy_dtype_dict = {
 
 
 def as_ndarray(
-    values: Tensor, dtype: Optional[np.dtype] = None, inplace: bool = True
-) -> ndarray:
+    values: Tensor, dtype: np.dtype | None = None, inplace: bool = True
+) -> npt.NDArray:
     r"""Helper for going from torch.Tensor to numpy.ndarray.
 
     Args:
@@ -67,11 +65,11 @@ def as_ndarray(
 
 
 def get_tensors_as_ndarray_1d(
-    tensors: Union[Iterator[Tensor], Dict[str, Tensor]],
-    out: Optional[ndarray] = None,
-    dtype: Optional[Union[np.dtype, str]] = None,
-    as_array: Callable[[Tensor], ndarray] = as_ndarray,
-) -> ndarray:
+    tensors: Iterator[Tensor] | dict[str, Tensor],
+    out: npt.NDArray | None = None,
+    dtype: np.dtype | str | None = None,
+    as_array: Callable[[Tensor], npt.NDArray] = as_ndarray,
+) -> npt.NDArray:
     # Create a pair of iterators, one for setup and one for data transfer
     named_tensors_iter, named_tensors_iter2 = tee(
         iter(tensors.items()) if isinstance(tensors, dict) else enumerate(tensors), 2
@@ -112,9 +110,8 @@ def get_tensors_as_ndarray_1d(
 
 
 def set_tensors_from_ndarray_1d(
-    tensors: Union[Iterator[Tensor], Dict[str, Tensor]],
-    array: ndarray,
-    as_tensor: Callable[[ndarray], Tensor] = torch.as_tensor,
+    tensors: Iterator[Tensor] | dict[str, Tensor],
+    array: npt.NDArray,
 ) -> None:
     r"""Sets the values of one more tensors based off of a vector of assignments."""
     named_tensors_iter = (
@@ -126,7 +123,11 @@ def set_tensors_from_ndarray_1d(
             try:
                 size = tnsr.numel()
                 vals = array[index : index + size] if tnsr.ndim else array[index]
-                tnsr.copy_(as_tensor(vals).to(tnsr).view(tnsr.shape).to(tnsr))
+                tnsr.copy_(
+                    torch.as_tensor(vals, device=tnsr.device, dtype=tnsr.dtype).view(
+                        tnsr.shape
+                    )
+                )
                 index += size
             except Exception as e:
                 raise RuntimeError(
@@ -136,11 +137,9 @@ def set_tensors_from_ndarray_1d(
 
 
 def get_bounds_as_ndarray(
-    parameters: Dict[str, Tensor],
-    bounds: Dict[
-        str, Tuple[Union[float, Tensor, NoneType], Union[float, Tensor, NoneType]]
-    ],
-) -> Optional[np.ndarray]:
+    parameters: dict[str, Tensor],
+    bounds: dict[str, tuple[float | Tensor | None, float | Tensor | None]],
+) -> npt.NDArray | None:
     r"""Helper method for converting bounds into an ndarray.
 
     Args:
@@ -151,18 +150,23 @@ def get_bounds_as_ndarray(
         An ndarray of bounds.
     """
     inf = float("inf")
-    out = None
+    full_size = sum(param.numel() for param in parameters.values())
+    out = np.full((full_size, 2), (-inf, inf))
     index = 0
     for name, param in parameters.items():
-        size = prod(param.shape)
+        size = param.numel()
         if name in bounds:
             lower, upper = bounds[name]
-            lower = -inf if lower is None else float(lower)
-            upper = inf if upper is None else float(upper)
-            if lower != -inf or upper != inf:
-                if out is None:
-                    full_size = sum(prod(param.shape) for param in parameters.values())
-                    out = np.full((full_size, 2), (-inf, inf))
-                out[index : index + size] = (lower, upper)
+            lower = -inf if lower is None else lower
+            upper = inf if upper is None else upper
+            if isinstance(lower, Tensor):
+                lower = lower.cpu()
+            if isinstance(upper, Tensor):
+                upper = upper.cpu()
+            out[index : index + size, 0] = lower
+            out[index : index + size, 1] = upper
         index = index + size
+    # If all bounds are +/- inf, return None.
+    if np.isinf(out).all():
+        out = None
     return out

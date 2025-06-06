@@ -11,8 +11,6 @@ acquisition function.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from botorch.acquisition import AcquisitionFunction
 
@@ -24,7 +22,6 @@ from botorch.models.model import Model
 from botorch.models.transforms.input import InputTransform
 from botorch.utils import t_batch_mode_transform
 from torch import Tensor
-from torch.nn import Module
 
 
 class ProximalAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
@@ -54,8 +51,8 @@ class ProximalAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
         self,
         acq_function: AcquisitionFunction,
         proximal_weights: Tensor,
-        transformed_weighting: Optional[bool] = True,
-        beta: Optional[float] = None,
+        transformed_weighting: bool | None = True,
+        beta: float | None = None,
     ) -> None:
         r"""Derived Acquisition Function weighted by proximity to recently
         observed point.
@@ -90,7 +87,7 @@ class ProximalAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
 
         _validate_model(model, proximal_weights)
 
-    def set_X_pending(self, X_pending: Optional[Tensor]) -> None:
+    def set_X_pending(self, X_pending: Tensor | None) -> None:
         r"""Sets the `X_pending` of the base acquisition function."""
         raise UnsupportedError(
             "Proximal acquisition function does not support `X_pending`."
@@ -216,7 +213,7 @@ def _validate_model(model: Model, proximal_weights: Tensor) -> None:
         )
 
 
-def _get_input_transform(model: Model) -> Optional[InputTransform]:
+def _get_input_transform(model: Model) -> InputTransform | None:
     """get input transform if defined"""
     try:
         return model.input_transform

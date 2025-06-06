@@ -5,9 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+import re
+from collections.abc import Callable, Iterable
 from contextlib import ExitStack, nullcontext
+from copy import deepcopy
 from itertools import filterfalse, product
-from typing import Callable, Iterable, Optional
 from unittest.mock import MagicMock, patch
 from warnings import catch_warnings, warn, WarningMessage
 
@@ -15,25 +17,24 @@ import torch
 from botorch import fit
 from botorch.exceptions.errors import ModelFittingError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
+from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP, SingleTaskVariationalGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
-
 from botorch.optim.closures import get_loss_closure_with_grads
+from botorch.optim.core import OptimizationResult, OptimizationStatus
 from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
 from botorch.optim.utils import get_data_loader
-from botorch.settings import debug
-from botorch.utils.context_managers import (
-    module_rollback_ctx,
-    requires_grad_ctx,
-    TensorCheckpoint,
-)
+from botorch.utils.context_managers import module_rollback_ctx, TensorCheckpoint
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.kernels import MaternKernel
+from gpytorch.kernels import RBFKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood, VariationalELBO
 from linear_operator.utils.errors import NotPSDError
 
-MAX_ITER_MSG = "TOTAL NO. of ITERATIONS REACHED LIMIT"
+MAX_ITER_MSG_REGEX = re.compile(
+    # Note that the message changed with scipy 1.15, hence the different matching here.
+    "TOTAL NO. (of|OF) ITERATIONS REACHED LIMIT"
+)
 
 
 class MockOptimizer:
@@ -41,15 +42,16 @@ class MockOptimizer:
         self,
         randomize_requires_grad: bool = True,
         warnings: Iterable[WarningMessage] = (),
-        exception: Optional[BaseException] = None,
+        exception: BaseException | None = None,
     ):
         r"""Class used to mock `optimizer` argument to `fit_gpytorch_mll."""
         self.randomize_requires_grad = randomize_requires_grad
         self.warnings = warnings
         self.exception = exception
         self.call_count = 0
+        self.state_dicts = []
 
-    def __call__(self, mll, closure: Optional[Callable] = None):
+    def __call__(self, mll, closure: Callable | None = None) -> OptimizationResult:
         self.call_count += 1
         for w in self.warnings:
             warn(str(w.message), w.category)
@@ -63,13 +65,21 @@ class MockOptimizer:
         if self.exception is not None:
             raise self.exception
 
-        return mll, None
+        self.state_dicts.append(deepcopy(mll.state_dict()))
+        return OptimizationResult(
+            fval=torch.rand(1).item(),
+            step=1,
+            status=OptimizationStatus.SUCCESS,
+            message="Mock Success!",
+            runtime=1.0,
+        )
 
 
 class TestFitAPI(BotorchTestCase):
     r"""Unit tests for general fitting API"""
 
-    def setUp(self):
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
@@ -87,7 +97,7 @@ class TestFitAPI(BotorchTestCase):
     def test_fit_gpytorch_mll(self):
         # Test that `optimizer` is only passed when non-None
         with patch.object(fit, "FitGPyTorchMLL") as mock_dispatcher:
-            fit.fit_gpytorch_mll(self.mll, optimizer=None)
+            fit_gpytorch_mll(self.mll, optimizer=None)
             mock_dispatcher.assert_called_once_with(
                 self.mll,
                 type(self.mll.likelihood),
@@ -97,7 +107,7 @@ class TestFitAPI(BotorchTestCase):
                 optimizer_kwargs=None,
             )
 
-            fit.fit_gpytorch_mll(self.mll, optimizer="foo")
+            fit_gpytorch_mll(self.mll, optimizer="foo")
             mock_dispatcher.assert_called_with(
                 self.mll,
                 type(self.mll.likelihood),
@@ -108,71 +118,10 @@ class TestFitAPI(BotorchTestCase):
                 optimizer_kwargs=None,
             )
 
-    def test_fit_gyptorch_model(self):
-        r"""Test support for legacy API"""
-
-        # Test `option` argument
-        options = {"foo": 0}
-        with catch_warnings(), patch.object(
-            fit,
-            "fit_gpytorch_mll",
-            new=lambda mll, optimizer_kwargs=None, **kwargs: optimizer_kwargs,
-        ):
-            self.assertEqual(
-                {"options": options, "bar": 1},
-                fit.fit_gpytorch_model(
-                    self.mll,
-                    options=options,
-                    optimizer_kwargs={"bar": 1},
-                ),
-            )
-
-        # Test `max_retries` argument
-        with catch_warnings(), patch.object(
-            fit,
-            "fit_gpytorch_mll",
-            new=lambda mll, max_attempts=None, **kwargs: max_attempts,
-        ):
-            self.assertEqual(100, fit.fit_gpytorch_model(self.mll, max_retries=100))
-
-        # Test `exclude` argument
-        self.assertTrue(self.mll.model.mean_module.constant.requires_grad)
-        with catch_warnings(), patch.object(
-            fit,
-            "fit_gpytorch_mll",
-            new=lambda mll, **kwargs: mll.model.mean_module.constant.requires_grad,
-        ):
-            self.assertFalse(
-                fit.fit_gpytorch_model(
-                    self.mll,
-                    options=options,
-                    exclude=["model.mean_module.constant"],
-                )
-            )
-        self.assertTrue(self.mll.model.mean_module.constant.requires_grad)
-
-        # Test collisions
-        with catch_warnings(record=True) as ws, self.assertRaises(SyntaxError):
-            fit.fit_gpytorch_model(
-                self.mll,
-                options=options,
-                optimizer_kwargs={"options": {"bar": 1}},
-            )
-            self.assertTrue(any("marked for deprecation" in str(w.message) for w in ws))
-
-        # Test that ModelFittingErrors are rethrown as warnings
-        def mock_fit_gpytorch_mll(*args, **kwargs):
-            raise ModelFittingError("foo")
-
-        with catch_warnings(record=True) as ws, patch.object(
-            fit, "fit_gpytorch_mll", new=mock_fit_gpytorch_mll
-        ):
-            fit.fit_gpytorch_model(self.mll)
-        self.assertTrue(any("foo" in str(w.message) for w in ws))
-
 
 class TestFitFallback(BotorchTestCase):
-    def setUp(self):
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
@@ -180,26 +129,21 @@ class TestFitFallback(BotorchTestCase):
 
             self.mlls = {}
             self.checkpoints = {}
-            for model_type, output_dim in product([SingleTaskGP], [1, 2]):
+            for fixed_noise, output_dim in product([True, False], [1, 2]):
                 train_Y = train_F.repeat(1, output_dim)
                 train_Y = train_Y + 0.1 * torch.randn_like(train_Y)
-                model = model_type(
+                model = SingleTaskGP(
                     train_X=train_X,
                     train_Y=train_Y,
+                    train_Yvar=torch.full_like(train_Y, 0.1) if fixed_noise else None,
                     input_transform=Normalize(d=1),
                     outcome_transform=Standardize(m=output_dim),
-                    **(
-                        {}
-                        if model_type is SingleTaskGP
-                        else {"train_Yvar": torch.full_like(train_Y, 0.1)}
-                    ),
                 )
-                self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
-                model.covar_module.base_kernel.nu = 2.5
+                self.assertIsInstance(model.covar_module, RBFKernel)
 
                 mll = ExactMarginalLogLikelihood(model.likelihood, model)
                 for dtype in (torch.float32, torch.float64):
-                    key = model_type, output_dim
+                    key = fixed_noise, output_dim
                     self.mlls[key] = mll.to(dtype=dtype)
                     self.checkpoints[key] = {
                         k: TensorCheckpoint(
@@ -228,9 +172,7 @@ class TestFitFallback(BotorchTestCase):
         ]
         for should_fail in (True, False):
             optimizer.call_count = 0
-            with catch_warnings(), requires_grad_ctx(
-                module=mll, assignments={"model.mean_module.constant": False}
-            ), module_rollback_ctx(mll, checkpoint=ckpt):
+            with catch_warnings(), module_rollback_ctx(mll, checkpoint=ckpt):
                 try:
                     fit._fit_fallback(
                         mll,
@@ -277,7 +219,12 @@ class TestFitFallback(BotorchTestCase):
         optimizer = MockOptimizer(randomize_requires_grad=False)
         optimizer.warnings = [
             WarningMessage("test_runtime_warning", RuntimeWarning, __file__, 0),
-            WarningMessage(MAX_ITER_MSG, OptimizationWarning, __file__, 0),
+            WarningMessage(
+                "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+                OptimizationWarning,
+                __file__,
+                0,
+            ),
             WarningMessage(
                 "Optimization timed out after X", OptimizationWarning, __file__, 0
             ),
@@ -296,7 +243,6 @@ class TestFitFallback(BotorchTestCase):
                     else nullcontext()
                 )
                 ws = es.enter_context(catch_warnings(record=True))
-                es.enter_context(debug(True))
 
                 try:
                     fit._fit_fallback(
@@ -323,7 +269,9 @@ class TestFitFallback(BotorchTestCase):
                     {str(w.message) for w in rethrown + unresolved},
                 )
                 if logs:  # test that default filter logs certain warnings
-                    self.assertTrue(any(MAX_ITER_MSG in log for log in logs.output))
+                    self.assertTrue(
+                        any(MAX_ITER_MSG_REGEX.search(log) for log in logs.output)
+                    )
 
         # Test default of retrying upon encountering an uncaught OptimizationWarning
         optimizer.warnings.append(
@@ -344,8 +292,9 @@ class TestFitFallback(BotorchTestCase):
         optimizer = MockOptimizer(exception=NotPSDError("not_psd"))
         with catch_warnings():
             # Test behavior when encountering a caught exception
-            with self.assertLogs(level="DEBUG") as logs, self.assertRaises(
-                ModelFittingError
+            with (
+                self.assertLogs(logger="botorch", level="DEBUG") as logs,
+                self.assertRaises(ModelFittingError),
             ):
                 fit._fit_fallback(
                     mll,
@@ -375,9 +324,43 @@ class TestFitFallback(BotorchTestCase):
                 all(v.equal(ckpt[k].values) for k, v in mll.state_dict().items())
             )
 
+    def test_pick_best_of_all_attempts(self) -> None:
+        mll = next(iter(self.mlls.values()))
+        optimizer = MockOptimizer()
+        max_attempts = 10
+        with patch("botorch.fit.logger.debug") as mock_log:
+            fit._fit_fallback(
+                mll,
+                None,
+                None,
+                max_attempts=max_attempts,
+                pick_best_of_all_attempts=True,
+                optimizer=optimizer,
+            )
+        # Check that optimizer is called 3 times.
+        self.assertEqual(optimizer.call_count, max_attempts)
+        # Check that we log after each call.
+        self.assertEqual(mock_log.call_count, max_attempts)
+        # We have an increasing sequence of best MLL values.
+        mll_vals = []
+        for call in mock_log.call_args_list:
+            message = call.args[0]
+            mll_val = message.split(" ")[-1][:-1]
+            mll_vals.append(float(mll_val))
+        self.assertEqual(mll_vals, sorted(mll_vals))
+        # Check that the returned MLL is in eval mode.
+        self.assertFalse(mll.training)
+        # Check that the state dict matches the state dict of best attempt.
+        final_statedict = mll.state_dict()
+        best_idx = mll_vals.index(max(mll_vals))
+        best_state_dict = optimizer.state_dicts[best_idx]
+        for key, val in final_statedict.items():
+            self.assertAllClose(val, best_state_dict[key])
 
-class TestFitFallbackAppoximate(BotorchTestCase):
-    def setUp(self):
+
+class TestFitFallbackApproximate(BotorchTestCase):
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.linspace(0, 1, 10).unsqueeze(-1)
@@ -446,9 +429,10 @@ class TestFitFallbackAppoximate(BotorchTestCase):
                 optimizer=fit_gpytorch_mll_torch,
             )
 
-        with patch.object(fit, "_fit_fallback") as mock_fallback, patch.object(
-            fit, "get_loss_closure_with_grads"
-        ) as mock_get_closure:
+        with (
+            patch.object(fit, "_fit_fallback") as mock_fallback,
+            patch.object(fit, "get_loss_closure_with_grads") as mock_get_closure,
+        ):
             mock_get_closure.return_value = "foo"
             fit._fit_fallback_approximate(
                 self.mll,

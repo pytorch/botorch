@@ -11,11 +11,10 @@ Abstract base module for all botorch posteriors.
 from __future__ import annotations
 
 from functools import cached_property
-
-from typing import Any, List, Optional
+from typing import Any
 
 import torch
-from botorch.posteriors.fully_bayesian import FullyBayesianPosterior, MCMC_DIM
+from botorch.posteriors.fully_bayesian import GaussianMixturePosterior, MCMC_DIM
 from botorch.posteriors.posterior import Posterior
 from torch import Tensor
 
@@ -23,8 +22,8 @@ from torch import Tensor
 class PosteriorList(Posterior):
     r"""A Posterior represented by a list of independent Posteriors.
 
-    When at least one of the posteriors is a `FullyBayesianPosterior`, the other
-    posteriors are expanded to match the size of the `FullyBayesianPosterior`.
+    When at least one of the posteriors is a `GaussianMixturePosterior`, the other
+    posteriors are expanded to match the size of the `GaussianMixturePosterior`.
     """
 
     def __init__(self, *posteriors: Posterior) -> None:
@@ -44,16 +43,16 @@ class PosteriorList(Posterior):
         self.posteriors = list(posteriors)
 
     @cached_property
-    def _is_fully_bayesian(self) -> bool:
-        r"""Check if any of the posteriors is a `FullyBayesianPosterior`."""
-        return any(isinstance(p, FullyBayesianPosterior) for p in self.posteriors)
+    def _is_gaussian_mixture(self) -> bool:
+        r"""Check if any of the posteriors is a `GaussianMixturePosterior`."""
+        return any(isinstance(p, GaussianMixturePosterior) for p in self.posteriors)
 
     def _get_mcmc_batch_dimension(self) -> int:
         """Return the number of MCMC samples in the corresponding batch dimension."""
         mcmc_samples = [
             p.mean.shape[MCMC_DIM]
             for p in self.posteriors
-            if isinstance(p, FullyBayesianPosterior)
+            if isinstance(p, GaussianMixturePosterior)
         ]
         if len(set(mcmc_samples)) > 1:
             raise NotImplementedError(
@@ -68,15 +67,17 @@ class PosteriorList(Posterior):
         X = X.unsqueeze(MCMC_DIM)
         return X.expand(*X.shape[:MCMC_DIM], mcmc_samples, *X.shape[MCMC_DIM + 1 :])
 
-    def _reshape_and_cat(self, tensors: List[Tensor]):
+    def _reshape_and_cat(self, tensors: list[Tensor]):
         r"""Reshape, if needed, and concatenate (across dim=-1) a list of tensors."""
-        if self._is_fully_bayesian:
+        if self._is_gaussian_mixture:
             mcmc_samples = self._get_mcmc_batch_dimension()
             return torch.cat(
                 [
-                    x
-                    if isinstance(p, FullyBayesianPosterior)
-                    else self._reshape_tensor(x, mcmc_samples=mcmc_samples)
+                    (
+                        x
+                        if isinstance(p, GaussianMixturePosterior)
+                        else self._reshape_tensor(x, mcmc_samples=mcmc_samples)
+                    )
                     for x, p in zip(tensors, self.posteriors)
                 ],
                 dim=-1,
@@ -107,21 +108,24 @@ class PosteriorList(Posterior):
         return next(iter(dtypes))
 
     def _extended_shape(
-        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+        self,
+        sample_shape: torch.Size = torch.Size(),  # noqa: B008
     ) -> torch.Size:
         r"""Returns the shape of the samples produced by the posterior with
         the given `sample_shape`.
 
-        If there's at least one `FullyBayesianPosterior`, the MCMC dimension
+        If there's at least one `GaussianMixturePosterior`, the MCMC dimension
         is included the `_extended_shape`.
         """
-        if self._is_fully_bayesian:
+        if self._is_gaussian_mixture:
             mcmc_shape = torch.Size([self._get_mcmc_batch_dimension()])
             extend_dim = MCMC_DIM + 1  # The dimension to inject MCMC shape.
         extended_shapes = []
         for p in self.posteriors:
             es = p._extended_shape(sample_shape=sample_shape)
-            if self._is_fully_bayesian and not isinstance(p, FullyBayesianPosterior):
+            if self._is_gaussian_mixture and not isinstance(
+                p, GaussianMixturePosterior
+            ):
                 # Extend the shapes of non-fully Bayesian ones to match.
                 extended_shapes.append(es[:extend_dim] + mcmc_shape + es[extend_dim:])
             else:
@@ -151,19 +155,13 @@ class PosteriorList(Posterior):
         """
         return self._reshape_and_cat(tensors=[p.variance for p in self.posteriors])
 
-    def rsample(
-        self,
-        sample_shape: Optional[torch.Size] = None,
-    ) -> Tensor:
+    def rsample(self, sample_shape: torch.Size | None = None) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
         Args:
             sample_shape: A `torch.Size` object specifying the sample shape. To
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
                 of `n` samples each, set to `torch.Size([b, n])`.
-            base_samples: An (optional) Tensor of `N(0, I)` base samples of
-                appropriate dimension, typically obtained from a `Sampler`.
-                This is used for deterministic optimization. Deprecated.
 
         Returns:
             Samples from the posterior, a tensor of shape

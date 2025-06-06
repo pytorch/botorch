@@ -9,13 +9,11 @@ Cost models to be used with multi-fidelity optimization.
 
 Cost are useful for defining known cost functions when the cost of an evaluation
 is heterogeneous in fidelity. For a full worked example, see the
-`tutorial <https://botorch.org/tutorials/multi_fidelity_bo>`_ on continuous
+`tutorial <https://botorch.org/docs/tutorials/multi_fidelity_bo>`_ on continuous
 multi-fidelity Bayesian Optimization.
 """
 
 from __future__ import annotations
-
-from typing import Dict, Optional
 
 import torch
 from botorch.models.deterministic import DeterministicModel
@@ -31,7 +29,7 @@ class AffineFidelityCostModel(DeterministicModel):
         cost = fixed_cost + sum_j weights[j] * X[fidelity_dims[j]]
 
     For a full worked example, see the
-    `tutorial <https://botorch.org/tutorials/multi_fidelity_bo>`_ on continuous
+    `tutorial <https://botorch.org/docs/tutorials/multi_fidelity_bo>`_ on continuous
     multi-fidelity Bayesian Optimization.
 
     Example:
@@ -45,7 +43,7 @@ class AffineFidelityCostModel(DeterministicModel):
 
     def __init__(
         self,
-        fidelity_weights: Optional[Dict[int, float]] = None,
+        fidelity_weights: dict[int, float] | None = None,
         fixed_cost: float = 0.01,
     ) -> None:
         r"""
@@ -86,3 +84,40 @@ class AffineFidelityCostModel(DeterministicModel):
             "...f,f", X[..., self.fidelity_dims], self.weights.to(X)
         )
         return self.fixed_cost + lin_cost.unsqueeze(-1)
+
+
+class FixedCostModel(DeterministicModel):
+    r"""Deterministic, fixed cost model.
+
+    For each (q-batch) element of a candidate set `X`, this module computes a
+    fixed cost per objective.
+    """
+
+    def __init__(
+        self,
+        fixed_cost: Tensor,
+    ) -> None:
+        r"""
+        Args:
+            fixed_cost: A `m`-dim tensor containing the fixed cost of evaluating each
+                objective.
+        """
+        super().__init__()
+        self.register_buffer("fixed_cost", fixed_cost)
+        self._num_outputs = fixed_cost.shape[-1]
+
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate the cost on a candidate set X.
+
+        Computes the fixed cost of evaluating each objective for each element
+        of the q-batch.
+
+        Args:
+            X: A `batch_shape x q x d'`-dim tensor of candidate points.
+
+        Returns:
+            A `batch_shape x q x m`-dim tensor of costs.
+        """
+        view_shape = [1] * (X.ndim - 1) + [self._num_outputs]
+        expand_shape = X.shape[:-1] + torch.Size([self._num_outputs])
+        return self.fixed_cost.view(view_shape).expand(expand_shape)

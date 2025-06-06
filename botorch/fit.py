@@ -8,19 +8,29 @@ r"""Model fitting routines."""
 
 from __future__ import annotations
 
-import logging
-from contextlib import nullcontext
+from collections.abc import Callable, Sequence
+from copy import deepcopy
 from functools import partial
 from itertools import filterfalse
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Type, Union
-from warnings import catch_warnings, simplefilter, warn, warn_explicit, WarningMessage
+from typing import Any
+from warnings import catch_warnings, simplefilter, warn_explicit, WarningMessage
+
+import torch
 
 from botorch.exceptions.errors import ModelFittingError, UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
+from botorch.logging import logger
+from botorch.models import SingleTaskGP
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
-from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
+from botorch.models.fully_bayesian import (
+    AbstractFullyBayesianSingleTaskGP,
+    SaasFullyBayesianSingleTaskGP,
+)
 from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
+from botorch.models.map_saas import get_map_saas_model
 from botorch.models.model_list_gp_regression import ModelListGP
+from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.optim.closures import get_loss_closure_with_grads
 from botorch.optim.core import _LBFGSB_MAXITER_MAXFUN_REGEX
 from botorch.optim.fit import fit_gpytorch_mll_scipy, fit_gpytorch_mll_torch
@@ -29,21 +39,21 @@ from botorch.optim.utils import (
     get_parameters,
     sample_all_priors,
 )
-from botorch.settings import debug
 from botorch.utils.context_managers import (
     module_rollback_ctx,
     parameter_rollback_ctx,
-    requires_grad_ctx,
     TensorCheckpoint,
 )
 from botorch.utils.dispatcher import Dispatcher, type_bypassing_encoder
 from gpytorch.likelihoods import Likelihood
 from gpytorch.mlls._approximate_mll import _ApproximateMarginalLogLikelihood
+from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from linear_operator.utils.errors import NotPSDError
 from pyro.infer.mcmc import MCMC, NUTS
 from torch import device, Tensor
+from torch.distributions import HalfCauchy
 from torch.nn import Parameter
 from torch.utils.data import DataLoader
 
@@ -74,10 +84,10 @@ FitGPyTorchMLL = Dispatcher("fit_gpytorch_mll", encoder=type_bypassing_encoder)
 
 def fit_gpytorch_mll(
     mll: MarginalLogLikelihood,
-    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
-    optimizer: Optional[Callable] = None,
-    closure_kwargs: Optional[Dict[str, Any]] = None,
-    optimizer_kwargs: Optional[Dict[str, Any]] = None,
+    closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]] | None = None,
+    optimizer: Callable | None = None,
+    closure_kwargs: dict[str, Any] | None = None,
+    optimizer_kwargs: dict[str, Any] | None = None,
     **kwargs: Any,
 ) -> MarginalLogLikelihood:
     r"""Clearing house for fitting models passed as GPyTorch MarginalLogLikelihoods.
@@ -113,79 +123,20 @@ def fit_gpytorch_mll(
     )
 
 
-def fit_gpytorch_model(
-    mll: MarginalLogLikelihood,
-    optimizer: Optional[Callable] = None,
-    optimizer_kwargs: Optional[dict] = None,
-    exclude: Optional[Iterable[str]] = None,
-    max_retries: Optional[int] = None,
-    **kwargs: Any,
-) -> MarginalLogLikelihood:
-    r"""Convenience method for fitting GPyTorch models using legacy API. For more
-    details, see `fit_gpytorch_mll`.
-
-    Args:
-        mll: A GPyTorch MarginalLogLikelihood instance.
-        optimizer: User specified optimization algorithm. When `optimizer is None`,
-            this keyword argument is omitted when calling the dispatcher from inside
-            `fit_gpytorch_mll`.
-        optimizer_kwargs: Keyword arguments passed to `optimizer`.
-        exclude: Legacy argument for specifying parameters `x` that should be held fixed
-            during optimization. Internally, used to temporarily set `x.requires_grad`
-            to False.
-        max_retries: Legacy name for `max_attempts`. When `max_retries is None`,
-            this keyword argument is omitted when calling `fit_gpytorch_mll`.
-    """
-    warn(
-        "`fit_gpytorch_model` is marked for deprecation, consider using "
-        "`fit_gpytorch_mll` instead.",
-        DeprecationWarning,
-    )
-    if max_retries is not None:
-        kwargs["max_attempts"] = max_retries
-
-    optimizer_kwargs = {} if optimizer_kwargs is None else optimizer_kwargs
-    for key in ("bounds", "options"):
-        if key not in kwargs:
-            continue
-
-        val = kwargs.pop(key)
-        if key in optimizer_kwargs and val is not optimizer_kwargs[key]:
-            raise SyntaxError(f"keyword argument repeated: {key}")
-
-        optimizer_kwargs[key] = val
-
-    with (
-        nullcontext()
-        if exclude is None
-        else requires_grad_ctx(mll, assignments={name: False for name in exclude})
-    ):
-        try:
-            mll = fit_gpytorch_mll(
-                mll,
-                optimizer=optimizer,
-                optimizer_kwargs=optimizer_kwargs,
-                **kwargs,
-            )
-        except ModelFittingError as err:
-            warn(str(err), RuntimeWarning)
-
-    return mll
-
-
 @FitGPyTorchMLL.register(MarginalLogLikelihood, object, object)
 def _fit_fallback(
     mll: MarginalLogLikelihood,
-    _: Type[object],
-    __: Type[object],
+    _: type[object],
+    __: type[object],
     *,
-    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
-    optimizer: Optional[Callable] = fit_gpytorch_mll_scipy,
-    closure_kwargs: Optional[Dict[str, Any]] = None,
-    optimizer_kwargs: Optional[Dict[str, Any]] = None,
+    closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]] | None = None,
+    optimizer: Callable = fit_gpytorch_mll_scipy,
+    closure_kwargs: dict[str, Any] | None = None,
+    optimizer_kwargs: dict[str, Any] | None = None,
     max_attempts: int = 5,
+    pick_best_of_all_attempts: bool = False,
     warning_handler: Callable[[WarningMessage], bool] = DEFAULT_WARNING_HANDLER,
-    caught_exception_types: Tuple[Type[BaseException], ...] = (NotPSDError,),
+    caught_exception_types: tuple[type[BaseException], ...] = (NotPSDError,),
     **ignore: Any,
 ) -> MarginalLogLikelihood:
     r"""Generic fallback method for fitting Gaussian processes.
@@ -199,16 +150,25 @@ def _fit_fallback(
         closure: Forward-backward closure for obtaining objective values and gradients.
             Responsible for setting parameters' `grad` attributes. If no closure is
             provided, one will be obtained by calling `get_loss_closure_with_grads`.
-        optimizer: The underlying optimization algorithm to run.
+        optimizer: The underlying optimization algorithm to run. Should return
+            an `OptimizationResult` object, whose `fval` field records the negative
+            MLL value. Defaults to `fit_gpytorch_mll_scipy`.
         closure_kwargs: Keyword arguments passed to `closure`.
         optimizer_kwargs: Keyword arguments passed to `optimizer`.
         max_attempts: The maximum number of fit attempts allowed. The attempt budget
             is NOT shared between calls to this method.
+        pick_best_of_all_attempts: If True, the model will be fit `max_attempts` times,
+            and the attempt that produces largest MLL value will be returned.
+            First attempt uses the initial hyper parameter values, the subsequent
+            attempts will call `sample_all_priors` to sample the initial values.
+            If any attempt produces an error, the resulting parameters are discarded.
+            If optimizer timeout is used, the `timeout_sec` will be used as is for
+            each attempt, and it should be manually adjusted accordingly.
         warning_handler: A function used to filter warnings produced when calling
             `optimizer`. Any unfiltered warnings (those for which `warning_handler`
             returns `False`) will be rethrown and trigger a model fitting retry.
         caught_exception_types: A tuple of exception types whose instances should
-            be redirected to `logging.DEBUG`.
+            be logged at the `DEBUG` level.
         **ignore: This function ignores unrecognized keyword arguments.
 
     Returns:
@@ -217,9 +177,9 @@ def _fit_fallback(
     """
     # Setup
     optimizer_kwargs = {} if optimizer_kwargs is None else optimizer_kwargs
-    params_nograd: Dict[str, Parameter] = None  # pyre-ignore [9]
-    ckpt_nograd: Dict[str, TensorCheckpoint] = None  # pyre-ignore [9]
-    ckpt: Dict[str, TensorCheckpoint] = None  # pyre-ignore [9]
+    params_nograd: dict[str, Parameter] = None  # pyre-ignore [9]
+    ckpt_nograd: dict[str, TensorCheckpoint] = None  # pyre-ignore [9]
+    ckpt: dict[str, TensorCheckpoint] = None  # pyre-ignore [9]
 
     # Build closure
     mll.train()
@@ -230,6 +190,9 @@ def _fit_fallback(
     if closure_kwargs is not None:
         closure = partial(closure, **closure_kwargs)
 
+    # Record best MLL & corresponding state dict.
+    best_mll: float = -float("inf")
+    best_state_dict = None
     # Attempt to fit the model
     for attempt in range(1, 1 + max_attempts):
         # Wrap with rollback contextmanager so that each loop iteration reloads the
@@ -247,47 +210,64 @@ def _fit_fallback(
 
             try:
                 # Fit the model
-                with catch_warnings(record=True) as warning_list, debug(True):
+                with catch_warnings(record=True) as warning_list:
                     simplefilter("always", category=OptimizationWarning)
-                    optimizer(mll, closure=closure, **optimizer_kwargs)
+                    result = optimizer(mll, closure=closure, **optimizer_kwargs)
 
-                # Resolved warnings and determine whether or not to retry
-                done = True
+                # Resolve warnings and determine whether or not to retry
+                success = True
                 for w in filterfalse(warning_handler, warning_list):
                     warn_explicit(str(w.message), w.category, w.filename, w.lineno)
-                    done = False
+                    success = False
 
-                if done:
+                if success and not pick_best_of_all_attempts:
+                    # If not picking best of all attempts, return the first
+                    # successful attempt.
                     ckpt.clear()  # do not rollback upon exiting
                     return mll.eval()
+                elif success:
+                    # Update best MLL and corresponding state dict.
+                    # Optimizers minimize negative MLL, so we negate fval.
+                    current_mll = -result.fval
+                    if current_mll > best_mll:
+                        best_mll = current_mll
+                        # Deepcopy is important here, otherwise they get updated.
+                        best_state_dict = deepcopy(mll.state_dict())
+                        message = f"Fit attempt #{attempt}: New best MLL: {best_mll}."
+                    else:
+                        message = (
+                            f"Fit attempt #{attempt}: Current MLL {current_mll} did "
+                            f"not beat best MLL so far {best_mll}."
+                        )
+                    logger.debug(message)
 
-                # Ensure mll is in the right mode if fitting failed
+                # Ensure mll is in the right mode if going for another attempt.
                 mll = mll if mll.training else mll.train()
-                logging.log(
-                    logging.DEBUG,
-                    f"Fit attempt #{attempt} of {max_attempts} triggered retry policy"
-                    f"{'.' if attempt == max_attempts else '; retrying...'}",
-                )
+                if not success:
+                    logger.debug(
+                        f"Fit attempt #{attempt} of {max_attempts} triggered retry "
+                        f"policy {'.' if attempt == max_attempts else '; retrying...'}",
+                    )
 
             except caught_exception_types as err:
-                logging.log(
-                    logging.DEBUG,
-                    f"Fit attempt #{attempt} of {max_attempts} failed with exception: "
+                logger.debug(
+                    f"Fit attempt #{attempt} of {max_attempts} failed with exception:\n"
                     f"{err}",
                 )
 
-    msg = "All attempts to fit the model have failed."
-    if debug.off():
-        msg = msg + " For more information, try enabling botorch.settings.debug mode."
+    # If picking best of all attempts, return MLL with best state dict.
+    if best_state_dict is not None:
+        mll.load_state_dict(best_state_dict)
+        return mll.eval()
 
-    raise ModelFittingError(msg)
+    raise ModelFittingError("All attempts to fit the model have failed.")
 
 
 @FitGPyTorchMLL.register(SumMarginalLogLikelihood, object, ModelListGP)
 def _fit_list(
     mll: SumMarginalLogLikelihood,
-    _: Type[Likelihood],
-    __: Type[ModelListGP],
+    _: type[Likelihood],
+    __: type[ModelListGP],
     **kwargs: Any,
 ) -> SumMarginalLogLikelihood:
     r"""Fitting routine for lists of independent Gaussian processes.
@@ -310,12 +290,12 @@ def _fit_list(
 @FitGPyTorchMLL.register(_ApproximateMarginalLogLikelihood, object, object)
 def _fit_fallback_approximate(
     mll: _ApproximateMarginalLogLikelihood,
-    _: Type[Likelihood],
-    __: Type[ApproximateGPyTorchModel],
+    _: type[Likelihood],
+    __: type[ApproximateGPyTorchModel],
     *,
-    closure: Optional[Callable[[], Tuple[Tensor, Sequence[Optional[Tensor]]]]] = None,
-    data_loader: Optional[DataLoader] = None,
-    optimizer: Optional[Callable] = None,
+    closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]] | None = None,
+    data_loader: DataLoader | None = None,
+    optimizer: Callable | None = None,
     full_batch_limit: int = 1024,
     **kwargs: Any,
 ) -> _ApproximateMarginalLogLikelihood:
@@ -357,7 +337,7 @@ def _fit_fallback_approximate(
 
 
 def fit_fully_bayesian_model_nuts(
-    model: Union[SaasFullyBayesianSingleTaskGP, SaasFullyBayesianMultiTaskGP],
+    model: AbstractFullyBayesianSingleTaskGP | SaasFullyBayesianMultiTaskGP,
     max_tree_depth: int = 6,
     warmup_steps: int = 512,
     num_samples: int = 256,
@@ -369,7 +349,7 @@ def fit_fully_bayesian_model_nuts(
 
 
     Args:
-        model: SaasFullyBayesianSingleTaskGP to be fitted.
+        model: Fully Bayesian GP to be fitted.
         max_tree_depth: Maximum tree depth for NUTS
         warmup_steps: The number of burn-in steps for NUTS.
         num_samples:  The number of MCMC samples. Note that with thinning,
@@ -413,3 +393,128 @@ def fit_fully_bayesian_model_nuts(
     # Load the MCMC samples back into the BoTorch model
     model.load_mcmc_samples(mcmc_samples)
     model.eval()
+
+
+def get_fitted_map_saas_model(
+    train_X: Tensor,
+    train_Y: Tensor,
+    train_Yvar: Tensor | None = None,
+    input_transform: InputTransform | None = None,
+    outcome_transform: OutcomeTransform | None = None,
+    tau: float | None = None,
+    optimizer_kwargs: dict[str, Any] | None = None,
+) -> SingleTaskGP:
+    """Get a fitted MAP SAAS model with a Matern kernel.
+
+    Args:
+        train_X: Tensor of shape `n x d` with training inputs.
+        train_Y: Tensor of shape `n x 1` with training targets.
+        train_Yvar: Optional tensor of shape `n x 1` with observed noise,
+            inferred if None.
+        input_transform: An optional input transform.
+        outcome_transform: An optional outcome transforms.
+        tau: Fixed value of the global shrinkage tau. If None, the model
+            places a HC(0.1) prior on tau.
+        optimizer_kwargs: A dict of options for the optimizer passed
+            to fit_gpytorch_mll.
+
+    Returns:
+        A fitted SingleTaskGP with a Matern kernel.
+    """
+    # make sure optimizer_kwargs is a Dict
+    optimizer_kwargs = optimizer_kwargs or {}
+    model = get_map_saas_model(
+        train_X=train_X,
+        train_Y=train_Y,
+        train_Yvar=train_Yvar,
+        input_transform=(
+            input_transform.train() if input_transform is not None else None
+        ),
+        outcome_transform=outcome_transform,
+        tau=tau,
+    )
+    mll = ExactMarginalLogLikelihood(model=model, likelihood=model.likelihood)
+    fit_gpytorch_mll(mll, optimizer_kwargs=optimizer_kwargs)
+    return model
+
+
+def get_fitted_map_saas_ensemble(
+    train_X: Tensor,
+    train_Y: Tensor,
+    train_Yvar: Tensor | None = None,
+    input_transform: InputTransform | None = None,
+    outcome_transform: OutcomeTransform | None = None,
+    taus: Tensor | list[float] | None = None,
+    num_taus: int = 4,
+    optimizer_kwargs: dict[str, Any] | None = None,
+) -> SaasFullyBayesianSingleTaskGP:
+    """Get a fitted SAAS ensemble using several different tau values.
+
+    Args:
+        train_X: Tensor of shape `n x d` with training inputs.
+        train_Y: Tensor of shape `n x 1` with training targets.
+        train_Yvar: Optional tensor of shape `n x 1` with observed noise,
+            inferred if None.
+        input_transform: An optional input transform.
+        outcome_transform: An optional outcome transforms.
+        taus: Global shrinkage values to use. If None, we sample `num_taus` values
+            from an HC(0.1) distrbution.
+        num_taus: Optional argument for how many taus to sample.
+        optimizer_kwargs: A dict of options for the optimizer passed
+            to fit_gpytorch_mll.
+
+    Returns:
+        A fitted SaasFullyBayesianSingleTaskGP with a Matern kernel.
+    """
+    tkwargs = {"device": train_X.device, "dtype": train_X.dtype}
+    if taus is None:
+        taus = HalfCauchy(0.1).sample([num_taus]).to(**tkwargs)
+    num_samples = len(taus)
+    if num_samples == 1:
+        raise ValueError(
+            "Use `get_fitted_map_saas_model` if you only specify one value of tau"
+        )
+
+    mean = torch.zeros(num_samples, **tkwargs)
+    outputscale = torch.zeros(num_samples, **tkwargs)
+    lengthscale = torch.zeros(num_samples, train_X.shape[-1], **tkwargs)
+    noise = torch.zeros(num_samples, **tkwargs)
+
+    # Fit a model for each tau and save the hyperparameters
+    for i, tau in enumerate(taus):
+        model = get_fitted_map_saas_model(
+            train_X,
+            train_Y,
+            train_Yvar=train_Yvar,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
+            tau=tau,
+            optimizer_kwargs=optimizer_kwargs,
+        )
+        mean[i] = model.mean_module.constant.detach().clone()
+        outputscale[i] = model.covar_module.outputscale.detach().clone()
+        lengthscale[i, :] = model.covar_module.base_kernel.lengthscale.detach().clone()
+        if train_Yvar is None:
+            noise[i] = model.likelihood.noise.detach().clone()
+
+    # Load the samples into a fully Bayesian SAAS model
+    ensemble_model = SaasFullyBayesianSingleTaskGP(
+        train_X=train_X,
+        train_Y=train_Y,
+        train_Yvar=train_Yvar,
+        input_transform=(
+            input_transform.train() if input_transform is not None else None
+        ),
+        outcome_transform=outcome_transform,
+    )
+    mcmc_samples = {
+        "mean": mean,
+        "outputscale": outputscale,
+        "lengthscale": lengthscale,
+    }
+    if train_Yvar is None:
+        mcmc_samples["noise"] = noise
+    ensemble_model.train()
+    ensemble_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
+    ensemble_model.eval()
+    return ensemble_model

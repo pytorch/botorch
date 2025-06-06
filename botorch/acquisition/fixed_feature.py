@@ -5,19 +5,49 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-A wrapper around AquisitionFunctions to fix certain features for optimization.
+A wrapper around AcquisitionFunctions to fix certain features for optimization.
 This is useful e.g. for performing contextual optimization.
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from numbers import Number
-from typing import List, Optional, Sequence, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.wrapper import AbstractAcquisitionFunctionWrapper
 from torch import Tensor
+
+
+def get_dtype_of_sequence(values: Sequence[Tensor | float]) -> torch.dtype:
+    """
+    Return torch.float32 if everything is single-precision and torch.float64
+    otherwise.
+
+    Numbers (non-tensors) are double-precision.
+    """
+
+    def _is_single(value: Tensor | float) -> bool:
+        return isinstance(value, Tensor) and value.dtype == torch.float32
+
+    all_single_precision = all(_is_single(value) for value in values)
+    return torch.float32 if all_single_precision else torch.float64
+
+
+def get_device_of_sequence(values: Sequence[Tensor | float]) -> torch.dtype:
+    """
+    CPU if everything is on the CPU; Cuda otherwise.
+
+    Numbers (non-tensors) are considered to be on the CPU.
+    """
+
+    def _is_cuda(value: Tensor | float) -> bool:
+        return hasattr(value, "device") and value.device == torch.device("cuda")
+
+    any_cuda = any(_is_cuda(value) for value in values)
+    return torch.device("cuda") if any_cuda else torch.device("cpu")
 
 
 class FixedFeatureAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
@@ -36,8 +66,8 @@ class FixedFeatureAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
         self,
         acq_function: AcquisitionFunction,
         d: int,
-        columns: List[int],
-        values: Union[Tensor, Sequence[Union[Tensor, float]]],
+        columns: list[int],
+        values: Tensor | Sequence[Tensor | float],
     ) -> None:
         r"""Derived Acquisition Function by fixing a subset of input features.
 
@@ -60,24 +90,23 @@ class FixedFeatureAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
         dtype = torch.float
         device = torch.device("cpu")
         self.d = d
+
         if isinstance(values, Tensor):
             new_values = values.detach().clone()
         else:
+            dtype = get_dtype_of_sequence(values)
+            device = get_device_of_sequence(values)
+
             new_values = []
             for value in values:
                 if isinstance(value, Number):
-                    new_values.append(torch.tensor([float(value)]))
+                    value = torch.tensor([value], dtype=dtype)
                 else:
-                    # if any value uses double, use double for all values
-                    # likewise if any value uses cuda, use cuda for all values
-                    dtype = value.dtype if value.dtype == torch.double else dtype
-                    device = value.device if value.device.type == "cuda" else device
                     if value.ndim == 0:  # since we can't broadcast with zero-d tensors
                         value = value.unsqueeze(0)
-                    new_values.append(value.detach().clone())
-            # move all values to same device
-            for i, val in enumerate(new_values):
-                new_values[i] = val.to(dtype=dtype, device=device)
+                    value = value.detach().clone()
+
+                new_values.append(value.to(dtype=dtype, device=device))
 
             # There are 3 cases for when `values` is a `Sequence`.
             # 1) `values` == list of floats as earlier.
@@ -125,7 +154,19 @@ class FixedFeatureAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
         X_full = self._construct_X_full(X)
         return self.acq_func(X_full)
 
-    def set_X_pending(self, X_pending: Optional[Tensor]):
+    @property
+    def X_pending(self):
+        r"""Return the `X_pending` of the base acquisition function."""
+        try:
+            return self.acq_func.X_pending
+        except (ValueError, AttributeError):
+            raise ValueError(
+                f"Base acquisition function {type(self.acq_func).__name__} "
+                "does not have an `X_pending` attribute."
+            )
+
+    @X_pending.setter
+    def X_pending(self, X_pending: Tensor | None):
         r"""Sets the `X_pending` of the base acquisition function."""
         if X_pending is not None:
             full_X_pending = self._construct_X_full(X_pending)

@@ -10,8 +10,8 @@ from unittest import mock
 
 import torch
 from botorch.acquisition.multi_objective.objective import (
+    IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
-    UnstandardizeMCMultiOutputObjective,
 )
 from botorch.acquisition.multi_objective.utils import (
     compute_sample_box_decomposition,
@@ -24,7 +24,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.outcome import Standardize
-from botorch.utils.gp_sampling import get_gp_samples
+from botorch.sampling.pathwise import get_matheron_path_model
 from botorch.utils.multi_objective import is_non_dominated
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from torch import Tensor
@@ -32,8 +32,8 @@ from torch import Tensor
 
 class TestUtils(BotorchTestCase):
     def test_get_default_partitioning_alpha(self):
-        for m in range(2, 7):
-            expected_val = 0.0 if m < 5 else 10 ** (-8 + m)
+        for m in range(2, 9):
+            expected_val = 0.0 if m < 5 else 10 ** (-2 if m >= 6 else -3)
             self.assertEqual(
                 expected_val, get_default_partitioning_alpha(num_objectives=m)
             )
@@ -41,12 +41,12 @@ class TestUtils(BotorchTestCase):
         # remove the filter to ensure a warning is issued as expected.
         warnings.resetwarnings()
         with warnings.catch_warnings(record=True) as ws:
-            self.assertEqual(0.1, get_default_partitioning_alpha(num_objectives=7))
+            self.assertEqual(0.01, get_default_partitioning_alpha(num_objectives=7))
         self.assertEqual(len(ws), 1)
 
 
 class DummyMCMultiOutputObjective(MCMultiOutputObjective):
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None) -> Tensor:
         return samples
 
 
@@ -88,20 +88,17 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 prune_inferior_points_multi_objective(
                     model=mm, X=X, max_frac=1.1, ref_point=ref_point
                 )
+            # test that invalid X is checked properly
+            with self.assertRaises(ValueError):
+                prune_inferior_points_multi_objective(
+                    model=mm, X=torch.empty(0, 0), ref_point=ref_point
+                )
             # test basic behaviour
             X_pruned = prune_inferior_points_multi_objective(
                 model=mm, X=X, ref_point=ref_point
             )
-            self.assertTrue(torch.equal(X_pruned, X[[-1]]))
-            # test unstd objective
-            unstd_obj = UnstandardizeMCMultiOutputObjective(
-                Y_mean=samples.mean(dim=0), Y_std=samples.std(dim=0), outcomes=[0, 1]
-            )
-            X_pruned = prune_inferior_points_multi_objective(
-                model=mm, X=X, ref_point=ref_point, objective=unstd_obj
-            )
-            self.assertTrue(torch.equal(X_pruned, X[[-1]]))
             # test constraints
+            objective = IdentityMCMultiOutputObjective(outcomes=[0, 1])
             samples_constrained = torch.tensor(
                 [[1.0, 2.0, -1.0], [2.0, 1.0, -1.0], [3.0, 4.0, 1.0]], **tkwargs
             )
@@ -110,7 +107,7 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 model=mm_constrained,
                 X=X,
                 ref_point=ref_point,
-                objective=unstd_obj,
+                objective=objective,
                 constraints=[lambda Y: Y[..., -1]],
             )
             self.assertTrue(torch.equal(X_pruned, X[:2]))
@@ -133,13 +130,12 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 X_pruned = prune_inferior_points_multi_objective(
                     model=mm, X=X, ref_point=ref_point, max_frac=2 / 3
                 )
-            if self.device.type == "cuda":
-                # sorting has different order on cuda
-                self.assertTrue(
-                    torch.equal(X_pruned, X[[2, 1]]) or torch.equal(X_pruned, X[[1, 2]])
+            self.assertTrue(
+                torch.equal(
+                    torch.sort(X_pruned, stable=True).values,
+                    torch.sort(X[:2], stable=True).values,
                 )
-            else:
-                self.assertTrue(torch.equal(X_pruned, X[:2]))
+            )
             # test that zero-probability is in fact pruned
             samples[2, 0, 0] = 10
             with mock.patch.object(MockPosterior, "rsample", return_value=samples):
@@ -161,7 +157,7 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 model=mm,
                 X=X,
                 ref_point=ref_point,
-                objective=unstd_obj,
+                objective=objective,
                 constraints=[lambda Y: Y[..., -1] - 3.0],
                 marginalize_dim=-3,
             )
@@ -279,10 +275,7 @@ class TestThompsonSampling(BotorchTestCase):
         input_dim = 3
         num_initial = 5
         tkwargs = {"device": self.device}
-        optimizer_kwargs = {
-            "pop_size": 1000,
-            "max_tries": 5,
-        }
+        optimizer_kwargs = {"pop_size": 1000, "max_tries": 5}
 
         for (
             dtype,
@@ -309,11 +302,7 @@ class TestThompsonSampling(BotorchTestCase):
                 **tkwargs,
             )
 
-            model_sample = get_gp_samples(
-                model=model,
-                num_outputs=num_objectives,
-                n_samples=1,
-            )
+            model_sample = get_matheron_path_model(model=model)
 
             input_dim = X.shape[-1]
             # fake bounds
@@ -357,10 +346,7 @@ class TestThompsonSampling(BotorchTestCase):
         input_dim = 3
         num_initial = 5
         tkwargs = {"device": self.device}
-        optimizer_kwargs = {
-            "pop_size": 100,
-            "max_tries": 1,
-        }
+        optimizer_kwargs = {"pop_size": 100, "max_tries": 1}
         num_samples = 2
         num_points = 1
 

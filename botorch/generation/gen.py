@@ -12,50 +12,54 @@ from __future__ import annotations
 
 import time
 import warnings
+from collections.abc import Callable
 from functools import partial
-from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple, Type, Union
+from typing import Any, NoReturn
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from botorch.acquisition import AcquisitionFunction
+from botorch.exceptions.errors import OptimizationGradientError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.generation.utils import _remove_fixed_features_from_optimization
-from botorch.logging import _get_logger
+from botorch.logging import logger
 from botorch.optim.parameter_constraints import (
     _arrayify,
     make_scipy_bounds,
     make_scipy_linear_constraints,
     make_scipy_nonlinear_inequality_constraints,
-    NLC_TOL,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
-from botorch.optim.utils import _filter_kwargs, columnwise_clamp, fix_features
+from botorch.optim.utils import columnwise_clamp, fix_features
 from botorch.optim.utils.timeout import minimize_with_timeout
-from scipy.optimize.optimize import OptimizeResult
+from scipy.optimize import OptimizeResult
 from torch import Tensor
 from torch.optim import Optimizer
 
-logger = _get_logger()
-
-TGenCandidates = Callable[[Tensor, AcquisitionFunction, Any], Tuple[Tensor, Tensor]]
+TGenCandidates = Callable[[Tensor, AcquisitionFunction, Any], tuple[Tensor, Tensor]]
 
 
 def gen_candidates_scipy(
     initial_conditions: Tensor,
     acquisition_function: AcquisitionFunction,
-    lower_bounds: Optional[Union[float, Tensor]] = None,
-    upper_bounds: Optional[Union[float, Tensor]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    nonlinear_inequality_constraints: Optional[List[Callable]] = None,
-    options: Optional[Dict[str, Any]] = None,
-    fixed_features: Optional[Dict[int, Optional[float]]] = None,
-    timeout_sec: Optional[float] = None,
-) -> Tuple[Tensor, Tensor]:
+    lower_bounds: float | Tensor | None = None,
+    upper_bounds: float | Tensor | None = None,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None = None,
+    options: dict[str, Any] | None = None,
+    fixed_features: dict[int, float | None] | None = None,
+    timeout_sec: float | None = None,
+) -> tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using `scipy.optimize.minimize`.
 
     Optimizes an acquisition function starting from a set of initial candidates
     using `scipy.optimize.minimize` via a numpy converter.
+    We use SLSQP, if constraints are present, and LBFGS-B otherwise.
+    As `scipy.optimize.minimize` does not support optimizating a batch of problems, we
+    treat optimizing a set of candidates as a single optimization problem by
+    summing together their acquisition values.
 
     Args:
         initial_conditions: Starting points for optimization, with shape
@@ -69,13 +73,20 @@ def gen_candidates_scipy(
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
-        nonlinear_inequality_constraints: A list of callables with that represent
-            non-linear inequality constraints of the form `callable(x) >= 0`. Each
-            callable is expected to take a `(num_restarts) x q x d`-dim tensor as
-            an input and return a `(num_restarts) x q`-dim tensor with the
-            constraint values. The constraints will later be passed to SLSQP.
+        nonlinear_inequality_constraints: A list of tuples representing the nonlinear
+            inequality constraints. The first element in the tuple is a callable
+            representing a constraint of the form `callable(x) >= 0`. In case of an
+            intra-point constraint, `callable()`takes in an one-dimensional tensor of
+            shape `d` and returns a scalar. In case of an inter-point constraint,
+            `callable()` takes a two dimensional tensor of shape `q x d` and again
+            returns a scalar. The second element is a boolean, indicating if it is an
+            intra-point or inter-point constraint (`True` for intra-point. `False` for
+            inter-point). For more information on intra-point vs inter-point
+            constraints, see the docstring of the `inequality_constraints` argument to
+            `optimize_acqf()`. The constraints will later be passed to the scipy
+            solver.
         options: Options used to control the optimization including "method"
-            and "maxiter". Select method for `scipy.minimize` using the
+            and "maxiter". Select method for `scipy.optimize.minimize` using the
             "method" key. By default uses L-BFGS-B for box-constrained problems
             and SLSQP if inequality or equality constraints are present. If
             `with_grad=False`, then we use a two-point finite difference estimate
@@ -114,15 +125,12 @@ def gen_candidates_scipy(
     # if there are fixed features we may optimize over a domain of lower dimension
     reduced_domain = False
     if fixed_features:
-        # TODO: We can support fixed features, see Max's comment on D33551393. We can
-        # consider adding this at a later point.
-        if nonlinear_inequality_constraints:
-            raise NotImplementedError(
-                "Fixed features are not supported when non-linear inequality "
-                "constraints are given."
-            )
-        # if there are no constraints things are straightforward
-        if not (inequality_constraints or equality_constraints):
+        # if there are no constraints, things are straightforward
+        if not (
+            inequality_constraints
+            or equality_constraints
+            or nonlinear_inequality_constraints
+        ):
             reduced_domain = True
         # if there are we need to make sure features are fixed to specific values
         else:
@@ -137,6 +145,7 @@ def gen_candidates_scipy(
             upper_bounds=upper_bounds,
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
+            nonlinear_inequality_constraints=nonlinear_inequality_constraints,
         )
         # call the routine with no fixed_features
         clamped_candidates, batch_acquisition = gen_candidates_scipy(
@@ -146,6 +155,7 @@ def gen_candidates_scipy(
             upper_bounds=_no_fixed_features.upper_bounds,
             inequality_constraints=_no_fixed_features.inequality_constraints,
             equality_constraints=_no_fixed_features.equality_constraints,
+            nonlinear_inequality_constraints=_no_fixed_features.nonlinear_inequality_constraints,  # noqa: E501
             options=options,
             fixed_features=None,
             timeout_sec=timeout_sec,
@@ -172,7 +182,7 @@ def gen_candidates_scipy(
     with_grad = options.get("with_grad", True)
     if with_grad:
 
-        def f_np_wrapper(x: np.ndarray, f: Callable):
+        def f_np_wrapper(x: npt.NDArray, f: Callable):
             """Given a torch callable, compute value + grad given a numpy array."""
             if np.isnan(x).any():
                 raise RuntimeError(
@@ -198,23 +208,23 @@ def gen_candidates_scipy(
                 )
                 if initial_conditions.dtype != torch.double:
                     msg += " Consider using `dtype=torch.double`."
-                raise RuntimeError(msg)
-            fval = loss.item()
+                raise OptimizationGradientError(msg, current_x=x)
+            fval = loss.detach().item()
             return fval, gradf
 
     else:
 
-        def f_np_wrapper(x: np.ndarray, f: Callable):
+        def f_np_wrapper(x: npt.NDArray, f: Callable):
             X = torch.from_numpy(x).to(initial_conditions).view(shapeX).contiguous()
             with torch.no_grad():
                 X_fix = fix_features(X=X, fixed_features=fixed_features)
                 loss = f(X_fix).sum()
-            fval = loss.item()
+            fval = loss.detach().item()
             return fval
 
     if nonlinear_inequality_constraints:
         # Make sure `batch_limit` is 1 for now.
-        if not (len(shapeX) == 3 and shapeX[:2] == torch.Size([1, 1])):
+        if not (len(shapeX) == 3 and shapeX[0] == 1):
             raise ValueError(
                 "`batch_limit` must be 1 when non-linear inequality constraints "
                 "are given."
@@ -223,17 +233,19 @@ def gen_candidates_scipy(
             nonlinear_inequality_constraints=nonlinear_inequality_constraints,
             f_np_wrapper=f_np_wrapper,
             x0=x0,
+            shapeX=shapeX,
         )
     x0 = _arrayify(x0)
 
     def f(x):
         return -acquisition_function(x)
 
+    method = options.get("method", "SLSQP" if constraints else "L-BFGS-B")
     res = minimize_with_timeout(
         fun=f_np_wrapper,
         args=(f,),
         x0=x0,
-        method=options.get("method", "SLSQP" if constraints else "L-BFGS-B"),
+        method=method,
         jac=with_grad,
         bounds=bounds,
         constraints=constraints,
@@ -252,18 +264,6 @@ def gen_candidates_scipy(
         fixed_features=fixed_features,
     )
 
-    # SLSQP sometimes fails in the line search or may just fail to find a feasible
-    # candidate in which case we just return the starting point. This happens rarely,
-    # so it shouldn't be an issue given enough restarts.
-    if nonlinear_inequality_constraints and any(
-        nlc(candidates.view(-1)) < NLC_TOL for nlc in nonlinear_inequality_constraints
-    ):
-        candidates = torch.from_numpy(x0).to(candidates).reshape(shapeX)
-        warnings.warn(
-            "SLSQP failed to converge to a solution the satisfies the non-linear "
-            "constraints. Returning the feasible starting point."
-        )
-
     clamped_candidates = columnwise_clamp(
         X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True
     )
@@ -276,14 +276,14 @@ def gen_candidates_scipy(
 def gen_candidates_torch(
     initial_conditions: Tensor,
     acquisition_function: AcquisitionFunction,
-    lower_bounds: Optional[Union[float, Tensor]] = None,
-    upper_bounds: Optional[Union[float, Tensor]] = None,
-    optimizer: Type[Optimizer] = torch.optim.Adam,
-    options: Optional[Dict[str, Union[float, str]]] = None,
-    callback: Optional[Callable[[int, Tensor, Tensor], NoReturn]] = None,
-    fixed_features: Optional[Dict[int, Optional[float]]] = None,
-    timeout_sec: Optional[float] = None,
-) -> Tuple[Tensor, Tensor]:
+    lower_bounds: float | Tensor | None = None,
+    upper_bounds: float | Tensor | None = None,
+    optimizer: type[Optimizer] = torch.optim.Adam,
+    options: dict[str, float | str] | None = None,
+    callback: Callable[[int, Tensor, Tensor], NoReturn] | None = None,
+    fixed_features: dict[int, float | None] | None = None,
+    timeout_sec: float | None = None,
+) -> tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using a `torch.optim` optimizer.
 
     Optimizes an acquisition function starting from a set of initial candidates
@@ -342,6 +342,7 @@ def gen_candidates_torch(
             upper_bounds=upper_bounds,
             inequality_constraints=None,
             equality_constraints=None,
+            nonlinear_inequality_constraints=None,
         )
 
         # call the routine with no fixed_features
@@ -367,9 +368,7 @@ def gen_candidates_torch(
 
     i = 0
     stop = False
-    stopping_criterion = ExpMAStoppingCriterion(
-        **_filter_kwargs(ExpMAStoppingCriterion, **options)
-    )
+    stopping_criterion = ExpMAStoppingCriterion(**options)
     while not stop:
         i += 1
         with torch.no_grad():
@@ -431,7 +430,7 @@ def get_best_candidates(batch_candidates: Tensor, batch_values: Tensor) -> Tenso
     return batch_candidates[best]
 
 
-def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
+def _process_scipy_result(res: OptimizeResult, options: dict[str, Any]) -> None:
     r"""Process scipy optimization result to produce relevant logs and warnings."""
     if "success" not in res.keys() or "status" not in res.keys():
         with warnings.catch_warnings():
@@ -440,6 +439,7 @@ def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
                 "Optimization failed within `scipy.optimize.minimize` with no "
                 "status returned to `res.`",
                 OptimizationWarning,
+                stacklevel=3,
             )
     elif not res.success:
         if (
@@ -447,13 +447,13 @@ def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
             or "Iteration limit reached" in res.message
         ):
             logger.info(
-                "`scipy.minimize` exited by reaching the iteration limit of "
+                "`scipy.optimize.minimize` exited by reaching the iteration limit of "
                 f"`maxiter: {options.get('maxiter')}`."
             )
         elif "EVALUATIONS EXCEEDS LIMIT" in res.message:
             logger.info(
-                "`scipy.minimize` exited by reaching the function evaluation limit of "
-                f"`maxfun: {options.get('maxfun')}`."
+                "`scipy.optimize.minimize` exited by reaching the function evaluation "
+                f"limit of `maxfun: {options.get('maxfun')}`."
             )
         elif "Optimization timed out after" in res.message:
             logger.info(res.message)
@@ -464,16 +464,5 @@ def _process_scipy_result(res: OptimizeResult, options: Dict[str, Any]) -> None:
                     f"Optimization failed within `scipy.optimize.minimize` with status "
                     f"{res.status} and message {res.message}.",
                     OptimizationWarning,
+                    stacklevel=3,
                 )
-
-
-def minimize(*args, **kwargs):
-    """Deprecated, use `botorch.generation.gen.minimize_with_timeout`."""
-    # TODO: Reap this after the next stable Ax release.
-    warnings.warn(
-        "`botorch.generation.gen.minimize` is an alias for "
-        "`botorch.generation.gen.minimize_with_timeout` and will "
-        "be removed in a future release.",
-        DeprecationWarning,
-    )
-    return minimize_with_timeout(*args, **kwargs)

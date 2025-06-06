@@ -16,20 +16,15 @@ References
 
 """
 
-
 from __future__ import annotations
 
-from abc import abstractmethod
 from itertools import product
-from typing import List, Optional
 
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.multi_objective.objective import (
-    AnalyticMultiOutputObjective,
-    IdentityAnalyticMultiOutputObjective,
+from botorch.acquisition.multi_objective.base import (
+    MultiObjectiveAnalyticAcquisitionFunction,
 )
-from botorch.exceptions.errors import UnsupportedError
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
@@ -39,49 +34,13 @@ from torch import Tensor
 from torch.distributions import Normal
 
 
-class MultiObjectiveAnalyticAcquisitionFunction(AcquisitionFunction):
-    r"""Abstract base class for Multi-Objective batch acquisition functions."""
-
-    def __init__(
-        self, model: Model, objective: Optional[AnalyticMultiOutputObjective] = None
-    ) -> None:
-        r"""Constructor for the MultiObjectiveAnalyticAcquisitionFunction base class.
-
-        Args:
-            model: A fitted model.
-            objective: An AnalyticMultiOutputObjective (optional).
-        """
-        super().__init__(model=model)
-        if objective is None:
-            objective = IdentityAnalyticMultiOutputObjective()
-        elif not isinstance(objective, AnalyticMultiOutputObjective):
-            raise UnsupportedError(
-                "Only objectives of type AnalyticMultiOutputObjective are supported "
-                "for Multi-Objective analytic acquisition functions."
-            )
-        self.objective = objective
-
-    @abstractmethod
-    def forward(self, X: Tensor) -> Tensor:
-        r"""Takes in a `batch_shape x 1 x d` X Tensor of t-batches with `1` `d`-dim
-        design point each, and returns a Tensor with shape `batch_shape'`, where
-        `batch_shape'` is the broadcasted batch shape of model and input `X`.
-        """
-        pass  # pragma: no cover
-
-    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
-        raise UnsupportedError(
-            "Analytic acquisition functions do not account for X_pending yet."
-        )
-
-
 class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        ref_point: List[float],
+        ref_point: list[float],
         partitioning: NondominatedPartitioning,
-        objective: Optional[AnalyticMultiOutputObjective] = None,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> None:
         r"""Expected Hypervolume Improvement supporting m>=2 outcomes.
 
@@ -111,14 +70,14 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
 
         Args:
             model: A fitted model.
-            ref_point: A list with `m` elements representing the reference point (in the
-                outcome space) w.r.t. to which compute the hypervolume. This is a
-                reference point for the objective values (i.e. after applying
-                `objective` to the samples).
+            ref_point: A list with `m` elements representing the reference point
+                (in the outcome space) w.r.t. to which compute the hypervolume.
+                This is a reference point for the outcome values (i.e., after
+                applying `posterior_transform` if provided).
             partitioning: A `NondominatedPartitioning` module that provides the non-
                 dominated front and a partitioning of the non-dominated space in hyper-
                 rectangles.
-            objective: An `AnalyticMultiOutputObjective`.
+            posterior_transform: A `PosteriorTransform`.
         """
         # TODO: we could refactor this __init__ logic into a
         # HypervolumeAcquisitionFunction Mixin
@@ -138,7 +97,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
             raise ValueError(
                 "At least one pareto point must be better than the reference point."
             )
-        super().__init__(model=model, objective=objective)
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.register_buffer("ref_point", ref_point)
         self.partitioning = partitioning
         cell_bounds = self.partitioning.get_hypercell_bounds()
@@ -152,7 +111,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
         )
         self.normal = Normal(0, 1)
 
-    def psi(self, lower: Tensor, upper: Tensor, mu: Tensor, sigma: Tensor) -> None:
+    def psi(self, lower: Tensor, upper: Tensor, mu: Tensor, sigma: Tensor) -> Tensor:
         r"""Compute Psi function.
 
         For each cell i and outcome k:
@@ -179,7 +138,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
             1 - self.normal.cdf(u)
         )
 
-    def nu(self, lower: Tensor, upper: Tensor, mu: Tensor, sigma: Tensor) -> None:
+    def nu(self, lower: Tensor, upper: Tensor, mu: Tensor, sigma: Tensor) -> Tensor:
         r"""Compute Nu function.
 
         For each cell i and outcome k:
@@ -203,7 +162,9 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
-        posterior = self.objective(self.model.posterior(X))
+        posterior = self.model.posterior(
+            X, posterior_transform=self.posterior_transform
+        )
         mu = posterior.mean
         sigma = posterior.variance.clamp_min(1e-9).sqrt()
         # clamp here, since upper_bounds will contain `inf`s, which

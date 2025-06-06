@@ -49,6 +49,7 @@ class DummyFastPartitioning(FastPartitioning, DummyBoxDecomposition):
 
 class TestBoxDecomposition(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.ref_point_raw = torch.zeros(3, device=self.device)
         self.Y_raw = torch.tensor(
             [
@@ -76,7 +77,6 @@ class TestBoxDecomposition(BotorchTestCase):
                 DummyBoxDecomposition,
                 "_partition_space_2d" if m == 2 else "_partition_space",
             ) as mock_partition_space:
-
                 ref_point = self.ref_point_raw[:m].to(dtype=dtype)
                 Y = self.Y_raw[:, :m].to(dtype=dtype)
                 pareto_Y = self.pareto_Y_raw[:, :m].to(dtype=dtype)

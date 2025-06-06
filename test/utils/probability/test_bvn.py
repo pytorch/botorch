@@ -6,8 +6,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from itertools import count
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -24,13 +26,12 @@ from torch import Tensor
 
 
 def run_gaussian_estimator(
-    estimator: Callable[[Tensor], Tuple[Tensor, Union[Tensor, float, int]]],
+    estimator: Callable[[Tensor], tuple[Tensor, Tensor | float | int]],
     sqrt_cov: Tensor,
     num_samples: int,
-    batch_limit: Optional[int] = None,
-    seed: Optional[int] = None,
+    batch_limit: int | None = None,
+    seed: int | None = None,
 ) -> Tensor:
-
     if batch_limit is None:
         batch_limit = num_samples
 
@@ -64,13 +65,13 @@ class TestBVN(BotorchTestCase):
     def setUp(
         self,
         nprobs_per_coeff: int = 3,
-        bound_range: Tuple[float, float] = (-3.0, 3.0),
+        bound_range: tuple[float, float] = (-3.0, 3.0),
         mc_num_samples: int = 10000,
         mc_batch_limit: int = 1000,
         mc_atol_multiplier: float = 4.0,
         seed: int = 1,
         dtype: torch.dtype = torch.float64,
-        device: Optional[torch.device] = None,
+        device: torch.device | None = None,
     ):
         super().setUp()
         self.dtype = dtype
@@ -106,7 +107,7 @@ class TestBVN(BotorchTestCase):
         self.sqrt_covariances[:, 1, 1] = (1 - self.correlations**2) ** 0.5
 
     @property
-    def tkwargs(self) -> Dict[str, Any]:
+    def tkwargs(self) -> dict[str, Any]:
         return {"dtype": self.dtype, "device": self.device}
 
     @property

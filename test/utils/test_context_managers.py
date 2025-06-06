@@ -13,7 +13,6 @@ from botorch.utils.context_managers import (
     delattr_ctx,
     module_rollback_ctx,
     parameter_rollback_ctx,
-    requires_grad_ctx,
     TensorCheckpoint,
     zero_grad_ctx,
 )
@@ -23,6 +22,7 @@ from torch.nn import Module, Parameter
 
 class TestContextManagers(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         module = self.module = Module()
         for i, name in enumerate(ascii_lowercase[:3], start=1):
             values = torch.rand(2).to(torch.float16)
@@ -46,18 +46,6 @@ class TestContextManagers(BotorchTestCase):
             with delattr_ctx(self.module, "z", enforce_hasattr=True):
                 pass  # pragma: no cover
 
-    def test_requires_grad_ctx(self):
-        # Test temporary setting of requires_grad field
-        with requires_grad_ctx(self.module, assignments={"a": False, "b": True}):
-            self.assertTrue(not self.module.a.requires_grad)
-            self.assertTrue(self.module.b.requires_grad)
-            self.assertTrue(self.module.c.requires_grad)
-
-        # Test that requires_grad fields get restored
-        self.assertTrue(self.module.a.requires_grad)
-        self.assertTrue(not self.module.b.requires_grad)
-        self.assertTrue(self.module.c.requires_grad)
-
     def test_parameter_rollback_ctx(self):
         # Test that only unfiltered parameters get rolled back
         a = self.module.a.detach().clone()
@@ -65,7 +53,7 @@ class TestContextManagers(BotorchTestCase):
         c = self.module.c.detach().clone()
         parameters = dict(self.module.named_parameters())
         with parameter_rollback_ctx(parameters, dtype=torch.float16) as ckpt:
-            for (tnsr, _, __) in ckpt.values():  # test whether dtype is obeyed
+            for tnsr, _, __ in ckpt.values():  # test whether dtype is obeyed
                 self.assertEqual(torch.float16, tnsr.dtype)
 
             self.module.a.data[...] = 0
@@ -92,7 +80,7 @@ class TestContextManagers(BotorchTestCase):
         with module_rollback_ctx(
             self.module, lambda name: name == "a", dtype=torch.float16
         ) as ckpt:
-            for (tnsr, _, __) in ckpt.values():  # test whether dtype is obeyed
+            for tnsr, _, __ in ckpt.values():  # test whether dtype is obeyed
                 self.assertEqual(torch.float16, tnsr.dtype)
 
             self.module.a.data[...] = 0

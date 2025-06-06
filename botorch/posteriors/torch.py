@@ -10,7 +10,7 @@ Posterior module to be used with PyTorch distributions.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 import torch
 from botorch.posteriors.posterior import Posterior
@@ -42,7 +42,7 @@ class TorchPosterior(Posterior):
 
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
@@ -78,7 +78,7 @@ class TorchPosterior(Posterior):
         """
         return getattr(self.distribution, name)
 
-    def __getstate__(self) -> Dict[str, Any]:
+    def __getstate__(self) -> dict[str, Any]:
         r"""A minimal utility to support pickle protocol.
 
         Pickle uses `__get/setstate__` to serialize / deserialize the objects.
@@ -88,7 +88,7 @@ class TorchPosterior(Posterior):
         """
         return self.__dict__
 
-    def __setstate__(self, d: Dict[str, Any]) -> None:
+    def __setstate__(self, d: dict[str, Any]) -> None:
         r"""A minimal utility to support pickle protocol."""
         self.__dict__ = d
 
@@ -113,7 +113,8 @@ class TorchPosterior(Posterior):
         return self.log_prob(value).exp()
 
     def _extended_shape(
-        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+        self,
+        sample_shape: torch.Size = torch.Size(),  # noqa: B008
     ) -> torch.Size:
         r"""Returns the shape of the samples produced by the distribution with
         the given `sample_shape`.

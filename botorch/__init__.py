@@ -16,11 +16,7 @@ from botorch import (
     test_functions,
 )
 from botorch.cross_validation import batch_cross_validation
-from botorch.fit import (
-    fit_fully_bayesian_model_nuts,
-    fit_gpytorch_mll,
-    fit_gpytorch_model,
-)
+from botorch.fit import fit_fully_bayesian_model_nuts, fit_gpytorch_mll
 from botorch.generation.gen import (
     gen_candidates_scipy,
     gen_candidates_torch,
@@ -30,9 +26,12 @@ from botorch.logging import logger
 from botorch.utils import manual_seed
 
 try:
-    from botorch.version import version as __version__
+    # Marking this as a manual import to avoid autodeps complaints
+    # due to imports from non-existent file.
+    # lint-ignore: UnusedImportsRule
+    from botorch.version import version as __version__  # @manual
 except Exception:  # pragma: no cover
-    __version__ = "Unknown"  # pragma: no cover
+    __version__ = "Unknown"
 
 logger.info(
     "Turning off `fast_computations` in linear operator and increasing "
@@ -56,7 +55,6 @@ __all__ = [
     "exceptions",
     "fit_fully_bayesian_model_nuts",
     "fit_gpytorch_mll",
-    "fit_gpytorch_model",
     "gen_candidates_scipy",
     "gen_candidates_torch",
     "get_best_candidates",

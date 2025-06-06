@@ -16,20 +16,34 @@ from botorch.acquisition.analytic import (
     AnalyticAcquisitionFunction,
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    LogExpectedImprovement,
+    LogNoisyExpectedImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
+    PosteriorStandardDeviation,
     ProbabilityOfImprovement,
+    qAnalyticProbabilityOfImprovement,
     UpperConfidenceBound,
+)
+from botorch.acquisition.bayesian_active_learning import (
+    qBayesianActiveLearningByDisagreement,
 )
 from botorch.acquisition.cost_aware import (
     GenericCostAwareUtility,
     InverseCostWeightedUtility,
 )
+from botorch.acquisition.decoupled import DecoupledAcquisitionFunction
+from botorch.acquisition.factory import get_acquisition_function
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.input_constructors import get_acqf_input_constructor
 from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
+)
+from botorch.acquisition.logei import (
+    LogImprovementMCAcquisitionFunction,
+    qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
 )
 from botorch.acquisition.max_value_entropy_search import (
     MaxValueBase,
@@ -41,10 +55,13 @@ from botorch.acquisition.max_value_entropy_search import (
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
     qExpectedImprovement,
+    qLowerConfidenceBound,
     qNoisyExpectedImprovement,
+    qPosteriorStandardDeviation,
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
+    SampleReducingMCAcquisitionFunction,
 )
 from botorch.acquisition.multi_step_lookahead import qMultiStepLookahead
 from botorch.acquisition.objective import (
@@ -54,30 +71,45 @@ from botorch.acquisition.objective import (
     LearnedObjective,
     LinearMCObjective,
     MCAcquisitionObjective,
-    ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
-from botorch.acquisition.preference import AnalyticExpectedUtilityOfBestOption
+from botorch.acquisition.preference import (
+    AnalyticExpectedUtilityOfBestOption,
+    PairwiseBayesianActiveLearningByDisagreement,
+    qExpectedUtilityOfBestOption,
+)
+from botorch.acquisition.prior_guided import PriorGuidedAcquisitionFunction
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
-from botorch.acquisition.utils import get_acquisition_function
 
 __all__ = [
     "AcquisitionFunction",
     "AnalyticAcquisitionFunction",
     "AnalyticExpectedUtilityOfBestOption",
     "ConstrainedExpectedImprovement",
+    "DecoupledAcquisitionFunction",
     "ExpectedImprovement",
+    "LogExpectedImprovement",
+    "LogNoisyExpectedImprovement",
     "FixedFeatureAcquisitionFunction",
     "GenericCostAwareUtility",
     "InverseCostWeightedUtility",
     "NoisyExpectedImprovement",
     "OneShotAcquisitionFunction",
+    "PairwiseBayesianActiveLearningByDisagreement",
     "PairwiseMCPosteriorVariance",
     "PosteriorMean",
+    "PosteriorStandardDeviation",
+    "PriorGuidedAcquisitionFunction",
     "ProbabilityOfImprovement",
     "ProximalAcquisitionFunction",
     "UpperConfidenceBound",
+    "qBayesianActiveLearningByDisagreement",
+    "qAnalyticProbabilityOfImprovement",
     "qExpectedImprovement",
+    "qExpectedUtilityOfBestOption",
+    "LogImprovementMCAcquisitionFunction",
+    "qLogExpectedImprovement",
+    "qLogNoisyExpectedImprovement",
     "qKnowledgeGradient",
     "MaxValueBase",
     "qMultiFidelityKnowledgeGradient",
@@ -90,6 +122,8 @@ __all__ = [
     "qNegIntegratedPosteriorVariance",
     "qProbabilityOfImprovement",
     "qSimpleRegret",
+    "qPosteriorStandardDeviation",
+    "qLowerConfidenceBound",
     "qUpperConfidenceBound",
     "ConstrainedMCObjective",
     "GenericMCObjective",
@@ -97,8 +131,8 @@ __all__ = [
     "LearnedObjective",
     "LinearMCObjective",
     "MCAcquisitionFunction",
+    "SampleReducingMCAcquisitionFunction",
     "MCAcquisitionObjective",
-    "ScalarizedObjective",
     "ScalarizedPosteriorTransform",
     "get_acquisition_function",
     "get_acqf_input_constructor",

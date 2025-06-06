@@ -18,7 +18,6 @@ References
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import torch
 from botorch.exceptions.errors import BotorchError
@@ -36,13 +35,9 @@ class BoxDecomposition(Module, ABC):
     r"""An abstract class for box decompositions.
 
     Note: Internally, we store the negative reference point (minimization).
-
-    :meta private:
     """
 
-    def __init__(
-        self, ref_point: Tensor, sort: bool, Y: Optional[Tensor] = None
-    ) -> None:
+    def __init__(self, ref_point: Tensor, sort: bool, Y: Tensor | None = None) -> None:
         """Initialize BoxDecomposition.
 
         Args:
@@ -54,6 +49,7 @@ class BoxDecomposition(Module, ABC):
         self._neg_ref_point = -ref_point
         self.sort = torch.tensor(sort, dtype=torch.bool)
         self.num_outcomes = ref_point.shape[-1]
+        self.register_buffer("hypercell_bounds", None)
 
         if Y is not None:
             if Y.isnan().any():
@@ -257,14 +253,12 @@ class FastPartitioning(BoxDecomposition, ABC):
     [Lacour17]_: 1) partitioning the space that is dominated by the Pareto
     frontier and 2) partitioning the space that is not dominated by the
     Pareto frontier.
-
-    :meta private:
     """
 
     def __init__(
         self,
         ref_point: Tensor,
-        Y: Optional[Tensor] = None,
+        Y: Tensor | None = None,
     ) -> None:
         """
         Args:

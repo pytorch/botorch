@@ -6,7 +6,6 @@
 
 import time
 from functools import partial
-from typing import Dict
 from unittest.mock import MagicMock, patch
 
 import torch
@@ -43,7 +42,7 @@ class ToyModule(Module):
         return (self.x - self.b).square().sum()
 
     @property
-    def free_parameters(self) -> Dict[str, Tensor]:
+    def free_parameters(self) -> dict[str, Tensor]:
         return {n: p for n, p in self.named_parameters() if p.requires_grad}
 
 
@@ -81,7 +80,7 @@ class TestScipyMinimize(BotorchTestCase):
     def test_timeout(self):
         x = Parameter(torch.tensor(1.0))
         # adding a small delay here to combat some timing issues on windows
-        closure = partial(norm_squared, x, delay=1e-3)
+        closure = partial(norm_squared, x, delay=1e-2)
         result = scipy_minimize(closure, {"x": x}, timeout_sec=1e-4)
         self.assertEqual(result.status, OptimizationStatus.STOPPED)
         self.assertTrue("Optimization timed out after" in result.message)
@@ -136,11 +135,20 @@ class TestScipyMinimize(BotorchTestCase):
     def test_post_processing(self):
         closure = next(iter(self.closures.values()))
         wrapper = NdarrayOptimizationClosure(closure, closure.parameters)
+
+        # Scipy changed return values and messages in v1.15, so we check both
+        # old and new versions here.
+        status_msgs = [
+            # scipy >=1.15
+            (OptimizationStatus.FAILURE, "ABNORMAL_TERMINATION_IN_LNSRCH"),
+            (OptimizationStatus.STOPPED, "TOTAL NO. of ITERATIONS REACHED LIMIT"),
+            # scipy <1.15
+            (OptimizationStatus.FAILURE, "ABNORMAL "),
+            (OptimizationStatus.STOPPED, "TOTAL NO. OF ITERATIONS REACHED LIMIT"),
+        ]
+
         with patch.object(core, "minimize_with_timeout") as mock_minimize_with_timeout:
-            for status, msg in (
-                (OptimizationStatus.FAILURE, b"ABNORMAL_TERMINATION_IN_LNSRCH"),
-                (OptimizationStatus.STOPPED, "TOTAL NO. of ITERATIONS REACHED LIMIT"),
-            ):
+            for status, msg in status_msgs:
                 mock_minimize_with_timeout.return_value = OptimizeResult(
                     x=wrapper.state,
                     fun=1.0,

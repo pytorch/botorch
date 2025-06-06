@@ -9,6 +9,7 @@ import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.higher_order_gp import HigherOrderGP
 from botorch.posteriors.higher_order import HigherOrderGPPosterior
+from botorch.posteriors.transformed import TransformedPosterior
 from botorch.sampling.normal import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase
 
@@ -22,7 +23,7 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
         train_y = torch.randn(2, 10, 3, 5, device=self.device)
 
         m1 = HigherOrderGP(train_x, train_y)
-        m2 = HigherOrderGP(train_x[0], train_y[0])
+        m2 = HigherOrderGP(train_x[0], train_y[0], outcome_transform=None)
 
         torch.random.manual_seed(0)
         test_x = torch.rand(2, 5, 1, device=self.device)
@@ -32,18 +33,18 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
         posterior3 = m2.posterior(test_x)
 
         self.post_list = [
-            [m1, test_x, posterior1],
-            [m2, test_x[0], posterior2],
-            [m2, test_x, posterior3],
+            [m1, test_x, posterior1, TransformedPosterior],
+            [m2, test_x[0], posterior2, HigherOrderGPPosterior],
+            [m2, test_x, posterior3, HigherOrderGPPosterior],
         ]
 
     def test_HigherOrderGPPosterior(self):
         sample_shaping = torch.Size([5, 3, 5])
 
         for post_collection in self.post_list:
-            model, test_x, posterior = post_collection
+            model, test_x, posterior, posterior_class = post_collection
 
-            self.assertIsInstance(posterior, HigherOrderGPPosterior)
+            self.assertIsInstance(posterior, posterior_class)
 
             batch_shape = test_x.shape[:-2]
             expected_extended_shape = batch_shape + sample_shaping
@@ -105,6 +106,10 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
 
             model.eval()
             eval_mode_variance = model(test_x).variance.reshape_as(posterior_variance)
+            if hasattr(model, "outcome_transform"):
+                eval_mode_variance = model.outcome_transform.untransform(
+                    eval_mode_variance, eval_mode_variance
+                )[1]
             self.assertLess(
                 (posterior_variance - eval_mode_variance).norm()
                 / eval_mode_variance.norm(),

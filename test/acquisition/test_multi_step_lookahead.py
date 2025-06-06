@@ -12,11 +12,7 @@ from botorch.acquisition import (
     qMultiStepLookahead,
 )
 from botorch.acquisition.multi_step_lookahead import make_best_f, warmstart_multistep
-from botorch.acquisition.objective import (
-    IdentityMCObjective,
-    ScalarizedObjective,
-    ScalarizedPosteriorTransform,
-)
+from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.sampling import SobolQMCNormalSampler
@@ -115,33 +111,7 @@ class TestMultiStepLookahead(BotorchTestCase):
                     num_fantasies=num_fantasies,
                     inner_mc_samples=[2] * 4,
                 )
-            # AnalyticAcquisitionFunction with scalarized obj (deprecated)
-            with self.assertWarns(DeprecationWarning):
-                acqf = qMultiStepLookahead(
-                    model=model,
-                    objective=ScalarizedObjective(weights=torch.ones(1)),
-                    batch_sizes=q_batch_sizes,
-                    valfunc_cls=[ExpectedImprovement] * 4,
-                    valfunc_argfacs=[make_best_f] * 4,
-                    num_fantasies=num_fantasies,
-                )
-            self.assertIsNone(acqf.objective)
-            self.assertIsInstance(
-                acqf.posterior_transform, ScalarizedPosteriorTransform
-            )
-            # Both scalarized obj and scalarized post_tf
-            with self.assertRaises(RuntimeError):
-                qMultiStepLookahead(
-                    model=model,
-                    objective=ScalarizedObjective(weights=torch.ones(1)),
-                    posterior_transform=ScalarizedPosteriorTransform(
-                        weights=torch.ones(1)
-                    ),
-                    batch_sizes=q_batch_sizes,
-                    valfunc_cls=[ExpectedImprovement] * 4,
-                    valfunc_argfacs=[make_best_f] * 4,
-                    num_fantasies=num_fantasies,
-                )
+
             # test warmstarting
             qMS = qMultiStepLookahead(
                 model=model,
@@ -160,6 +130,13 @@ class TestMultiStepLookahead(BotorchTestCase):
                 full_optimizer=eval_X,
             )
             self.assertEqual(warmstarted_X.shape, torch.Size([5, q_prime, d]))
+
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "`qMultiStepLookahead` got a non-MC `objective`. This is not supported."
+            " Use `posterior_transform` and `objective=None` instead.",
+        ):
+            qMultiStepLookahead(model=model, batch_sizes=q_batch_sizes, objective="cat")
 
     def test_qMS(self):
         d = 2

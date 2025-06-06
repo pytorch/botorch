@@ -10,40 +10,22 @@ on:
 
 jobs:
 
-  ufmt:
-    name: Code formatting and sorting with ufmt
+  lint:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
+    env:
+      # `uv pip ...` requires venv by default. This skips that requirement.
+      UV_SYSTEM_PYTHON: 1
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.8"
-    - name: Install dependencies
-      run: |
-        # pin dependencies to match Meta-internal versions
-        pip install -r requirements-fmt.txt
-        pip install ufmt
-    - name: ufmt
-      run: |
-        ufmt diff .
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
 
-  flake8:
-    name: Lint with flake8
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.8"
-    - name: Install dependencies
-      run: |
-        pip install flake8 flake8-docstrings
-    - name: Flake8
-      run: |
-        flake8
+      - name: Install dependencies
+        run: uv pip install pre-commit
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files --show-diff-on-failure

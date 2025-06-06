@@ -7,18 +7,11 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import List, Optional
 
 import torch
-from botorch.acquisition.objective import (
-    AcquisitionObjective,
-    GenericMCObjective,
-    MCAcquisitionObjective,
-)
+from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.models.model import Model
-from botorch.models.transforms.outcome import Standardize
-from botorch.posteriors import GPyTorchPosterior
 from botorch.utils import apply_constraints
 from botorch.utils.transforms import normalize_indices
 from torch import Tensor
@@ -34,7 +27,7 @@ class MCMultiOutputObjective(MCAcquisitionObjective):
     _is_mo: bool = True
 
     @abstractmethod
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None, **kwargs) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Evaluate the multi-output objective on the samples.
 
         Args:
@@ -64,6 +57,7 @@ class GenericMCMultiOutputObjective(GenericMCObjective, MCMultiOutputObjective):
     callable. In order to be able to use gradient-based acquisition function
     optimization it should be possible to backpropagate through the callable.
     """
+
     pass
 
 
@@ -77,12 +71,11 @@ class IdentityMCMultiOutputObjective(MCMultiOutputObjective):
     """
 
     def __init__(
-        self, outcomes: Optional[List[int]] = None, num_outcomes: Optional[int] = None
+        self, outcomes: list[int] | None = None, num_outcomes: int | None = None
     ) -> None:
         r"""Initialize Objective.
 
         Args:
-            weights: `m'`-dim tensor of outcome weights.
             outcomes: A list of the `m'` indices that the weights should be
                 applied to.
             num_outcomes: The total number of outcomes `m`
@@ -101,7 +94,7 @@ class IdentityMCMultiOutputObjective(MCMultiOutputObjective):
                 outcomes = normalize_indices(outcomes, num_outcomes)
             self.register_buffer("outcomes", torch.tensor(outcomes, dtype=torch.long))
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         if hasattr(self, "outcomes"):
             return samples.index_select(-1, self.outcomes.to(device=samples.device))
         return samples
@@ -120,8 +113,8 @@ class WeightedMCMultiOutputObjective(IdentityMCMultiOutputObjective):
     def __init__(
         self,
         weights: Tensor,
-        outcomes: Optional[List[int]] = None,
-        num_outcomes: Optional[int] = None,
+        outcomes: list[int] | None = None,
+        num_outcomes: int | None = None,
     ) -> None:
         r"""Initialize Objective.
 
@@ -143,7 +136,7 @@ class WeightedMCMultiOutputObjective(IdentityMCMultiOutputObjective):
             )
         self.register_buffer("weights", weights)
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         samples = super().forward(samples=samples)
         return samples * self.weights.to(samples)
 
@@ -153,10 +146,10 @@ class FeasibilityWeightedMCMultiOutputObjective(MCMultiOutputObjective):
         self,
         model: Model,
         X_baseline: Tensor,
-        constraint_idcs: List[int],
-        objective: Optional[MCMultiOutputObjective] = None,
+        constraint_idcs: list[int],
+        objective: MCMultiOutputObjective | None = None,
     ) -> None:
-        r"""Construct a feasibility weighted objective.
+        r"""Construct a feasibility-weighted objective.
 
         This applies feasibility weighting before calculating the objective value.
         Defaults to identity if no constraints or objective is present.
@@ -188,12 +181,10 @@ class FeasibilityWeightedMCMultiOutputObjective(MCMultiOutputObjective):
             from botorch.acquisition.utils import get_infeasible_cost
 
             inf_cost = get_infeasible_cost(
-                X=X_baseline, model=model, objective=lambda y: y
+                X=X_baseline, model=model, objective=lambda y, X: y
             )[objective_idcs]
 
-            def apply_feasibility_weights(
-                Y: Tensor, X: Optional[Tensor] = None
-            ) -> Tensor:
+            def apply_feasibility_weights(Y: Tensor, X: Tensor | None = None) -> Tensor:
                 return apply_constraints(
                     obj=Y[..., objective_idcs],
                     constraints=[lambda Y: -Y[..., i] for i in constraint_idcs],
@@ -211,108 +202,5 @@ class FeasibilityWeightedMCMultiOutputObjective(MCMultiOutputObjective):
             self.objective = objective
             self._verify_output_shape = objective._verify_output_shape
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         return self.objective(self.apply_feasibility_weights(samples), X=X)
-
-
-class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):
-    r"""Objective that unstandardizes the samples.
-
-    TODO: remove this when MultiTask models support outcome transforms.
-
-    Example:
-        >>> unstd_objective = UnstandardizeMCMultiOutputObjective(Y_mean, Y_std)
-        >>> samples = sampler(posterior)
-        >>> objective = unstd_objective(samples)
-    """
-
-    def __init__(
-        self, Y_mean: Tensor, Y_std: Tensor, outcomes: Optional[List[int]] = None
-    ) -> None:
-        r"""Initialize objective.
-
-        Args:
-            Y_mean: `m`-dim tensor of outcome means.
-            Y_std: `m`-dim tensor of outcome standard deviations.
-            outcomes: A list of `m' <= m` indices that specifies which of the `m` model
-                outputs should be considered as the outcomes for MOO. If omitted, use
-                all model outcomes. Typically used for constrained optimization.
-        """
-        if Y_mean.ndim > 1 or Y_std.ndim > 1:
-            raise BotorchTensorDimensionError(
-                "Y_mean and Y_std must both be 1-dimensional, but got "
-                f"{Y_mean.ndim} and {Y_std.ndim}"
-            )
-        elif outcomes is not None and len(outcomes) > Y_mean.shape[-1]:
-            raise BotorchTensorDimensionError(
-                f"Cannot specify more ({len(outcomes)}) outcomes than are present in "
-                f"the normalization inputs ({Y_mean.shape[-1]})."
-            )
-        super().__init__(outcomes=outcomes, num_outcomes=Y_mean.shape[-1])
-        if outcomes is not None:
-            Y_mean = Y_mean.index_select(-1, self.outcomes.to(Y_mean.device))
-            Y_std = Y_std.index_select(-1, self.outcomes.to(Y_mean.device))
-
-        self.register_buffer("Y_mean", Y_mean)
-        self.register_buffer("Y_std", Y_std)
-
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
-        samples = super().forward(samples=samples)
-        return samples * self.Y_std + self.Y_mean
-
-
-class AnalyticMultiOutputObjective(AcquisitionObjective):
-    r"""Abstract base class for multi-output analyic objectives."""
-    # TODO: Refactor these as PosteriorTransform as well.
-
-    @abstractmethod
-    def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
-        r"""Transform the posterior
-
-        Args:
-            posterior: A posterior.
-
-        Returns:
-            A transformed posterior.
-        """
-        pass  # pragma: no cover
-
-
-class IdentityAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
-    def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
-        return posterior
-
-
-class UnstandardizeAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
-    r"""Objective that unstandardizes the posterior.
-
-    TODO: remove this when MultiTask models support outcome transforms.
-
-    Example:
-        >>> unstd_objective = UnstandardizeAnalyticMultiOutputObjective(Y_mean, Y_std)
-        >>> unstd_posterior = unstd_objective(posterior)
-    """
-
-    def __init__(self, Y_mean: Tensor, Y_std: Tensor) -> None:
-        r"""Initialize objective.
-
-        Args:
-            Y_mean: `m`-dim tensor of outcome means
-            Y_std: `m`-dim tensor of outcome standard deviations
-
-        """
-        if Y_mean.ndim > 1 or Y_std.ndim > 1:
-            raise BotorchTensorDimensionError(
-                "Y_mean and Y_std must both be 1-dimensional, but got "
-                f"{Y_mean.ndim} and {Y_std.ndim}"
-            )
-        super().__init__()
-        self.outcome_transform = Standardize(m=Y_mean.shape[0]).to(Y_mean)
-        Y_std_unsqueezed = Y_std.unsqueeze(0)
-        self.outcome_transform.means = Y_mean.unsqueeze(0)
-        self.outcome_transform.stdvs = Y_std_unsqueezed
-        self.outcome_transform._stdvs_sq = Y_std_unsqueezed.pow(2)
-        self.outcome_transform.eval()
-
-    def forward(self, posterior: GPyTorchPosterior) -> Tensor:
-        return self.outcome_transform.untransform_posterior(posterior)

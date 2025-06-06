@@ -94,16 +94,16 @@ sphinx/build/
 website/build/
 website/i18n/
 website/node_modules/
+website/.docusaurus/
 
 ## Generated for tutorials
 website/_tutorials/
 website/static/files/
-website/pages/tutorials/*
-!website/pages/tutorials/index.js
+docs/tutorials/*
+!docs/tutorials/index.mdx
 
 ## Generated for Sphinx
 website/pages/api/
 website/static/js/*
-!website/static/js/mathjax.js
 !website/static/js/code_block_buttons.js
 website/static/_sphinx-sources/

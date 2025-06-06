@@ -51,21 +51,6 @@ class propagate_grads(_Flag):
     _state: bool = False
 
 
-class debug(_Flag):
-    r"""Flag for printing verbose warnings.
-
-    To make sure a warning is only raised in debug mode:
-        >>> if debug.on():
-        >>>     warnings.warn(<some warning>)
-    """
-
-    _state: bool = False
-
-    @classmethod
-    def _set_state(cls, state: bool) -> None:
-        cls._state = state
-
-
 class validate_input_scaling(_Flag):
     r"""Flag for validating input normalization/standardization.
 

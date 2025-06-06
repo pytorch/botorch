@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Dict, List, Optional
 
 from botorch.models.transforms.input import (
     AnalyticProbabilisticReparameterizationInputTransform,
@@ -22,8 +21,8 @@ from torch import Tensor
 
 def get_rounding_input_transform(
     one_hot_bounds: Tensor,
-    integer_indices: Optional[List[int]] = None,
-    categorical_features: Optional[Dict[int, int]] = None,
+    integer_indices: list[int] | None = None,
+    categorical_features: dict[int, int] | None = None,
     initialization: bool = False,
     return_numeric: bool = False,
     approximate: bool = False,
@@ -129,8 +128,8 @@ def get_rounding_input_transform(
 
 def get_probabilistic_reparameterization_input_transform(
     one_hot_bounds: Tensor,
-    integer_indices: Optional[List[int]] = None,
-    categorical_features: Optional[Dict[int, int]] = None,
+    integer_indices: list[int] | None = None,
+    categorical_features: dict[int, int] | None = None,
     use_analytic: bool = False,
     mc_samples: int = 128,
     resample: bool = False,

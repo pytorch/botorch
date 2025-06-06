@@ -10,8 +10,10 @@ Utilities for optimization.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Generator, Iterable
+
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Generator, Iterable, NamedTuple, Optional, Union
+from typing import Any, NamedTuple
 
 from torch import device as Device, dtype as Dtype, Tensor
 from torch.nn import Module
@@ -19,8 +21,8 @@ from torch.nn import Module
 
 class TensorCheckpoint(NamedTuple):
     values: Tensor
-    device: Optional[Device] = None
-    dtype: Optional[Dtype] = None
+    device: Device | None = None
+    dtype: Dtype | None = None
 
 
 @contextmanager
@@ -45,29 +47,11 @@ def delattr_ctx(
 
 
 @contextmanager
-def requires_grad_ctx(
-    module: Module, assignments: Dict[str, bool]
-) -> Generator[None, None, None]:
-    r"""Contextmanager for temporarily setting the requires_grad field of a module's
-    parameters."""
-    try:
-        cache = {}
-        for name, mode in assignments.items():
-            parameter = module.get_parameter(name)
-            cache[name] = parameter.requires_grad
-            parameter.requires_grad_(mode)
-        yield
-    finally:
-        for name, mode in cache.items():
-            module.get_parameter(name).requires_grad_(mode)
-
-
-@contextmanager
 def parameter_rollback_ctx(
-    parameters: Dict[str, Tensor],
-    checkpoint: Optional[Dict[str, TensorCheckpoint]] = None,
+    parameters: dict[str, Tensor],
+    checkpoint: dict[str, TensorCheckpoint] | None = None,
     **tkwargs: Any,
-) -> Generator[Dict[str, TensorCheckpoint], None, None]:
+) -> Generator[dict[str, TensorCheckpoint], None, None]:
     r"""Contextmanager that exits by rolling back a module's state_dict.
 
     Args:
@@ -108,10 +92,10 @@ def parameter_rollback_ctx(
 @contextmanager
 def module_rollback_ctx(
     module: Module,
-    name_filter: Optional[Callable[[str], bool]] = None,
-    checkpoint: Optional[Dict[str, TensorCheckpoint]] = None,
+    name_filter: Callable[[str], bool] | None = None,
+    checkpoint: dict[str, TensorCheckpoint] | None = None,
     **tkwargs: Any,
-) -> Generator[Dict[str, TensorCheckpoint], None, None]:
+) -> Generator[dict[str, TensorCheckpoint], None, None]:
     r"""Contextmanager that exits by rolling back a module's state_dict.
 
     Args:
@@ -157,7 +141,7 @@ def module_rollback_ctx(
 
 @contextmanager
 def zero_grad_ctx(
-    parameters: Union[Dict[str, Tensor], Iterable[Tensor]],
+    parameters: dict[str, Tensor] | Iterable[Tensor],
     zero_on_enter: bool = True,
     zero_on_exit: bool = False,
 ) -> Generator[None, None, None]:

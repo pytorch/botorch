@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 from contextlib import ExitStack
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -25,17 +25,22 @@ from botorch.models.model import FantasizeMixin
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.models.utils import gpt_posterior_settings
+from botorch.models.utils.assorted import fantasize as fantasize_flag
+from botorch.models.utils.gpytorch_modules import (
+    get_covar_module_with_dim_scaled_prior,
+    get_gaussian_likelihood_with_lognormal_prior,
+)
 from botorch.posteriors import (
     GPyTorchPosterior,
     HigherOrderGPPosterior,
     TransformedPosterior,
 )
-from gpytorch.constraints import GreaterThan
+from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.kernels import Kernel, MaternKernel
-from gpytorch.likelihoods import GaussianLikelihood, Likelihood
+from gpytorch.kernels import Kernel
+from gpytorch.likelihoods import Likelihood
 from gpytorch.models import ExactGP
-from gpytorch.priors.torch_priors import GammaPrior, MultivariateNormalPrior
+from gpytorch.priors.torch_priors import MultivariateNormalPrior
 from gpytorch.settings import fast_pred_var, skip_posterior_variances
 from linear_operator.operators import (
     BatchRepeatLinearOperator,
@@ -44,11 +49,9 @@ from linear_operator.operators import (
     LinearOperator,
     ZeroLinearOperator,
 )
+from linear_operator.settings import _fast_solves
 from torch import Tensor
 from torch.nn import ModuleList, Parameter, ParameterList
-
-
-MIN_INFERRED_NOISE_LEVEL = 1e-4
 
 
 class FlattenedStandardize(Standardize):
@@ -61,7 +64,7 @@ class FlattenedStandardize(Standardize):
     def __init__(
         self,
         output_shape: torch.Size,
-        batch_shape: torch.Size = None,
+        batch_shape: torch.Size | None = None,
         min_stdv: float = 1e-8,
     ):
         r"""
@@ -74,9 +77,7 @@ class FlattenedStandardize(Standardize):
         if batch_shape is None:
             batch_shape = torch.Size()
 
-        super(FlattenedStandardize, self).__init__(
-            m=1, outputs=None, batch_shape=batch_shape, min_stdv=min_stdv
-        )
+        super().__init__(m=1, outputs=None, batch_shape=batch_shape, min_stdv=min_stdv)
 
         self.output_shape = output_shape
         self.batch_shape = batch_shape
@@ -90,8 +91,8 @@ class FlattenedStandardize(Standardize):
         return out
 
     def forward(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         Y = self._squeeze_to_single_output(Y)
         if Yvar is not None:
             Yvar = self._squeeze_to_single_output(Yvar)
@@ -106,13 +107,13 @@ class FlattenedStandardize(Standardize):
         return Y_out, Yvar_out
 
     def untransform(
-        self, Y: Tensor, Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+        self, Y: Tensor, Yvar: Tensor | None = None, X: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         Y = self._squeeze_to_single_output(Y)
         if Yvar is not None:
             Yvar = self._squeeze_to_single_output(Yvar)
 
-        Y, Yvar = super().untransform(Y, Yvar)
+        Y, Yvar = super().untransform(Y=Y, Yvar=Yvar, X=X)
 
         Y = self._return_to_output_shape(Y)
         if Yvar is not None:
@@ -120,7 +121,7 @@ class FlattenedStandardize(Standardize):
         return Y, Yvar
 
     def untransform_posterior(
-        self, posterior: HigherOrderGPPosterior
+        self, posterior: HigherOrderGPPosterior, X: Tensor | None = None
     ) -> TransformedPosterior:
         # TODO: return a HigherOrderGPPosterior once rescaling constant
         # muls * LinearOperators won't force a dense decomposition rather than a
@@ -158,19 +159,35 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     they would have a 6,000 x 6,000 covariance matrix, with 36 million entries.
     The Kronecker structure allows representing this as a product of 10x10,
     20x20, and 30x30 covariance matrices, with only 1,400 entries.
+
+    NOTE: This model requires the use of specialized Kronecker solves in
+    linear operator, which are disabled by default in BoTorch. These are enabled
+    by default in the `HigherOrderGP.posterior` call. However, they need to be
+    manually enabled by the user during model fitting. Note also that we're using
+    `fit_gpytorch_mll_torch()` here instead of `fit_gpytorch_mll()` since the
+    approximate computations result in a non-smooth MLL that the default
+    L-BFGS-B optimizer invoked by `fit_gpytorch_mll()` does not handle well.
+
+    Example:
+        >>> from linear_operator.settings import _fast_solves
+        >>> model = HigherOrderGP(train_X, train_Y)
+        >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        >>> with _fast_solves(True):
+        >>>     fit_gpytorch_mll_torch(mll)
+        >>> samples = model.posterior(test_X).rsample()
     """
 
     def __init__(
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        likelihood: Optional[Likelihood] = None,
-        covar_modules: Optional[List[Kernel]] = None,
-        num_latent_dims: Optional[List[int]] = None,
+        likelihood: Likelihood | None = None,
+        covar_modules: list[Kernel] | None = None,
+        num_latent_dims: list[int] | None = None,
         learn_latent_pars: bool = True,
         latent_init: str = "default",
-        outcome_transform: Optional[OutcomeTransform] = None,
-        input_transform: Optional[InputTransform] = None,
+        outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
+        input_transform: InputTransform | None = None,
     ):
         r"""
         Args:
@@ -181,8 +198,16 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             num_latent_dims: Sizes for the latent dimensions.
             learn_latent_pars: If true, learn the latent parameters.
             latent_init: [default or gp] how to initialize the latent parameters.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale). We use a
+                `Standardize` transform if no `outcome_transform` is specified.
+                Pass down `None` to use no outcome transform. Note that `.train()` will
+                be called on the outcome transform during instantiation of the model.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
         """
-
         if input_transform is not None:
             input_transform.to(train_X)
 
@@ -193,7 +218,11 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             raise NotImplementedError(
                 "HigherOrderGP currently only supports 1-dim `batch_shape`."
             )
-
+        if outcome_transform == DEFAULT:
+            outcome_transform = FlattenedStandardize(
+                output_shape=train_Y.shape[-num_output_dims:],
+                batch_shape=batch_shape,
+            )
         if outcome_transform is not None:
             if isinstance(outcome_transform, Standardize) and not isinstance(
                 outcome_transform, FlattenedStandardize
@@ -204,12 +233,14 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                     f"{train_Y.shape[- num_output_dims:]} and batch_shape="
                     f"{batch_shape} instead.",
                     RuntimeWarning,
+                    stacklevel=2,
                 )
                 outcome_transform = FlattenedStandardize(
                     output_shape=train_Y.shape[-num_output_dims:],
                     batch_shape=batch_shape,
                 )
-            train_Y, _ = outcome_transform(train_Y)
+            outcome_transform.train()
+            train_Y, _ = outcome_transform(train_Y, X=train_X)
 
         self._aug_batch_shape = batch_shape
         self._num_dimensions = num_output_dims + 1
@@ -218,17 +249,8 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         self._input_batch_shape = batch_shape
 
         if likelihood is None:
-
-            noise_prior = GammaPrior(1.1, 0.05)
-            noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
-            likelihood = GaussianLikelihood(
-                noise_prior=noise_prior,
-                batch_shape=self._aug_batch_shape,
-                noise_constraint=GreaterThan(
-                    MIN_INFERRED_NOISE_LEVEL,
-                    transform=None,
-                    initial_value=noise_prior_mode,
-                ),
+            likelihood = get_gaussian_likelihood_with_lognormal_prior(
+                batch_shape=self._aug_batch_shape
             )
         else:
             self._is_custom_likelihood = True
@@ -244,11 +266,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         else:
             self.covar_modules = ModuleList(
                 [
-                    MaternKernel(
-                        nu=2.5,
-                        lengthscale_prior=GammaPrior(3.0, 6.0),
-                        batch_shape=self._aug_batch_shape,
+                    get_covar_module_with_dim_scaled_prior(
                         ard_num_dims=1 if dim > 0 else train_X.shape[-1],
+                        batch_shape=self._aug_batch_shape,
                     )
                     for dim in range(self._num_dimensions)
                 ]
@@ -275,7 +295,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     def _initialize_latents(
         self,
         latent_init: str,
-        num_latent_dims: List[int],
+        num_latent_dims: list[int],
         learn_latent_pars: bool,
         device: torch.device,
         dtype: torch.dtype,
@@ -381,7 +401,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         return super().get_fantasy_model(inputs, reshaped_targets, **kwargs)
 
     def condition_on_observations(
-        self, X: Tensor, Y: Tensor, **kwargs: Any
+        self, X: Tensor, Y: Tensor, noise: torch.Tensor | None = None, **kwargs: Any
     ) -> HigherOrderGP:
         r"""Condition the model on new observations.
 
@@ -397,6 +417,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 standard broadcasting semantics. If `Y` has fewer batch dimensions
                 than `X`, its is assumed that the missing batch dimensions are
                 the same for all `Y`.
+            noise: If not None, a tensor of the same shape as `Y` representing
+                the noise variance associated with each observation.
+            kwargs: Passed to `condition_on_observations`.
 
         Returns:
             A `BatchedMultiOutputGPyTorchModel` object of the same type with
@@ -404,11 +427,12 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             conditioned on the new observations `(X, Y)` (and possibly noise
             observations passed in via kwargs).
         """
-        noise = kwargs.get("noise")
         if hasattr(self, "outcome_transform"):
             # we need to apply transforms before shifting batch indices around
-            Y, noise = self.outcome_transform(Y, noise)
-        self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
+            Y, noise = self.outcome_transform(Y=Y, Yvar=noise, X=X)
+        # Do not check shapes when fantasizing as they are not expected to match.
+        if fantasize_flag.off():
+            self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
 
         # we don't need to do un-squeezing because Y already is batched
         # we don't support fixed noise here yet
@@ -416,7 +440,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         #     kwargs.update({"noise": noise})
         fantasy_model = super(
             BatchedMultiOutputGPyTorchModel, self
-        ).condition_on_observations(X=X, Y=Y, **kwargs)
+        ).condition_on_observations(X=X, Y=Y, noise=noise, **kwargs)
         fantasy_model._input_batch_shape = fantasy_model.train_targets.shape[
             : (-1 if self._num_outputs == 1 else -2)
         ]
@@ -426,10 +450,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
-        observation_noise: Union[bool, Tensor] = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        **kwargs: Any,
+        output_indices: list[int] | None = None,
+        observation_noise: bool | Tensor = False,
+        posterior_transform: PosteriorTransform | None = None,
     ) -> GPyTorchPosterior:
         self.eval()  # make sure we're calling a posterior
 
@@ -448,6 +471,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         with ExitStack() as es:
             es.enter_context(gpt_posterior_settings())
             es.enter_context(fast_pred_var(True))
+            es.enter_context(_fast_solves(True))
 
             # we need to skip posterior variances here
             es.enter_context(skip_posterior_variances(True))
@@ -472,7 +496,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
             # we now compute the data covariances for the training data, the testing
             # data, the joint covariances, and the test train cross-covariance
             train_train_covar = self.prediction_strategy.lik_train_train_covar.detach()
-            base_train_train_covar = train_train_covar.lazy_tensor
+            base_train_train_covar = train_train_covar.linear_op
 
             data_train_covar = base_train_train_covar.linear_ops[0]
             data_covar = self.covar_modules[0]
@@ -529,7 +553,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
                 num_outputs=self._num_outputs,
             )
             if hasattr(self, "outcome_transform"):
-                posterior = self.outcome_transform.untransform_posterior(posterior)
+                posterior = self.outcome_transform.untransform_posterior(posterior, X=X)
             return posterior
 
     def make_posterior_variances(
@@ -556,7 +580,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         )
         full_test_train_covar_tuple = (test_train_covar,) + jcm_linops
 
-        train_evals, train_evecs = full_train_train_covar.symeig(eigenvectors=True)
+        train_evals, train_evecs = full_train_train_covar.eigh()
         # (\kron \Lambda_i + \sigma^2 I)^{-1}
         train_inv_evals = DiagLinearOperator(
             1.0 / (train_evals + self.likelihood.noise)
@@ -574,5 +598,5 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP, FantasizeMixin):
         #  (\kron K_i S_i * K_i S_i) \tilde{\Lambda}^{-1}
         test_train_pred_covar = test_train_hadamard.matmul(train_inv_evals).sum(dim=-1)
 
-        pred_variances = full_test_test_covar.diag() - test_train_pred_covar
+        pred_variances = full_test_test_covar.diagonal() - test_train_pred_covar
         return pred_variances

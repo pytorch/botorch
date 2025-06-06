@@ -12,7 +12,7 @@ via the BoTorch Model and Posterior APIs.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional
+from typing import Any
 
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
@@ -22,11 +22,7 @@ from torch import Tensor
 
 
 class EnsembleModel(Model, ABC):
-    r"""
-    Abstract base class for ensemble models.
-
-    :meta private:
-    """
+    """Abstract base class for ensemble models."""
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
@@ -52,8 +48,8 @@ class EnsembleModel(Model, ABC):
     def posterior(
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        output_indices: list[int] | None = None,
+        posterior_transform: PosteriorTransform | None = None,
         **kwargs: Any,
     ) -> EnsemblePosterior:
         r"""Compute the ensemble posterior at X.
@@ -83,7 +79,7 @@ class EnsembleModel(Model, ABC):
         # `posterior` (as is done in GP models). This is more general since it works
         # even if the transform doesn't support `untransform_posterior`.
         if hasattr(self, "outcome_transform"):
-            values, _ = self.outcome_transform.untransform(values)
+            values, _ = self.outcome_transform.untransform(values, X=X)
         if output_indices is not None:
             values = values[..., output_indices]
         posterior = EnsemblePosterior(values=values)

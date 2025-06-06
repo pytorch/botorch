@@ -70,8 +70,8 @@ class TestSampleCachedCholesky(BotorchTestCase):
                             train_X,
                             train_Y[:, :m],
                         )
-                    sampler = IIDNormalSampler(3)
-                    base_sampler = IIDNormalSampler(3)
+                    sampler = IIDNormalSampler(sample_shape=torch.Size([3]))
+                    base_sampler = IIDNormalSampler(sample_shape=torch.Size([3]))
                     for q in (1, 3, 9):
                         # test batched baseline_L
                         for train_batch_shape in (
@@ -85,7 +85,6 @@ class TestSampleCachedCholesky(BotorchTestCase):
                                 torch.Size([4]),
                                 torch.Size([4, 2]),
                             ):
-
                                 if len(train_batch_shape) > 0:
                                     train_X_ex = train_X.unsqueeze(0).expand(
                                         train_batch_shape + train_X.shape

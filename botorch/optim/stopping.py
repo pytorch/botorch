@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import typing  # noqa F401
 from abc import ABC, abstractmethod
 
 import torch
@@ -18,8 +17,6 @@ class StoppingCriterion(ABC):
 
     Stopping criteria are implemented as a objects rather than a function, so that they
     can keep track of past function values between optimization steps.
-
-    :meta private:
     """
 
     @abstractmethod

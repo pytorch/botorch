@@ -32,9 +32,19 @@ Dispatcher
 .. automodule:: botorch.utils.dispatcher
 		:members:
 
+Evaluation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.evaluation
+		:members:
+
 Low-Rank Cholesky Update Utils
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.low_rank
+		:members:
+
+Multi-Task Distribution Utils
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.multitask
 		:members:
 
 Objective
@@ -52,15 +62,14 @@ Sampling
 .. automodule:: botorch.utils.sampling
 		:members:
 
-Sampling from GP priors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.utils.gp_sampling
-		:members:
-
-
 Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.testing
+		:members:
+
+Test Helpers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.test_helpers
 		:members:
 
 Torch

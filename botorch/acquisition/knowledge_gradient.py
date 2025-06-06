@@ -26,8 +26,10 @@ and [Wu2016parallelkg]_.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from copy import deepcopy
-from typing import Any, Callable, Dict, Optional, Tuple, Type
+from typing import Any
 
 import torch
 from botorch import settings
@@ -67,14 +69,13 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        num_fantasies: Optional[int] = 64,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        inner_sampler: Optional[MCSampler] = None,
-        X_pending: Optional[Tensor] = None,
-        current_value: Optional[Tensor] = None,
-        **kwargs: Any,
+        num_fantasies: int | None = 64,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        inner_sampler: MCSampler | None = None,
+        X_pending: Tensor | None = None,
+        current_value: Tensor | None = None,
     ) -> None:
         r"""q-Knowledge Gradient (one-shot optimization).
 
@@ -126,18 +127,10 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         elif objective is not None and not isinstance(
             objective, MCAcquisitionObjective
         ):
-            # TODO: clean this up after removing AcquisitionObjective.
-            if posterior_transform is None:
-                posterior_transform = self._deprecate_acqf_objective(
-                    posterior_transform=posterior_transform,
-                    objective=objective,
-                )
-                objective = None
-            else:
-                raise RuntimeError(
-                    "Got both a non-MC objective (DEPRECATED) and a posterior "
-                    "transform. Use only a posterior transform instead."
-                )
+            raise UnsupportedError(
+                "Objectives that are not an `MCAcquisitionObjective` are not supported."
+            )
+
         if objective is None and model.num_outputs != 1:
             if posterior_transform is None:
                 raise UnsupportedError(
@@ -193,7 +186,8 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
         # construct the fantasy model of shape `num_fantasies x b`
         fantasy_model = self.model.fantasize(
-            X=X_actual, sampler=self.sampler, observation_noise=True
+            X=X_actual,
+            sampler=self.sampler,
         )
 
         # get the value function
@@ -229,7 +223,7 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
             kwargs: Additional keyword arguments. This includes the options for
                 optimization of the inner problem, i.e. `num_restarts`, `raw_samples`,
                 an `options` dictionary to be passed on to the optimization helpers, and
-                a `scipy_options` dictionary to be passed to `scipy.minimize`.
+                a `scipy_options` dictionary to be passed to `scipy.optimize.minimize`.
 
         Returns:
             A Tensor of shape `b`. For t-batch b, the q-KG value of the design
@@ -242,7 +236,8 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
         # construct the fantasy model of shape `num_fantasies x b`
         fantasy_model = self.model.fantasize(
-            X=X, sampler=self.sampler, observation_noise=True
+            X=X,
+            sampler=self.sampler,
         )
 
         # get the value function
@@ -326,19 +321,18 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
     def __init__(
         self,
         model: Model,
-        num_fantasies: Optional[int] = 64,
-        sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        inner_sampler: Optional[MCSampler] = None,
-        X_pending: Optional[Tensor] = None,
-        current_value: Optional[Tensor] = None,
-        cost_aware_utility: Optional[CostAwareUtility] = None,
+        num_fantasies: int | None = 64,
+        sampler: MCSampler | None = None,
+        objective: MCAcquisitionObjective | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        inner_sampler: MCSampler | None = None,
+        X_pending: Tensor | None = None,
+        current_value: Tensor | None = None,
+        cost_aware_utility: CostAwareUtility | None = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
-        valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-        valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
-        **kwargs: Any,
+        valfunc_cls: type[AcquisitionFunction] | None = None,
+        valfunc_argfac: Callable[[Model], dict[str, Any]] | None = None,
     ) -> None:
         r"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).
 
@@ -435,7 +429,7 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
                 `X_actual = X[..., :-num_fantasies, :]`
                 `X_actual.shape = b x q x d`
 
-                In addition, `X` may be augmented with fidelity parameteres as
+                In addition, `X` may be augmented with fidelity parameters as
                 part of thee `d`-dimension. Projecting fidelities to the target
                 fidelity is handled by `project`.
 
@@ -461,7 +455,8 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         # construct the fantasy model of shape `num_fantasies x b`
         # expand X (to potentially add trace observations)
         fantasy_model = self.model.fantasize(
-            X=self.expand(X_eval), sampler=self.sampler, observation_noise=True
+            X=self.expand(X_eval),
+            sampler=self.sampler,
         )
         # get the value function
         value_function = _get_value_function(
@@ -523,16 +518,16 @@ class ProjectedAcquisitionFunction(AcquisitionFunction):
 
 def _get_value_function(
     model: Model,
-    objective: Optional[MCAcquisitionObjective] = None,
-    posterior_transform: Optional[PosteriorTransform] = None,
-    sampler: Optional[MCSampler] = None,
-    project: Optional[Callable[[Tensor], Tensor]] = None,
-    valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
-    valfunc_argfac: Optional[Callable[[Model], Dict[str, Any]]] = None,
+    objective: MCAcquisitionObjective | None = None,
+    posterior_transform: PosteriorTransform | None = None,
+    sampler: MCSampler | None = None,
+    project: Callable[[Tensor], Tensor] | None = None,
+    valfunc_cls: type[AcquisitionFunction] | None = None,
+    valfunc_argfac: Callable[[Model], dict[str, Any]] | None = None,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function)."""
     if valfunc_cls is not None:
-        common_kwargs: Dict[str, Any] = {
+        common_kwargs: dict[str, Any] = {
             "model": model,
             "posterior_transform": posterior_transform,
         }
@@ -563,7 +558,7 @@ def _get_value_function(
         )
 
 
-def _split_fantasy_points(X: Tensor, n_f: int) -> Tuple[Tensor, Tensor]:
+def _split_fantasy_points(X: Tensor, n_f: int) -> tuple[Tensor, Tensor]:
     r"""Split a one-shot optimization input into actual and fantasy points
 
     Args:

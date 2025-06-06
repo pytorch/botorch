@@ -23,11 +23,9 @@ Active learning acquisition functions.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import torch
 from botorch import settings
-from botorch.acquisition.analytic import AnalyticAcquisitionFunction
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 from botorch.models.model import Model
@@ -37,7 +35,7 @@ from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_tr
 from torch import Tensor
 
 
-class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
+class qNegIntegratedPosteriorVariance(AcquisitionFunction):
     r"""Batch Integrated Negative Posterior Variance for Active Learning.
 
     This acquisition function quantifies the (negative) integrated posterior variance
@@ -53,10 +51,9 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
         self,
         model: Model,
         mc_points: Tensor,
-        sampler: Optional[MCSampler] = None,
-        posterior_transform: Optional[PosteriorTransform] = None,
-        X_pending: Optional[Tensor] = None,
-        **kwargs,
+        sampler: MCSampler | None = None,
+        posterior_transform: PosteriorTransform | None = None,
+        X_pending: Tensor | None = None,
     ) -> None:
         r"""q-Integrated Negative Posterior Variance.
 
@@ -76,7 +73,8 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
                 points that have been submitted for function evaluation but
                 have not yet been evaluated.
         """
-        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
+        super().__init__(model=model)
+        self.posterior_transform = posterior_transform
         if sampler is None:
             # If no sampler is provided, we use the following dummy sampler for the
             # fantasize() method in forward. IMPORTANT: This assumes that the posterior
@@ -94,7 +92,8 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
         # Construct the fantasy model (we actually do not use the full model,
         # this is just a convenient way of computing fast posterior covariances
         fantasy_model = self.model.fantasize(
-            X=X, sampler=self.sampler, observation_noise=True
+            X=X,
+            sampler=self.sampler,
         )
 
         bdims = tuple(1 for _ in X.shape[:-2])
@@ -106,7 +105,7 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
         else:
             # While we only need marginal variances, we can evaluate for q>1
             # b/c for GPyTorch models lazy evaluation can make this quite a bit
-            # faster than evaluting in t-batch mode with q-batch size of 1
+            # faster than evaluating in t-batch mode with q-batch size of 1
             mc_points = self.mc_points.view(*bdims, -1, X.size(-1))
 
         # evaluate the posterior at the grid points
@@ -139,7 +138,7 @@ class PairwiseMCPosteriorVariance(MCAcquisitionFunction):
         self,
         model: Model,
         objective: MCAcquisitionObjective,
-        sampler: Optional[MCSampler] = None,
+        sampler: MCSampler | None = None,
     ) -> None:
         r"""Pairwise Monte Carlo Posterior Variance
 

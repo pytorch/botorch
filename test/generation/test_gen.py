@@ -5,11 +5,13 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+import re
 import warnings
 from unittest import mock
 
 import torch
 from botorch.acquisition import qExpectedImprovement, qKnowledgeGradient
+from botorch.exceptions.errors import OptimizationGradientError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.generation.gen import (
@@ -105,9 +107,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 self.assertTrue(-EPS <= candidates <= 1 + EPS)
 
     def test_gen_candidates_torch(self):
-        self.test_gen_candidates(
-            gen_candidates=gen_candidates_torch, options={"disp": False}
-        )
+        self.test_gen_candidates(gen_candidates=gen_candidates_torch)
 
     def test_gen_candidates_with_none_fixed_features(
         self,
@@ -144,7 +144,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
 
     def test_gen_candidates_torch_with_none_fixed_features(self):
         self.test_gen_candidates_with_none_fixed_features(
-            gen_candidates=gen_candidates_torch, options={"disp": False}
+            gen_candidates=gen_candidates_torch
         )
 
     def test_gen_candidates_with_fixed_features(
@@ -184,21 +184,20 @@ class TestGenCandidates(TestBaseCandidateGeneration):
     def test_gen_candidates_with_fixed_features_and_timeout(self):
         with self.assertLogs("botorch", level="INFO") as logs:
             self.test_gen_candidates_with_fixed_features(
-                options={"disp": False},
                 timeout_sec=1e-4,
+                options={"disp": False},
             )
         self.assertTrue(any("Optimization timed out" in o for o in logs.output))
 
     def test_gen_candidates_torch_with_fixed_features(self):
         self.test_gen_candidates_with_fixed_features(
-            gen_candidates=gen_candidates_torch, options={"disp": False}
+            gen_candidates=gen_candidates_torch
         )
 
     def test_gen_candidates_torch_with_fixed_features_and_timeout(self):
         with self.assertLogs("botorch", level="INFO") as logs:
             self.test_gen_candidates_with_fixed_features(
                 gen_candidates=gen_candidates_torch,
-                options={"disp": False},
                 timeout_sec=1e-4,
             )
         self.assertTrue(any("Optimization timed out" in o for o in logs.output))
@@ -212,8 +211,16 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 initial_conditions=self.initial_conditions.reshape(1, 1, -1),
                 acquisition_function=qEI,
                 inequality_constraints=[
-                    (torch.tensor([0]), torch.tensor([1]), 0),
-                    (torch.tensor([1]), torch.tensor([-1]), -1),
+                    (
+                        torch.tensor([0], device=self.device),
+                        torch.tensor([1], device=self.device),
+                        0,
+                    ),
+                    (
+                        torch.tensor([1], device=self.device),
+                        torch.tensor([-1], device=self.device),
+                        -1,
+                    ),
                 ],
                 fixed_features={1: 0.25},
                 options=options,
@@ -227,16 +234,15 @@ class TestGenCandidates(TestBaseCandidateGeneration):
     def test_gen_candidates_scipy_warns_opt_failure(self):
         with warnings.catch_warnings(record=True) as ws:
             self.test_gen_candidates(options={"maxls": 1})
-        expected_msg = (
+        expected_msg = re.compile(
+            # The message changed with scipy 1.15, hence the different matching here.
             "Optimization failed within `scipy.optimize.minimize` with status 2"
-            " and message ABNORMAL_TERMINATION_IN_LNSRCH."
+            " and message ABNORMAL(|_TERMINATION_IN_LNSRCH)."
         )
         expected_warning_raised = any(
-            (
-                issubclass(w.category, OptimizationWarning)
-                and expected_msg in str(w.message)
-                for w in ws
-            )
+            issubclass(w.category, OptimizationWarning)
+            and expected_msg.search(str(w.message))
+            for w in ws
         )
         self.assertTrue(expected_warning_raised)
 
@@ -302,11 +308,9 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 acquisition_function=MockAcquisitionFunction(),
             )
         expected_warning_raised = any(
-            (
-                issubclass(w.category, OptimizationWarning)
-                and expected_msg in str(w.message)
-                for w in ws
-            )
+            issubclass(w.category, OptimizationWarning)
+            and expected_msg in str(w.message)
+            for w in ws
         )
         self.assertTrue(expected_warning_raised)
 
@@ -321,7 +325,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             test_grad = torch.tensor([0.5, 0.2, float("nan")], **ckwargs)
             # test NaN in grad
             with mock.patch("torch.autograd.grad", return_value=[test_grad]):
-                with self.assertRaisesRegex(RuntimeError, expected_regex):
+                with self.assertRaisesRegex(OptimizationGradientError, expected_regex):
                     gen_candidates_scipy(
                         initial_conditions=test_ics,
                         acquisition_function=mock.Mock(return_value=test_ics),
@@ -335,22 +339,51 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                     acquisition_function=mock.Mock(),
                 )
 
-    def test_gen_candidates_without_grad(self):
+    def test_gen_candidates_without_grad(self) -> None:
+        """Test with `with_grad=False` (not supported for gen_candidates_torch)."""
 
-        for gen_candidates in (gen_candidates_scipy, gen_candidates_torch):
-            self.test_gen_candidates(
-                gen_candidates=gen_candidates,
-                options={"disp": False, "with_grad": False},
+        self.test_gen_candidates(
+            gen_candidates=gen_candidates_scipy,
+            options={"disp": False, "with_grad": False},
+        )
+
+        self.test_gen_candidates_with_fixed_features(
+            gen_candidates=gen_candidates_scipy,
+            options={"disp": False, "with_grad": False},
+        )
+
+        self.test_gen_candidates_with_none_fixed_features(
+            gen_candidates=gen_candidates_scipy,
+            options={"disp": False, "with_grad": False},
+        )
+
+    def test_gen_candidates_scipy_invalid_method(self) -> None:
+        """Test with method that doesn't support constraint / bounds."""
+        self._setUp(double=True, expand=True)
+        acqf = qExpectedImprovement(self.model, best_f=self.f_best)
+        with self.assertRaisesRegex(
+            RuntimeWarning,
+            "Method L-BFGS-B cannot handle constraints",
+        ):
+            gen_candidates_scipy(
+                initial_conditions=self.initial_conditions,
+                acquisition_function=acqf,
+                options={"method": "L-BFGS-B"},
+                inequality_constraints=[
+                    (torch.tensor([0]), torch.tensor([1]), 0),
+                    (torch.tensor([1]), torch.tensor([-1]), -1),
+                ],
             )
-
-            self.test_gen_candidates_with_fixed_features(
-                gen_candidates=gen_candidates,
-                options={"disp": False, "with_grad": False},
-            )
-
-            self.test_gen_candidates_with_none_fixed_features(
-                gen_candidates=gen_candidates,
-                options={"disp": False, "with_grad": False},
+        with self.assertRaisesRegex(
+            RuntimeWarning,
+            "Method Newton-CG cannot handle bounds",
+        ):
+            gen_candidates_scipy(
+                initial_conditions=self.initial_conditions,
+                acquisition_function=acqf,
+                options={"method": "Newton-CG"},
+                lower_bounds=0,
+                upper_bounds=1,
             )
 
 
@@ -374,16 +407,3 @@ class TestRandomRestartOptimization(TestBaseCandidateGeneration):
                 batch_candidates=batch_candidates, batch_values=batch_acq_values
             )
             self.assertTrue(-EPS <= candidates <= 1 + EPS)
-
-
-class TestDeprecateMinimize(BotorchTestCase):
-    def test_deprecate_minimize(self):
-        from botorch.generation.gen import minimize
-
-        with self.assertWarnsRegex(
-            DeprecationWarning, "botorch.generation.gen.minimize_with_timeout"
-        ):
-            try:
-                minimize(None, None)
-            except Exception:
-                pass

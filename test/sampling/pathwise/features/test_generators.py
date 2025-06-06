@@ -74,9 +74,11 @@ class TestFeatureGenerators(BotorchTestCase):
             self.assertEqual(feature_map.weight.device, kernel.device)
             self.assertEqual(
                 feature_map.weight.shape[-1],
-                self.num_inputs
-                if kernel.active_dims is None
-                else len(kernel.active_dims),
+                (
+                    self.num_inputs
+                    if kernel.active_dims is None
+                    else len(kernel.active_dims)
+                ),
             )
 
         with self.subTest("test_covariance"):

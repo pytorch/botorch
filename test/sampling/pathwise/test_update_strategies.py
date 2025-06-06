@@ -12,7 +12,7 @@ from itertools import chain
 from unittest.mock import patch
 
 import torch
-from botorch.models import FixedNoiseGP, SingleTaskGP, SingleTaskVariationalGP
+from botorch.models import SingleTaskGP, SingleTaskVariationalGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.pathwise import (
@@ -26,8 +26,9 @@ from botorch.utils.context_managers import delattr_ctx
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
 from gpytorch.likelihoods import BernoulliLikelihood
-from gpytorch.utils.cholesky import psd_safe_cholesky
+from gpytorch.models import ExactGP
 from linear_operator.operators import ZeroLinearOperator
+from linear_operator.utils.cholesky import psd_safe_cholesky
 from torch import Size
 from torch.nn.functional import pad
 
@@ -61,8 +62,8 @@ class TestPathwiseUpdates(BotorchTestCase):
                 input_transform = Normalize(d=X.shape[-1], bounds=bounds)
                 outcome_transform = Standardize(m=Y.shape[-1])
 
-                # SingleTaskGP in eval mode
-                self.models[SingleTaskGP].append(
+                # SingleTaskGP w/ inferred noise in eval mode
+                self.models["inferred"].append(
                     SingleTaskGP(
                         train_X=X,
                         train_Y=Y,
@@ -74,9 +75,9 @@ class TestPathwiseUpdates(BotorchTestCase):
                     .eval()
                 )
 
-                # FixedNoiseGP in train mode
-                self.models[FixedNoiseGP].append(
-                    FixedNoiseGP(
+                # SingleTaskGP w/ observed noise in train mode
+                self.models["observed"].append(
+                    SingleTaskGP(
                         train_X=X,
                         train_Y=Y,
                         train_Yvar=0.01 * torch.rand_like(Y),
@@ -89,7 +90,7 @@ class TestPathwiseUpdates(BotorchTestCase):
                 # SingleTaskVariationalGP in train mode
                 # When batched, uses a multitask format which break the tests below
                 if not kernel.batch_shape:
-                    self.models[SingleTaskVariationalGP].append(
+                    self.models["variational"].append(
                         SingleTaskVariationalGP(
                             train_X=X,
                             train_Y=Y,
@@ -204,3 +205,20 @@ class TestPathwiseUpdates(BotorchTestCase):
             with patch.object(model, "likelihood", new=BernoulliLikelihood()):
                 with self.assertRaises(NotImplementedError):
                     gaussian_update(model=model, sample_values=sample_values)
+
+            with self.subTest("Exact models with `None` target_values"):
+                assert isinstance(model, ExactGP)
+                torch.manual_seed(0)
+                path_none_target_values = gaussian_update(
+                    model=model,
+                    sample_values=sample_values,
+                )
+                torch.manual_seed(0)
+                path_with_target_values = gaussian_update(
+                    model=model,
+                    sample_values=sample_values,
+                    target_values=get_train_targets(model, transformed=True),
+                )
+                self.assertAllClose(
+                    path_none_target_values.weight, path_with_target_values.weight
+                )

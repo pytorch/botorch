@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional, Tuple
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -77,7 +76,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         return batch_shape + sampling_shape
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         r"""The t-batch range.
 
         This is used in samplers to identify the t-batch component of the
@@ -88,7 +87,8 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         return (0, -1)
 
     def _extended_shape(
-        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+        self,
+        sample_shape: torch.Size = torch.Size(),  # noqa: B008
     ) -> torch.Size:
         r"""Returns the shape of the samples produced by the posterior with
         the given `sample_shape`.
@@ -162,7 +162,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
     def rsample_from_base_samples(
         self,
         sample_shape: torch.Size,
-        base_samples: Optional[Tensor],
+        base_samples: Tensor | None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients) using base samples.
 
@@ -229,7 +229,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
 
         # K_{train, train}^{-1} (y - Y_x)
         # internally, this solve is done using Kronecker algebra and is fast.
-        kinv_rhs = self.train_train_covar.inv_matmul(train_rhs)
+        kinv_rhs = self.train_train_covar.solve(train_rhs)
         # multiply by cross-covariance
         test_updated_samples = self.test_train_covar.matmul(kinv_rhs)
 
@@ -244,7 +244,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
 
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 

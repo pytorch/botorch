@@ -23,8 +23,6 @@ References:
 
 from __future__ import annotations
 
-from typing import Any, Optional, Tuple
-
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.exceptions import InputDataError
@@ -77,7 +75,7 @@ class qMultiObjectivePredictiveEntropySearch(AcquisitionFunction):
         Problem (a) occurs because we have to compute the variable:
         `alpha = (mean(x_n) - mean(x_p)) / std(x_n - x_p)`, which becomes very
         large when `x_n` is better than `x_p` with high-probability. This leads to a
-        log(0) error when we compute `log(1 - cdf(alpha))`. We have pre-emptively
+        log(0) error when we compute `log(1 - cdf(alpha))`. We have preemptively
         clamped some values depending on `1`alpha` in order to mitigate this.
 
         Problem (b) occurs because we have to compute matrix inverses for the
@@ -102,12 +100,11 @@ class qMultiObjectivePredictiveEntropySearch(AcquisitionFunction):
         model: Model,
         pareto_sets: Tensor,
         maximize: bool = True,
-        X_pending: Optional[Tensor] = None,
+        X_pending: Tensor | None = None,
         max_ep_iterations: int = 250,
         ep_jitter: float = 1e-4,
         test_jitter: float = 1e-4,
         threshold: float = 1e-2,
-        **kwargs: Any,
     ) -> None:
         r"""Multi-objective predictive entropy search acquisition function.
 
@@ -521,7 +518,7 @@ def _initialize_predictive_matrices(
     observation_noise: bool = True,
     jitter: float = 1e-4,
     natural: bool = True,
-) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+) -> tuple[Tensor, Tensor, Tensor, Tensor]:
     r"""Initializes the natural predictive mean and covariance matrix. For a
     multivariate normal distribution with mean mu and covariance Sigma, the natural
     mean is Sigma^{-1} mu and the natural covariance is Sigma^{-1}.
@@ -585,7 +582,7 @@ def _initialize_predictive_matrices(
 
 def _get_omega_f_contribution(
     mean: Tensor, cov: Tensor, N: int, P: int, M: int
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Extract the mean vector and covariance matrix corresponding to the `2 x 2`
     multivariate normal blocks in the objective model between the points in `X` and
     the Pareto optimal set.
@@ -679,7 +676,7 @@ def _update_omega(
     M: int,
     maximize: bool = True,
     jitter: float = 1e-6,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Computes the new omega factors by matching the moments.
 
     Args:
@@ -848,7 +845,7 @@ def _safe_update_omega(
     M: int,
     maximize: bool = True,
     jitter: float = 1e-6,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Try to update the new omega factors by matching the moments. If the update
     is not possible then this returns the initial omega factors.
 
@@ -892,7 +889,7 @@ def _safe_update_omega(
         check_no_nans(omega_f_nat_cov_new)
         return omega_f_nat_mean_new, omega_f_nat_cov_new
 
-    except RuntimeError or InputDataError:
+    except (RuntimeError, InputDataError):
         return omega_f_nat_mean, omega_f_nat_cov
 
 
@@ -903,7 +900,7 @@ def _update_marginals(
     omega_f_nat_cov: Tensor,
     N: int,
     P: int,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Computes the new marginal by summing up all the natural factors.
 
     Args:
@@ -1003,7 +1000,7 @@ def _update_damping(
     nat_cov_new: Tensor,
     damping_factor: Tensor,
     jitter: Tensor,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Updates the damping factor whilst ensuring the covariance matrix is positive
     definite by trying a Cholesky decomposition.
 
@@ -1071,7 +1068,7 @@ def _update_damping_when_converged(
     damping_factor: Tensor,
     iteration: Tensor,
     threshold: float = 1e-3,
-) -> Tensor:
+) -> tuple[Tensor, Tensor, Tensor]:
     r"""Set the damping factor to 0 once converged. Convergence is determined by the
     relative change in the entries of the mean and covariance matrix.
 
@@ -1088,8 +1085,10 @@ def _update_damping_when_converged(
         damping_factor: A `batch_shape`-dim Tensor containing the damping factor.
 
     Returns:
-        A `batch_shape x param_shape`-dim Tensor containing the updated damping
+        - A `batch_shape x param_shape`-dim Tensor containing the updated damping
         factor.
+        - Difference between `mean_new` and `mean_old`
+        - Difference between `cov_new` and `cov_old`
     """
     df = damping_factor.clone()
     delta_mean = mean_new - mean_old
@@ -1113,7 +1112,7 @@ def _augment_factors_with_cached_factors(
     cached_omega_f_nat_mean: Tensor,
     omega_f_nat_cov: Tensor,
     cached_omega_f_nat_cov: Tensor,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Incorporate the cached Pareto updated factors in the forward call and
     augment them with the previously computed factors.
 

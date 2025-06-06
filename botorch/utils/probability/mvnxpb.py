@@ -24,7 +24,7 @@ see [Genz2016numerical]_ and [Trinh2015bivariate]_.
 
 from __future__ import annotations
 
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 from warnings import warn
 
 import torch
@@ -56,7 +56,7 @@ class mvnxpbState(TypedDict):
     piv_chol: PivotedCholesky
     plug_ins: Tensor
     log_prob: Tensor
-    log_prob_extra: Optional[Tensor]
+    log_prob_extra: Tensor | None
 
 
 class MVNXPB:
@@ -101,7 +101,7 @@ class MVNXPB:
             batch_shape + [n], float("nan"), device=device, dtype=dtype
         )
         self.log_prob = torch.zeros(batch_shape, device=device, dtype=dtype)
-        self.log_prob_extra: Optional[Tensor] = None
+        self.log_prob_extra: Tensor | None = None
 
     @classmethod
     def build(
@@ -112,7 +112,7 @@ class MVNXPB:
         piv_chol: PivotedCholesky,
         plug_ins: Tensor,
         log_prob: Tensor,
-        log_prob_extra: Optional[Tensor] = None,
+        log_prob_extra: Tensor | None = None,
     ) -> MVNXPB:
         r"""Creates an MVNXPB instance from raw arguments. Unlike MVNXPB.__init__,
         this methods does not preprocess or copy terms.
@@ -137,7 +137,7 @@ class MVNXPB:
         new.log_prob_extra = log_prob_extra
         return new
 
-    def solve(self, num_steps: Optional[int] = None, eps: float = 1e-10) -> Tensor:
+    def solve(self, num_steps: int | None = None, eps: float = 1e-10) -> Tensor:
         r"""Runs the MVNXPB solver instance for a fixed number of steps.
 
         Calculates a bivariate conditional approximation to P(X \in bounds), where
@@ -176,18 +176,20 @@ class MVNXPB:
             if pivot is not None and torch.any(pivot > i):
                 self.pivot_(pivot=pivot)
 
-            # Initialize `i`-th plug-in value as univariate conditional expectation
+            # Compute whitened bounds conditional on preceding plug-ins
             Lii = L[..., i, i].clone()
             if should_update_chol:
-                Lii = Lii.clip(min=0).sqrt()
+                Lii = Lii.clip(min=0).sqrt()  # conditional stddev
             inv_Lii = Lii.reciprocal()
-            if i == 0:
-                lb, ub = bounds[..., i, :].clone().unbind(dim=-1)
-            else:
-                db = (L[..., i, :i].clone() * y[..., :i].clone()).sum(-1, keepdim=True)
-                lb, ub = (bounds[..., i, :].clone() - db).unbind(dim=-1)
+            bounds_i = bounds[..., i, :].clone()
+            if i != 0:
+                bounds_i = bounds_i - torch.sum(
+                    L[..., i, :i].clone() * y[..., :i].clone(), dim=-1, keepdim=True
+                )
+            lb, ub = (inv_Lii.unsqueeze(-1) * bounds_i).unbind(dim=-1)
 
-            Phi_i = Phi(inv_Lii * ub) - Phi(inv_Lii * lb)
+            # Initialize `i`-th plug-in value as univariate conditional expectation
+            Phi_i = Phi(ub) - Phi(lb)
             small = Phi_i <= i * eps
             y[..., i] = case_dispatcher(  # used to select next pivot
                 out=(phi(lb) - phi(ub)) / Phi_i,
@@ -224,7 +226,7 @@ class MVNXPB:
                 # Replace 1D expectations with 2D ones `L[blk, blk]^{-1} y[..., blk]`
                 mask = blk_prob > zero
                 y[..., h] = torch.where(mask, zh, zero)
-                y[..., i] = torch.where(mask, (std_i * zi - Lih * zh) / Lii, zero)
+                y[..., i] = torch.where(mask, inv_Lii * (std_i * zi - Lih * zh), zero)
 
                 # Update running approximation to log probability
                 self.log_prob = self.log_prob + safe_log(blk_prob)
@@ -240,7 +242,7 @@ class MVNXPB:
 
         return self.log_prob
 
-    def select_pivot(self) -> Optional[LongTensor]:
+    def select_pivot(self) -> LongTensor | None:
         r"""GGE variable prioritization strategy from [Gibson1994monte]_.
 
         Returns the index of the random variable least likely to satisfy its bounds
@@ -300,7 +302,7 @@ class MVNXPB:
             if _self is None and _other is None:
                 continue
 
-            if type(_self) != type(_other):
+            if type(_self) is not type(_other):
                 raise TypeError(
                     f"Concatenation failed: `self.{key}` has type {type(_self)}, "
                     f"but `other.{key}` is of type {type(_self)}."
@@ -340,8 +342,8 @@ class MVNXPB:
         bounds: Tensor,
         cross_covariance_matrix: Tensor,
         disable_pivoting: bool = False,
-        jitter: Optional[float] = None,
-        max_tries: Optional[int] = None,
+        jitter: float | None = None,
+        max_tries: int | None = None,
     ) -> MVNXPB:
         r"""Augment an `n`-dimensional MVNXPB instance to include `m` additional random
         variables.

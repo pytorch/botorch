@@ -12,9 +12,13 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from typing import Any, Tuple
 
 import torch
+from botorch.utils.probability.utils import (
+    log_ndtr,
+    log_phi,
+    standard_normal_log_hazard,
+)
 from gpytorch.likelihoods import Likelihood
 from torch import Tensor
 from torch.distributions import Bernoulli
@@ -23,8 +27,6 @@ from torch.distributions import Bernoulli
 class PairwiseLikelihood(Likelihood, ABC):
     """
     Pairwise likelihood base class for pairwise preference GP (e.g., PairwiseGP).
-
-    :meta private:
     """
 
     def __init__(self, max_plate_nesting: int = 1):
@@ -36,7 +38,7 @@ class PairwiseLikelihood(Likelihood, ABC):
         """
         super().__init__(max_plate_nesting)
 
-    def forward(self, utility: Tensor, D: Tensor, **kwargs: Any) -> Bernoulli:
+    def forward(self, utility: Tensor, D: Tensor) -> Bernoulli:
         """Given the difference in (estimated) utility util_diff = f(v) - f(u),
         return a Bernoulli distribution object representing the likelihood of
         the user prefer v over u.
@@ -118,18 +120,18 @@ class PairwiseProbitLikelihood(PairwiseLikelihood):
         z = z.clamp(-self._zlim, self._zlim).squeeze(-1)
         return z
 
-    def _calc_z_derived(self, z: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+    def _calc_z_derived(self, z: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         """Calculate auxiliary statistics derived from z, including log pdf,
-        log cdf, and the hazard function (pdf divided by cdf)"""
-        std_norm = torch.distributions.normal.Normal(
-            torch.zeros(1, dtype=z.dtype, device=z.device),
-            torch.ones(1, dtype=z.dtype, device=z.device),
-        )
-        z_logpdf = std_norm.log_prob(z)
-        z_cdf = std_norm.cdf(z)
-        z_logcdf = torch.log(z_cdf)
-        hazard = torch.exp(z_logpdf - z_logcdf)
-        return z_logpdf, z_logcdf, hazard
+        log cdf, and the hazard function (pdf divided by cdf)
+
+        Args:
+            z: A Tensor of arbitrary shape.
+
+        Returns:
+            Tensors with standard normal logpdf(z), logcdf(z), and hazard function
+            values evaluated at -z.
+        """
+        return log_phi(z), log_ndtr(z), standard_normal_log_hazard(-z).exp()
 
     def p(self, utility: Tensor, D: Tensor, log: bool = False) -> Tensor:
         z = self._calc_z(utility=utility, D=D)
@@ -148,7 +150,6 @@ class PairwiseProbitLikelihood(PairwiseLikelihood):
         _, _, h = self._calc_z_derived(z)
         h_factor = h / math.sqrt(2)
         grad = (h_factor.unsqueeze(-2) @ (-D)).squeeze(-2)
-
         return grad
 
     def negative_log_hessian_sum(self, utility: Tensor, D: Tensor) -> Tensor:

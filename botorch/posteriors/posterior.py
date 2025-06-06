@@ -10,21 +10,14 @@ Abstract base module for all botorch posteriors.
 
 from __future__ import annotations
 
-import warnings
-
-from abc import ABC, abstractmethod, abstractproperty
-from typing import Optional, Tuple
+from abc import ABC, abstractmethod
 
 import torch
 from torch import Tensor
 
 
 class Posterior(ABC):
-    r"""
-    Abstract base class for botorch posteriors.
-
-    :meta private:
-    """
+    """Abstract base class for botorch posteriors."""
 
     def rsample_from_base_samples(
         self,
@@ -54,7 +47,7 @@ class Posterior(ABC):
     @abstractmethod
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
@@ -69,23 +62,29 @@ class Posterior(ABC):
         """
         pass  # pragma: no cover
 
-    @property
-    def event_shape(self) -> torch.Size:
-        r"""The event shape (i.e. the shape of a single sample)."""
-        warnings.warn(
-            "The `event_shape` attribute of `Posterior` is deprecated. It will default "
-            "to the `event_shape` of the underlying distribution in a future version. "
-            "Use `_extended_shape` instead.",
-            DeprecationWarning,
-        )
-        return self._extended_shape()
+    def sample(self, sample_shape: torch.Size | None = None) -> Tensor:
+        r"""Sample from the posterior without gradients.
 
-    @abstractproperty
+        Args:
+            sample_shape: A `torch.Size` object specifying the sample shape. To
+                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
+                of `n` samples each, set to `torch.Size([b, n])`.
+
+        Returns:
+            Samples from the posterior, a tensor of shape
+            `self._extended_shape(sample_shape=sample_shape)`.
+        """
+        with torch.no_grad():
+            return self.rsample(sample_shape=sample_shape)
+
+    @property
+    @abstractmethod
     def device(self) -> torch.device:
         r"""The torch device of the distribution."""
         pass  # pragma: no cover
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def dtype(self) -> torch.dtype:
         r"""The torch dtype of the distribution."""
         pass  # pragma: no cover
@@ -111,7 +110,8 @@ class Posterior(ABC):
         )  # pragma: no cover
 
     def _extended_shape(
-        self, sample_shape: torch.Size = torch.Size()  # noqa: B008
+        self,
+        sample_shape: torch.Size = torch.Size(),  # noqa: B008
     ) -> torch.Size:
         r"""Returns the shape of the samples produced by the posterior with
         the given `sample_shape`.
@@ -132,7 +132,7 @@ class Posterior(ABC):
         )
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         r"""The t-batch range.
 
         This is used in samplers to identify the t-batch component of the

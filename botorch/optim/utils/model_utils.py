@@ -8,26 +8,15 @@ r"""Utilities for fitting and manipulating models."""
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
+
 from re import Pattern
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    NamedTuple,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, NamedTuple
 from warnings import warn
 
 import torch
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.gpytorch import GPyTorchModel
-from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
-from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from torch import Tensor
 from torch.nn import Module
 from torch.utils.data import DataLoader, TensorDataset
@@ -37,29 +26,6 @@ class TorchAttr(NamedTuple):
     shape: torch.Size
     dtype: torch.dtype
     device: torch.device
-
-
-def _get_extra_mll_args(
-    mll: MarginalLogLikelihood,
-) -> Union[List[Tensor], List[List[Tensor]]]:
-    r"""Obtain extra arguments for MarginalLogLikelihood objects.
-
-    Get extra arguments (beyond the model output and training targets) required
-    for the particular type of MarginalLogLikelihood for a forward pass.
-
-    Args:
-        mll: The MarginalLogLikelihood module.
-
-    Returns:
-        Extra arguments for the MarginalLogLikelihood.
-        Returns an empty list if the mll type is unknown.
-    """
-    warn("`_get_extra_mll_args` is marked for deprecation.", DeprecationWarning)
-    if isinstance(mll, ExactMarginalLogLikelihood):
-        return list(mll.model.train_inputs)
-    elif isinstance(mll, SumMarginalLogLikelihood):
-        return [list(x) for x in mll.model.train_inputs]
-    return []
 
 
 def get_data_loader(
@@ -73,9 +39,9 @@ def get_data_loader(
 
 def get_parameters(
     module: Module,
-    requires_grad: Optional[bool] = None,
-    name_filter: Optional[Callable[[str], bool]] = None,
-) -> Dict[str, Tensor]:
+    requires_grad: bool | None = None,
+    name_filter: Callable[[str], bool] | None = None,
+) -> dict[str, Tensor]:
     r"""Helper method for obtaining a module's parameters and their respective ranges.
 
     Args:
@@ -102,10 +68,10 @@ def get_parameters(
 
 def get_parameters_and_bounds(
     module: Module,
-    requires_grad: Optional[bool] = None,
-    name_filter: Optional[Callable[[str], bool]] = None,
-    default_bounds: Tuple[float, float] = (-float("inf"), float("inf")),
-) -> Tuple[Dict[str, Tensor], Dict[str, Tuple[Optional[float], Optional[float]]]]:
+    requires_grad: bool | None = None,
+    name_filter: Callable[[str], bool] | None = None,
+    default_bounds: tuple[float, float] = (-float("inf"), float("inf")),
+) -> tuple[dict[str, Tensor], dict[str, tuple[float | None, float | None]]]:
     r"""Helper method for obtaining a module's parameters and their respective ranges.
 
     Args:
@@ -144,8 +110,8 @@ def get_parameters_and_bounds(
 
 
 def get_name_filter(
-    patterns: Iterator[Union[Pattern, str]]
-) -> Callable[[Union[str, Tuple[str, Any, ...]]], bool]:
+    patterns: Iterator[Pattern | str],
+) -> Callable[[str | tuple[str, Any, ...]], bool]:
     r"""Returns a binary function that filters strings (or iterables whose first
     element is a string) according to a bank of excluded patterns. Typically, used
     in conjunction with generators such as `module.named_parameters()`.
@@ -170,7 +136,7 @@ def get_name_filter(
                 f"but found {type(pattern)}."
             )
 
-    def name_filter(item: Union[str, Tuple[str, Any, ...]]) -> bool:
+    def name_filter(item: str | tuple[str, Any, ...]) -> bool:
         name = item if isinstance(item, str) else next(iter(item))
         if name in names:
             return False
@@ -197,7 +163,18 @@ def sample_all_priors(model: GPyTorchModel, max_retries: int = 100) -> None:
             )
         for i in range(max_retries):
             try:
-                setting_closure(module, prior.sample(closure(module).shape))
+                # Set sample shape, so that the prior samples have the same shape
+                # as `closure(module)` without having to be repeated.
+                prior_shape = prior._extended_shape()
+                if prior_shape.numel() == 1:
+                    # For a univariate prior we can sample the size of the closure.
+                    # Otherwise we will sample exactly the same value for all
+                    # lengthscales where we commonly specify a univariate prior.
+                    setting_closure(module, prior.sample(closure(module).shape))
+                else:
+                    closure_shape = closure(module).shape
+                    sample_shape = closure_shape[: -len(prior_shape)]
+                    setting_closure(module, prior.sample(sample_shape=sample_shape))
                 break
             except NotImplementedError:
                 warn(

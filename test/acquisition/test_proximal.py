@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import List
 
 import torch
 from botorch.acquisition import LinearMCObjective, ScalarizedPosteriorTransform
@@ -27,7 +26,7 @@ class DummyModel(GPyTorchModel):
     def __init__(self):  # noqa: D107
         super(GPyTorchModel, self).__init__()
 
-    def subset_output(self, idcs: List[int]) -> Model:
+    def subset_output(self, idcs: list[int]) -> Model:
         pass
 
 
@@ -44,23 +43,22 @@ class NegativeAcquisitionFunction(AcquisitionFunction):
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
-            train_X = torch.rand(5, 3, device=self.device, dtype=dtype) * 2.0
-            train_Y = train_X.norm(dim=-1, keepdim=True)
-
             # test single point evaluation with and without input transform
             normalize = Normalize(
                 3, bounds=torch.tensor(((0.0, 0.0, 0.0), (2.0, 2.0, 2.0)))
             )
-            for input_transform in [None, normalize]:
+            for input_transform, x_scale in [(None, 1), (normalize, 2)]:
+                train_X = torch.rand(5, 3, device=self.device, dtype=dtype) * x_scale
+                train_Y = train_X.norm(dim=-1, keepdim=True)
 
                 # test with and without transformed weights
                 for transformed_weighting in [True, False]:
                     # test with single outcome model
-                    model = (
-                        SingleTaskGP(train_X, train_Y, input_transform=input_transform)
-                        .to(device=self.device, dtype=dtype)
-                        .eval()
+                    model = SingleTaskGP(
+                        train_X, train_Y, input_transform=input_transform
                     )
+
+                    model = model.to(device=self.device, dtype=dtype).eval()
 
                     EI = ExpectedImprovement(model, best_f=0.0)
 
@@ -80,7 +78,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     proximal_test_X = test_X.clone()
                     if transformed_weighting:
                         if input_transform is not None:
-                            last_X = input_transform(train_X[-1])
+                            last_X = input_transform(train_X[-1].unsqueeze(0))
                             proximal_test_X = input_transform(test_X)
 
                     mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
@@ -107,7 +105,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     proximal_test_X = test_X.clone()
                     if transformed_weighting:
                         if input_transform is not None:
-                            last_X = input_transform(train_X[-1])
+                            last_X = input_transform(train_X[-1].unsqueeze(0))
                             proximal_test_X = input_transform(test_X)
 
                     mv_normal = MultivariateNormal(last_X, torch.diag(proximal_weights))
@@ -124,7 +122,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     proximal_test_X = test_X.clone()
                     if transformed_weighting:
                         if input_transform is not None:
-                            last_X = input_transform(train_X[-1])
+                            last_X = input_transform(train_X[-1].unsqueeze(0))
                             proximal_test_X = input_transform(test_X)
 
                     ei = EI(test_X)
@@ -145,7 +143,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     proximal_test_X = test_X.clone()
                     if transformed_weighting:
                         if input_transform is not None:
-                            last_X = input_transform(train_X[-1])
+                            last_X = input_transform(train_X[-1].unsqueeze(0))
                             proximal_test_X = input_transform(test_X)
 
                     qEI_prox = ProximalAcquisitionFunction(

@@ -28,8 +28,8 @@ References
 
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from math import ceil
-from typing import Callable, List, Optional, Union
 
 import torch
 from botorch.acquisition.multi_objective.objective import (
@@ -55,15 +55,12 @@ class MultiOutputRiskMeasureMCObjective(
     If the q-batch includes samples corresponding to multiple inputs, it is assumed
     that first `n_w` samples correspond to first input, second `n_w` samples
     correspond to second input, etc.
-
-    :meta private:
     """
 
     def __init__(
         self,
         n_w: int,
-        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
-        weights: Optional[Union[List[float], Tensor]] = None,
+        preprocessing_function: Callable[[Tensor], Tensor] | None = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -75,13 +72,8 @@ class MultiOutputRiskMeasureMCObjective(
                 maximization. For constrained optimization, this should also
                 apply feasibility-weighting to samples. Given a `batch x m`-dim
                 tensor of samples, this should return a `batch x m'`-dim tensor.
-            weights: An optional `m`-dim tensor or list of weights for scaling
-                multi-output samples before calculating the risk measure.
-                Deprecated, use `preprocessing_function` instead.
         """
-        super().__init__(
-            n_w=n_w, preprocessing_function=preprocessing_function, weights=weights
-        )
+        super().__init__(n_w=n_w, preprocessing_function=preprocessing_function)
 
     def _prepare_samples(self, samples: Tensor) -> Tensor:
         r"""Prepare samples for risk measure calculations by scaling and
@@ -100,7 +92,7 @@ class MultiOutputRiskMeasureMCObjective(
         return samples.view(*samples.shape[:-2], -1, self.n_w, samples.shape[-1])
 
     @abstractmethod
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the risk measure corresponding to the given samples.
 
         Args:
@@ -124,7 +116,7 @@ class MultiOutputExpectation(MultiOutputRiskMeasureMCObjective):
     reducing the cost of posterior sampling as a result.
     """
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the expectation of the given samples. Expectation is
         calculated over each `n_w` samples in the q-batch dimension.
 
@@ -174,7 +166,7 @@ class IndependentCVaR(CVaR, MultiOutputRiskMeasureMCObjective):
         prepared_samples = self._prepare_samples(samples)
         return prepared_samples.sort(dim=-2, descending=True).values
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the CVaR corresponding to the given samples.
 
         Args:
@@ -202,7 +194,7 @@ class IndependentVaR(IndependentCVaR):
     `1 - alpha` quantile of a given random variable.
     """
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the VaR corresponding to the given samples.
 
         Args:
@@ -221,7 +213,7 @@ class IndependentVaR(IndependentCVaR):
 class MultiOutputWorstCase(MultiOutputRiskMeasureMCObjective):
     r"""The multi-output worst-case risk measure."""
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         r"""Calculate the worst-case measure corresponding to the given samples.
 
         Args:
@@ -246,6 +238,8 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
     particular realizations of the random variable. [Cousin2013MVaR]_ instead
     propose to use the expectation of the set-valued MVaR as the multivariate
     VaR. We support this alternative with an `expectation` flag.
+
+    This supports approximate gradients as discussed in [Daulton2022MARS]_.
     """
 
     _verify_output_shape = False
@@ -255,10 +249,11 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         n_w: int,
         alpha: float,
         expectation: bool = False,
-        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
-        weights: Optional[Union[List[float], Tensor]] = None,
+        preprocessing_function: Callable[[Tensor], Tensor] | None = None,
+        *,
         pad_to_n_w: bool = False,
         filter_dominated: bool = True,
+        use_counting: bool = False,
     ) -> None:
         r"""The multivariate Value-at-Risk.
 
@@ -275,9 +270,6 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 maximization. For constrained optimization, this should also
                 apply feasibility-weighting to samples. Given a `batch x m`-dim
                 tensor of samples, this should return a `batch x m'`-dim tensor.
-            weights: An optional `m`-dim tensor or list of weights for scaling
-                multi-output samples before calculating the risk measure.
-                Deprecated, use `preprocessing_function` instead.
             pad_to_n_w: If True, instead of padding up to `k'`, which is the size of
                 the largest MVaR set across all batches, we pad the MVaR set up to
                 `n_w`. This produces a return tensor of known size, however, it may
@@ -290,33 +282,33 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 the dominated points will be filtered out later, e.g., while
                 calculating the hypervolume. Disabling this is not recommended
                 if `expectation=True`.
+            use_counting: If True, uses `get_mvar_set_via_counting` for finding the
+                MVaR set. This is method is less memory intensive than the vectorized
+                implementation, which is beneficial when `n_w` is quite large.
         """
-        super().__init__(
-            n_w=n_w, preprocessing_function=preprocessing_function, weights=weights
-        )
+        super().__init__(n_w=n_w, preprocessing_function=preprocessing_function)
         if not 0 < alpha <= 1:
             raise ValueError("`alpha` must be in (0.0, 1.0]")
         self.alpha = alpha
         self.expectation = expectation
         self.pad_to_n_w = pad_to_n_w
         self.filter_dominated = filter_dominated
+        self.use_counting = use_counting
 
-    def get_mvar_set_cpu(self, Y: Tensor) -> Tensor:
+    def get_mvar_set_via_counting(self, Y: Tensor) -> list[Tensor]:
         r"""Find MVaR set based on the definition in [Prekopa2012MVaR]_.
-
-        NOTE: This is much faster on CPU for large `n_w` than the alternative but it
-        is significantly slower on GPU. Based on empirical evidence, this is recommended
-        when running on CPU with `n_w > 64`.
 
         This first calculates the CDF for each point on the extended domain of the
         random variable (the grid defined by the given samples), then takes the
         values with CDF equal to (rounded if necessary) `alpha`. The non-dominated
         subset of these form the MVaR set.
 
+        This implementation processes each batch of `Y` in a for loop using a counting
+        based implementation. It requires less memory than the vectorized implementation
+        and should be used with large (>128) `n_w` values.
+
         Args:
-            Y: A `batch x n_w x m`-dim tensor of outcomes. This is currently
-                restricted to `m = 2` objectives.
-                TODO: Support `m > 2` objectives.
+            Y: A `batch x n_w x m`-dim tensor of outcomes.
 
         Returns:
             A `batch` length list of `k x m`-dim tensor of MVaR values, where `k`
@@ -324,10 +316,8 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             are not in-sample points.
         """
         if Y.dim() == 3:
-            return [self.get_mvar_set_cpu(y_) for y_ in Y]
+            return sum((self.get_mvar_set_via_counting(y_) for y_ in Y), [])
         m = Y.shape[-1]
-        if m != 2:  # pragma: no cover
-            raise ValueError("`get_mvar_set_cpu` only supports `m=2` outcomes!")
         # Generate sets of all unique values in each output dimension.
         # Note that points in MVaR are bounded from above by the
         # independent VaR of each objective. Hence, we only need to
@@ -335,9 +325,10 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         # the VaR of the independent objectives
         var_alpha_idx = ceil(self.alpha * self.n_w) - 1
         Y_sorted = Y.topk(Y.shape[0] - var_alpha_idx, dim=0, largest=False).values
-        unique_outcomes_list = [
-            Y_sorted[:, i].unique().tolist()[::-1] for i in range(m)
-        ]
+        unique_outcomes_list = []
+        for i in range(m):
+            sorted_i = Y_sorted[:, i].cpu().clone(memory_format=torch.contiguous_format)
+            unique_outcomes_list.append(sorted_i.unique().tolist()[::-1])
         # Convert this into a list of m dictionaries mapping values to indices.
         unique_outcomes = [
             dict(zip(outcomes, range(len(outcomes))))
@@ -362,7 +353,8 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         Y_pruned = Y[mask]
         for y_ in Y_pruned:
             starting_idcs = [unique_outcomes[i].get(y_[i].item(), 0) for i in range(m)]
-            counter_tensor[starting_idcs[0] :, starting_idcs[1] :] += 1
+            slices = [slice(s_idx, None) for s_idx in starting_idcs]
+            counter_tensor[slices] += 1
 
         # Get the count alpha-level points should have.
         alpha_count = ceil(self.alpha * self.n_w)
@@ -392,20 +384,21 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             mvar = alpha_level_points[mask]
         else:
             mvar = alpha_level_points
-        return mvar
+        return [mvar]
 
-    def get_mvar_set_gpu(self, Y: Tensor) -> Tensor:
+    def get_mvar_set_vectorized(self, Y: Tensor) -> list[Tensor]:
         r"""Find MVaR set based on the definition in [Prekopa2012MVaR]_.
-
-        NOTE: This is much faster on GPU than the alternative but it scales very poorly
-        on CPU as `n_w` increases. This should be preferred if a GPU is available or
-        when `n_w <= 64`. In addition, this supports `m >= 2` outcomes (vs `m = 2` for
-        the CPU version) and it should be used if `m > 2`.
 
         This first calculates the CDF for each point on the extended domain of the
         random variable (the grid defined by the given samples), then takes the
         values with CDF equal to (rounded if necessary) `alpha`. The non-dominated
         subset of these form the MVaR set.
+
+        This implementation uses computes the CDF of each point using highly vectorized
+        operations. As such, it may use large amounts of memory, particularly when the
+        batch size and/or `n_w` are large. It is typically faster than the alternative
+        implementation when computing MVaR of a large batch of points with small to
+        moderate (<128 for m=2, <64 for m=3) `n_w`.
 
         Args:
             Y: A `batch x n_w x m`-dim tensor of observations.
@@ -439,7 +432,9 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             y_grid = torch.stack(
                 [
                     torch.stack(
-                        torch.meshgrid([Y_sorted[b, :, i] for i in range(m)]),
+                        torch.meshgrid(
+                            [Y_sorted[b, :, i] for i in range(m)], indexing="ij"
+                        ),
                         dim=-1,
                     ).view(-1, m)
                     for b in range(batch)
@@ -467,7 +462,29 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 mvar.append(alpha_level_points)
         return mvar
 
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def make_differentiable(self, prepared_samples: Tensor, mvars: Tensor) -> Tensor:
+        r"""An experimental approach for obtaining the gradient of the MVaR via
+        component-wise mapping to original samples. See [Daulton2022MARS]_.
+
+        Args:
+            prepared_samples: A `(sample_shape * batch_shape * q) x n_w x m`-dim tensor
+                of posterior samples. The q-batches should be ordered so that each
+                `n_w` block of samples correspond to the same input.
+            mvars: A `(sample_shape * batch_shape * q) x k x m`-dim tensor
+                of padded MVaR values.
+        Returns:
+            The same `mvars` with entries mapped to inputs to produce gradients.
+        """
+        samples = prepared_samples.unsqueeze(-2).repeat(1, 1, mvars.shape[-2], 1)
+        mask = samples == mvars.unsqueeze(-3)
+        samples[~mask] = 0
+        return samples.sum(dim=-3) / mask.sum(dim=-3)
+
+    def forward(
+        self,
+        samples: Tensor,
+        X: Tensor | None = None,
+    ) -> Tensor:
         r"""Calculate the MVaR corresponding to the given samples.
 
         Args:
@@ -490,28 +507,11 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         prepared_samples = self._prepare_samples(samples)
         # This is -1 x n_w x m.
         prepared_samples = prepared_samples.reshape(-1, *prepared_samples.shape[-2:])
-        # Get the mvar set using the appropriate method based on device, m & n_w.
-        # NOTE: The `n_w <= 64` part is based on testing on a 24 core CPU.
-        # `get_mvar_set_gpu` heavily relies on parallelized batch computations and
-        # may scale worse on CPUs with fewer cores.
-        # Using `no_grad` here since `MVaR` is not differentiable.
         with torch.no_grad():
-            if (
-                samples.device == torch.device("cpu")
-                and m == 2
-                and prepared_samples.shape[-2] <= 64
-            ):
-                mvar_set = self.get_mvar_set_cpu(prepared_samples)
+            if self.use_counting:
+                mvar_set = self.get_mvar_set_via_counting(prepared_samples)
             else:
-                mvar_set = self.get_mvar_set_gpu(prepared_samples)
-        if samples.requires_grad:
-            # TODO: Investigate differentiability of MVaR.
-            warnings.warn(
-                "Got `samples` that requires grad, but computing MVaR involves "
-                "non-differentable operations and the results will not be "
-                "differentiable. This may lead to errors down the line!",
-                RuntimeWarning,
-            )
+                mvar_set = self.get_mvar_set_vectorized(prepared_samples)
         # Set the `pad_size` to either `self.n_w` or the size of the largest MVaR set.
         pad_size = self.n_w if self.pad_to_n_w else max([_.shape[0] for _ in mvar_set])
         padded_mvar_list = []
@@ -525,6 +525,10 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                     torch.cat([mvar_, mvar_[-1].expand(repeats_needed, m)], dim=0)
                 )
         mvars = torch.stack(padded_mvar_list, dim=0)
+        if samples.requires_grad:
+            mvars = self.make_differentiable(
+                prepared_samples=prepared_samples, mvars=mvars
+            )
         return mvars.view(*batch_shape, -1, m)
 
 
@@ -545,10 +549,10 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         self,
         alpha: float,
         n_w: int,
-        chebyshev_weights: Union[Tensor, List[float]],
-        baseline_Y: Optional[Tensor] = None,
-        ref_point: Optional[Union[Tensor, List[float]]] = None,
-        preprocessing_function: Optional[Callable[[Tensor], Tensor]] = None,
+        chebyshev_weights: Tensor | list[float],
+        baseline_Y: Tensor | None = None,
+        ref_point: Tensor | list[float] | None = None,
+        preprocessing_function: Callable[[Tensor], Tensor] | None = None,
     ) -> None:
         r"""Transform the posterior samples to samples of a risk measure.
 
@@ -587,9 +591,9 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
 
     def set_baseline_Y(
         self,
-        model: Optional[Model],
-        X_baseline: Optional[Tensor],
-        Y_samples: Optional[Tensor] = None,
+        model: Model | None,
+        X_baseline: Tensor | None,
+        Y_samples: Tensor | None = None,
     ) -> None:
         r"""Set the `baseline_Y` based on the MVaR predictions of the `model`
         for `X_baseline`.
@@ -611,6 +615,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
                     "`model` and `X_baseline` are ignored when `Y_samples` is "
                     "provided to `MARS.set_baseline_Y`.",
                     BotorchWarning,
+                    stacklevel=2,
                 )
             Y = Y_samples
         Y = self.preprocessing_function(Y)
@@ -624,7 +629,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         return self._chebyshev_weights
 
     @chebyshev_weights.setter
-    def chebyshev_weights(self, chebyshev_weights: Union[Tensor, List[float]]) -> None:
+    def chebyshev_weights(self, chebyshev_weights: Tensor | list[float]) -> None:
         r"""Update the Chebyshev weights.
 
         Invalidates the cached Chebyshev objective.
@@ -644,12 +649,12 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         self.register_buffer("_chebyshev_weights", chebyshev_weights)
 
     @property
-    def baseline_Y(self) -> Optional[Tensor]:
-        r"""Baseline outcomes used indetermining the normalization bounds."""
+    def baseline_Y(self) -> Tensor | None:
+        r"""Baseline outcomes used in determining the normalization bounds."""
         return self._baseline_Y
 
     @baseline_Y.setter
-    def baseline_Y(self, baseline_Y: Optional[Tensor]) -> None:
+    def baseline_Y(self, baseline_Y: Tensor | None) -> None:
         r"""Update the baseline outcomes.
 
         Invalidates the cached Chebyshev objective.
@@ -663,7 +668,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         self.register_buffer("_baseline_Y", baseline_Y)
 
     @property
-    def chebyshev_objective(self) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
+    def chebyshev_objective(self) -> Callable[[Tensor, Tensor | None], Tensor]:
         r"""The objective for applying the Chebyshev scalarization."""
         if self._chebyshev_objective is None:
             self._construct_chebyshev_objective()
@@ -690,7 +695,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
         if ref_point is not None:
             ref_point = normalize(ref_point.unsqueeze(0), bounds=Y_bounds).squeeze(0)
 
-        def chebyshev_obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        def chebyshev_obj(Y: Tensor, X: Tensor | None = None) -> Tensor:
             Y = self.preprocessing_function(Y)
             Y = normalize(Y, bounds=Y_bounds)
             if ref_point is not None:
@@ -718,7 +723,7 @@ class MARS(VaR, MultiOutputRiskMeasureMCObjective):
     @staticmethod
     def _get_Y_normalization_bounds(
         Y: Tensor,
-        ref_point: Optional[Tensor] = None,
+        ref_point: Tensor | None = None,
     ) -> Tensor:
         r"""Get normalization bounds for scalarizations.
 

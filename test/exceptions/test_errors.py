@@ -10,7 +10,10 @@ from botorch.exceptions.errors import (
     BotorchError,
     BotorchTensorDimensionError,
     CandidateGenerationError,
+    DeprecationError,
+    InfeasibilityError,
     InputDataError,
+    OptimizationGradientError,
     OptimizationTimeoutError,
     UnsupportedError,
 )
@@ -20,10 +23,15 @@ from botorch.utils.testing import BotorchTestCase
 class TestBotorchExceptions(BotorchTestCase):
     def test_botorch_exception_hierarchy(self):
         self.assertIsInstance(BotorchError(), Exception)
-        self.assertIsInstance(CandidateGenerationError(), BotorchError)
-        self.assertIsInstance(InputDataError(), BotorchError)
-        self.assertIsInstance(UnsupportedError(), BotorchError)
-        self.assertIsInstance(BotorchTensorDimensionError(), BotorchError)
+        for ErrorClass in [
+            CandidateGenerationError,
+            DeprecationError,
+            InputDataError,
+            UnsupportedError,
+            BotorchTensorDimensionError,
+            InfeasibilityError,
+        ]:
+            self.assertIsInstance(ErrorClass(), BotorchError)
 
     def test_raise_botorch_exceptions(self):
         for ErrorClass in (
@@ -32,6 +40,7 @@ class TestBotorchExceptions(BotorchTestCase):
             CandidateGenerationError,
             InputDataError,
             UnsupportedError,
+            InfeasibilityError,
         ):
             with self.assertRaises(ErrorClass):
                 raise ErrorClass("message")
@@ -43,4 +52,10 @@ class TestBotorchExceptions(BotorchTestCase):
         self.assertEqual(error.runtime, 0.123)
         self.assertTrue(np.array_equal(error.current_x, np.array([1.0])))
         with self.assertRaises(OptimizationTimeoutError):
+            raise error
+
+    def test_OptimizationGradientError(self):
+        error = OptimizationGradientError("message", current_x=np.array([1.0]))
+        self.assertTrue(np.array_equal(error.current_x, np.array([1.0])))
+        with self.assertRaisesRegex(OptimizationGradientError, "message"):
             raise error

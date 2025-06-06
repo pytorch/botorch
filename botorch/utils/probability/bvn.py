@@ -19,7 +19,6 @@ Methods for computing bivariate normal probabilities and statistics.
 from __future__ import annotations
 
 from math import pi as _pi
-from typing import Optional, Tuple
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -134,7 +133,7 @@ def bvnu(r: Tensor, h: Tensor, k: Tensor) -> Tensor:
 
 
 def _bvnu_polar(
-    r: Tensor, h: Tensor, k: Tensor, num_points: Optional[int] = None
+    r: Tensor, h: Tensor, k: Tensor, num_points: int | None = None
 ) -> Tensor:
     r"""Solves for `P(x > h, y > k)` by integrating in polar coordinates as
 
@@ -242,8 +241,8 @@ def bvnmom(
     yl: Tensor,
     xu: Tensor,
     yu: Tensor,
-    p: Optional[Tensor] = None,
-) -> Tuple[Tensor, Tensor]:
+    p: Tensor | None = None,
+) -> tuple[Tensor, Tensor]:
     r"""Computes the expected values of truncated, bivariate normal random variables.
 
     Let `x` and `y` be a pair of standard bivariate normal random variables having

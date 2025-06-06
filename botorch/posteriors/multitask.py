@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Optional, Tuple, Union
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -22,8 +21,8 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         train_diff: Tensor,
         test_mean: Tensor,
         train_train_covar: LinearOperator,
-        train_noise: Union[LinearOperator, Tensor],
-        test_noise: Optional[Union[LinearOperator, Tensor]] = None,
+        train_noise: LinearOperator | Tensor,
+        test_noise: LinearOperator | Tensor | None = None,
     ):
         r"""
         Posterior class for a Kronecker Multi-task GP model using with ICM kernel.
@@ -36,9 +35,11 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             distribution: Posterior multivariate normal distribution.
             joint_covariance_matrix: Joint test train covariance matrix over the entire
                 tensor.
-            train_train_covar: Covariance matrix of train points in the data space.
-            test_obs_covar: Covariance matrix of test x train points in the data space.
+            test_train_covar: Covariance matrix of test x train points in the data
+                space.
             train_diff: Difference between train mean and train responses.
+            test_mean: Test mean response.
+            train_train_covar: Covariance matrix of train points in the data space.
             train_noise: Training noise covariance.
             test_noise: Only used if posterior should contain observation noise.
                 Testing noise covariance.
@@ -75,7 +76,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         return batch_shape + torch.Size((sampling_shape,))
 
     @property
-    def batch_range(self) -> Tuple[int, int]:
+    def batch_range(self) -> tuple[int, int]:
         r"""The t-batch range.
 
         This is used in samplers to identify the t-batch component of the
@@ -87,7 +88,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
 
     def _prepare_base_samples(
         self, sample_shape: torch.Size, base_samples: Tensor = None
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         covariance_matrix = self.joint_covariance_matrix
         joint_size = covariance_matrix.shape[-1]
         batch_shape = covariance_matrix.batch_shape
@@ -182,8 +183,8 @@ class MultitaskGPPosterior(GPyTorchPosterior):
     def rsample_from_base_samples(
         self,
         sample_shape: torch.Size,
-        base_samples: Optional[Tensor],
-        train_diff: Optional[Tensor] = None,
+        base_samples: Tensor | None,
+        train_diff: Tensor | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients) using base samples.
 
@@ -226,7 +227,9 @@ class MultitaskGPPosterior(GPyTorchPosterior):
             train_diff.reshape(*train_diff.shape[:-2], -1) - updated_obs_samples
         )
         train_covar_plus_noise = self.train_train_covar + self.train_noise
-        obs_solve = train_covar_plus_noise.inv_matmul(obs_minus_samples.unsqueeze(-1))
+        obs_solve = _permute_solve(
+            train_covar_plus_noise, obs_minus_samples.unsqueeze(-1)
+        )
 
         # and multiply the test-observed matrix against the result of the solve
         updated_samples = self.test_train_covar.matmul(obs_solve).squeeze(-1)
@@ -251,7 +254,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
 
     def rsample(
         self,
-        sample_shape: Optional[torch.Size] = None,
+        sample_shape: torch.Size | None = None,
     ) -> Tensor:
         r"""Sample from the posterior (with gradients).
 
@@ -271,7 +274,7 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         )
 
     def _draw_from_base_covar(
-        self, covar: Union[Tensor, LinearOperator], base_samples: Tensor
+        self, covar: Tensor | LinearOperator, base_samples: Tensor
     ) -> Tensor:
         # Now reparameterize those base samples
         if not isinstance(covar, LinearOperator):
@@ -286,3 +289,37 @@ class MultitaskGPPosterior(GPyTorchPosterior):
         res = covar_root.matmul(base_samples)
 
         return res.squeeze(-1)
+
+
+def _permute_solve(A: LinearOperator, b: Tensor) -> LinearOperator:
+    r"""Solve the batched linear system AX = b, where b is a batched column
+    vector. The solve is carried out after permuting the largest batch
+    dimension of b to the final position, which results in a more efficient
+    matrix-matrix solve.
+
+    This ideally should be handled upstream (in GPyTorch, linear_operator or
+    PyTorch), after which any uses of this method can be replaced with
+    `A.solve(b)`.
+
+    Args:
+        A: LinearOperator of shape (n, n)
+        b: Tensor of shape (..., n, 1)
+
+    Returns:
+        LinearOperator of shape (..., n, 1)
+    """
+    # permute dimensions to move largest batch dimension to the end (more efficient
+    # than unsqueezing)
+    perm = list(range(b.ndim))
+    if b.ndim > 2:
+        largest_batch_dim, _ = max(enumerate(b.shape[:-2]), key=lambda t: t[1])
+        perm[-1], perm[largest_batch_dim] = perm[largest_batch_dim], perm[-1]
+    b_p = b.permute(*perm)
+
+    x_p = A.solve(b_p)
+
+    # Undo permutation
+    inverse_perm = torch.argsort(torch.tensor(perm))
+    x = x_p.permute(*inverse_perm)
+
+    return x

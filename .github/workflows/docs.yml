@@ -15,20 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+    env:
+      # `uv pip ...` requires venv by default. This skips that requirement.
+      UV_SYSTEM_PYTHON: 1
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.8"
+        python-version: "3.13"
     - name: Install dependencies
       env:
         ALLOW_LATEST_GPYTORCH_LINOP: true
       run: |
-        pip install git+https://github.com/cornellius-gp/linear_operator.git
-        pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install .[dev]
-        pip install beautifulsoup4 ipython nbconvert jinja2
+        uv pip install git+https://github.com/cornellius-gp/linear_operator.git
+        uv pip install git+https://github.com/cornellius-gp/gpytorch.git
+        uv pip install ."[dev, tutorials]"
     - name: Validate Sphinx
       run: |
         python scripts/validate_sphinx.py -p "$(pwd)"
@@ -38,4 +42,4 @@ jobs:
         sphinx-build -WT --keep-going sphinx/source sphinx/build
     - name: Validate and parse tutorials
       run: |
-        python scripts/parse_tutorials.py -w "$(pwd)"
+        python scripts/convert_ipynb_to_mdx.py --clean

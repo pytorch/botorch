@@ -8,9 +8,13 @@ r"""Representations for different kinds of data."""
 
 from __future__ import annotations
 
+import dataclasses
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
 from typing import Any
+
+import torch
 
 from torch import device as Device, dtype as Dtype, LongTensor, Size, Tensor
 
@@ -25,9 +29,9 @@ class BotorchContainer(ABC):
 
     Notice: Once version 3.10 becomes standard, this class should
     be reworked to take advantage of dataclasses' `kw_only` flag.
-
-    :meta private:
     """
+
+    event_shape: Size
 
     def __post_init__(self, validate_init: bool = True) -> None:
         if validate_init:
@@ -66,6 +70,7 @@ class BotorchContainer(ABC):
 @dataclass(eq=False)
 class DenseContainer(BotorchContainer):
     r"""Basic representation of data stored as a dense Tensor."""
+
     values: Tensor
     event_shape: Size
 
@@ -100,6 +105,9 @@ class DenseContainer(BotorchContainer):
                     f"Shape of `values` {self.values.shape} incompatible with "
                     f"`event shape` {self.event_shape}."
                 )
+
+    def clone(self) -> DenseContainer:
+        return dataclasses.replace(self)
 
 
 @dataclass(eq=False)
@@ -148,3 +156,10 @@ class SliceContainer(BotorchContainer):
                 f"Shapes of `values` {values.shape} and `indices` "
                 f"{indices.shape} incompatible with `event_shape` {event_shape}."
             )
+
+    def clone(self) -> SliceContainer:
+        return type(self)(
+            values=self.values.clone(),
+            indices=self.indices.clone(),
+            event_shape=torch.Size(self.event_shape),
+        )

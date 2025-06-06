@@ -4,17 +4,17 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from unittest.mock import patch
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import InputDataError
 from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.model import Model, ModelDict, ModelList
-from botorch.models.utils import parse_training_data
-from botorch.posteriors.deterministic import DeterministicPosterior
+from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.posteriors.posterior_list import PosteriorList
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from torch import rand
 
 
 class NotSoAbstractBaseModel(Model):
@@ -35,7 +35,10 @@ class DummyPosteriorTransform(PosteriorTransform):
 
     def forward(self, posterior):
         return PosteriorList(
-            *[DeterministicPosterior(2 * p.mean + 1) for p in posterior.posteriors]
+            *[
+                EnsemblePosterior(2 * p.mean.unsqueeze(0) + 1)
+                for p in posterior.posteriors
+            ]
         )
 
 
@@ -55,12 +58,27 @@ class TestBaseModel(BotorchTestCase):
         with self.assertRaises(NotImplementedError):
             model.subset_output([0])
 
-    def test_construct_inputs(self):
-        with patch.object(
-            parse_training_data, "parse_training_data", return_value={"a": 1}
+    def test_construct_inputs(self) -> None:
+        model = NotSoAbstractBaseModel()
+        with self.subTest("Wrong training data type"), self.assertRaisesRegex(
+            TypeError, "Expected `training_data` to be a `SupervisedDataset`, but got "
         ):
-            model = NotSoAbstractBaseModel()
-            self.assertEqual(model.construct_inputs(None), {"a": 1})
+            model.construct_inputs(training_data=None)
+
+        x = rand(3, 2)
+        y = rand(3, 1)
+        dataset = SupervisedDataset(
+            X=x, Y=y, feature_names=["a", "b"], outcome_names=["y"]
+        )
+        model_inputs = model.construct_inputs(training_data=dataset)
+        self.assertEqual(model_inputs, {"train_X": x, "train_Y": y})
+
+        yvar = rand(3, 1)
+        dataset = SupervisedDataset(
+            X=x, Y=y, Yvar=yvar, feature_names=["a", "b"], outcome_names=["y"]
+        )
+        model_inputs = model.construct_inputs(training_data=dataset)
+        self.assertEqual(model_inputs, {"train_X": x, "train_Y": y, "train_Yvar": yvar})
 
     def test_model_list(self):
         tkwargs = {"device": self.device, "dtype": torch.double}

@@ -4,27 +4,31 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import warnings
 from typing import Any
 
 import torch
 from botorch.models import (
     GenericDeterministicModel,
+    HigherOrderGP,
     ModelList,
-    ModelListGP,
+    PairwiseGP,
     SaasFullyBayesianSingleTaskGP,
     SingleTaskGP,
 )
+from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
+from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
+from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.model import Model
+from botorch.models.multitask import MultiTaskGP
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch.utils.transforms import (
     _verify_output_shape,
     concatenate_pending_points,
+    is_ensemble,
     is_fully_bayesian,
     match_batch_shape,
     normalize,
     normalize_indices,
-    squeeze_last_dim,
     standardize,
     t_batch_mode_transform,
     unnormalize,
@@ -55,7 +59,7 @@ class TestStandardize(BotorchTestCase):
 
 
 class TestNormalizeAndUnnormalize(BotorchTestCase):
-    def test_normalize_unnormalize(self):
+    def test_normalize_unnormalize(self) -> None:
         for dtype in (torch.float, torch.double):
             X = torch.tensor([0.0, 0.25, 0.5], device=self.device, dtype=dtype).view(
                 -1, 1
@@ -81,6 +85,17 @@ class TestNormalizeAndUnnormalize(BotorchTestCase):
             X2_normalized = normalize(X2, bounds=bounds2)
             self.assertTrue(torch.equal(X2_normalized, expected_X2_normalized))
             self.assertTrue(torch.equal(X2, unnormalize(X2_normalized, bounds=bounds2)))
+
+    def test_with_constant_bounds(self) -> None:
+        X = torch.rand(10, 2, dtype=torch.double)
+        # First dimension is constant, second has a range of 1.
+        # The transform should just add 1 to each dimension.
+        bounds = -torch.ones(2, 2, dtype=torch.double)
+        bounds[1, 1] = 0.0
+        X_normalized = normalize(X, bounds=bounds)
+        self.assertAllClose(X_normalized, X + 1)
+        X_unnormalized = unnormalize(X_normalized, bounds=bounds)
+        self.assertAllClose(X_unnormalized, X)
 
 
 class BMIMTestClass(BotorchTestCase):
@@ -118,6 +133,13 @@ class NotSoAbstractBaseModel(Model):
     def posterior(self, X, output_indices, observation_noise, **kwargs):
         pass
 
+    @property
+    def batch_shape(self) -> torch.Size():
+        if hasattr(self, "_batch_shape"):
+            return self._batch_shape
+        else:
+            return super().batch_shape
+
 
 class TestBatchModeTransform(BotorchTestCase):
     def test_verify_output_shape(self):
@@ -129,13 +151,25 @@ class TestBatchModeTransform(BotorchTestCase):
         X = torch.ones(1, 1, 1)
         self.assertTrue(_verify_output_shape(acqf=None, X=X, output=torch.tensor(1)))
         # shape mismatch and cls does not have model attribute
-        cls = BMIMTestClass()
+        acqf = BMIMTestClass()
         with self.assertWarns(RuntimeWarning):
-            self.assertTrue(_verify_output_shape(acqf=cls, X=X, output=X))
+            self.assertTrue(_verify_output_shape(acqf=acqf, X=X, output=X))
         # shape mismatch and cls.model does not define batch shape
-        cls.model = NotSoAbstractBaseModel()
+        acqf.model = NotSoAbstractBaseModel()
         with self.assertWarns(RuntimeWarning):
-            self.assertTrue(_verify_output_shape(acqf=cls, X=X, output=X))
+            self.assertTrue(_verify_output_shape(acqf=acqf, X=X, output=X))
+        # Output matches model batch shape.
+        acqf.model._batch_shape = torch.Size([3, 5])
+        self.assertTrue(_verify_output_shape(acqf=acqf, X=X, output=torch.empty(3, 5)))
+        # Output has additional dimensions beyond model batch shape.
+        for X_batch in [(2, 3, 5), (2, 1, 5), (2, 1, 1)]:
+            self.assertTrue(
+                _verify_output_shape(
+                    acqf=acqf,
+                    X=torch.empty(*X_batch, 1, 1),
+                    output=torch.empty(2, 3, 5),
+                )
+            )
 
     def test_t_batch_mode_transform(self):
         c = BMIMTestClass()
@@ -279,30 +313,85 @@ class TorchNormalizeIndices(BotorchTestCase):
             nlzd_indices = normalize_indices([-4], 3)
 
 
-class TestSqueezeLastDim(BotorchTestCase):
-    def test_squeeze_last_dim(self):
-        Y = torch.rand(2, 1, 1)
-        with warnings.catch_warnings(record=True) as ws:
-            Y_squeezed = squeeze_last_dim(Y=Y)
-            self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in ws))
-        self.assertTrue(torch.equal(Y_squeezed, Y.squeeze(-1)))
-
-
 class TestIsFullyBayesian(BotorchTestCase):
     def test_is_fully_bayesian(self):
         X, Y = torch.rand(3, 2), torch.randn(3, 1)
-        saas = SaasFullyBayesianSingleTaskGP(train_X=X, train_Y=Y)
         vanilla_gp = SingleTaskGP(train_X=X, train_Y=Y)
         deterministic = GenericDeterministicModel(f=lambda x: x)
-        # Single model
-        self.assertTrue(is_fully_bayesian(model=saas))
-        self.assertFalse(is_fully_bayesian(model=vanilla_gp))
-        self.assertFalse(is_fully_bayesian(model=deterministic))
-        # ModelListGP
-        self.assertTrue(is_fully_bayesian(model=ModelListGP(saas, saas)))
-        self.assertTrue(is_fully_bayesian(model=ModelListGP(saas, vanilla_gp)))
-        self.assertFalse(is_fully_bayesian(model=ModelListGP(vanilla_gp, vanilla_gp)))
-        # ModelList
-        self.assertTrue(is_fully_bayesian(model=ModelList(saas, saas)))
-        self.assertTrue(is_fully_bayesian(model=ModelList(saas, deterministic)))
-        self.assertFalse(is_fully_bayesian(model=ModelList(vanilla_gp, deterministic)))
+
+        fully_bayesian_models = (
+            SaasFullyBayesianSingleTaskGP(train_X=X, train_Y=Y),
+            SaasFullyBayesianMultiTaskGP(train_X=X, train_Y=Y, task_feature=-1),
+        )
+        for m in fully_bayesian_models:
+            self.assertTrue(is_fully_bayesian(model=m))
+            # ModelList
+            self.assertTrue(is_fully_bayesian(model=ModelList(m, m)))
+            self.assertTrue(is_fully_bayesian(model=ModelList(m, vanilla_gp)))
+            self.assertTrue(is_fully_bayesian(model=ModelList(m, deterministic)))
+            # Nested ModelList
+            self.assertTrue(is_fully_bayesian(model=ModelList(ModelList(m), m)))
+            self.assertTrue(
+                is_fully_bayesian(model=ModelList(ModelList(m), deterministic))
+            )
+
+        non_fully_bayesian_models = (
+            GenericDeterministicModel(f=lambda x: x),
+            SingleTaskGP(train_X=X, train_Y=Y),
+            MultiTaskGP(train_X=X, train_Y=Y, task_feature=-1),
+            HigherOrderGP(train_X=X, train_Y=Y),
+            SingleTaskMultiFidelityGP(train_X=X, train_Y=Y, data_fidelities=[3]),
+            MixedSingleTaskGP(train_X=X, train_Y=Y, cat_dims=[1]),
+            PairwiseGP(datapoints=X, comparisons=None),
+        )
+        for m in non_fully_bayesian_models:
+            self.assertFalse(is_fully_bayesian(model=m))
+            # ModelList
+            self.assertFalse(is_fully_bayesian(model=ModelList(m, m)))
+            self.assertFalse(is_fully_bayesian(model=ModelList(m, vanilla_gp)))
+            self.assertFalse(is_fully_bayesian(model=ModelList(m, deterministic)))
+            # Nested ModelList
+            self.assertFalse(is_fully_bayesian(model=ModelList(ModelList(m), m)))
+            self.assertFalse(
+                is_fully_bayesian(model=ModelList(ModelList(m), deterministic))
+            )
+
+
+class TestIsEnsemble(BotorchTestCase):
+    def test_is_ensemble(self):
+        X, Y = torch.rand(3, 2), torch.randn(3, 1)
+        vanilla_gp = SingleTaskGP(train_X=X, train_Y=Y)
+        deterministic = GenericDeterministicModel(f=lambda x: x)
+
+        ensemble_models = (
+            SaasFullyBayesianSingleTaskGP(train_X=X, train_Y=Y),
+            SaasFullyBayesianMultiTaskGP(train_X=X, train_Y=Y, task_feature=-1),
+        )
+        for m in ensemble_models:
+            self.assertTrue(is_ensemble(model=m))
+            # ModelList
+            self.assertTrue(is_ensemble(model=ModelList(m, m)))
+            self.assertTrue(is_ensemble(model=ModelList(m, vanilla_gp)))
+            self.assertTrue(is_ensemble(model=ModelList(m, deterministic)))
+            # Nested ModelList
+            self.assertTrue(is_ensemble(model=ModelList(ModelList(m), m)))
+            self.assertTrue(is_ensemble(model=ModelList(ModelList(m), deterministic)))
+
+        non_ensemble_models = (
+            GenericDeterministicModel(f=lambda x: x),
+            SingleTaskGP(train_X=X, train_Y=Y),
+            MultiTaskGP(train_X=X, train_Y=Y, task_feature=-1),
+            HigherOrderGP(train_X=X, train_Y=Y),
+            SingleTaskMultiFidelityGP(train_X=X, train_Y=Y, data_fidelities=[3]),
+            MixedSingleTaskGP(train_X=X, train_Y=Y, cat_dims=[1]),
+            PairwiseGP(datapoints=X, comparisons=None),
+        )
+        for m in non_ensemble_models:
+            self.assertFalse(is_ensemble(model=m))
+            # ModelList
+            self.assertFalse(is_ensemble(model=ModelList(m, m)))
+            self.assertFalse(is_ensemble(model=ModelList(m, vanilla_gp)))
+            self.assertFalse(is_ensemble(model=ModelList(m, deterministic)))
+            # Nested ModelList
+            self.assertFalse(is_ensemble(model=ModelList(ModelList(m), m)))
+            self.assertFalse(is_ensemble(model=ModelList(ModelList(m), deterministic)))

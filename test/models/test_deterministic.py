@@ -96,7 +96,7 @@ class TestDeterministicModels(BotorchTestCase):
             X = torch.rand(*shape)
             p = model.posterior(X)
             mean_exp = model.b + (X.unsqueeze(-1) * a).sum(dim=-2)
-            self.assertTrue(torch.equal(p.mean, mean_exp))
+            self.assertAllClose(p.mean, mean_exp)
         # # test two-dim output
         a = torch.rand(3, 2)
         model = AffineDeterministicModel(a)
@@ -105,7 +105,7 @@ class TestDeterministicModels(BotorchTestCase):
             X = torch.rand(*shape)
             p = model.posterior(X)
             mean_exp = model.b + (X.unsqueeze(-1) * a).sum(dim=-2)
-            self.assertTrue(torch.equal(p.mean, mean_exp))
+            self.assertAllClose(p.mean, mean_exp)
         # test subset output
         X = torch.rand(4, 3)
         subset_model = model.subset_output([0])
@@ -152,6 +152,8 @@ class TestDeterministicModels(BotorchTestCase):
         train_Y = torch.rand(2, 2)
         model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
         mean_model = PosteriorMeanModel(model=model)
+        self.assertTrue(mean_model.num_outputs == train_Y.shape[-1])
+        self.assertTrue(mean_model.batch_shape == torch.Size([]))
 
         test_X = torch.rand(2, 3)
         post = model.posterior(test_X)
@@ -166,14 +168,29 @@ class TestDeterministicModels(BotorchTestCase):
         model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
         fss_model = FixedSingleSampleModel(model=model)
 
+        # test without specifying w and dim
         test_X = torch.rand(2, 3)
         w = fss_model.w
         post = model.posterior(test_X)
         original_output = post.mean + post.variance.sqrt() * w
         fss_output = fss_model(test_X)
-        self.assertTrue(torch.equal(original_output, fss_output))
+        self.assertAllClose(original_output, fss_output)
 
         self.assertTrue(hasattr(fss_model, "num_outputs"))
+
+        # test specifying w
+        w = torch.randn(4)
+        fss_model = FixedSingleSampleModel(model=model, w=w)
+        self.assertTrue(fss_model.w.shape == w.shape)
+        # test dim
+        dim = 5
+        fss_model = FixedSingleSampleModel(model=model, w=w, dim=dim)
+        # dim should be ignored
+        self.assertTrue(fss_model.w.shape == w.shape)
+        # test dim when no w is provided
+        fss_model = FixedSingleSampleModel(model=model, dim=dim)
+        # dim should be ignored
+        self.assertTrue(fss_model.w.shape == torch.Size([dim]))
 
         # check w dtype conversion
         train_X_double = torch.rand(2, 3, dtype=torch.double)

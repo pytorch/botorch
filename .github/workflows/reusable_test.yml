@@ -1,0 +1,60 @@
+name: Reusable Test Workflow
+
+on:
+  workflow_call:
+    inputs:
+      use_latest_pytorch_gpytorch:
+        required: true
+        type: boolean
+      upload_coverage:
+        required: false
+        type: boolean
+        default: true
+
+
+jobs:
+  tests-and-coverage:
+    name: Tests and coverage (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-14", "windows-latest"]
+        python-version: ["3.10", "3.13"]
+    env:
+      # `uv pip ...` requires venv by default. This skips that requirement.
+      UV_SYSTEM_PYTHON: 1
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install (auto-install dependencies)
+      if: ${{ !inputs.use_latest_pytorch_gpytorch }}
+      run: |
+        uv pip install .[test]
+    - name: Install dependencies with latest PyTorch & GPyTorch
+      if: ${{ inputs.use_latest_pytorch_gpytorch }}
+      env:
+        ALLOW_LATEST_GPYTORCH_LINOP: true
+      run: |
+        uv pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cpu
+        uv pip install git+https://github.com/cornellius-gp/linear_operator.git
+        uv pip install git+https://github.com/cornellius-gp/gpytorch.git
+        uv pip install .[test]
+    - name: Unit tests and coverage -- BoTorch
+      run: |
+        pytest -ra test/ --cov botorch/ --cov-report term-missing --cov-report xml:botorch_cov.xml
+    - name: Unit tests and coverage -- BoTorch Community
+      run: |
+        pytest -ra test_community/ --cov botorch_community/ --cov-report term-missing --cov-report xml:botorch_community_cov.xml
+    - name: Upload coverage
+      if: ${{ inputs.upload_coverage && runner.os == 'Linux' && matrix.python-version == 3.10 }}
+      uses: codecov/codecov-action@v4
+      with:
+        fail_ci_if_error: true
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./botorch_cov.xml,./botorch_community_cov.xml

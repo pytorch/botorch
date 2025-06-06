@@ -6,9 +6,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from dataclasses import dataclass, InitVar
 from itertools import chain
-from typing import Any, Optional, Sequence
+from typing import Any
 
 import torch
 from botorch.utils.probability.utils import swap_along_dim_
@@ -32,9 +34,9 @@ def block_matrix_concat(blocks: Sequence[Sequence[Tensor]]) -> Tensor:
 def augment_cholesky(
     Laa: Tensor,
     Kbb: Tensor,
-    Kba: Optional[Tensor] = None,
-    Lba: Optional[Tensor] = None,
-    jitter: Optional[float] = None,
+    Kba: Tensor | None = None,
+    Lba: Tensor | None = None,
+    jitter: float | None = None,
 ) -> Tensor:
     r"""Computes the Cholesky factor of a block matrix `K = [[Kaa, Kab], [Kba, Kbb]]`
     based on a precomputed Cholesky factor `Kaa = Laa Laa^T`.
@@ -75,7 +77,7 @@ class PivotedCholesky:
     step: int
     tril: Tensor
     perm: LongTensor
-    diag: Optional[Tensor] = None
+    diag: Tensor | None = None
     validate_init: InitVar[bool] = True
 
     def __post_init__(self, validate_init: bool = True):
@@ -123,7 +125,7 @@ class PivotedCholesky:
         rank1 = L[..., i + 1 :, i : i + 1].clone()
         rank1 = (rank1 * rank1.transpose(-1, -2)).tril()
         L[..., i + 1 :, i + 1 :] = L[..., i + 1 :, i + 1 :].clone() - rank1
-        L[Lii <= i * eps, i:, i] = 0  # numerical stability clause
+        L[..., i:, i][Lii <= i * eps] = 0  # numerical stability clause
         self.step += 1
 
     def pivot_(self, pivot: LongTensor) -> None:
@@ -189,7 +191,7 @@ class PivotedCholesky:
         for name in ("tril", "perm", "diag"):
             a = getattr(self, name)
             b = getattr(other, name)
-            if type(a) != type(b):
+            if type(a) is not type(b):
                 raise NotImplementedError(f"Types of field {name} do not match.")
 
             if a is not None:

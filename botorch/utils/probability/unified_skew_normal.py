@@ -6,8 +6,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from inspect import getmembers
-from typing import Optional, Sequence, Union
 
 import torch
 from botorch.utils.probability.linalg import augment_cholesky, block_matrix_concat
@@ -30,8 +31,8 @@ class UnifiedSkewNormal(Distribution):
         self,
         trunc: TruncatedMultivariateNormal,
         gauss: MultivariateNormal,
-        cross_covariance_matrix: Union[Tensor, LinearOperator],
-        validate_args: Optional[bool] = None,
+        cross_covariance_matrix: Tensor | LinearOperator,
+        validate_args: bool | None = None,
     ):
         r"""Unified Skew Normal distribution of `Y | a < X < b` for jointly Gaussian
         random vectors `X ∈ R^m` and `Y ∈ R^n`.

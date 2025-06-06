@@ -6,108 +6,85 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from copy import deepcopy
-from itertools import product
+from typing import Any
 
 import torch
-from botorch.models import (
-    FixedNoiseGP,
-    ModelListGP,
-    SingleTaskGP,
-    SingleTaskVariationalGP,
-)
+from botorch.exceptions.errors import UnsupportedError
+from botorch.models import ModelListGP, SingleTaskGP, SingleTaskVariationalGP
+from botorch.models.deterministic import GenericDeterministicModel
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.pathwise import draw_matheron_paths, MatheronPath, PathList
+from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.sampling.pathwise.utils import get_train_inputs
+from botorch.utils.test_helpers import get_sample_moments, standardize_moments
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from torch import Size
 from torch.nn.functional import pad
 
-from .helpers import get_sample_moments, standardize_moments
-
 
 class TestPosteriorSamplers(BotorchTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.models = defaultdict(list)
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
+        tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.float64}
+        torch.manual_seed(0)
 
-        seed = 0
-        for kernel in (
-            ScaleKernel(MaternKernel(nu=2.5, ard_num_dims=2, batch_shape=Size([]))),
-        ):
-            with torch.random.fork_rng():
-                torch.manual_seed(seed)
-                tkwargs = {"device": self.device, "dtype": torch.float64}
+        base = MaternKernel(nu=2.5, ard_num_dims=2, batch_shape=Size([]))
+        base.lengthscale = 0.1 + 0.3 * torch.rand_like(base.lengthscale)
+        kernel = ScaleKernel(base)
+        kernel.to(**tkwargs)
 
-                base = kernel.base_kernel if isinstance(kernel, ScaleKernel) else kernel
-                base.lengthscale = 0.1 + 0.3 * torch.rand_like(base.lengthscale)
-                kernel.to(**tkwargs)
+        uppers = 1 + 9 * torch.rand(base.lengthscale.shape[-1], **tkwargs)
+        bounds = pad(uppers.unsqueeze(0), (0, 0, 1, 0))
+        X = uppers * torch.rand(4, base.lengthscale.shape[-1], **tkwargs)
+        Y = 10 * kernel(X).cholesky() @ torch.randn(4, 1, **tkwargs)
+        input_transform = Normalize(d=X.shape[-1], bounds=bounds)
+        outcome_transform = Standardize(m=Y.shape[-1])
 
-                uppers = 1 + 9 * torch.rand(base.lengthscale.shape[-1], **tkwargs)
-                bounds = pad(uppers.unsqueeze(0), (0, 0, 1, 0))
+        # SingleTaskGP w/ inferred noise in eval mode
+        self.inferred_noise_gp = SingleTaskGP(
+            train_X=X,
+            train_Y=Y,
+            covar_module=deepcopy(kernel),
+            input_transform=deepcopy(input_transform),
+            outcome_transform=deepcopy(outcome_transform),
+        ).eval()
 
-                X = uppers * torch.rand(4, base.lengthscale.shape[-1], **tkwargs)
-                Y = 10 * kernel(X).cholesky() @ torch.randn(4, 1, **tkwargs)
-                if kernel.batch_shape:
-                    Y = Y.squeeze(-1).transpose(0, 1)  # n x m
+        # SingleTaskGP with observed noise in train mode
+        self.observed_noise_gp = SingleTaskGP(
+            train_X=X,
+            train_Y=Y,
+            train_Yvar=0.01 * torch.rand_like(Y),
+            covar_module=kernel,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
+        )
 
-                input_transform = Normalize(d=X.shape[-1], bounds=bounds)
-                outcome_transform = Standardize(m=Y.shape[-1])
+        # SingleTaskVariationalGP in train mode
+        self.variational_gp = SingleTaskVariationalGP(
+            train_X=X,
+            train_Y=Y,
+            covar_module=kernel,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
+        ).to(**tkwargs)
 
-                # SingleTaskGP in eval mode
-                self.models[SingleTaskGP].append(
-                    SingleTaskGP(
-                        train_X=X,
-                        train_Y=Y,
-                        covar_module=deepcopy(kernel),
-                        input_transform=deepcopy(input_transform),
-                        outcome_transform=deepcopy(outcome_transform),
-                    )
-                    .to(**tkwargs)
-                    .eval()
-                )
-
-                # FixedNoiseGP in train mode
-                self.models[FixedNoiseGP].append(
-                    FixedNoiseGP(
-                        train_X=X,
-                        train_Y=Y,
-                        train_Yvar=0.01 * torch.rand_like(Y),
-                        covar_module=kernel,
-                        input_transform=input_transform,
-                        outcome_transform=outcome_transform,
-                    ).to(**tkwargs)
-                )
-
-                # SingleTaskVariationalGP in train mode
-                self.models[SingleTaskVariationalGP].append(
-                    SingleTaskVariationalGP(
-                        train_X=X,
-                        train_Y=Y,
-                        covar_module=kernel,
-                        input_transform=input_transform,
-                        outcome_transform=outcome_transform,
-                    ).to(**tkwargs)
-                )
-
-            seed += 1
+        self.tkwargs = tkwargs
 
     def test_draw_matheron_paths(self):
-        for seed, models in enumerate(self.models.values()):
-            for model, sample_shape in product(models, [Size([1024]), Size([32, 32])]):
-                with torch.random.fork_rng():
-                    torch.random.manual_seed(seed)
-                    paths = draw_matheron_paths(model=model, sample_shape=sample_shape)
-                    self.assertIsInstance(paths, MatheronPath)
-                    self._test_draw_matheron_paths(model, paths, sample_shape)
+        for seed, model in enumerate(
+            (self.inferred_noise_gp, self.observed_noise_gp, self.variational_gp)
+        ):
+            for sample_shape in [Size([1024]), Size([32, 32])]:
+                torch.random.manual_seed(seed)
+                paths = draw_matheron_paths(model=model, sample_shape=sample_shape)
+                self.assertIsInstance(paths, MatheronPath)
+                self._test_draw_matheron_paths(model, paths, sample_shape)
 
         with self.subTest("test_model_list"):
-            model_list = ModelListGP(
-                self.models[SingleTaskGP][0], self.models[FixedNoiseGP][0]
-            )
+            model_list = ModelListGP(self.inferred_noise_gp, self.observed_noise_gp)
             path_list = draw_matheron_paths(model_list, sample_shape=sample_shape)
             (train_X,) = get_train_inputs(model_list.models[0], transformed=False)
             X = torch.zeros(
@@ -151,3 +128,60 @@ class TestPosteriorSamplers(BotorchTestCase):
         tol = atol * (num_features**-0.5 + sample_shape.numel() ** -0.5)
         for exact, estimate in zip(exact_moments, sample_moments):
             self.assertTrue(exact.allclose(estimate, atol=tol, rtol=0))
+
+    def test_get_matheron_path_model(self) -> None:
+        model_list = ModelListGP(self.inferred_noise_gp, self.observed_noise_gp)
+        moo_model = SingleTaskGP(
+            train_X=torch.rand(5, 2, **self.tkwargs),
+            train_Y=torch.rand(5, 2, **self.tkwargs),
+        )
+
+        test_X = torch.rand(5, 2, **self.tkwargs)
+        batch_test_X = torch.rand(3, 5, 2, **self.tkwargs)
+        sample_shape = Size([2])
+        sample_shape_X = torch.rand(3, 2, 5, 2, **self.tkwargs)
+        for model in (self.inferred_noise_gp, moo_model, model_list):
+            path_model = get_matheron_path_model(model=model)
+            self.assertFalse(path_model._is_ensemble)
+            self.assertIsInstance(path_model, GenericDeterministicModel)
+            for X in (test_X, batch_test_X):
+                self.assertEqual(
+                    model.posterior(X).mean.shape, path_model.posterior(X).mean.shape
+                )
+            path_model = get_matheron_path_model(model=model, sample_shape=sample_shape)
+            self.assertTrue(path_model._is_ensemble)
+            self.assertEqual(
+                path_model.posterior(sample_shape_X).mean.shape,
+                sample_shape_X.shape[:-1] + Size([model.num_outputs]),
+            )
+
+        with self.assertRaisesRegex(
+            UnsupportedError, "A model-list of multi-output models is not supported."
+        ):
+            get_matheron_path_model(
+                model=ModelListGP(self.inferred_noise_gp, moo_model)
+            )
+
+    def test_get_matheron_path_model_batched(self) -> None:
+        model = SingleTaskGP(
+            train_X=torch.rand(4, 5, 2, **self.tkwargs),
+            train_Y=torch.rand(4, 5, 2, **self.tkwargs),
+        )
+        model._is_ensemble = True
+        path_model = get_matheron_path_model(model=model)
+        self.assertTrue(path_model._is_ensemble)
+        test_X = torch.rand(5, 2, **self.tkwargs)
+        # This mimics the behavior of the acquisition functions unsqueezing the
+        # model batch dimension for ensemble models.
+        batch_test_X = torch.rand(3, 1, 5, 2, **self.tkwargs)
+        # Explicitly matching X for completeness.
+        complete_test_X = torch.rand(3, 4, 5, 2, **self.tkwargs)
+        for X in (test_X, batch_test_X, complete_test_X):
+            self.assertEqual(
+                model.posterior(X).mean.shape, path_model.posterior(X).mean.shape
+            )
+
+        # Test with sample_shape.
+        path_model = get_matheron_path_model(model=model, sample_shape=Size([2, 6]))
+        test_X = torch.rand(3, 2, 6, 4, 5, 2, **self.tkwargs)
+        self.assertEqual(path_model.posterior(test_X).mean.shape, test_X.shape)

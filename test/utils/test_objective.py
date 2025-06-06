@@ -7,6 +7,10 @@
 
 import torch
 from botorch.utils import apply_constraints, get_objective_weights_transform
+from botorch.utils.objective import (
+    compute_feasibility_indicator,
+    compute_smoothed_feasibility_indicator,
+)
 from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
 
@@ -61,7 +65,7 @@ class TestApplyConstraints(BotorchTestCase):
         # nonnegative objective, one constraint, eta = 0
         samples = torch.randn(1)
         obj = ones_f(samples)
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "eta must be positive."):
             apply_constraints(
                 obj=obj,
                 constraints=[zeros_f],
@@ -153,7 +157,7 @@ class TestApplyConstraints(BotorchTestCase):
             self.assertAllClose(obj, samples.clamp_min(-1.0) * 0.5 - 1.0)
             # nonnegative objective, one constraint, eta = 0
             obj = samples
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(ValueError, "eta must be positive"):
                 apply_constraints(
                     obj=obj,
                     constraints=[zeros_f],
@@ -168,7 +172,7 @@ class TestApplyConstraints(BotorchTestCase):
             tkwargs["dtype"] = dtype
             samples = torch.rand(3, 2, **tkwargs)
             obj = samples.clone()
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(ValueError, "Number of provided constraints"):
                 obj = apply_constraints(
                     obj=obj,
                     constraints=[zeros_f, zeros_f],
@@ -176,7 +180,7 @@ class TestApplyConstraints(BotorchTestCase):
                     infeasible_cost=0.0,
                     eta=torch.tensor([0.1]).to(**tkwargs),
                 )
-            with self.assertRaises(ValueError):
+            with self.assertRaisesRegex(ValueError, "Number of provided constraints"):
                 obj = apply_constraints(
                     obj=obj,
                     constraints=[zeros_f, zeros_f],
@@ -185,21 +189,91 @@ class TestApplyConstraints(BotorchTestCase):
                     eta=torch.tensor([0.1, 0.1, 0.3]).to(**tkwargs),
                 )
 
+    def test_constraint_indicators(self):
+        # nonnegative objective, one constraint
+        samples = torch.randn(1)
+        ind = compute_feasibility_indicator(constraints=[zeros_f], samples=samples)
+        self.assertAllClose(ind, torch.ones_like(ind))
+        self.assertEqual(ind.dtype, torch.bool)
+
+        smoothed_ind = compute_smoothed_feasibility_indicator(
+            constraints=[zeros_f], samples=samples, eta=1e-3
+        )
+        self.assertAllClose(smoothed_ind, ones_f(samples) / 2)
+
+        # two constraints
+        samples = torch.randn(1)
+        smoothed_ind = compute_smoothed_feasibility_indicator(
+            constraints=[zeros_f, zeros_f],
+            samples=samples,
+            eta=1e-3,
+        )
+        self.assertAllClose(smoothed_ind, ones_f(samples) * 0.5 * 0.5)
+
+        # test it without fatmoid/sigmoid transformation
+        smoothed_ind = compute_smoothed_feasibility_indicator(
+            constraints=[zeros_f, zeros_f],
+            samples=samples,
+            eta=1e-3,
+            fat=[False, None],
+        )
+        self.assertAllClose(smoothed_ind, ones_f(samples) * 0.5 * 0)
+
+        # feasible
+        samples = torch.randn(1)
+        ind = compute_feasibility_indicator(
+            constraints=[minus_one_f],
+            samples=samples,
+        )
+        self.assertAllClose(ind, torch.ones_like(ind))
+
+        smoothed_ind = compute_smoothed_feasibility_indicator(
+            constraints=[minus_one_f], samples=samples, eta=1e-3
+        )
+        self.assertTrue((smoothed_ind > 3 / 4).all())
+
+        with self.assertRaisesRegex(ValueError, "Number of provided constraints"):
+            compute_smoothed_feasibility_indicator(
+                constraints=[zeros_f, zeros_f],
+                samples=samples,
+                eta=torch.tensor([0.1], device=self.device),
+            )
+        with self.assertRaisesRegex(ValueError, "Number of provided constraints"):
+            compute_smoothed_feasibility_indicator(
+                constraints=[zeros_f, zeros_f],
+                samples=samples,
+                eta=torch.tensor([0.1, 0.1], device=self.device),
+                fat=[True],
+            )
+
+        # test marginalize_dim
+        samples = torch.randn(1, 2, 1, 1)
+        ind = compute_feasibility_indicator(
+            constraints=[zeros_f], samples=samples, marginalize_dim=-3
+        )
+        self.assertAllClose(ind, torch.ones_like(ind))
+        self.assertTrue(ind.shape == torch.Size([1, 1]))
+        self.assertEqual(ind.dtype, torch.bool)
+
 
 class TestGetObjectiveWeightsTransform(BotorchTestCase):
-    def test_NoWeights(self):
+    def test_NoWeights(self) -> None:
         Y = torch.ones(5, 2, 4, 1)
         objective_transform = get_objective_weights_transform(None)
         Y_transformed = objective_transform(Y)
         self.assertTrue(torch.equal(Y.squeeze(-1), Y_transformed))
+        Y_transformed_X_None = objective_transform(Y, X=None)
+        self.assertTrue(torch.equal(Y.squeeze(-1), Y_transformed_X_None))
 
-    def test_OneWeightBroadcasting(self):
+    def test_OneWeightBroadcasting(self) -> None:
         Y = torch.ones(5, 2, 4, 1)
         objective_transform = get_objective_weights_transform(torch.tensor([0.5]))
         Y_transformed = objective_transform(Y)
         self.assertTrue(torch.equal(0.5 * Y.sum(dim=-1), Y_transformed))
+        Y_transformed_X_None = objective_transform(Y, X=None)
+        self.assertTrue(torch.equal(0.5 * Y.sum(dim=-1), Y_transformed_X_None))
 
-    def test_IncompatibleNumberOfWeights(self):
+    def test_IncompatibleNumberOfWeights(self) -> None:
         Y = torch.ones(5, 2, 4, 3)
         objective_transform = get_objective_weights_transform(torch.tensor([1.0, 2.0]))
         with self.assertRaises(RuntimeError):

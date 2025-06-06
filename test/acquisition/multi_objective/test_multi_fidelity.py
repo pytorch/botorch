@@ -8,7 +8,6 @@ import warnings
 from unittest import mock
 
 import torch
-from botorch import settings
 from botorch.acquisition.multi_objective.multi_fidelity import MOMF
 from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
 from botorch.exceptions.errors import BotorchError
@@ -149,11 +148,11 @@ class TestMOMF(BotorchTestCase):
             acqf.model._posterior._samples = torch.zeros(1, 2, 2, **tkwargs)
             res = acqf(X)
             X2 = torch.zeros(1, 1, 1, requires_grad=True, **tkwargs)
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+            with warnings.catch_warnings(record=True) as ws:
                 acqf.set_X_pending(X2)
-                self.assertEqual(acqf.X_pending, X2)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+            self.assertEqual(acqf.X_pending, X2)
+            self.assertEqual(len(ws), 1)
+            self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
 
             # test objective
             acqf = MOMF(

@@ -34,11 +34,6 @@ GPyTorch Posterior
 .. automodule:: botorch.posteriors.gpytorch
     :members:
 
-Determinstic Posterior
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.posteriors.deterministic
-    :members:
-
 Ensemble Posterior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.posteriors.ensemble
@@ -47,6 +42,11 @@ Ensemble Posterior
 Higher Order GP Posterior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.posteriors.higher_order
+    :members:
+
+Latent Kronecker GP Posterior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.posteriors.latent_kronecker
     :members:
 
 Multitask GP Posterior

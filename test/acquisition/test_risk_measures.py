@@ -5,8 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from typing import Optional
-
 import torch
 from botorch.acquisition.objective import LinearMCObjective
 from botorch.acquisition.risk_measures import (
@@ -16,13 +14,12 @@ from botorch.acquisition.risk_measures import (
     VaR,
     WorstCase,
 )
-from botorch.exceptions.errors import UnsupportedError
 from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
 
 
 class NotSoAbstractRiskMeasure(RiskMeasureMCObjective):
-    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:
         prepared_samples = self._prepare_samples(samples)
         return prepared_samples.sum(dim=-1)
 
@@ -33,28 +30,13 @@ class TestRiskMeasureMCObjective(BotorchTestCase):
         with self.assertRaises(TypeError):
             RiskMeasureMCObjective(n_w=3)
 
-        # DeprecationWarning.
-        with self.assertWarnsRegex(DeprecationWarning, "`weights` argument"):
-            obj = NotSoAbstractRiskMeasure(n_w=2, weights=[0.5])
-        # Preprocessing function is constructed from the weight.
-        self.assertIsInstance(obj.preprocessing_function, LinearMCObjective)
-        self.assertTrue(
-            torch.equal(obj.preprocessing_function.weights, torch.tensor([0.5]))
-        )
-
-        # Error on weights & preprocessing function.
-        with self.assertRaisesRegex(UnsupportedError, "together"):
-            NotSoAbstractRiskMeasure(
-                n_w=2, preprocessing_function=lambda X: X.squeeze(-1), weights=[0.5]
-            )
-
         for dtype in (torch.float, torch.double):
             samples = torch.tensor(
                 [[[1.0], [0.5], [2.0], [3.0], [1.0], [5.0]]],
                 device=self.device,
                 dtype=dtype,
             )
-            obj = NotSoAbstractRiskMeasure(n_w=3, weights=None)
+            obj = NotSoAbstractRiskMeasure(n_w=3)
             # MO samples without weights
             with self.assertRaises(RuntimeError):
                 obj(torch.ones(3, 2, device=self.device, dtype=dtype))

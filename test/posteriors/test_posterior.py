@@ -9,7 +9,7 @@ from itertools import product
 
 import torch
 from botorch.posteriors import GPyTorchPosterior, Posterior, PosteriorList
-from botorch.posteriors.deterministic import DeterministicPosterior
+from botorch.posteriors.ensemble import EnsemblePosterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
 from linear_operator.operators import to_linear_operator
@@ -57,7 +57,7 @@ class TestPosteriorList(BotorchTestCase):
 
     def _make_deterministic_posterior(self, shape, dtype):
         mean = torch.rand(*shape, 1, dtype=dtype, device=self.device)
-        return DeterministicPosterior(values=mean)
+        return EnsemblePosterior(values=mean.unsqueeze(0))
 
     def test_posterior_list(self):
         for dtype, use_deterministic in product(
@@ -72,10 +72,6 @@ class TestPosteriorList(BotorchTestCase):
             p_1 = make_posterior(shape, dtype)
             p_2 = make_posterior(shape, dtype)
             p = PosteriorList(p_1, p_2)
-            with self.assertWarnsRegex(
-                DeprecationWarning, "The `event_shape` attribute"
-            ):
-                self.assertEqual(p.event_shape, p._extended_shape())
             with self.assertRaisesRegex(NotImplementedError, "base_sample_shape"):
                 p.base_sample_shape
             self.assertEqual(p._extended_shape(), shape + torch.Size([2]))

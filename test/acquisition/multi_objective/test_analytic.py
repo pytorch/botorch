@@ -6,59 +6,12 @@
 
 
 import torch
-from botorch.acquisition.multi_objective.analytic import (
-    ExpectedHypervolumeImprovement,
-    MultiObjectiveAnalyticAcquisitionFunction,
-)
-from botorch.acquisition.multi_objective.objective import (
-    AnalyticMultiOutputObjective,
-    IdentityAnalyticMultiOutputObjective,
-    IdentityMCMultiOutputObjective,
-)
-from botorch.exceptions.errors import BotorchError, UnsupportedError
+from botorch.acquisition.multi_objective.analytic import ExpectedHypervolumeImprovement
+from botorch.exceptions.errors import BotorchError
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
-
-
-class DummyMultiObjectiveAnalyticAcquisitionFunction(
-    MultiObjectiveAnalyticAcquisitionFunction
-):
-    def forward(self, X):
-        pass
-
-
-class DummyAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
-    def forward(self, samples):
-        pass
-
-
-class TestMultiObjectiveAnalyticAcquisitionFunction(BotorchTestCase):
-    def test_abstract_raises(self):
-        with self.assertRaises(TypeError):
-            MultiObjectiveAnalyticAcquisitionFunction()
-
-    def test_init(self):
-        mm = MockModel(MockPosterior(mean=torch.rand(2, 1)))
-        # test default init
-        acqf = DummyMultiObjectiveAnalyticAcquisitionFunction(model=mm)
-        self.assertIsInstance(acqf.objective, IdentityAnalyticMultiOutputObjective)
-        # test custom init
-        objective = DummyAnalyticMultiOutputObjective()
-        acqf = DummyMultiObjectiveAnalyticAcquisitionFunction(
-            model=mm, objective=objective
-        )
-        self.assertEqual(acqf.objective, objective)
-        # test unsupported objective
-        with self.assertRaises(UnsupportedError):
-            DummyMultiObjectiveAnalyticAcquisitionFunction(
-                model=mm, objective=IdentityMCMultiOutputObjective()
-            )
-        acqf = DummyMultiObjectiveAnalyticAcquisitionFunction(model=mm)
-        # test set_X_pending
-        with self.assertRaises(UnsupportedError):
-            acqf.set_X_pending()
 
 
 class TestExpectedHypervolumeImprovement(BotorchTestCase):

@@ -20,21 +20,17 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.monte_carlo import qExpectedImprovement, qSimpleRegret
 from botorch.acquisition.objective import (
     GenericMCObjective,
-    ScalarizedObjective,
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.utils import project_to_sample_points
 from botorch.exceptions.errors import UnsupportedError
-from botorch.generation.gen import gen_candidates_scipy
 from botorch.models import SingleTaskGP
 from botorch.optim.optimize import optimize_acqf
-from botorch.optim.utils import _filter_kwargs
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.utils.test_helpers import DummyNonScalarizingPosteriorTransform
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal
-
-from .test_monte_carlo import DummyNonScalarizingPosteriorTransform
 
 NO = "botorch.utils.testing.MockModel.num_outputs"
 
@@ -129,18 +125,13 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     model=mm2,
                     posterior_transform=DummyNonScalarizingPosteriorTransform(),
                 )
-            # test handling of scalarized objective
-            obj = ScalarizedObjective(weights=torch.rand(2))
-            post_tf = ScalarizedPosteriorTransform(weights=torch.rand(2))
-            with self.assertRaises(RuntimeError):
-                qKnowledgeGradient(
-                    model=mm2, objective=obj, posterior_transform=post_tf
-                )
-            acqf = qKnowledgeGradient(model=mm2, objective=obj)
-            self.assertIsInstance(
-                acqf.posterior_transform, ScalarizedPosteriorTransform
-            )
-            self.assertIsNone(acqf.objective)
+
+            with self.assertRaisesRegex(
+                UnsupportedError,
+                "Objectives that are not an `MCAcquisitionObjective` are not "
+                "supported.",
+            ):
+                qKnowledgeGradient(model=mm, objective="car")
 
     def test_evaluate_q_knowledge_gradient(self):
         # Stop gap measure to avoid test failures on Ampere devices
@@ -595,13 +586,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                         torch.zeros(2, n_f + 1, 2, **tkwargs),
                         torch.zeros(2, **tkwargs),
                     ),
-                ), mock.patch(
-                    f"{optimize_acqf.__module__}._filter_kwargs",
-                    wraps=lambda f, **kwargs: _filter_kwargs(
-                        function=gen_candidates_scipy, **kwargs
-                    ),
                 ):
-
                     candidate, value = optimize_acqf(
                         acq_function=kg,
                         bounds=bounds,

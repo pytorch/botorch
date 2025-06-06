@@ -7,7 +7,8 @@
 import math
 
 import torch
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import InputDataError, UnsupportedError
+from botorch.test_functions.base import BaseTestProblem
 from botorch.test_functions.multi_objective import (
     BNH,
     BraninCurrin,
@@ -40,9 +41,10 @@ from botorch.test_functions.multi_objective import (
     ZDT3,
 )
 from botorch.utils.testing import (
+    BaseTestProblemTestCaseMixIn,
     BotorchTestCase,
-    ConstrainedMultiObjectiveTestProblemBaseTestCase,
-    MultiObjectiveTestProblemBaseTestCase,
+    ConstrainedTestProblemTestCaseMixin,
+    MultiObjectiveTestProblemTestCaseMixin,
 )
 
 
@@ -50,8 +52,10 @@ class DummyMOProblem(MultiObjectiveTestProblem):
     _ref_point = [0.0, 0.0]
     _num_objectives = 2
     _bounds = [(0.0, 1.0)] * 2
+    dim = 2
+    continuous_inds = list(range(dim))
 
-    def evaluate_true(self, X):
+    def _evaluate_true(self, X):
         f_X = X + 2
         return -f_X if self.negate else f_X
 
@@ -59,7 +63,7 @@ class DummyMOProblem(MultiObjectiveTestProblem):
 class TestBaseTestMultiObjectiveProblem(BotorchTestCase):
     def test_base_mo_problem(self):
         for negate in (True, False):
-            for noise_std in (None, 1.0):
+            for noise_std in (None, 1.0, [1.0, 2.0]):
                 f = DummyMOProblem(noise_std=noise_std, negate=negate)
                 self.assertEqual(f.noise_std, noise_std)
                 self.assertEqual(f.negate, negate)
@@ -71,10 +75,20 @@ class TestBaseTestMultiObjectiveProblem(BotorchTestCase):
                     self.assertTrue(torch.equal(f_X, expected_f_X))
                 with self.assertRaises(NotImplementedError):
                     f.gen_pareto_front(1)
+            with self.assertRaisesRegex(
+                InputDataError, "must match the number of objectives"
+            ):
+                f = DummyMOProblem(noise_std=[1.0, 2.0, 3.0], negate=negate)
 
 
-class TestBraninCurrin(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
-    functions = [BraninCurrin()]
+class TestBraninCurrin(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [BraninCurrin()]
 
     def test_init(self):
         for f in self.functions:
@@ -82,21 +96,30 @@ class TestBraninCurrin(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
             self.assertEqual(f.dim, 2)
 
 
-class TestDH(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
-    functions = [DH1(dim=2), DH2(dim=3), DH3(dim=4), DH4(dim=5)]
-    dims = [2, 3, 4, 5]
-    bounds = [
-        [[0.0, -1], [1, 1]],
-        [[0.0, -1, -1], [1, 1, 1]],
-        [[0.0, 0, -1, -1], [1, 1, 1, 1]],
-        [[0.0, -0.15, -1, -1, -1], [1, 1, 1, 1, 1]],
-    ]
-    expected = [
-        [[0.0, 1.0], [1.0, 1.0 / 1.2 + 1.0]],
-        [[0.0, 1.0], [1.0, 2.0 / 1.2 + 20.0]],
-        [[0.0, 1.88731], [1.0, 1.9990726 * 100]],
-        [[0.0, 1.88731], [1.0, 150.0]],
-    ]
+class TestDH(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
+        self.dims = [2, 3, 4, 5]
+        self.bounds = [
+            [[0.0, -1], [1, 1]],
+            [[0.0, -1, -1], [1, 1, 1]],
+            [[0.0, 0, -1, -1], [1, 1, 1, 1]],
+            [[0.0, -0.15, -1, -1, -1], [1, 1, 1, 1, 1]],
+        ]
+        self.expected = [
+            [[0.0, 1.0], [1.0, 1.0 / 1.2 + 1.0]],
+            [[0.0, 1.0], [1.0, 2.0 / 1.2 + 20.0]],
+            [[0.0, 1.88731], [1.0, 1.9990726 * 100]],
+            [[0.0, 1.88731], [1.0, 150.0]],
+        ]
+
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [DH1(dim=2), DH2(dim=3), DH3(dim=4), DH4(dim=5)]
 
     def test_init(self):
         for i, f in enumerate(self.functions):
@@ -105,27 +128,40 @@ class TestDH(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
             self.assertEqual(f.num_objectives, 2)
             self.assertEqual(f.dim, self.dims[i])
             self.assertTrue(
-                torch.equal(f.bounds, torch.tensor(self.bounds[i]).to(f.bounds))
+                torch.equal(
+                    f.bounds,
+                    torch.tensor(
+                        self.bounds[i], dtype=f.bounds.dtype, device=f.bounds.device
+                    ),
+                )
             )
 
     def test_function_values(self):
         for i, f in enumerate(self.functions):
             test_X = torch.zeros(2, self.dims[i], device=self.device)
             test_X[1] = 1.0
+            f = f.to(device=self.device)
             actual = f(test_X)
             expected = torch.tensor(self.expected[i], device=self.device)
             self.assertAllClose(actual, expected)
 
 
-class TestDTLZ(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
-    functions = [
-        DTLZ1(dim=5, num_objectives=2),
-        DTLZ2(dim=5, num_objectives=2),
-        DTLZ3(dim=5, num_objectives=2),
-        DTLZ4(dim=5, num_objectives=2),
-        DTLZ5(dim=5, num_objectives=2),
-        DTLZ7(dim=5, num_objectives=2),
-    ]
+class TestDTLZ(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [
+            DTLZ1(dim=5, num_objectives=2),
+            DTLZ2(dim=5, num_objectives=2),
+            DTLZ3(dim=5, num_objectives=2),
+            DTLZ4(dim=5, num_objectives=2),
+            DTLZ5(dim=5, num_objectives=2),
+            DTLZ7(dim=5, num_objectives=2),
+            DTLZ7(dim=5, num_objectives=2, noise_std=[0.1, 0.2]),
+        ]
 
     def test_init(self):
         for f in self.functions:
@@ -179,8 +215,17 @@ class TestDTLZ(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
                             )
 
 
-class TestGMM(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
-    functions = [GMM(num_objectives=4)]
+class TestGMM(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [
+            GMM(num_objectives=4),
+            GMM(num_objectives=4, noise_std=[0.0, 0.1, 0.2, 0.3]),
+        ]
 
     def test_init(self):
         f = self.functions[0]
@@ -225,8 +270,19 @@ class TestGMM(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
             )
 
 
-class TestMW7(ConstrainedMultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
-    functions = [MW7(dim=3)]
+class TestMW7(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [
+            MW7(dim=3),
+            MW7(dim=3, noise_std=[0.1, 0.2]),
+            MW7(dim=3, constraint_noise_std=[0.05, 0.025]),
+        ]
 
     def test_init(self):
         for f in self.functions:
@@ -236,12 +292,20 @@ class TestMW7(ConstrainedMultiObjectiveTestProblemBaseTestCase, BotorchTestCase)
             self.assertEqual(f.dim, 3)
 
 
-class TestZDT(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
-    functions = [
-        ZDT1(dim=3, num_objectives=2),
-        ZDT2(dim=3, num_objectives=2),
-        ZDT3(dim=3, num_objectives=2),
-    ]
+class TestZDT(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [
+            ZDT1(dim=3, num_objectives=2),
+            ZDT2(dim=3, num_objectives=2),
+            ZDT3(dim=3, num_objectives=2),
+            ZDT3(dim=3, num_objectives=2, noise_std=0.1),
+            ZDT3(dim=3, num_objectives=2, noise_std=[0.1, 0.2]),
+        ]
 
     def test_init(self):
         for f in self.functions:
@@ -303,27 +367,148 @@ class TestZDT(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
                         )
 
 
-class TestMultiObjectiveProblems(
-    MultiObjectiveTestProblemBaseTestCase, BotorchTestCase
+# ------------------ Unconstrained Multi-objective test problems ------------------ #
+
+
+class TestCarSideImpact(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [CarSideImpact(), Penicillin(), ToyRobust(), VehicleSafety()]
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [CarSideImpact(), CarSideImpact(noise_std=[0.1, 0.2, 0.3, 0.4])]
 
 
-class TestConstrainedMultiObjectiveProblems(
-    ConstrainedMultiObjectiveTestProblemBaseTestCase, BotorchTestCase
+class TestPenicillin(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
 ):
-    functions = [
-        BNH(),
-        SRN(),
-        CONSTR(),
-        ConstrainedBraninCurrin(),
-        C2DTLZ2(dim=3, num_objectives=2),
-        DiscBrake(),
-        WeldedBeam(),
-        OSY(),
-    ]
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [Penicillin(), Penicillin(noise_std=[0.1, 0.2, 0.3])]
 
-    def test_c2dtlz2_batch_exception(self):
+
+class TestToyRobust(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [ToyRobust(), ToyRobust(noise_std=[0.1, 0.2])]
+
+
+class TestVehicleSafety(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [VehicleSafety(), VehicleSafety(noise_std=[0.1, 0.2, 0.3])]
+
+
+# ------------------ Constrained Multi-objective test problems ------------------ #
+
+
+class TestBNH(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [BNH(), BNH(noise_std=[0.1, 0.2])]
+
+
+class TestSRN(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [SRN(), SRN(noise_std=[0.1, 0.2])]
+
+
+class TestCONSTR(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [CONSTR(), CONSTR(noise_std=[0.1, 0.2])]
+
+
+class TestConstrainedBraninCurrin(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [
+            ConstrainedBraninCurrin(),
+            ConstrainedBraninCurrin(noise_std=[0.1, 0.2]),
+            ConstrainedBraninCurrin(constraint_noise_std=0.1),
+        ]
+
+
+class TestC2DTLZ2(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [
+            C2DTLZ2(dim=3, num_objectives=2),
+            C2DTLZ2(dim=3, num_objectives=2, noise_std=0.1),
+            C2DTLZ2(dim=3, num_objectives=2, noise_std=[0.1, 0.2]),
+        ]
+
+    def test_batch_exception(self):
         f = C2DTLZ2(dim=3, num_objectives=2)
         with self.assertRaises(NotImplementedError):
-            f.evaluate_slack_true(torch.empty(1, 1, 3))
+            f.evaluate_slack_true(torch.rand(1, 1, 3))
+
+
+class TestDiscBrake(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [DiscBrake(), DiscBrake(noise_std=[0.1, 0.2])]
+
+
+class TestWeldedBeam(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [WeldedBeam(), WeldedBeam(noise_std=[0.1, 0.2])]
+
+
+class TestOSY(
+    BotorchTestCase,
+    BaseTestProblemTestCaseMixIn,
+    MultiObjectiveTestProblemTestCaseMixin,
+    ConstrainedTestProblemTestCaseMixin,
+):
+    @property
+    def functions(self) -> list[BaseTestProblem]:
+        return [OSY(), OSY(noise_std=[0.1, 0.2])]

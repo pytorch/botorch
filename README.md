@@ -8,10 +8,9 @@
 [![Lint](https://github.com/pytorch/botorch/workflows/Lint/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ALint)
 [![Test](https://github.com/pytorch/botorch/workflows/Test/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ATest)
 [![Docs](https://github.com/pytorch/botorch/workflows/Docs/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ADocs)
-[![Tutorials](https://github.com/pytorch/botorch/workflows/Tutorials/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ATutorials)
+[![Nightly](https://github.com/pytorch/botorch/actions/workflows/nightly.yml/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ANightly)
 [![Codecov](https://img.shields.io/codecov/c/github/pytorch/botorch.svg)](https://codecov.io/github/pytorch/botorch)
 
-[![Conda](https://img.shields.io/conda/v/pytorch/botorch.svg)](https://anaconda.org/pytorch/botorch)
 [![PyPI](https://img.shields.io/pypi/v/botorch.svg)](https://pypi.org/project/botorch)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -55,46 +54,33 @@ Optimization simply use Ax.
 ## Installation
 
 **Installation Requirements**
-- Python >= 3.8
-- PyTorch >= 1.11
-- gpytorch == 1.9.1
-- linear_operator == 0.3.0
+- Python >= 3.10
+- PyTorch >= 2.0.1
+- gpytorch == 1.14
+- linear_operator == 0.6
 - pyro-ppl >= 1.8.4
 - scipy
 - multiple-dispatch
 
-### Prerequisite only for MacOS users with Intel processors:
-Before installing BoTorch, we recommend first manually installing PyTorch, a required dependency of
-BoTorch. Installing it according to the [PyTorch installation instructions](https://pytorch.org/get-started/locally/)
-ensures that it is properly linked against MKL, a library that optimizes mathematical computation for Intel processors.
-This will result in up to an order-of-magnitude speed-up for Bayesian optimization, as at the moment,
-installing PyTorch from pip does not link against MKL.
-
-The PyTorch installation instructions currently recommend:
-1. Install [Anaconda](https://www.anaconda.com/distribution/#download-section). Note that there are different installers for Intel and M1 Macs.
-2. Install PyTorch following the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
-Currently, this suggests running `conda install pytorch torchvision -c pytorch`.
-
-If you want to customize your installation, please follow the [PyTorch installation instructions](https://pytorch.org/get-started/locally/) to build from source.
 
 ### Option 1: Installing the latest release
 
-The latest release of BoTorch is easily installed either via
-[Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended) or pip.
+The latest release of BoTorch is easily installed via `pip`:
 
-**To install BoTorch from Anaconda**, run
-```bash
-conda install botorch -c pytorch -c gpytorch -c conda-forge
-```
-The above command installs BoTorch and any needed dependencies. ` -c pytorch -c gpytorch -c conda-forge` means that the most preferred source to install from is the PyTorch channel, the next most preferred is the GPyTorch channel,
-and the least preferred is conda-forge.
-
-**Alternatively, to install with `pip`**, do
 ```bash
 pip install botorch
 ```
 
-_Note_: Make sure the `pip` being used is actually the one from the newly created Conda environment. If you're using a Unix-based OS, you can use `which pip` to check.
+_Note_: Make sure the `pip` being used is actually the one from the newly created
+Conda environment. If you're using a Unix-based OS, you can use `which pip` to check.
+
+BoTorch [stopped publishing](https://github.com/pytorch/botorch/discussions/2613#discussion-7431533)
+an official Anaconda package to the `pytorch` channel after the 0.12 release. However,
+users can still use the package published to the `conda-forge` channel and install botorch via
+
+```bash
+conda install botorch -c gpytorch -c conda-forge
+```
 
 ### Option 2: Installing from latest main branch
 
@@ -144,39 +130,46 @@ pip install -e ".[dev, tutorials]"
 
 Here's a quick run down of the main components of a Bayesian optimization loop.
 For more details see our [Documentation](https://botorch.org/docs/introduction) and the
-[Tutorials](https://botorch.org/tutorials).
+[Tutorials](https://botorch.org/docs/tutorials).
 
 1. Fit a Gaussian Process model to data
   ```python
   import torch
   from botorch.models import SingleTaskGP
+  from botorch.models.transforms import Normalize, Standardize
   from botorch.fit import fit_gpytorch_mll
   from gpytorch.mlls import ExactMarginalLogLikelihood
 
-  train_X = torch.rand(10, 2)
+  # Double precision is highly recommended for GPs.
+  # See https://github.com/pytorch/botorch/discussions/1444
+  train_X = torch.rand(10, 2, dtype=torch.double) * 2
   Y = 1 - (train_X - 0.5).norm(dim=-1, keepdim=True)  # explicit output dimension
   Y += 0.1 * torch.rand_like(Y)
-  train_Y = (Y - Y.mean()) / Y.std()
 
-  gp = SingleTaskGP(train_X, train_Y)
+  gp = SingleTaskGP(
+      train_X=train_X,
+      train_Y=Y,
+      input_transform=Normalize(d=2),
+      outcome_transform=Standardize(m=1),
+  )
   mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
   fit_gpytorch_mll(mll)
   ```
 
 2. Construct an acquisition function
   ```python
-  from botorch.acquisition import UpperConfidenceBound
+  from botorch.acquisition import LogExpectedImprovement
 
-  UCB = UpperConfidenceBound(gp, beta=0.1)
+  logEI = LogExpectedImprovement(model=gp, best_f=Y.max())
   ```
 
 3. Optimize the acquisition function
   ```python
   from botorch.optim import optimize_acqf
 
-  bounds = torch.stack([torch.zeros(2), torch.ones(2)])
+  bounds = torch.stack([torch.zeros(2), torch.ones(2)]).to(torch.double)
   candidate, acq_value = optimize_acqf(
-      UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
+      logEI, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
   )
   ```
 

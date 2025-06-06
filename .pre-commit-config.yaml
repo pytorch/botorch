@@ -1,0 +1,29 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: check-requirements-versions
+        name: Check pre-commit formatting versions
+        entry: python scripts/check_pre_commit_reqs.py
+        language: python
+        always_run: true
+        pass_filenames: false
+        additional_dependencies:
+            - PyYAML
+
+-   repo: https://github.com/omnilib/ufmt
+    rev: v2.8.0
+    hooks:
+    -   id: ufmt
+        additional_dependencies:
+        - black==24.4.2
+        - usort==1.0.8.post1
+        - ruff-api==0.1.0
+        - stdlibs==2024.1.28
+        args: [format]
+
+-   repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+    -   id: flake8
+        additional_dependencies:
+        - flake8-docstrings

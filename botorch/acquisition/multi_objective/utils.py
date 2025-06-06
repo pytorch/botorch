@@ -10,24 +10,20 @@ Utilities for multi-objective acquisition functions.
 
 from __future__ import annotations
 
-import math
 import warnings
+from collections.abc import Callable
 from math import ceil
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import torch
 from botorch.acquisition import monte_carlo  # noqa F401
-from botorch.acquisition.multi_objective.objective import (
-    IdentityMCMultiOutputObjective,
-    MCMultiOutputObjective,
-)
+from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
+from botorch.acquisition.utils import _prune_inferior_shared_processing
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.deterministic import GenericDeterministicModel
-from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
-from botorch.sampling.get_sampler import get_sampler
-from botorch.utils.gp_sampling import get_gp_samples
+from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
 )
@@ -39,7 +35,7 @@ from botorch.utils.multi_objective.box_decompositions.dominated import (
 )
 from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.sampling import draw_sobol_samples
-from botorch.utils.transforms import is_fully_bayesian, normalize_indices
+from pyre_extensions import assert_is_instance
 from torch import Tensor
 
 
@@ -59,19 +55,23 @@ def get_default_partitioning_alpha(num_objectives: int) -> float:
     if num_objectives <= 4:
         return 0.0
     elif num_objectives > 6:
-        warnings.warn("EHVI works best for less than 7 objectives.", BotorchWarning)
-    return 10 ** (-8 + num_objectives)
+        warnings.warn(
+            "EHVI works best for less than 7 objectives.",
+            BotorchWarning,
+            stacklevel=3,
+        )
+    return 10 ** (-2 if num_objectives >= 6 else -3)
 
 
 def prune_inferior_points_multi_objective(
     model: Model,
     X: Tensor,
     ref_point: Tensor,
-    objective: Optional[MCMultiOutputObjective] = None,
-    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    objective: MCMultiOutputObjective | None = None,
+    constraints: list[Callable[[Tensor], Tensor]] | None = None,
     num_samples: int = 2048,
     max_frac: float = 1.0,
-    marginalize_dim: Optional[int] = None,
+    marginalize_dim: int | None = None,
 ) -> Tensor:
     r"""Prune points from an input tensor that are unlikely to be pareto optimal.
 
@@ -109,48 +109,17 @@ def prune_inferior_points_multi_objective(
         with `N_nz` the number of points in `X` that have non-zero (empirical,
         under `num_samples` samples) probability of being pareto optimal.
     """
-    if marginalize_dim is None and is_fully_bayesian(model):
-        # TODO: Properly deal with marginalizing fully Bayesian models
-        marginalize_dim = MCMC_DIM
-
-    if X.ndim > 2:
-        # TODO: support batched inputs (req. dealing with ragged tensors)
-        raise UnsupportedError(
-            "Batched inputs `X` are currently unsupported by "
-            "prune_inferior_points_multi_objective"
-        )
-    max_points = math.ceil(max_frac * X.size(-2))
-    if max_points < 1 or max_points > X.size(-2):
-        raise ValueError(f"max_frac must take values in (0, 1], is {max_frac}")
-    with torch.no_grad():
-        posterior = model.posterior(X=X)
-    sampler = get_sampler(posterior, sample_shape=torch.Size([num_samples]))
-    samples = sampler(posterior)
-    if objective is None:
-        objective = IdentityMCMultiOutputObjective()
-    obj_vals = objective(samples, X=X)
-    if obj_vals.ndim > 3:
-        if obj_vals.ndim == 4 and marginalize_dim is not None:
-            obj_vals = obj_vals.mean(dim=marginalize_dim)
-        else:
-            # TODO: support batched inputs (req. dealing with ragged tensors)
-            raise UnsupportedError(
-                "Models with multiple batch dims are currently unsupported by"
-                " prune_inferior_points_multi_objective."
-            )
-    if constraints is not None:
-        infeas = torch.stack([c(samples) > 0 for c in constraints], dim=0).any(dim=0)
-        if infeas.ndim == 3 and marginalize_dim is not None:
-            # make sure marginalize_dim is not negative
-            if marginalize_dim < 0:
-                # add 1 to the normalize marginalize_dim since we have already
-                # removed the output dim
-                marginalize_dim = (
-                    1 + normalize_indices([marginalize_dim], d=infeas.ndim)[0]
-                )
-
-            infeas = infeas.float().mean(dim=marginalize_dim).round().bool()
-        # set infeasible points to be the ref point
+    max_points, obj_vals, infeas = _prune_inferior_shared_processing(
+        model=model,
+        X=X,
+        is_moo=True,
+        objective=objective,
+        constraints=constraints,
+        num_samples=num_samples,
+        max_frac=max_frac,
+        marginalize_dim=marginalize_dim,
+    )
+    if infeas.any():
         obj_vals[infeas] = ref_point
     pareto_mask = is_non_dominated(obj_vals, deduplicate=False) & (
         obj_vals > ref_point
@@ -158,7 +127,7 @@ def prune_inferior_points_multi_objective(
     probs = pareto_mask.to(dtype=X.dtype).mean(dim=0)
     idcs = probs.nonzero().view(-1)
     if idcs.shape[0] > max_points:
-        counts, order_idcs = torch.sort(probs, descending=True)
+        counts, order_idcs = torch.sort(probs, stable=True, descending=True)
         idcs = order_idcs[:max_points]
     effective_n_w = obj_vals.shape[-2] // X.shape[-2]
     idcs = (idcs / effective_n_w).long().unique()
@@ -167,9 +136,9 @@ def prune_inferior_points_multi_objective(
 
 def compute_sample_box_decomposition(
     pareto_fronts: Tensor,
-    partitioning: BoxDecomposition = DominatedPartitioning,
+    partitioning: type[BoxDecomposition] = DominatedPartitioning,
     maximize: bool = True,
-    num_constraints: Optional[int] = 0,
+    num_constraints: int = 0,
 ) -> Tensor:
     r"""Computes the box decomposition associated with some sampled optimal
     objectives. This also supports the single-objective and constrained optimization
@@ -194,7 +163,10 @@ def compute_sample_box_decomposition(
         the hyper-rectangles. The number `J` is the smallest number of boxes needed
         to partition all the Pareto samples.
     """
-    tkwargs = {"dtype": pareto_fronts.dtype, "device": pareto_fronts.device}
+    tkwargs: dict[str, Any] = {
+        "dtype": pareto_fronts.dtype,
+        "device": pareto_fronts.device,
+    }
     # We will later compute `norm.log_prob(NEG_INF)`, this is `-inf` if `NEG_INF` is
     # too small.
     NEG_INF = -1e10
@@ -213,16 +185,18 @@ def compute_sample_box_decomposition(
 
     if M == 1:
         # Only consider a Pareto front with one element.
-        extreme_values = weight * torch.max(weight * pareto_fronts, dim=-2).values
+        extreme_values = assert_is_instance(
+            weight * torch.max(weight * pareto_fronts, dim=-2).values, Tensor
+        )
         ref_point = weight * ref_point.expand(extreme_values.shape)
 
         if maximize:
             hypercell_bounds = torch.stack(
-                [ref_point, extreme_values], axis=-2
+                [ref_point, extreme_values], dim=-2
             ).unsqueeze(-1)
         else:
             hypercell_bounds = torch.stack(
-                [extreme_values, ref_point], axis=-2
+                [extreme_values, ref_point], dim=-2
             ).unsqueeze(-1)
     else:
         bd_list = []
@@ -243,9 +217,7 @@ def compute_sample_box_decomposition(
     # Add an extra box for the inequality constraint.
     if K > 0:
         # `num_pareto_samples x 2 x (J - 1) x K`
-        feasible_boxes = torch.zeros(
-            hypercell_bounds.shape[:-1] + torch.Size([K]), **tkwargs
-        )
+        feasible_boxes = torch.zeros(hypercell_bounds.shape[:-1] + (K,), **tkwargs)
 
         feasible_boxes[..., 0, :, :] = NEG_INF
         # `num_pareto_samples x 2 x (J - 1) x (M + K)`
@@ -253,7 +225,7 @@ def compute_sample_box_decomposition(
 
         # `num_pareto_samples x 2 x 1 x (M + K)`
         infeasible_box = torch.zeros(
-            hypercell_bounds.shape[:-2] + torch.Size([1, M + K]), **tkwargs
+            hypercell_bounds.shape[:-2] + (1, M + K), **tkwargs
         )
         infeasible_box[..., 1, :, M:] = -NEG_INF
         infeasible_box[..., 0, :, 0:M] = NEG_INF
@@ -273,7 +245,7 @@ def random_search_optimizer(
     maximize: bool,
     pop_size: int = 1024,
     max_tries: int = 10,
-) -> Tuple[Tensor, Tensor]:
+) -> tuple[Tensor, Tensor]:
     r"""Optimize a function via random search.
 
     Args:
@@ -291,11 +263,12 @@ def random_search_optimizer(
         - A `num_points x M`-dim Tensor containing the collection of optimal
             objectives.
     """
-    tkwargs = {"dtype": bounds.dtype, "device": bounds.device}
+    tkwargs: dict[str, Any] = {"dtype": bounds.dtype, "device": bounds.device}
     weight = 1.0 if maximize else -1.0
     optimal_inputs = torch.tensor([], **tkwargs)
     optimal_outputs = torch.tensor([], **tkwargs)
     num_tries = 0
+    num_found = 0
     ratio = 2
     while ratio > 1 and num_tries < max_tries:
         X = draw_sobol_samples(bounds=bounds, n=pop_size, q=1).squeeze(-2)
@@ -322,12 +295,11 @@ def sample_optimal_points(
     num_samples: int,
     num_points: int,
     optimizer: Callable[
-        [GenericDeterministicModel, Tensor, int, bool, Any], Tuple[Tensor, Tensor]
+        [GenericDeterministicModel, Tensor, int, bool, Any], tuple[Tensor, Tensor]
     ] = random_search_optimizer,
-    num_rff_features: int = 512,
     maximize: bool = True,
-    optimizer_kwargs: Optional[Dict[str, Any]] = None,
-) -> Tuple[Tensor, Tensor]:
+    optimizer_kwargs: dict[str, Any] | None = None,
+) -> tuple[Tensor, Tensor]:
     r"""Compute a collection of optimal inputs and outputs from samples of a Gaussian
     Process (GP).
 
@@ -348,7 +320,6 @@ def sample_optimal_points(
         num_samples: The number of GP samples.
         num_points: The number of optimal points to be outputted.
         optimizer: A callable that solves the deterministic optimization problem.
-        num_rff_features: The number of random Fourier features.
         maximize: If true, we consider a maximization problem.
         optimizer_kwargs: The additional arguments for the optimizer.
 
@@ -360,7 +331,7 @@ def sample_optimal_points(
         - A `num_samples x num_points x M`-dim Tensor containing the collection of
             optimal objectives.
     """
-    tkwargs = {"dtype": bounds.dtype, "device": bounds.device}
+    tkwargs: dict[str, Any] = {"dtype": bounds.dtype, "device": bounds.device}
     M = model.num_outputs
     d = bounds.shape[-1]
     if M == 1:
@@ -373,9 +344,7 @@ def sample_optimal_points(
     pareto_sets = torch.zeros((num_samples, num_points, d), **tkwargs)
     pareto_fronts = torch.zeros((num_samples, num_points, M), **tkwargs)
     for i in range(num_samples):
-        sample_i = get_gp_samples(
-            model=model, num_outputs=M, n_samples=1, num_rff_features=num_rff_features
-        )
+        sample_i = get_matheron_path_model(model=model)
         ps_i, pf_i = optimizer(
             model=sample_i,
             bounds=bounds,

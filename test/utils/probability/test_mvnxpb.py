@@ -6,11 +6,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+
 from copy import deepcopy
 
 from functools import partial
-from itertools import count
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from itertools import count, product
+from typing import Any
 from unittest.mock import patch
 
 import torch
@@ -22,13 +24,12 @@ from torch import Tensor
 
 
 def run_gaussian_estimator(
-    estimator: Callable[[Tensor], Tuple[Tensor, Union[Tensor, float, int]]],
+    estimator: Callable[[Tensor], tuple[Tensor, Tensor | float | int]],
     sqrt_cov: Tensor,
     num_samples: int,
-    batch_limit: Optional[int] = None,
-    seed: Optional[int] = None,
+    batch_limit: int | None = None,
+    seed: int | None = None,
 ) -> Tensor:
-
     if batch_limit is None:
         batch_limit = num_samples
 
@@ -62,7 +63,7 @@ class TestMVNXPB(BotorchTestCase):
         self,
         ndims: Sequence[int] = (4, 8),
         batch_shape: Sequence[int] = (4,),
-        bound_range: Tuple[float, float] = (-5.0, 5.0),
+        bound_range: tuple[float, float] = (-5.0, 5.0),
         mc_num_samples: int = 100000,
         mc_batch_limit: int = 10000,
         mc_atol_multiplier: float = 4.0,
@@ -116,8 +117,8 @@ class TestMVNXPB(BotorchTestCase):
         self,
         ndim: int,
         batch_shape: Sequence[int] = (),
-        bound_range: Optional[Tuple[float, float]] = None,
-    ) -> Tuple[Tensor, Tensor]:
+        bound_range: tuple[float, float] | None = None,
+    ) -> tuple[Tensor, Tensor]:
         shape = tuple(batch_shape) + (ndim,)
         lower = torch.rand(shape, **self.tkwargs)
         upper = lower + (1 - lower) * torch.rand_like(lower)
@@ -128,7 +129,7 @@ class TestMVNXPB(BotorchTestCase):
         return torch.stack([lower, upper], dim=-1)
 
     @property
-    def tkwargs(self) -> Dict[str, Any]:
+    def tkwargs(self) -> dict[str, Any]:
         return {"dtype": self.dtype, "device": self.device}
 
     def assertEqualMXNBPB(self, A: MVNXPB, B: MVNXPB):
@@ -177,6 +178,29 @@ class TestMVNXPB(BotorchTestCase):
                     continue
 
                 self.assertAllClose(est, prob, rtol=0, atol=atol)
+
+    def test_solve_batch(self):
+        ndim = 3
+        batch_shape = (3, 4)
+        with torch.random.fork_rng():
+            torch.random.manual_seed(next(self.seed_generator))
+            bounds = self.gen_bounds(ndim, batch_shape, bound_range=(-5.0, +5.0))
+            sqrt_cov = self.gen_covariances(ndim, batch_shape, as_sqrt=True)
+
+        cov = sqrt_cov @ sqrt_cov.mT
+
+        batched_solver = MVNXPB(cov, bounds)
+        batched_solver.solve()
+
+        # solution for each individual batch element is the same as
+        # that of the entire batch
+        for idx in product(*map(range, batch_shape)):
+            solver = MVNXPB(cov[tuple(idx)], bounds[tuple(idx)])
+            solver.solve()
+            self.assertAlmostEqual(
+                batched_solver.log_prob[tuple(idx)].item(),
+                solver.log_prob.item(),
+            )
 
     def test_augment(self):
         r"""Test `augment`."""
