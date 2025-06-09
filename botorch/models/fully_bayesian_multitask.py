@@ -18,6 +18,7 @@ from botorch.models.fully_bayesian import (
     reshape_and_detach,
     SaasPyroModel,
 )
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
@@ -441,3 +442,37 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
         # Load the actual samples from the state dict
         super().load_state_dict(state_dict=state_dict, strict=strict)
+
+    def condition_on_observations(
+        self, X: Tensor, Y: Tensor, **kwargs: Any
+    ) -> BatchedMultiOutputGPyTorchModel:
+        """Conditions on additional observations for a Fully Bayesian model (either
+        identical across models or unique per-model).
+
+        Args:
+            X: A `batch_shape x num_samples x d`-dim Tensor, where `d` is
+                the dimension of the feature space and `batch_shape` is the number of
+                sampled models.
+            Y: A `batch_shape x num_samples x 1`-dim Tensor, where `d` is
+                the dimension of the feature space and `batch_shape` is the number of
+                sampled models.
+
+        Returns:
+            BatchedMultiOutputGPyTorchModel: A fully bayesian model conditioned on
+              given observations. The returned model has `batch_shape` copies of the
+              training data in case of identical observations (and `batch_shape`
+              training datasets otherwise).
+        """
+        if X.ndim == 2 and Y.ndim == 2:
+            # To avoid an error in GPyTorch when inferring the batch dimension, we add
+            # the explicit batch shape here. The result is that the conditioned model
+            # will have 'batch_shape' copies of the training data.
+            X = X.repeat(self.batch_shape + (1, 1))
+            Y = Y.repeat(self.batch_shape + (1, 1))
+
+        elif X.ndim < Y.ndim:
+            # We need to duplicate the training data to enable correct batch
+            # size inference in gpytorch.
+            X = X.repeat(*(Y.shape[:-2] + (1, 1)))
+
+        return super().condition_on_observations(X, Y, **kwargs)
