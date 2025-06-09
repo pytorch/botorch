@@ -14,12 +14,17 @@ from botorch.utils.sampling import (
     draw_sobol_samples,
     manual_seed,
 )
-from botorch.utils.transforms import standardize, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    standardize,
+    t_batch_mode_transform,
+)
 
 
 __all__ = [
     "apply_constraints",
     "approximate_round",
+    "average_over_ensemble_models",
     "batched_multinomial",
     "draw_sobol_normal_samples",
     "draw_sobol_samples",

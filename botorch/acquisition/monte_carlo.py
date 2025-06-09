@@ -50,6 +50,7 @@ from botorch.sampling.base import MCSampler
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from botorch.utils.transforms import (
     concatenate_pending_points,
+    is_ensemble,
     match_batch_shape,
     t_batch_mode_transform,
 )
@@ -247,6 +248,9 @@ class SampleReducingMCAcquisitionFunction(MCAcquisitionFunction):
         )
         # Shall the need arise, sample_dim could be exposed in the constructor.
         sample_dim = tuple(range(len(self.sample_shape)))
+        # the ensemble dimension is assumed to be the last dimension
+        if is_ensemble(model):
+            sample_dim = sample_dim + (-1,)
         self._sample_reduction = partial(sample_reduction, dim=sample_dim)
         self._q_reduction = partial(q_reduction, dim=-1)
         self._constraints = constraints

@@ -29,7 +29,10 @@ from botorch.models.model import Model
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
-from botorch.utils.transforms import t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 from torch.distributions import Normal
 
@@ -161,6 +164,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
         return (upper - lower) * (1 - self.normal.cdf((upper - mu) / sigma))
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         posterior = self.model.posterior(
             X, posterior_transform=self.posterior_transform
