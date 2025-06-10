@@ -30,7 +30,11 @@ from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.utils import fantasize as fantasize_flag
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.normal import SobolQMCNormalSampler
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    concatenate_pending_points,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 from torch.distributions import Normal
 
@@ -440,6 +444,7 @@ class qLowerBoundMultiObjectiveJointEntropySearch(
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluates qLowerBoundMultiObjectiveJointEntropySearch at the design
         points `X`.

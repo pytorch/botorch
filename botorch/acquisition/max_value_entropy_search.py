@@ -45,7 +45,11 @@ from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.model import Model
 from botorch.models.utils import check_no_nans
 from botorch.sampling.normal import SobolQMCNormalSampler
-from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    match_batch_shape,
+    t_batch_mode_transform,
+)
 
 from linear_operator.functions import inv_quad
 from linear_operator.utils.cholesky import psd_safe_cholesky
@@ -126,6 +130,7 @@ class MaxValueBase(AcquisitionFunction, ABC):
         self.set_X_pending(X_pending)
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Compute max-value entropy at the design points `X`.
 
@@ -706,6 +711,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         return self._cost_sampler
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluates `qMultifidelityMaxValueEntropy` at the design points `X`
 

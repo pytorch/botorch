@@ -14,7 +14,10 @@ import torch
 
 from botorch.acquisition import AcquisitionFunction
 from botorch.models.model import Model
-from botorch.utils.transforms import t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 
@@ -44,6 +47,7 @@ class DiscretizedAcquistionFunction(AcquisitionFunction, ABC):
         super().__init__(model=model)
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the acquisition function on the candidate set X.
 

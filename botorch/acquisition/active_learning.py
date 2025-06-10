@@ -31,7 +31,11 @@ from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTrans
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.sampling.normal import SobolQMCNormalSampler
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    concatenate_pending_points,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 
@@ -88,6 +92,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         # Construct the fantasy model (we actually do not use the full model,
         # this is just a convenient way of computing fast posterior covariances
@@ -154,6 +159,7 @@ class PairwiseMCPosteriorVariance(MCAcquisitionFunction):
         )
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate PairwiseMCPosteriorVariance on the candidate set `X`.
 

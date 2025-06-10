@@ -47,7 +47,11 @@ from botorch.sampling.stochastic_samplers import StochasticSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
 )
-from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    match_batch_shape,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 
@@ -181,6 +185,7 @@ class qHypervolumeKnowledgeGradient(
         return self._cost_sampler
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qKnowledgeGradient on the candidate set `X`.
 
@@ -400,6 +405,7 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
         self.target_fidelities = target_fidelities
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qMultiFidelityKnowledgeGradient on the candidate set `X`.
 
