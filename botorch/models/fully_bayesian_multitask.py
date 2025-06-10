@@ -159,7 +159,7 @@ class MultitaskSaasPyroModel(SaasPyroModel):
             num_tasks=self.num_tasks,
             rank=self.task_rank,
             batch_shape=latent_features.shape[:-2],
-        )
+        ).to(**tkwargs)
         task_covar_module.covar_factor = Parameter(
             task_covar.cholesky().to_dense().detach()
         )
