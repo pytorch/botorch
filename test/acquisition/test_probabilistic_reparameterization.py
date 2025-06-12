@@ -1,3 +1,4 @@
+import itertools
 from typing import Any
 
 import torch
@@ -6,12 +7,13 @@ from botorch.acquisition.probabilistic_reparameterization import (
     AnalyticProbabilisticReparameterization,
     MCProbabilisticReparameterization,
 )
+from botorch.generation.gen import gen_candidates_scipy, gen_candidates_torch
 from botorch.models.transforms.factory import (
     get_probabilistic_reparameterization_input_transform,
     get_rounding_input_transform,
 )
 from botorch.models.transforms.input import OneHotToNumeric
-from botorch.optim import optimize_acqf
+from botorch.optim import optimize_acqf, optimize_acqf_mixed
 from botorch.test_functions.synthetic import Ackley, AckleyMixed
 from botorch.utils.sampling import draw_sobol_samples
 from botorch.utils.test_helpers import get_model
@@ -44,6 +46,8 @@ def get_categorical_features_dict(feature_to_num_categories: dict[int, int]):
 
 class TestProbabilisticReparameterizationInputTransform(BotorchTestCase):
     def test_probabilistic_reparameterization_input_transform(self):
+        # TODO: test this functionality in factory
+        # test the actual transform here.
         _ = get_probabilistic_reparameterization_input_transform()
 
 
@@ -54,50 +58,69 @@ class TestProbabilisticReparameterization(BotorchTestCase):
 
     def test_probabilistic_reparameterization_binary(
         self,
-        pr_acq_func_cls=AnalyticProbabilisticReparameterization,
         base_acq_func_cls=LogExpectedImprovement,
     ):
         torch.manual_seed(0)
-        f = AckleyMixed(dim=13, randomize_optimum=True)
+        f = AckleyMixed(dim=6, randomize_optimum=True)
         train_X = torch.rand((10, f.dim), **self.tkwargs)
         train_X[:, f.discrete_inds] = train_X[:, f.discrete_inds].round()
         train_Y = f(train_X).unsqueeze(-1)
         model = get_model(train_X, train_Y)
         base_acq_func = base_acq_func_cls(model, best_f=train_Y.max())
 
-        pr_acq_func = pr_acq_func_cls(
+        pr_acq_func_params = dict(
             acq_function=base_acq_func,
             one_hot_bounds=f.bounds,
             integer_indices=f.discrete_inds,
             batch_limit=32,
         )
-
-        candidate, _ = optimize_acqf(
-            acq_function=pr_acq_func,
+        optimize_acqf_params = dict(
             bounds=f.bounds,
             q=1,
             num_restarts=10,
-            raw_samples=20,
-            options={"maxiter": 5},
+            raw_samples=512,
+            options={
+                "batch_limit": 5,
+                "maxiter": 200,
+                "rel_tol": float("-inf"),
+            },
         )
 
-        self.assertTrue(candidate.shape == (1, f.dim))
-
-    def test_probabilistic_reparameterization_binary_analytic_qLogEI(self):
-        self.test_probabilistic_reparameterization_binary(
-            pr_acq_func_cls=AnalyticProbabilisticReparameterization,
-            base_acq_func_cls=qLogExpectedImprovement,
+        pr_analytic_acq_func = AnalyticProbabilisticReparameterization(
+            **pr_acq_func_params
         )
 
-    def test_probabilistic_reparameterization_binary_MC_LogEI(self):
-        self.test_probabilistic_reparameterization_binary(
-            pr_acq_func_cls=MCProbabilisticReparameterization,
-            base_acq_func_cls=LogExpectedImprovement,
+        pr_mc_acq_func = MCProbabilisticReparameterization(**pr_acq_func_params)
+
+        candidate_analytic, acq_values_analytic = optimize_acqf(
+            acq_function=pr_analytic_acq_func,
+            gen_candidates=gen_candidates_scipy,
+            **optimize_acqf_params,
         )
 
-    def test_probabilistic_reparameterization_binary_MC_qLogEI(self):
+        candidate_mc, acq_values_mc = optimize_acqf(
+            acq_function=pr_mc_acq_func,
+            gen_candidates=gen_candidates_torch,
+            **optimize_acqf_params,
+        )
+
+        fixed_features_list = [
+            {feat_dim: val for feat_dim, val in enumerate(vals)}
+            for vals in itertools.product([0, 1], repeat=len(f.discrete_inds))
+        ]
+        candidate_exhaustive, acq_values_exhaustive = optimize_acqf_mixed(
+            acq_function=base_acq_func,
+            fixed_features_list=fixed_features_list,
+            **optimize_acqf_params,
+        )
+
+        self.assertTrue(candidate_analytic.shape == (1, f.dim))
+        self.assertTrue(candidate_mc.shape == (1, f.dim))
+        self.assertAllClose(candidate_analytic, candidate_mc)
+        self.assertAllClose(acq_values_analytic, acq_values_mc)
+
+    def test_probabilistic_reparameterization_binary_qLogEI(self):
         self.test_probabilistic_reparameterization_binary(
-            pr_acq_func_cls=MCProbabilisticReparameterization,
             base_acq_func_cls=qLogExpectedImprovement,
         )
 
