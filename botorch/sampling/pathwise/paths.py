@@ -147,6 +147,7 @@ class GeneralizedLinearPath(SamplePath):
         bias_module: Module | None = None,
         input_transform: TInputTransform | None = None,
         output_transform: TOutputTransform | None = None,
+        is_ensemble: bool = False,
     ):
         r"""Initializes a GeneralizedLinearPath instance.
 
@@ -161,6 +162,7 @@ class GeneralizedLinearPath(SamplePath):
             bias_module: An optional module used to define additive offsets.
             input_transform: An optional input transform for the module.
             output_transform: An optional output transform for the module.
+            is_ensemble: Whether the associated model is an ensemble model or not.
         """
         super().__init__()
         self.feature_map = feature_map
@@ -170,8 +172,13 @@ class GeneralizedLinearPath(SamplePath):
         self.bias_module = bias_module
         self.input_transform = input_transform
         self.output_transform = output_transform
+        self.is_ensemble = is_ensemble
 
     def forward(self, x: Tensor, **kwargs) -> Tensor:
+        if self.is_ensemble:
+            # assuming that the ensembling dimension is added after (n, d), but
+            # before the other batch dimensions, starting from the left.
+            x = x.unsqueeze(-3)
         feat = self.feature_map(x, **kwargs)
         out = (feat @ self.weight.unsqueeze(-1)).squeeze(-1)
         return out if self.bias_module is None else out + self.bias_module(x)

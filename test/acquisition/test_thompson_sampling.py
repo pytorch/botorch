@@ -6,43 +6,45 @@
 
 from itertools import product
 
+from unittest import mock
+from unittest.mock import PropertyMock
+
 import torch
 from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
-from botorch.models.fully_bayesian import SaasFullyBayesianSingleTaskGP
 from botorch.models.model import Model
-from botorch.utils.test_helpers import get_model
+from botorch.utils.test_helpers import get_fully_bayesian_model, get_model
 from botorch.utils.testing import BotorchTestCase
 
 
-def _get_mcmc_samples(num_samples: int, dim: int, infer_noise: bool, **tkwargs):
-    mcmc_samples = {
-        "lengthscale": torch.rand(num_samples, 1, dim, **tkwargs),
-        "outputscale": torch.rand(num_samples, **tkwargs),
-        "mean": torch.randn(num_samples, **tkwargs),
-    }
-    if infer_noise:
-        mcmc_samples["noise"] = torch.rand(num_samples, 1, **tkwargs)
-    return mcmc_samples
+# def _get_mcmc_samples(num_samples: int, dim: int, infer_noise: bool, **tkwargs):
+#     mcmc_samples = {
+#         "lengthscale": torch.rand(num_samples, 1, dim, **tkwargs),
+#         "outputscale": torch.rand(num_samples, **tkwargs),
+#         "mean": torch.randn(num_samples, **tkwargs),
+#     }
+#     if infer_noise:
+#         mcmc_samples["noise"] = torch.rand(num_samples, 1, **tkwargs)
+#     return mcmc_samples
 
 
-def get_fully_bayesian_model(
-    train_X,
-    train_Y,
-    num_models,
-    **tkwargs,
-):
-    model = SaasFullyBayesianSingleTaskGP(
-        train_X=train_X,
-        train_Y=train_Y,
-    )
-    mcmc_samples = _get_mcmc_samples(
-        num_samples=num_models,
-        dim=train_X.shape[-1],
-        infer_noise=True,
-        **tkwargs,
-    )
-    model.load_mcmc_samples(mcmc_samples)
-    return model
+# def get_fully_bayesian_model(
+#     train_X,
+#     train_Y,
+#     num_models,
+#     **tkwargs,
+# ) -> SaasFullyBayesianSingleTaskGP:
+#     model = SaasFullyBayesianSingleTaskGP(
+#         train_X=train_X,
+#         train_Y=train_Y,
+#     )
+#     mcmc_samples = _get_mcmc_samples(
+#         num_samples=num_models,
+#         dim=train_X.shape[-1],
+#         infer_noise=True,
+#         **tkwargs,
+#     )
+#     model.load_mcmc_samples(mcmc_samples)
+#     return model
 
 
 class TestPathwiseThompsonSampling(BotorchTestCase):
@@ -59,7 +61,7 @@ class TestPathwiseThompsonSampling(BotorchTestCase):
 
         acq_pass1 = acq(test_X)
         self.assertAllClose(acq_pass1, acq(test_X))
-        acq.redraw()
+        acq.redraw(batch_size=acq.batch_size)
         acq_pass2 = acq(test_X)
         self.assertFalse(torch.allclose(acq_pass1, acq_pass2))
 
@@ -109,10 +111,27 @@ class TestPathwiseThompsonSampling(BotorchTestCase):
         tkwargs = {"device": self.device, "dtype": torch.float64}
         train_X = torch.rand(4, input_dim, **tkwargs)
         train_Y = 10 * torch.rand(4, num_objectives, **tkwargs)
-
         fb_model = get_fully_bayesian_model(train_X, train_Y, num_models=3, **tkwargs)
-        with self.assertRaisesRegex(
-            NotImplementedError,
-            "PathwiseThompsonSampling is not supported for fully Bayesian models",
-        ):
-            PathwiseThompsonSampling(model=fb_model)
+        acqf = PathwiseThompsonSampling(model=fb_model)
+        acqf_vals = acqf(train_X)
+
+        acqf_vals_2 = acqf(train_X)
+
+        self.assertAllClose(acqf_vals, acqf_vals_2)
+
+        batch_shape = (2, 5)
+        test_X = torch.randn(*batch_shape, *train_X.shape)
+        batched_output = acqf(test_X)
+        self.assertEqual(batched_output.shape, batch_shape)
+        batched_output_2 = acqf(test_X)
+        self.assertAllClose(batched_output, batched_output_2)
+
+        with mock.patch.object(
+            type(acqf.model), "batch_shape", new_callable=PropertyMock
+        ) as mock_batch_shape:
+            mock_batch_shape.return_value = (2, 3)
+            with self.assertRaisesRegex(
+                NotImplementedError,
+                "Ensemble models with more than one ensemble dimension",
+            ):
+                acqf.redraw(batch_size=2)

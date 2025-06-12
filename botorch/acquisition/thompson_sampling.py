@@ -9,7 +9,7 @@ from botorch.acquisition.analytic import AcquisitionFunction
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
 from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
-from botorch.utils.transforms import t_batch_mode_transform
+from botorch.utils.transforms import is_ensemble, t_batch_mode_transform
 from torch import Tensor
 
 
@@ -42,45 +42,91 @@ class PathwiseThompsonSampling(AcquisitionFunction):
                 a PosteriorTransform that transforms the multi-output posterior into a
                 single-output posterior is required.
         """
-        if model._is_fully_bayesian:
-            raise NotImplementedError(
-                "PathwiseThompsonSampling is not supported for fully Bayesian models",
-            )
 
         super().__init__(model=model)
         self.batch_size: int | None = None
 
-    def redraw(self) -> None:
+    def redraw(self, batch_size: int) -> None:
+        sample_shape = (batch_size,)
         self.samples = get_matheron_path_model(
-            model=self.model, sample_shape=torch.Size([self.batch_size])
+            model=self.model, sample_shape=torch.Size(sample_shape)
         )
+        if is_ensemble(self.model):
+            # the ensembling dimension is assumed to be part of the batch shape
+            # could add a dedicated proporty to keep track of the ensembling dimension
+            # i.e. generalizing num_mcmc_samples in AbstractFullyBayesianSingleTaskGP
+            model_batch_shape = self.model.batch_shape
+            if len(model_batch_shape) > 1:
+                raise NotImplementedError(
+                    "Ensemble models with more than one ensemble dimension are not "
+                    "yet supported."
+                )
+            num_ensemble = model_batch_shape[0]
+            self.ensemble_indices = torch.randint(
+                0,
+                num_ensemble,
+                (*sample_shape, 1, self.model.num_outputs),
+            )
 
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the pathwise posterior sample draws on the candidate set X.
 
         Args:
-            X: A `(b1 x ... bk) x 1 x d`-dim batched tensor of `d`-dim design points.
+            X: A `batch_shape x q x d`-dim batched tensor of `d`-dim design points.
 
         Returns:
-            A `(b1 x ... bk) x [num_models for fully bayesian]`-dim tensor of
-            evaluations on the posterior sample draws.
+            A `batch_shape [x m]`-dim tensor of evaluations on the posterior sample
+            draws, where `m` is the number of outputs of the model.
         """
         batch_size = X.shape[-2]
         q_dim = -2
-
         # batch_shape x q x 1 x d
         X = X.unsqueeze(-2)
         if self.batch_size is None:
             self.batch_size = batch_size
-            self.redraw()
+            self.redraw(batch_size=batch_size)
         elif self.batch_size != batch_size:
             raise ValueError(
                 BATCH_SIZE_CHANGE_ERROR.format(self.batch_size, batch_size)
             )
-
-        # posterior_values.shape post-squeeze:
+        # batch_shape x q [x num_ensembles] x 1 x m
+        posterior_values = self.samples(X)
+        # batch_shape x q [x num_ensembles] x m
+        posterior_values = posterior_values.squeeze(-2)
         # batch_shape x q x m
-        posterior_values = self.samples(X).squeeze(-2)
-        # sum over batch dim and squeeze num_objectives dim (-1)
-        return posterior_values.sum(q_dim).squeeze(-1)
+        posterior_values = self.select_from_ensemble_models(values=posterior_values)
+        # NOTE: can leverage batched L-BFGS computation instead of summing in the future
+        # sum over batch dim and squeeze num_objectives dim (-1): batch_shape [x m]
+        acqf_vals = posterior_values.sum(q_dim).squeeze(-1)
+        return acqf_vals
+
+    def select_from_ensemble_models(self, values: Tensor):
+        """Subselecting a value associated with a single sample in the ensemble for each
+        element of samples that is not associated with an ensemble dimension. NOTE: uses
+        `self.model` and `is_ensemble` to determine whether or not an ensembling
+        dimension is present.
+
+        Args:
+            values: A `batch_shape x num_draws x q [x num_ensemble] x m`-dim Tensor.
+
+        Returns:
+            A`batch_shape x num_draws x q x m`-dim where each element was chosen
+            independently randomly from the ensemble dimension.
+        """
+        if not is_ensemble(self.model):
+            return values
+
+        ensemble_dim = -2
+        # `ensemble_indices` are fixed so that the acquisition function becomes
+        # deterministic for the same input and can be optimized with LBFGS.
+        # ensemble indices have shape num_paths x 1 x m
+        self.ensemble_indices = self.ensemble_indices.to(device=values.device)
+        index = self.ensemble_indices
+        input_batch_shape = values.shape[:-3]
+        index = index.expand(*input_batch_shape, *index.shape)
+        # samples is batch_shape x q x num_ensemble x m
+        values_wo_ensemble = torch.gather(values, dim=ensemble_dim, index=index)
+        return values_wo_ensemble.squeeze(
+            ensemble_dim
+        )  # removing the ensemble dimension
