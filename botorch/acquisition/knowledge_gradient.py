@@ -47,6 +47,7 @@ from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import (
+    average_over_ensemble_models,
     concatenate_pending_points,
     match_batch_shape,
     t_batch_mode_transform,
@@ -151,6 +152,7 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         self.current_value = current_value
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qKnowledgeGradient on the candidate set `X`.
 
@@ -210,6 +212,7 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def evaluate(self, X: Tensor, bounds: Tensor, **kwargs: Any) -> Tensor:
         r"""Evaluate qKnowledgeGradient on the candidate set `X_actual` by
         solving the inner optimization problem.
@@ -413,6 +416,7 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         return self._cost_sampler
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qMultiFidelityKnowledgeGradient on the candidate set `X`.
 

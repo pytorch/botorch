@@ -28,7 +28,10 @@ from botorch.acquisition import UpperConfidenceBound
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions import UnsupportedError
 from botorch.models.model import Model
-from botorch.utils.transforms import t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    t_batch_mode_transform,
+)
 from gpytorch.models import ExactGP
 from torch import Tensor
 
@@ -83,6 +86,7 @@ class AugmentedUpperConfidenceBound(UpperConfidenceBound):
         self.best_f = best_f
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the Upper Confidence Bound on the candidate set X.
 

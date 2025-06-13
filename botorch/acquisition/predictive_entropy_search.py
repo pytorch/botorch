@@ -19,7 +19,11 @@ from botorch.acquisition.multi_objective.predictive_entropy_search import (
     qMultiObjectivePredictiveEntropySearch,
 )
 from botorch.models.model import Model
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    concatenate_pending_points,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 
@@ -87,6 +91,7 @@ class qPredictiveEntropySearch(qMultiObjectivePredictiveEntropySearch):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qPredictiveEntropySearch on the candidate set `X`.
 

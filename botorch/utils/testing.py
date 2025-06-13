@@ -12,8 +12,9 @@ from abc import abstractmethod
 from collections import OrderedDict
 from collections.abc import Sequence
 from itertools import product
-from typing import Any
+from typing import Any, Callable
 from unittest import mock, TestCase
+from warnings import warn
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -37,6 +38,19 @@ from torch import Tensor
 
 
 EMPTY_SIZE = torch.Size()
+
+
+def skip_if_import_error(func: Callable) -> Callable:
+    def f(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ImportError as e:
+            warn(
+                "Skipping test because module is not installed. Received the "
+                f"following error: {e}"
+            )
+
+    return f
 
 
 class BotorchTestCase(TestCase):

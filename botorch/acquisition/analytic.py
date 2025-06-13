@@ -35,7 +35,11 @@ from botorch.utils.probability.utils import (
     phi,
 )
 from botorch.utils.safe_math import log1mexp, logmeanexp
-from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    convert_to_target_pre_hook,
+    t_batch_mode_transform,
+)
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 from torch.nn.functional import pad
@@ -154,6 +158,7 @@ class LogProbabilityOfImprovement(AnalyticAcquisitionFunction):
         self.maximize = maximize
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the Log Probability of Improvement on the candidate set X.
 
@@ -208,6 +213,7 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
         self.maximize = maximize
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the Probability of Improvement on the candidate set X.
 
@@ -258,6 +264,7 @@ class qAnalyticProbabilityOfImprovement(AnalyticAcquisitionFunction):
         self.register_buffer("best_f", best_f)
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         """Evaluate approximate qPI on the candidate set X.
 
@@ -334,6 +341,7 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
         self.maximize = maximize
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Expected Improvement on the candidate set X.
 
@@ -397,6 +405,7 @@ class LogExpectedImprovement(AnalyticAcquisitionFunction):
         self.maximize = maximize
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate logarithm of Expected Improvement on the candidate set X.
 
@@ -578,6 +587,7 @@ class LogConstrainedExpectedImprovement(
         self.register_forward_pre_hook(convert_to_target_pre_hook)
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Constrained Log Expected Improvement on the candidate set X.
 
@@ -647,6 +657,7 @@ class LogProbabilityOfFeasibility(
         self.register_forward_pre_hook(convert_to_target_pre_hook)
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Constrained Log Probability of Feasibility on the candidate set X.
 
@@ -722,6 +733,7 @@ class ConstrainedExpectedImprovement(
         self.register_forward_pre_hook(convert_to_target_pre_hook)
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Constrained Expected Improvement on the candidate set X.
 
@@ -810,6 +822,7 @@ class LogNoisyExpectedImprovement(AnalyticAcquisitionFunction):
         self.best_f, self.maximize = best_f, maximize
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate logarithm of the mean Expected Improvement on the candidate set X.
 
@@ -894,6 +907,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
         super().__init__(model=fantasy_model, best_f=best_f, maximize=maximize)
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Expected Improvement on the candidate set X.
 
@@ -951,6 +965,7 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
         self.maximize = maximize
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the Upper Confidence Bound on the candidate set X.
 
@@ -1000,6 +1015,7 @@ class PosteriorMean(AnalyticAcquisitionFunction):
         self.maximize = maximize
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the posterior mean on the candidate set X.
 
@@ -1041,6 +1057,7 @@ class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
         self.register_buffer("weights", weights)
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the scalarized posterior mean on the candidate set X.
 
@@ -1108,6 +1125,7 @@ class PosteriorStandardDeviation(AnalyticAcquisitionFunction):
         self.maximize = maximize
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the posterior standard deviation on the candidate set X.
 

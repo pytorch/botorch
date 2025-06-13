@@ -34,7 +34,11 @@ from botorch.models.model import Model
 from botorch.models.utils import check_no_nans, fantasize as fantasize_flag
 from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
 from botorch.sampling.normal import SobolQMCNormalSampler
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    concatenate_pending_points,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 from torch.distributions import Normal
@@ -162,6 +166,7 @@ class qJointEntropySearch(AcquisitionFunction, MCSamplerMixin):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluates qJointEntropySearch at the design points `X`.
 

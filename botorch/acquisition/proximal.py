@@ -21,6 +21,7 @@ from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model import Model
 from botorch.models.transforms.input import InputTransform
 from botorch.utils import t_batch_mode_transform
+from botorch.utils.transforms import average_over_ensemble_models
 from torch import Tensor
 
 
@@ -94,6 +95,7 @@ class ProximalAcquisitionFunction(AbstractAcquisitionFunctionWrapper):
         )
 
     @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate base acquisition function with proximal weighting.
 

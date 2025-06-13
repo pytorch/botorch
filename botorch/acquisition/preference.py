@@ -37,6 +37,7 @@ from botorch.models.deterministic import DeterministicModel
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.utils.transforms import (
+    average_over_ensemble_models,
     concatenate_pending_points,
     match_batch_shape,
     t_batch_mode_transform,
@@ -86,6 +87,7 @@ class AnalyticExpectedUtilityOfBestOption(AnalyticAcquisitionFunction):
         self.std_norm = std_norm
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate analytical EUBO on the candidate set X.
 
@@ -181,6 +183,7 @@ class qExpectedUtilityOfBestOption(MCAcquisitionFunction):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qEUBO on the candidate set `X`.
 
@@ -234,6 +237,7 @@ class PairwiseBayesianActiveLearningByDisagreement(MCAcquisitionFunction):
         self.std_normal = Normal(0, 1)
 
     @t_batch_mode_transform(expected_q=2)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate MC BALD on the candidate set `X`.
 
