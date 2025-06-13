@@ -58,20 +58,23 @@ def columnwise_clamp(
 
     out = X.clamp(lower, upper)
     if raise_on_violation and not X.allclose(out):
-        raise BotorchError("Original value(s) are out of bounds.")
+        raise BotorchError(
+            "Original value(s) are out of bounds: "
+            f"out={out}, X={X}, lower={lower}, upper={upper}"
+        )
 
     return out
 
 
 def fix_features(
-    X: Tensor, fixed_features: Mapping[int, float | None] | None = None
+    X: Tensor, fixed_features: Mapping[int, float | None | torch.tensor] | None = None
 ) -> Tensor:
     r"""Fix feature values in a Tensor.
 
     The fixed features will have zero gradient in downstream calculations.
 
     Args:
-        X: input Tensor with shape `... x p`, where `p` is the number of features
+        X: input Tensor with shape `b x q x p`, where `p` is the number of features
         fixed_features: A mapping with keys as column indices and values
             equal to what the feature should be set to in `X`. If the value is
             None, that column is just considered fixed. Keys should be in the
@@ -85,10 +88,20 @@ def fix_features(
 
     columns = list(X.unbind(dim=-1))
     for index, value in fixed_features.items():
-        if value is None:
+        if value is None:  # todo: i think this does not do anything
             columns[index] = columns[index].detach()
         else:
-            columns[index] = torch.full_like(columns[index], value)
+            if torch.is_tensor(value) and value.ndim > 0:
+                assert X.ndim == 3, (
+                    "X must be a 3-dimensional tensor, as value is a tensor."
+                    f"X.shape = {X.shape}, value.shape = {value.shape}."
+                )
+                if value.ndim == 1:
+                    # spread across the q dimension
+                    value = value[:, None].repeat(1, columns[index].shape[1])
+            else:
+                value = torch.full_like(columns[index], value)
+            columns[index] = value
 
     return torch.stack(columns, dim=-1)
 
