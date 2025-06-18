@@ -512,7 +512,7 @@ class MCProbabilisticReparameterization(AbstractProbabilisticReparameterization)
         if self.batch_limit is None:
             self.batch_limit = mc_samples
         self.use_ma_baseline = use_ma_baseline
-        self._pr_acq_function = _MCProbabilisticReparameterization()
+        self._pr_acq_function = _MCProbabilisticReparameterization
         # create input transform
         self.input_transform = get_probabilistic_reparameterization_input_transform(
             integer_indices=integer_indices,
