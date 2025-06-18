@@ -155,9 +155,50 @@ class TestProbabilisticReparameterizationInputTransform(BotorchTestCase):
             **self.analytic_params,
         )
 
-        X = torch.tensor([[[0.2, 0.8, 3.2, 1.5, 1.0, 0.0, 0.0, 0.0, 1.0]]])
-        X_transformed = tf_analytic.transform(X)
-        print(X_transformed.shape)
+        X = torch.tensor(
+            [[[0.2, 0.8, 3.2, 1.5, 0.9, 0.05, 0.05, 0.05, 0.95]]], **self.tkwargs
+        )
+        X_transformed_analytic = tf_analytic.transform(X)
+
+        expected_shape = [5 * 6 * 2 * 3, 1, bounds.shape[-1]]
+        self.assertEqual(X_transformed_analytic.shape, torch.Size(expected_shape))
+
+        tf_mc = MCProbabilisticReparameterizationInputTransform(
+            one_hot_bounds=bounds,
+            integer_indices=integer_indices,
+            categorical_features=categorical_features,
+            **self.mc_params,
+        )
+
+        X_transformed_mc = tf_mc.transform(X)
+
+        expected_shape = [tf_mc.mc_samples, 1, bounds.shape[-1]]
+        self.assertEqual(X_transformed_mc.shape, torch.Size(expected_shape))
+
+        continuous_indices = [0, 1]
+        discrete_indices = [
+            d for d in range(bounds.shape[-1]) if d not in continuous_indices
+        ]
+        for X_transformed in [X_transformed_analytic, X_transformed_mc]:
+            self.assertAllClose(
+                X[..., continuous_indices].repeat([X_transformed.shape[0], 1, 1]),
+                X_transformed[..., continuous_indices],
+            )
+
+            # all discrete indices have been rounded
+            self.assertAllClose(
+                X_transformed[..., discrete_indices] % 1,
+                torch.zeros_like(X_transformed[..., discrete_indices]),
+            )
+
+        # for MC, all integer indices should be within [floor(X), ceil(X)]
+        # categoricals should be approximately proportional to their probability
+        self.assertTrue(
+            ((X.floor() <= X_transformed_mc) & (X_transformed_mc <= X.ceil()))[
+                ..., integer_indices
+            ].all()
+        )
+        self.assertAllClose(X_transformed_mc[..., -1].mean().item(), 0.95, atol=0.10)
 
 
 class TestProbabilisticReparameterization(BotorchTestCase):

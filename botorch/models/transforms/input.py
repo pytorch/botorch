@@ -2213,10 +2213,10 @@ class MCProbabilisticReparameterizationInputTransform(InputTransform, Module):
         This is not sample-path differentiable.
 
         Args:
-            X: A `batch_shape x n x d`-dim tensor of inputs.
+            X: A `batch_shape x 1 x n x d`-dim tensor of inputs.
 
         Returns:
-            A `batch_shape x n x d`-dim tensor of rounded inputs.
+            A `batch_shape x mc_samples x n x d`-dim tensor of rounded inputs.
         """
         X_expanded = X.expand(*X.shape[:-3], self.mc_samples, *X.shape[-2:]).clone()
         X_prob = self.get_rounding_prob(X=X)
