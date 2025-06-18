@@ -1894,6 +1894,9 @@ class AnalyticProbabilisticReparameterizationInputTransform(InputTransform, Modu
                 )
             )
         if integer_indices is not None:
+            # FIXME: this assumes that the integer dimensions are after the continuous
+            # if we want to enforce this, we should test for it similarly to
+            # categoricals
             for i in range(self.integer_bounds.shape[-1]):
                 discrete_options.append(
                     torch.arange(

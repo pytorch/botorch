@@ -8,11 +8,12 @@ from botorch.acquisition.probabilistic_reparameterization import (
     MCProbabilisticReparameterization,
 )
 from botorch.generation.gen import gen_candidates_scipy, gen_candidates_torch
-from botorch.models.transforms.factory import (
-    get_probabilistic_reparameterization_input_transform,
-    get_rounding_input_transform,
+from botorch.models.transforms.factory import get_rounding_input_transform
+from botorch.models.transforms.input import (
+    AnalyticProbabilisticReparameterizationInputTransform,
+    MCProbabilisticReparameterizationInputTransform,
+    OneHotToNumeric,
 )
-from botorch.models.transforms.input import OneHotToNumeric
 from botorch.optim import optimize_acqf, optimize_acqf_mixed
 from botorch.test_functions.synthetic import Ackley, AckleyMixed
 from botorch.utils.sampling import draw_sobol_samples
@@ -45,10 +46,118 @@ def get_categorical_features_dict(feature_to_num_categories: dict[int, int]):
 
 
 class TestProbabilisticReparameterizationInputTransform(BotorchTestCase):
-    def test_probabilistic_reparameterization_input_transform(self):
-        # TODO: test this functionality in factory
-        # test the actual transform here.
-        _ = get_probabilistic_reparameterization_input_transform()
+    def setUp(self):
+        super().setUp()
+        self.tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.double}
+        self.one_hot_bounds = torch.tensor(
+            [
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [1.0, 1.0, 4.0, 5.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            ],
+            **self.tkwargs,
+        )
+
+        self.analytic_params = dict(
+            transform_on_train=False,
+            transform_on_eval=True,
+            transform_on_fantasize=True,
+            tau=0.1,
+        )
+
+        self.mc_params = dict(
+            **self.analytic_params,
+            mc_samples=128,
+            resample=False,
+        )
+
+    def test_probabilistic_reparameterization_input_transform_construction(self):
+        bounds = self.one_hot_bounds
+        integer_indices = [2, 3]
+        categorical_features = {4: 2, 6: 3}
+
+        # must provide either categorical or discrete features
+        with self.assertRaises(ValueError):
+            _ = AnalyticProbabilisticReparameterizationInputTransform(
+                one_hot_bounds=bounds,
+                **self.analytic_params,
+            )
+
+        with self.assertRaises(ValueError):
+            _ = MCProbabilisticReparameterizationInputTransform(
+                one_hot_bounds=bounds,
+                **self.mc_params,
+            )
+
+        # categorical features must be in the rightmost columns
+        with self.assertRaisesRegex(ValueError, "rightmost"):
+            _ = AnalyticProbabilisticReparameterizationInputTransform(
+                one_hot_bounds=bounds,
+                integer_indices=integer_indices,
+                categorical_features={0: 2},
+                **self.analytic_params,
+            )
+        with self.assertRaisesRegex(ValueError, "rightmost"):
+            _ = MCProbabilisticReparameterizationInputTransform(
+                one_hot_bounds=bounds,
+                integer_indices=integer_indices,
+                categorical_features={0: 2},
+                **self.mc_params,
+            )
+
+        # correct construction passes without raising errors
+        _ = AnalyticProbabilisticReparameterizationInputTransform(
+            one_hot_bounds=bounds,
+            integer_indices=integer_indices,
+            categorical_features=categorical_features,
+            **self.analytic_params,
+        )
+        _ = MCProbabilisticReparameterizationInputTransform(
+            one_hot_bounds=bounds,
+            integer_indices=integer_indices,
+            categorical_features=categorical_features,
+            **self.mc_params,
+        )
+
+        # analytic generates all discrete options correctly
+        # use subset of features so that we can manually generate all options
+        sub_bounds = bounds[:, [0, 2, 6, 7, 8]]
+        sub_integer_indices = [1]
+        sub_categorical_features = {2: 3}
+        tf_analytic = AnalyticProbabilisticReparameterizationInputTransform(
+            one_hot_bounds=sub_bounds,
+            integer_indices=sub_integer_indices,
+            categorical_features=sub_categorical_features,
+            **self.analytic_params,
+        )
+
+        num_discrete_options = 5 * 3
+        expected_all_discrete_options = torch.zeros(
+            (num_discrete_options, sub_bounds.shape[-1])
+        )
+        expected_all_discrete_options[:, 1] = torch.repeat_interleave(
+            torch.arange(5), 3
+        )
+        expected_all_discrete_options[:, 2:] = torch.eye(3).repeat([5, 1])
+
+        self.assertAllClose(
+            expected_all_discrete_options, tf_analytic.all_discrete_options
+        )
+
+    def test_probabilistic_reparameterization_input_transform_forward(self):
+        bounds = self.one_hot_bounds
+        integer_indices = [2, 3]
+        categorical_features = {4: 2, 6: 3}
+
+        tf_analytic = AnalyticProbabilisticReparameterizationInputTransform(
+            one_hot_bounds=bounds,
+            integer_indices=integer_indices,
+            categorical_features=categorical_features,
+            **self.analytic_params,
+        )
+
+        X = torch.tensor([[[0.2, 0.8, 3.2, 1.5, 1.0, 0.0, 0.0, 0.0, 1.0]]])
+        X_transformed = tf_analytic.transform(X)
+        print(X_transformed.shape)
 
 
 class TestProbabilisticReparameterization(BotorchTestCase):
