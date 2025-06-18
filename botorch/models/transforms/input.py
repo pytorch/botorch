@@ -1796,7 +1796,7 @@ class AnalyticProbabilisticReparameterizationInputTransform(InputTransform, Modu
                 to be one-hot encoded. TODO: generalize to support
                 alternative representations.
             transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: True.
+                transforms in train() mode. Default: False.
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True.
             transform_on_fantasize: A boolean indicating whether to apply the
@@ -1925,7 +1925,7 @@ class AnalyticProbabilisticReparameterizationInputTransform(InputTransform, Modu
             ):
                 start = idx - categorical_start_idx
                 X_categ[..., start : start + cardinality] = one_hot(
-                    all_discrete_options[..., i],
+                    all_discrete_options[..., -len(categorical_features) + i],
                     num_classes=cardinality,
                 ).to(X_categ)
             all_discrete_options = torch.cat(
@@ -2095,7 +2095,7 @@ class MCProbabilisticReparameterizationInputTransform(InputTransform, Module):
                 to be one-hot encoded. TODO: generalize to support
                 alternative representations.
             transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: True.
+                transforms in train() mode. Default: False.
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True.
             transform_on_fantasize: A boolean indicating whether to apply the
