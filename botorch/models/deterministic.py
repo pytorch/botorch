@@ -64,7 +64,12 @@ class GenericDeterministicModel(DeterministicModel):
         >>> model = GenericDeterministicModel(f)
     """
 
-    def __init__(self, f: Callable[[Tensor], Tensor], num_outputs: int = 1) -> None:
+    def __init__(
+        self,
+        f: Callable[[Tensor], Tensor],
+        num_outputs: int = 1,
+        batch_shape: torch.Size | None = None,
+    ) -> None:
         r"""
         Args:
             f: A callable mapping a `batch_shape x n x d`-dim input tensor `X`
@@ -75,6 +80,12 @@ class GenericDeterministicModel(DeterministicModel):
         super().__init__()
         self._f = f
         self._num_outputs = num_outputs
+        self._batch_shape = batch_shape
+
+    @property
+    def batch_shape(self) -> torch.Size | None:
+        r"""The batch shape of the model."""
+        return self._batch_shape
 
     def subset_output(self, idcs: list[int]) -> GenericDeterministicModel:
         r"""Subset the model along the output dimension.
@@ -100,7 +111,19 @@ class GenericDeterministicModel(DeterministicModel):
         Returns:
             A `batch_shape x n x m`-dimensional output tensor.
         """
-        return self._f(X)
+        Y = self._f(X)
+        batch_shape = Y.shape[:-2]
+        # allowing for old behavior of not specifying the batch_shape
+        if self.batch_shape is not None:
+            try:
+                torch.broadcast_shapes(self.batch_shape, batch_shape)
+            except RuntimeError:
+                raise ValueError(
+                    "GenericDeterministicModel was initialized with batch_shape="
+                    f"{self.batch_shape=} but the output of f has a batch_shape="
+                    f"{batch_shape=} that is not broadcastable with it."
+                )
+        return Y
 
 
 class AffineDeterministicModel(DeterministicModel):
