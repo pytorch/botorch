@@ -206,12 +206,27 @@ class TestProbabilisticReparameterization(BotorchTestCase):
         super().setUp()
         self.tkwargs: dict[str, Any] = {"device": self.device, "dtype": torch.double}
 
+        self.acqf_params = dict(
+            batch_limit=32,
+        )
+
+        self.optimize_acqf_params = dict(
+            num_restarts=10,
+            raw_samples=512,
+            options={
+                "batch_limit": 5,
+                "maxiter": 200,
+                "rel_tol": float("-inf"),
+            },
+        )
+
     def test_probabilistic_reparameterization_binary(
         self,
         base_acq_func_cls=LogExpectedImprovement,
     ):
         torch.manual_seed(0)
-        f = AckleyMixed(dim=6, randomize_optimum=True)
+        f = AckleyMixed(dim=6, randomize_optimum=False)
+        f.discrete_inds = [3, 4, 5]
         train_X = torch.rand((10, f.dim), **self.tkwargs)
         train_X[:, f.discrete_inds] = train_X[:, f.discrete_inds].round()
         train_Y = f(train_X).unsqueeze(-1)
@@ -222,18 +237,7 @@ class TestProbabilisticReparameterization(BotorchTestCase):
             acq_function=base_acq_func,
             one_hot_bounds=f.bounds,
             integer_indices=f.discrete_inds,
-            batch_limit=32,
-        )
-        optimize_acqf_params = dict(
-            bounds=f.bounds,
-            q=1,
-            num_restarts=10,
-            raw_samples=512,
-            options={
-                "batch_limit": 5,
-                "maxiter": 200,
-                "rel_tol": float("-inf"),
-            },
+            **self.acqf_params,
         )
 
         pr_analytic_acq_func = AnalyticProbabilisticReparameterization(
@@ -242,32 +246,54 @@ class TestProbabilisticReparameterization(BotorchTestCase):
 
         pr_mc_acq_func = MCProbabilisticReparameterization(**pr_acq_func_params)
 
+        X = torch.tensor([[[0.3, 0.7, 0.8, 0.0, 0.5, 1.0]]], **self.tkwargs)
+        X_lb, X_ub = X.clone(), X.clone()
+        X_lb[..., 4] = 0.0
+        X_ub[..., 4] = 1.0
+
+        acq_value_base_mean = (base_acq_func(X_lb) + base_acq_func(X_ub)) / 2
+        acq_value_analytic = pr_analytic_acq_func(X)
+        acq_value_mc = pr_mc_acq_func(X)
+
+        # this is not exact due to sigmoid transform in discrete probabilities
+        self.assertAllClose(acq_value_analytic, acq_value_base_mean, rtol=1e-2)
+        self.assertAllClose(acq_value_mc, acq_value_base_mean, rtol=1e-2)
+
         candidate_analytic, acq_values_analytic = optimize_acqf(
             acq_function=pr_analytic_acq_func,
+            bounds=f.bounds,
+            q=1,
             gen_candidates=gen_candidates_scipy,
-            **optimize_acqf_params,
+            **self.optimize_acqf_params,
         )
 
         candidate_mc, acq_values_mc = optimize_acqf(
             acq_function=pr_mc_acq_func,
+            bounds=f.bounds,
+            q=1,
             gen_candidates=gen_candidates_torch,
-            **optimize_acqf_params,
+            **self.optimize_acqf_params,
         )
 
         fixed_features_list = [
-            {feat_dim: val for feat_dim, val in enumerate(vals)}
+            {feat_dim + 3: val for feat_dim, val in enumerate(vals)}
             for vals in itertools.product([0, 1], repeat=len(f.discrete_inds))
         ]
         candidate_exhaustive, acq_values_exhaustive = optimize_acqf_mixed(
             acq_function=base_acq_func,
             fixed_features_list=fixed_features_list,
-            **optimize_acqf_params,
+            bounds=f.bounds,
+            q=1,
+            **self.optimize_acqf_params,
         )
 
         self.assertTrue(candidate_analytic.shape == (1, f.dim))
         self.assertTrue(candidate_mc.shape == (1, f.dim))
-        self.assertAllClose(candidate_analytic, candidate_mc)
-        self.assertAllClose(acq_values_analytic, acq_values_mc)
+
+        self.assertAllClose(candidate_analytic, candidate_exhaustive, rtol=0.1)
+        self.assertAllClose(acq_values_analytic, acq_values_exhaustive, rtol=0.1)
+        self.assertAllClose(candidate_mc, candidate_exhaustive, rtol=0.1)
+        self.assertAllClose(acq_values_mc, acq_values_exhaustive, rtol=0.1)
 
     def test_probabilistic_reparameterization_binary_qLogEI(self):
         self.test_probabilistic_reparameterization_binary(
