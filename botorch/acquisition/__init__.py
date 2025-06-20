@@ -79,12 +79,17 @@ from botorch.acquisition.preference import (
     qExpectedUtilityOfBestOption,
 )
 from botorch.acquisition.prior_guided import PriorGuidedAcquisitionFunction
+from botorch.acquisition.probabilistic_reparameterization import (
+    AnalyticProbabilisticReparameterization,
+    MCProbabilisticReparameterization,
+)
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 
 __all__ = [
     "AcquisitionFunction",
     "AnalyticAcquisitionFunction",
     "AnalyticExpectedUtilityOfBestOption",
+    "AnalyticProbabilisticReparameterization",
     "ConstrainedExpectedImprovement",
     "DecoupledAcquisitionFunction",
     "ExpectedImprovement",
@@ -93,6 +98,7 @@ __all__ = [
     "FixedFeatureAcquisitionFunction",
     "GenericCostAwareUtility",
     "InverseCostWeightedUtility",
+    "MCProbabilisticReparameterization",
     "NoisyExpectedImprovement",
     "OneShotAcquisitionFunction",
     "PairwiseBayesianActiveLearningByDisagreement",
