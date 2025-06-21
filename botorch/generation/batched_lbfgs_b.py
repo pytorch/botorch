@@ -1,13 +1,7 @@
 # noqa
 # flake8: noqa
 """
-Functions
----------
-.. autosummary::
-   :toctree: generated/
-
-    fmin_l_bfgs_b
-
+Just the standard L-BFGS-B algorithm, as implemented in scipy.optimize.minimize.
 """
 
 ## License for the Python wrapper
@@ -527,14 +521,13 @@ class LbfgsInvHessProduct(LinearOperator):
     ----------
     sk : array_like, shape=(n_corr, n)
         Array of `n_corr` most recent updates to the solution vector.
-        (See [1]).
     yk : array_like, shape=(n_corr, n)
-        Array of `n_corr` most recent updates to the gradient. (See [1]).
+        Array of `n_corr` most recent updates to the gradient.
 
     References
     ----------
-    .. [1] Nocedal, Jorge. "Updating quasi-Newton matrices with limited
-       storage." Mathematics of computation 35.151 (1980): 773-782.
+    * Nocedal, Jorge. "Updating quasi-Newton matrices with limited storage."
+      Mathematics of computation 35.151 (1980): 773-782.
 
     """
 
