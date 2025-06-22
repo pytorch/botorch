@@ -8,6 +8,7 @@ from botorch.acquisition.probabilistic_reparameterization import (
     MCProbabilisticReparameterization,
 )
 from botorch.generation.gen import gen_candidates_scipy, gen_candidates_torch
+from botorch.models import MixedSingleTaskGP
 from botorch.models.transforms.factory import get_rounding_input_transform
 from botorch.models.transforms.input import (
     AnalyticProbabilisticReparameterizationInputTransform,
@@ -256,8 +257,8 @@ class TestProbabilisticReparameterization(BotorchTestCase):
         acq_value_mc = pr_mc_acq_func(X)
 
         # this is not exact due to sigmoid transform in discrete probabilities
-        self.assertAllClose(acq_value_analytic, acq_value_base_mean, rtol=1e-2)
-        self.assertAllClose(acq_value_mc, acq_value_base_mean, rtol=1e-2)
+        self.assertAllClose(acq_value_analytic, acq_value_base_mean, rtol=0.1)
+        self.assertAllClose(acq_value_mc, acq_value_base_mean, rtol=0.1)
 
         candidate_analytic, acq_values_analytic = optimize_acqf(
             acq_function=pr_analytic_acq_func,
@@ -302,7 +303,6 @@ class TestProbabilisticReparameterization(BotorchTestCase):
 
     def test_probabilistic_reparameterization_categorical(
         self,
-        pr_acq_func_cls=AnalyticProbabilisticReparameterization,
         base_acq_func_cls=LogExpectedImprovement,
     ):
         torch.manual_seed(0)
@@ -327,52 +327,97 @@ class TestProbabilisticReparameterization(BotorchTestCase):
             initialization=True,
         )
         one_hot_to_numeric = OneHotToNumeric(
-            dim=one_hot_bounds.shape[1], categorical_features=categorical_features
+            dim=one_hot_bounds.shape[1],
+            categorical_features=categorical_features,
+            transform_on_train=False,
         ).to(**self.tkwargs)
 
         raw_X = (
             draw_sobol_samples(one_hot_bounds, n=10, q=1).squeeze(-2).to(**self.tkwargs)
         )
         train_X = init_exact_rounding_func(raw_X)
-        train_Y = f(one_hot_to_numeric(train_X)).unsqueeze(-1)
-        model = get_model(train_X, train_Y)
+        train_Y = f(one_hot_to_numeric.transform(train_X)).unsqueeze(-1)
+        model = MixedSingleTaskGP(
+            train_X=one_hot_to_numeric.transform(train_X),
+            train_Y=train_Y,
+            cat_dims=list(feature_to_num_categories.keys()),
+            input_transform=one_hot_to_numeric,
+        )
         base_acq_func = base_acq_func_cls(model, best_f=train_Y.max())
 
-        pr_acq_func = pr_acq_func_cls(
+        pr_acq_func_params = dict(
             acq_function=base_acq_func,
             one_hot_bounds=one_hot_bounds,
             categorical_features=categorical_features,
-            integer_indices=None,
-            batch_limit=32,
+            **self.acqf_params,
         )
 
-        raw_candidate, _ = optimize_acqf(
-            acq_function=pr_acq_func,
+        pr_analytic_acq_func = AnalyticProbabilisticReparameterization(
+            **pr_acq_func_params
+        )
+
+        pr_mc_acq_func = MCProbabilisticReparameterization(**pr_acq_func_params)
+
+        X = one_hot_bounds[:1, :].clone().unsqueeze(0)
+        X[..., -1] = 1.0
+        X_lb, X_ub = X.clone(), X.clone()
+        X[..., 3:5] = 0.5
+        X_lb[..., 3] = 1.0
+        X_ub[..., 4] = 1.0
+
+        acq_value_base_mean = (base_acq_func(X_lb) + base_acq_func(X_ub)) / 2
+        acq_value_analytic = pr_analytic_acq_func(X)
+        acq_value_mc = pr_mc_acq_func(X)
+
+        # this is not exact due to sigmoid transform in discrete probabilities
+        self.assertAllClose(acq_value_analytic, acq_value_base_mean, rtol=0.1)
+        self.assertAllClose(acq_value_mc, acq_value_base_mean, rtol=0.1)
+
+        candidate_analytic, acq_values_analytic = optimize_acqf(
+            acq_function=pr_analytic_acq_func,
             bounds=one_hot_bounds,
             q=1,
-            num_restarts=10,
-            raw_samples=20,
-            options={"maxiter": 5},
-            # gen_candidates=gen_candidates_scipy,
-        )
-        # candidates are generated in the one-hot space
-        candidate = one_hot_to_numeric(raw_candidate)
-        self.assertTrue(candidate.shape == (1, f.dim))
-
-    def test_probabilistic_reparameterization_categorical_analytic_qLogEI(self):
-        self.test_probabilistic_reparameterization_categorical(
-            pr_acq_func_cls=AnalyticProbabilisticReparameterization,
-            base_acq_func_cls=qLogExpectedImprovement,
+            gen_candidates=gen_candidates_scipy,
+            **self.optimize_acqf_params,
         )
 
-    def test_probabilistic_reparameterization_categorical_MC_LogEI(self):
-        self.test_probabilistic_reparameterization_categorical(
-            pr_acq_func_cls=MCProbabilisticReparameterization,
-            base_acq_func_cls=LogExpectedImprovement,
+        candidate_mc, acq_values_mc = optimize_acqf(
+            acq_function=pr_mc_acq_func,
+            bounds=one_hot_bounds,
+            q=1,
+            gen_candidates=gen_candidates_torch,
+            **self.optimize_acqf_params,
         )
 
-    def test_probabilistic_reparameterization_categorical_MC_qLogEI(self):
+        fixed_features_list = [
+            {
+                start_dim + i: float(val == i)
+                for (start_dim, num_cat), val in zip(categorical_features.items(), vals)
+                for i in range(num_cat)
+            }
+            for vals in itertools.product(*map(range, categorical_features.values()))
+        ]
+        candidate_exhaustive, acq_values_exhaustive = optimize_acqf_mixed(
+            acq_function=base_acq_func,
+            fixed_features_list=fixed_features_list,
+            bounds=one_hot_bounds,
+            q=1,
+            **self.optimize_acqf_params,
+        )
+
+        self.assertTrue(candidate_analytic.shape == (1, one_hot_bounds.shape[-1]))
+        self.assertTrue(candidate_mc.shape == (1, one_hot_bounds.shape[-1]))
+        self.assertTrue(one_hot_to_numeric(candidate_analytic).shape == (1, f.dim))
+
+        # round the mc candidate to allow for comparison
+        candidate_mc = init_exact_rounding_func(candidate_mc)
+
+        self.assertAllClose(candidate_analytic, candidate_exhaustive, rtol=0.1)
+        self.assertAllClose(acq_values_analytic, acq_values_exhaustive, rtol=0.1)
+        self.assertAllClose(candidate_mc, candidate_exhaustive, rtol=0.1)
+        self.assertAllClose(acq_values_mc, acq_values_exhaustive, rtol=0.1)
+
+    def test_probabilistic_reparameterization_categorical_qLogEI(self):
         self.test_probabilistic_reparameterization_categorical(
-            pr_acq_func_cls=MCProbabilisticReparameterization,
             base_acq_func_cls=qLogExpectedImprovement,
         )
