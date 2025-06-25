@@ -640,7 +640,6 @@ def translate_bounds_for_lbfgsb(
     upper_bounds: tp.Union[tp.Sequence[tp.Optional[float]], float, None],
     num_features: int,
     q: int,
-    fixed_features: tp.Optional[dict[int, float]] = None,
 ):
     """
     Translates the bounds to the format expected by L-BFGS-B.
@@ -676,11 +675,4 @@ def translate_bounds_for_lbfgsb(
         assert (
             len(bounds[i]) == num_features * q
         ), f"Instead got {len(bounds[i])} != {num_features} * {q}."
-        if fixed_features:
-            bounds[i] = [
-                bounds[i][q_i * num_features + f_i]
-                for q_i in range(q)
-                for f_i in range(num_features)
-                if f_i not in fixed_features
-            ]
     return list(zip(*bounds))
