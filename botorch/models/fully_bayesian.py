@@ -904,7 +904,7 @@ class AbstractFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel
 
 
 class FullyBayesianSingleTaskGP(AbstractFullyBayesianSingleTaskGP):
-    r"""A fully Bayesian single-task GP model with the Hvarfner prior.
+    r"""A fully Bayesian single-task GP model.
 
     This model assumes that the inputs have been normalized to [0, 1]^d and that
     the output has been standardized to have zero mean and unit variance. You can
