@@ -365,7 +365,9 @@ def sample_feasible_points(
         base_points[:, non_cont_dims] = base_points[:, non_cont_dims].round()
         # Fix the fixed features.
         base_points = fix_features(
-            X=base_points, fixed_features=opt_inputs.fixed_features
+            X=base_points,
+            fixed_features=opt_inputs.fixed_features,
+            replace_current_value=True,
         )
         # Filter out infeasible points.
         feasible_points = _filter_infeasible(
@@ -511,7 +513,9 @@ def generate_starting_points(
     # Process the candidates to make sure they are all feasible.
     x_init_candts[..., discrete_dims] = x_init_candts[..., discrete_dims].round()
     x_init_candts = fix_features(
-        X=x_init_candts, fixed_features=opt_inputs.fixed_features
+        X=x_init_candts,
+        fixed_features=opt_inputs.fixed_features,
+        replace_current_value=True,
     )
     x_init_candts = _filter_infeasible(
         X=x_init_candts, inequality_constraints=opt_inputs.inequality_constraints

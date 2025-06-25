@@ -607,6 +607,12 @@ class MockAcquisitionFunction:
     r"""Mock acquisition function object that implements dummy methods."""
 
     def __init__(self):  # noqa: D107
+        """
+        Initialize the MockAcquisitionFunction.
+        This function does not really do anything,
+        but it takes an input of shape (b,q,d)
+        and returns a tensor of shape (b,).
+        """
         self.model = None
         self.X_pending = None
 
