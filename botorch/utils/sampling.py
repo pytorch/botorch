@@ -1055,6 +1055,7 @@ def optimize_posterior_samples(
         path_func,
         lower_bounds=bounds[0],
         upper_bounds=bounds[1],
+        use_parallel_mode=False,
     )
     f_opt, arg_opt = f_top_k.max(dim=-1, keepdim=True)
 
