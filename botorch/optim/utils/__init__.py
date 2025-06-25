@@ -12,6 +12,7 @@ from botorch.optim.utils.acquisition_utils import (
 from botorch.optim.utils.common import (
     _handle_numerical_errors,
     _warning_handler_template,
+    check_scipy_version_at_least,
 )
 from botorch.optim.utils.model_utils import (
     get_data_loader,
@@ -32,6 +33,7 @@ from botorch.optim.utils.timeout import minimize_with_timeout
 __all__ = [
     "_handle_numerical_errors",
     "_warning_handler_template",
+    "check_scipy_version_at_least",
     "as_ndarray",
     "columnwise_clamp",
     "fix_features",
