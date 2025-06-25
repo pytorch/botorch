@@ -909,8 +909,9 @@ class FullyBayesianSingleTaskGP(AbstractFullyBayesianSingleTaskGP):
     This model assumes that the inputs have been normalized to [0, 1]^d and that
     the output has been standardized to have zero mean and unit variance. You can
     either normalize and standardize the data before constructing the model or use
-    an `input_transform` and `outcome_transform`. A dimension-scaled model
-    [Hvarfner2024vanilla]_ with a Matern-5/2 kernel is used by default.
+    an `input_transform` and `outcome_transform`. A model with a Matern-5/2 kernel
+    and dimension-scaled priors on the hyperparameters from [Hvarfner2024vanilla]_
+    is used by default.
 
     You are expected to use `fit_fully_bayesian_model_nuts` to fit this model as it
     isn't compatible with `fit_gpytorch_mll`.
