@@ -64,18 +64,23 @@ def columnwise_clamp(
 
 
 def fix_features(
-    X: Tensor, fixed_features: Mapping[int, float | None] | None = None
+    X: Tensor,
+    fixed_features: Mapping[int, float] | None = None,
+    replace_current_value: bool = True,
 ) -> Tensor:
     r"""Fix feature values in a Tensor.
 
     The fixed features will have zero gradient in downstream calculations.
 
     Args:
-        X: input Tensor with shape `... x p`, where `p` is the number of features
+        X: input Tensor with shape `b x q x (reduced_p | p)`, where `reduced_p` is
+            the number of features not fixed to a constant value and p is the full,
+            use `p` if `replace_current_value` is True, and `reduced_p` otherwise.
         fixed_features: A mapping with keys as column indices and values
-            equal to what the feature should be set to in `X`. If the value is
-            None, that column is just considered fixed. Keys should be in the
+            equal to what the feature should be set to in `X`. Keys should be in the
             range `[0, p - 1]`.
+        replace_current_value: If True, replace the specified indexes, otherwise
+            the indices are inserted.
 
     Returns:
         The tensor X with fixed features.
@@ -83,14 +88,27 @@ def fix_features(
     if fixed_features is None:
         return X
 
-    columns = list(X.unbind(dim=-1))
-    for index, value in fixed_features.items():
-        if value is None:
-            columns[index] = columns[index].detach()
-        else:
-            columns[index] = torch.full_like(columns[index], value)
+    if replace_current_value:
+        X = X[..., [i for i in range(X.shape[-1]) if i not in fixed_features]]
 
-    return torch.stack(columns, dim=-1)
+    new_X = torch.zeros(
+        *X.shape[:-1],
+        (X.shape[-1] + len(fixed_features)),
+        dtype=X.dtype,
+        device=X.device,
+    )
+
+    filtered_index = 0
+    for index in range(new_X.shape[-1]):
+        if index in fixed_features:
+            value = fixed_features[index]
+            value = torch.full_like(new_X[..., index], value)
+            new_X[..., index] = value
+        else:
+            new_X[..., index] = X[..., filtered_index]
+            filtered_index += 1
+
+    return new_X
 
 
 def get_X_baseline(acq_function: AcquisitionFunction) -> Tensor | None:

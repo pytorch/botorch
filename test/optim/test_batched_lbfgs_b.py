@@ -361,27 +361,3 @@ class TestTranslateBoundsForLBFGSB(BotorchTestCase):
             translate_bounds_for_lbfgsb(lower_bounds, upper_bounds, num_features, q),
             expected_bounds,
         )
-
-    def test_fixed_features(self):
-        """Test translate_bounds_for_lbfgsb with fixed features."""
-
-        lower_bounds = [0.0, 0.1, 0.2]
-        upper_bounds = [1.0, 1.1, 1.2]
-        num_features = 3
-        q = 2
-        fixed_features = {1: 0.1}  # Fix the second feature
-
-        # Expected bounds should exclude the fixed feature
-        expected_bounds = [
-            (0.0, 1.0),
-            (0.2, 1.2),
-            (0.0, 1.0),
-            (0.2, 1.2),
-        ]
-
-        self.assertEqual(
-            translate_bounds_for_lbfgsb(
-                lower_bounds, upper_bounds, num_features, q, fixed_features
-            ),
-            expected_bounds,
-        )

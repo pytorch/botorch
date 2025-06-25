@@ -94,25 +94,13 @@ class TestColumnWiseClamp(BotorchTestCase):
 
 
 class TestFixFeatures(BotorchTestCase):
-    def _getTensors(self):
-        X = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=self.device)
-        X_null_two = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=self.device)
-        X_expected = torch.tensor([[-1, 1, -2], [-1, -0.5, -2]], device=self.device)
-        X_expected_null_two = torch.tensor(
-            [[-1, 1, 3], [-1, -0.5, 1.0]], device=self.device
-        )
-        return X, X_null_two, X_expected, X_expected_null_two
-
     def test_fix_features(self):
-        X, X_null_two, X_expected, X_expected_null_two = self._getTensors()
+        X = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=self.device)
+        X_expected = torch.tensor([[-1, 1, -2], [-1, -0.5, -2]], device=self.device)
         X.requires_grad_(True)
-        X_null_two.requires_grad_(True)
 
-        X_fix = fix_features(X, {0: -1, 2: -2})
-        X_fix_null_two = fix_features(X_null_two, {0: -1, 2: None})
-
+        X_fix = fix_features(X, {0: -1, 2: -2}, replace_current_value=True)
         self.assertTrue(torch.equal(X_fix, X_expected))
-        self.assertTrue(torch.equal(X_fix_null_two, X_expected_null_two))
 
         def f(X):
             return X.sum()
@@ -129,16 +117,12 @@ class TestFixFeatures(BotorchTestCase):
             )
         )
 
-        f(X_null_two).backward()
-        self.assertTrue(torch.equal(X_null_two.grad, torch.ones_like(X)))
-        X_null_two.grad.zero_()
-        f(X_fix_null_two).backward()
-        self.assertTrue(
-            torch.equal(
-                X_null_two.grad,
-                torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]], device=self.device),
-            )
-        )
+        X_fix = fix_features(X, {0: -1, 2: -2}, replace_current_value=False)
+        X_expected = torch.zeros(2, 5, device=self.device)
+        X_expected[:, 0] = -1
+        X_expected[:, 2] = -2
+        X_expected[:, [1, 3, 4]] = X
+        self.assertTrue(torch.equal(X_fix, X_expected))
 
 
 class TestGetXBaseline(BotorchTestCase):
