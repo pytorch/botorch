@@ -51,6 +51,8 @@ def _make_opt_inputs(
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
     nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None = None,
     fixed_features: dict[int, float] | None = None,
+    return_best_only: bool = True,
+    sequential: bool = True,
 ) -> OptimizeAcqfInputs:
     r"""Helper to construct `OptimizeAcqfInputs` from limited inputs."""
     return OptimizeAcqfInputs(
@@ -66,9 +68,9 @@ def _make_opt_inputs(
         fixed_features=fixed_features or {},
         post_processing_func=None,
         batch_initial_conditions=None,
-        return_best_only=True,
+        return_best_only=return_best_only,
         gen_candidates=gen_candidates_scipy,
-        sequential=True,
+        sequential=sequential,
     )
 
 
@@ -391,6 +393,72 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # No feasible neighbors, so we should get the same point back.
         self.assertAllClose(X_new, X)
 
+        # Test with batched current_x that are diverse and converge differently fast
+        d = 4
+        bounds = self.single_bound.repeat(1, d)
+        root = torch.zeros(d, device=self.device)
+        binary_dims = torch.arange(d)
+        cat_dims = torch.tensor([], device=self.device, dtype=torch.long)
+
+        # Create a batch of 3 points with different distances from the optimum
+        # Point 1: 2 ones (close to optimum)
+        # Point 2: 8 ones (medium distance)
+        # Point 3: 14 ones (far from optimum)
+        X_batch = torch.zeros(3, d, device=self.device)
+        X_batch[0, :1] = 1.0
+        X_batch[1, :2] = 1.0
+        X_batch[2, :3] = 1.0
+
+        # Simple acquisition function that returns higher values for
+        # points closer to the optimum
+        # The negative squared distance from the root (all zeros)
+        def simple_acqf(X):
+            return -((X.squeeze(-2) - root) ** 2).sum(dim=-1, keepdim=True)
+
+        # Track convergence
+        converged = torch.zeros(len(X_batch), dtype=torch.bool, device=self.device)
+        convergence_steps = torch.zeros(
+            len(X_batch), dtype=torch.long, device=self.device
+        )
+
+        # Run for a fixed number of steps and track when each point converges
+        max_steps = 3
+        for step in range(max_steps):
+            X_batch, _ = discrete_step(
+                opt_inputs=_make_opt_inputs(
+                    acq_function=simple_acqf,
+                    bounds=bounds,
+                    options={
+                        "maxiter_discrete": 1,
+                        "tol": 1e-6,
+                        "init_batch_limit": 32,
+                    },
+                ),
+                discrete_dims=binary_dims,
+                cat_dims=cat_dims,
+                current_x=X_batch,
+            )
+
+            # Check which points have converged (all ones flipped to zeros)
+            for i in range(len(X_batch)):
+                if not converged[i] and torch.allclose(X_batch[i], root):
+                    converged[i] = True
+                    convergence_steps[i] = step + 1
+
+        # Verify that points closer to the optimum converged faster
+        self.assertTrue(
+            converged.all(), f"All points should have converged: {converged=}"
+        )
+        self.assertTrue(
+            (convergence_steps[0] == 1)
+            and (convergence_steps[1] == 2)
+            and (convergence_steps[2] == 3),
+            (
+                "Points should converge in distance from optimum number steps, "
+                f"but got {convergence_steps}"
+            ),
+        )
+
     def test_continuous_step(self):
         d_cont = 16
         d_bin = 5
@@ -612,6 +680,8 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             q=1,
             raw_samples=20,
             num_restarts=2,
+            return_best_only=True,
+            sequential=True,
         )
         # Can't just use `assert_called_once_with` here b/c of tensor ambiguity.
         wrapped_optimize.assert_called_once()
@@ -620,9 +690,11 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             opt_input = getattr(opt_inputs, field.name)
             expected_opt_input = getattr(expected_opt_inputs, field.name)
             if isinstance(opt_input, Tensor):
-                self.assertTrue(torch.equal(opt_input, expected_opt_input))
+                self.assertTrue(
+                    torch.equal(opt_input, expected_opt_input), f"field {field.name}"
+                )
             else:
-                self.assertEqual(opt_input, expected_opt_input)
+                self.assertEqual(opt_input, expected_opt_input, f"field {field.name}")
 
         # Only discrete works fine.
         candidates, _ = optimize_acqf_mixed_alternating(
@@ -924,6 +996,45 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # Should request 4 candidates, since all 4 are infeasible.
         self.assertEqual(wrapped_sample_feasible.call_args.kwargs["num_points"], 4)
 
+    def test_optimize_acqf_raises_on_wrong_options(self) -> None:
+        # Testing with integer variables.
+        train_X, train_Y, binary_dims, cont_dims = self._get_data()
+        dim = len(binary_dims) + len(cont_dims)
+        # Update the data to introduce integer dimensions.
+        binary_dims = [0]
+        cat_dims = [3, 4]
+        discrete_dims = binary_dims
+        bounds = self.single_bound.repeat(1, dim)
+        bounds[1, 3:5] = 4.0
+        # Update the model to have a different optimizer.
+        root = torch.tensor([0.0, 0.0, 0.0, 4.0, 4.0], device=self.device)
+        torch.manual_seed(0)
+        model = QuadraticDeterministicModel(root)
+        acqf = qLogNoisyExpectedImprovement(model=model, X_baseline=train_X)
+
+        # Test for raising unsupported with
+        # options['max_optimization_problem_aggregation_size']>1
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "optimize_acqf_mixed_alternating does not support "
+            "max_optimization_problem_aggregation_size != 1",
+        ):
+            optimize_acqf_mixed_alternating(
+                acq_function=acqf,
+                bounds=bounds,
+                discrete_dims=discrete_dims,
+                cat_dims=cat_dims,
+                q=3,
+                raw_samples=32,
+                num_restarts=4,
+                options={
+                    "batch_limit": 5,
+                    "init_batch_limit": 20,
+                    "maxiter_alternating": 1,
+                    "max_optimization_problem_aggregation_size": 2,
+                },
+            )
+
     def test_optimize_acqf_mixed_continuous_relaxation(self) -> None:
         # Testing with integer variables.
         train_X, train_Y, binary_dims, cont_dims = self._get_data()
@@ -944,7 +1055,11 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
         for max_discrete_values, post_processing_func in (
             (None, None),
-            (5, lambda X: X + 10),
+            (
+                5,
+                lambda X: X
+                + torch.tensor([0.0, 0.0, 0.0, 1.0, 0.0], device=self.device),
+            ),
         ):
             options = {
                 "batch_limit": 5,
