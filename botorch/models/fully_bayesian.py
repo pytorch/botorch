@@ -224,18 +224,19 @@ class PyroModel:
         The prior has a mean value of 1 for each concentration and is very
         concentrated around the mean.
         """
+        d = len(self.indices) if self.indices is not None else self.ard_num_dims
         c0 = pyro.sample(
             "c0",
             pyro.distributions.LogNormal(
-                torch.tensor([0.0] * self.ard_num_dims, **tkwargs),
-                torch.tensor([0.1**0.5] * self.ard_num_dims, **tkwargs),
+                torch.tensor([0.0] * d, **tkwargs),
+                torch.tensor([0.1**0.5] * d, **tkwargs),
             ),
         )
         c1 = pyro.sample(
             "c1",
             pyro.distributions.LogNormal(
-                torch.tensor([0.0] * self.ard_num_dims, **tkwargs),
-                torch.tensor([0.1**0.5] * self.ard_num_dims, **tkwargs),
+                torch.tensor([0.0] * d, **tkwargs),
+                torch.tensor([0.1**0.5] * d, **tkwargs),
             ),
         )
 
