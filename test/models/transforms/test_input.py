@@ -7,6 +7,7 @@
 import itertools
 from abc import ABC
 from copy import deepcopy
+from functools import partial
 from itertools import product
 from random import randint
 
@@ -25,6 +26,7 @@ from botorch.models.transforms.input import (
     InteractionFeatures,
     Log10,
     Normalize,
+    NumericToCategoricalEncoding,
     OneHotToNumeric,
     ReversibleInputTransform,
     Round,
@@ -1206,6 +1208,159 @@ class TestInputTransforms(BotorchTestCase):
                 object,
             ),
         )
+
+    def test_numeric_to_categorical_encoding(self) -> None:
+        # test exceptions
+        with self.assertRaises(
+            ValueError,
+            msg="The number of categorical features exceeds the provided dimension.",
+        ):
+            categorical_features = {0: 2, 1: 3}
+            NumericToCategoricalEncoding(
+                dim=1,
+                categorical_features=categorical_features,
+                encoders={
+                    0: partial(one_hot, num_classes=2),
+                    1: partial(one_hot, num_classes=3),
+                },
+            )
+        with self.assertRaises(
+            ValueError,
+            msg="The keys of `encoders` must match the keys of `categorical_features`.",
+        ):
+            categorical_features = {0: 2, 1: 3}
+            NumericToCategoricalEncoding(
+                dim=4,
+                categorical_features=categorical_features,
+                encoders={
+                    0: partial(one_hot, num_classes=2),
+                    2: partial(one_hot, num_classes=3),
+                },
+            )
+
+        torch.manual_seed(randint(0, 1000))
+        for dtype in (torch.float, torch.double):
+            # one categorical at start
+            dim = 3
+            categorical_features = {0: 3}
+            tf = NumericToCategoricalEncoding(
+                dim=dim,
+                categorical_features=categorical_features,
+                encoders={0: partial(one_hot, num_classes=3)},
+            )
+            tf.eval()
+            cat_numeric = torch.randint(0, 3, (3,), device=self.device)
+            cat_one_hot = one_hot(cat_numeric, num_classes=3)
+            cont = torch.rand(3, 2, dtype=dtype, device=self.device)
+
+            X_numeric = torch.cat(
+                [cat_numeric.view(-1, 1).to(dtype=dtype, device=self.device), cont],
+                dim=-1,
+            )
+
+            expected = torch.cat(
+                [cat_one_hot, cont],
+                dim=-1,
+            )
+            X_one_hot = tf(X_numeric)
+            self.assertTrue(torch.equal(X_one_hot, expected))
+            # two categoricals at end
+            dim = 4
+            categorical_features = {2: 3, 3: 2}
+            tf = NumericToCategoricalEncoding(
+                dim=dim,
+                categorical_features=categorical_features,
+                encoders={
+                    2: partial(one_hot, num_classes=3),
+                    3: partial(one_hot, num_classes=2),
+                },
+            )
+            tf.eval()
+            cat_numeric1 = torch.randint(0, 3, (3,), device=self.device)
+            cat_one_hot1 = one_hot(cat_numeric1, num_classes=3)
+            cat_numeric2 = torch.randint(0, 2, (3,), device=self.device)
+            cat_one_hot2 = one_hot(cat_numeric2, num_classes=2)
+            cont = torch.rand(3, 2, dtype=dtype, device=self.device)
+
+            X_numeric = torch.cat(
+                [
+                    cont,
+                    cat_numeric1.view(-1, 1).to(dtype=dtype, device=self.device),
+                    cat_numeric2.view(-1, 1).to(dtype=dtype, device=self.device),
+                ],
+                dim=-1,
+            )
+
+            expected = torch.cat(
+                [cont, cat_one_hot1, cat_one_hot2],
+                dim=-1,
+            )
+            X_one_hot = tf(X_numeric)
+            self.assertTrue(torch.equal(X_one_hot, expected))
+            # two categoricals, one at start, one at end
+            dim = 4
+            categorical_features = {0: 3, 3: 2}
+            tf = NumericToCategoricalEncoding(
+                dim=dim,
+                categorical_features=categorical_features,
+                encoders={
+                    0: partial(one_hot, num_classes=3),
+                    3: partial(one_hot, num_classes=2),
+                },
+            )
+            tf.eval()
+            cat_numeric1 = torch.randint(0, 3, (3,), device=self.device)
+            cat_one_hot1 = one_hot(cat_numeric1, num_classes=3)
+            cat_numeric2 = torch.randint(0, 2, (3,), device=self.device)
+            cat_one_hot2 = one_hot(cat_numeric2, num_classes=2)
+            cont = torch.rand(3, 2, dtype=dtype, device=self.device)
+
+            X_numeric = torch.cat(
+                [
+                    cat_numeric1.view(-1, 1).to(dtype=dtype, device=self.device),
+                    cont,
+                    cat_numeric2.view(-1, 1).to(dtype=dtype, device=self.device),
+                ],
+                dim=-1,
+            )
+
+            expected = torch.cat(
+                [cat_one_hot1, cont, cat_one_hot2],
+                dim=-1,
+            )
+            X_one_hot = tf(X_numeric)
+            self.assertTrue(torch.equal(X_one_hot, expected))
+            # only categoricals
+            dim = 2
+            categorical_features = {0: 3, 1: 2}
+            tf = NumericToCategoricalEncoding(
+                dim=dim,
+                categorical_features=categorical_features,
+                encoders={
+                    0: partial(one_hot, num_classes=3),
+                    1: partial(one_hot, num_classes=2),
+                },
+            )
+            tf.eval()
+            cat_numeric1 = torch.randint(0, 3, (3,), device=self.device)
+            cat_one_hot1 = one_hot(cat_numeric1, num_classes=3)
+            cat_numeric2 = torch.randint(0, 2, (3,), device=self.device)
+            cat_one_hot2 = one_hot(cat_numeric2, num_classes=2)
+
+            X_numeric = torch.cat(
+                [
+                    cat_numeric1.view(-1, 1).to(dtype=dtype, device=self.device),
+                    cat_numeric2.view(-1, 1).to(dtype=dtype, device=self.device),
+                ],
+                dim=-1,
+            )
+
+            expected = torch.cat(
+                [cat_one_hot1, cat_one_hot2],
+                dim=-1,
+            )
+            X_one_hot = tf(X_numeric)
+            self.assertTrue(torch.equal(X_one_hot, expected))
 
     def test_one_hot_to_numeric(self) -> None:
         dim = 8
