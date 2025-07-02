@@ -13,7 +13,7 @@ from warnings import warn
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.exceptions.errors import BotorchError
+from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.gpytorch import ModelListGPyTorchModel
 from torch import Tensor
@@ -58,14 +58,16 @@ def columnwise_clamp(
 
     out = X.clamp(lower, upper)
     if raise_on_violation and not X.allclose(out):
-        raise BotorchError("Original value(s) are out of bounds.")
+        raise BotorchError(
+            "Original value(s) are out of bounds: " f"{out=}, {X=}, {lower=}, {upper=}."
+        )
 
     return out
 
 
 def fix_features(
     X: Tensor,
-    fixed_features: Mapping[int, float] | None = None,
+    fixed_features: Mapping[int, float | Tensor] | None = None,
     replace_current_value: bool = True,
 ) -> Tensor:
     r"""Fix feature values in a Tensor.
@@ -79,6 +81,8 @@ def fix_features(
         fixed_features: A mapping with keys as column indices and values
             equal to what the feature should be set to in `X`. Keys should be in the
             range `[0, p - 1]`.
+            If a tensor is passed as value, it has to either have shape `b x q` or
+            `b`, in which case the same value is used across the q dimension.
         replace_current_value: If True, replace the specified indexes, otherwise
             the indices are inserted.
 
@@ -102,7 +106,18 @@ def fix_features(
     for index in range(new_X.shape[-1]):
         if index in fixed_features:
             value = fixed_features[index]
-            value = torch.full_like(new_X[..., index], value)
+            if torch.is_tensor(value) and value.ndim > 0:
+                if X.ndim != 3:
+                    raise BotorchTensorDimensionError(
+                        "X must be a 3-dimensional tensor, as value is a tensor."
+                        f"X.shape = {X.shape}, value.shape = {value.shape}."
+                    )
+                _b, q, _reduced_p = X.shape
+                if value.ndim == 1:
+                    # Repeat values across the q dimension.
+                    value = value.unsqueeze(-1).repeat(1, q)
+            else:
+                value = torch.full_like(new_X[..., index], value)
             new_X[..., index] = value
         else:
             new_X[..., index] = X[..., filtered_index]

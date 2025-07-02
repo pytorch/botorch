@@ -367,7 +367,18 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
     def _optimize_batch_candidates() -> tuple[Tensor, Tensor, list[Warning]]:
         batch_candidates_list: list[Tensor] = []
         batch_acq_values_list: list[Tensor] = []
+
         batched_ics = batch_initial_conditions.split(batch_limit)
+        if opt_inputs.fixed_features is None:
+            batched_fixed_features = {}
+        else:
+            batched_fixed_features = {
+                k: ff.split(batch_limit)
+                if torch.is_tensor(ff) and ff.numel() > 1
+                else [ff] * len(batched_ics)
+                for k, ff in opt_inputs.fixed_features.items()
+            }
+
         opt_warnings = []
         timeout_sec = (
             opt_inputs.timeout_sec / len(batched_ics)
@@ -393,7 +404,7 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
                     lower_bounds=lower_bounds,
                     upper_bounds=upper_bounds,
                     options=gen_options,
-                    fixed_features=opt_inputs.fixed_features,
+                    fixed_features={k: v[i] for k, v in batched_fixed_features.items()},
                     timeout_sec=timeout_sec,
                     **gen_kwargs,
                 )

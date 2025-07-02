@@ -18,7 +18,7 @@ from botorch.acquisition.multi_objective.monte_carlo import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
-from botorch.exceptions import BotorchError
+from botorch.exceptions import BotorchError, BotorchTensorDimensionError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.transforms.input import Warp
@@ -123,6 +123,42 @@ class TestFixFeatures(BotorchTestCase):
         X_expected[:, 2] = -2
         X_expected[:, [1, 3, 4]] = X
         self.assertTrue(torch.equal(X_fix, X_expected))
+
+    def test_fix_features_tensor_values(self):
+        # Test with 3D tensor input (b x q x d)
+        X = torch.tensor(
+            [[[-2, 1, 3], [0.5, -0.5, 1.0]], [[1, 2, 3], [4, 5, 6]]],
+            device=self.device,
+        )  # 2 x 2 x 3
+
+        # Test with b-dimensional tensor value
+        b_value = torch.tensor([-1, -3], device=self.device)
+        X_fix = fix_features(X, {0: b_value}, replace_current_value=True)
+        X_expected = torch.zeros(2, 2, 3, device=self.device)
+        X_expected[0, :, 0] = -1
+        X_expected[1, :, 0] = -3
+        X_expected[:, :, 1:] = X[:, :, 1:]
+        self.assertTrue(torch.equal(X_fix, X_expected))
+
+        # Test with b x q dimensional tensor value
+        bq_value = torch.tensor([[-1, -2], [-3, -4]], device=self.device)
+        X_fix = fix_features(X, {0: bq_value}, replace_current_value=True)
+        X_expected = torch.zeros(2, 2, 3, device=self.device)
+        X_expected[0, 0, 0] = -1
+        X_expected[0, 1, 0] = -2
+        X_expected[1, 0, 0] = -3
+        X_expected[1, 1, 0] = -4
+        X_expected[:, :, 1:] = X[:, :, 1:]
+        self.assertTrue(torch.equal(X_fix, X_expected))
+
+    def test_fix_features_dimension_error(self):
+        # Test with 2D tensor input
+        X = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=self.device)
+        b_value = torch.tensor([-1, -3], device=self.device)
+
+        # This should raise BotorchTensorDimensionError
+        with self.assertRaises(BotorchTensorDimensionError):
+            fix_features(X, {0: b_value}, replace_current_value=True)
 
 
 class TestGetXBaseline(BotorchTestCase):
