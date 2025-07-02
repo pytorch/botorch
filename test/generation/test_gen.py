@@ -164,6 +164,48 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                             self.assertTrue(-EPS <= candidate[0] <= 1 + EPS)
                             self.assertTrue(candidate[1].item() == 0.25)
 
+                        # Preparations for batched fixed features
+
+                        if timeout_sec is not None:
+                            options["max_optimization_problem_aggregation_size"] = 1
+
+                        if not options.get("with_grad", True):
+                            options["max_optimization_problem_aggregation_size"] = 1
+
+                        # Test with tensor fixed features
+                        with self.subTest(fixed_feature_type="tensor"):
+                            batch_fixed_features = {
+                                1: torch.tensor([0.25, 0.5, 0.75], device=self.device)
+                            }
+                            candidates, _ = gen_candidates(
+                                initial_conditions=ics[None].repeat(3, 1, 1),
+                                acquisition_function=acqf,
+                                lower_bounds=0,
+                                upper_bounds=1,
+                                fixed_features=batch_fixed_features,
+                                options=options,
+                                timeout_sec=timeout_sec,
+                            )
+
+                            self.assertTrue(
+                                candidates.shape == (3, *ics.shape),
+                                msg=f"{candidates.shape} != {(3, *ics.shape)}",
+                            )
+
+                            if isinstance(acqf, qKnowledgeGradient):
+                                candidates = acqf.extract_candidates(candidates)
+                            candidates = candidates.squeeze(1)
+                            self.assertTrue(
+                                candidates.shape == (3, 2),
+                                f"{candidates.shape} != {(3, 2)}",
+                            )
+
+                            self.assertTrue((-EPS <= candidates).all())
+                            self.assertTrue((candidates <= 1 + EPS).all())
+                            self.assertTrue(
+                                (candidates[:, 1] == batch_fixed_features[1]).all()
+                            )
+
     def test_gen_candidates_with_fixed_features_and_timeout(self):
         with self.assertLogs("botorch", level="INFO") as logs:
             self.test_gen_candidates_with_fixed_features(
@@ -386,6 +428,24 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 initial_conditions=initial_conditions,
                 acquisition_function=acqf,
                 use_parallel_mode=True,
+            )
+
+    def test_gen_candidates_scipy_errors_on_batch_shaped_fixed_features(self):
+        self._setUp(double=False, expand=True)
+        qEI = qExpectedImprovement(self.model, best_f=self.f_best)
+        batch_fixed_features = {1: torch.tensor([[0.25], [1.0]], device=self.device)}
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            "Batch shaped fixed features are not supported",
+        ):
+            gen_candidates_scipy(
+                initial_conditions=self.initial_conditions[None].repeat(2, 1, 1),
+                acquisition_function=qEI,
+                lower_bounds=0,
+                upper_bounds=1,
+                fixed_features=batch_fixed_features,
+                use_parallel_mode=False,
+                options={"max_optimization_problem_aggregation_size": 2},
             )
 
 
