@@ -155,14 +155,13 @@ class TestMultiTaskGP(BotorchTestCase):
                 self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
             else:
                 self.assertIsInstance(model.likelihood, GaussianLikelihood)
+            data_covar_module, task_covar_module = model.covar_module.kernels
             self.assertIsInstance(model.mean_module, ConstantMean)
-            self.assertIsInstance(model.covar_module, RBFKernel)
-            self.assertIsInstance(model.covar_module.lengthscale_prior, LogNormalPrior)
-            self.assertIsInstance(model.task_covar_module, IndexKernel)
+            self.assertIsInstance(data_covar_module, RBFKernel)
+            self.assertIsInstance(data_covar_module.lengthscale_prior, LogNormalPrior)
+            self.assertIsInstance(task_covar_module, IndexKernel)
             self.assertEqual(model._rank, 2)
-            self.assertEqual(
-                model.task_covar_module.covar_factor.shape[-1], model._rank
-            )
+            self.assertEqual(task_covar_module.covar_factor.shape[-1], model._rank)
             if task_values is None:
                 self.assertEqual(model._task_mapper, None)
                 self.assertEqual(model._expected_task_values, {0, 1})
@@ -308,7 +307,7 @@ class TestMultiTaskGP(BotorchTestCase):
                 self.assertTrue(torch.isnan(model._task_mapper[1]))
 
                 # test split inputs
-                _, task_idcs = model._split_inputs(test_x)
+                _, task_idcs, _ = model._split_inputs(test_x)
                 self.assertTrue(
                     torch.equal(
                         task_idcs,
@@ -322,17 +321,16 @@ class TestMultiTaskGP(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             tkwargs: dict[str, Any] = {"device": self.device, "dtype": dtype}
             model = _gen_model_single_output(**tkwargs)
+            data_covar_module, task_covar_module = model.covar_module.kernels
             self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 1)
             self.assertIsInstance(model.likelihood, GaussianLikelihood)
             self.assertIsInstance(model.mean_module, ConstantMean)
-            self.assertIsInstance(model.covar_module, RBFKernel)
-            self.assertIsInstance(model.covar_module.lengthscale_prior, LogNormalPrior)
-            self.assertIsInstance(model.task_covar_module, IndexKernel)
+            self.assertIsInstance(data_covar_module, RBFKernel)
+            self.assertIsInstance(data_covar_module.lengthscale_prior, LogNormalPrior)
+            self.assertIsInstance(task_covar_module, IndexKernel)
             self.assertEqual(model._rank, 2)
-            self.assertEqual(
-                model.task_covar_module.covar_factor.shape[-1], model._rank
-            )
+            self.assertEqual(task_covar_module.covar_factor.shape[-1], model._rank)
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
@@ -363,10 +361,11 @@ class TestMultiTaskGP(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model = _gen_fixed_prior_model(**tkwargs)
+            _, task_covar_module = model.covar_module.kernels
             self.assertIsInstance(model, MultiTaskGP)
-            self.assertIsInstance(model.task_covar_module, IndexKernel)
+            self.assertIsInstance(task_covar_module, IndexKernel)
             self.assertIsInstance(
-                model.task_covar_module.IndexKernelPrior, LKJCovariancePrior
+                task_covar_module.IndexKernelPrior, LKJCovariancePrior
             )
 
     def test_MultiTaskGP_given_covar_module(self) -> None:
@@ -374,11 +373,12 @@ class TestMultiTaskGP(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             model = _gen_given_covar_module_model(**tkwargs)
             self.assertIsInstance(model, MultiTaskGP)
-            self.assertIsInstance(model.task_covar_module, IndexKernel)
-            self.assertIsInstance(model.covar_module, RBFKernel)
-            self.assertIsInstance(model.covar_module.lengthscale_prior, LogNormalPrior)
-            self.assertAlmostEqual(model.covar_module.lengthscale_prior.loc, 0.0)
-            self.assertAlmostEqual(model.covar_module.lengthscale_prior.scale, 1.0)
+            data_covar_module, task_covar_module = model.covar_module.kernels
+            self.assertIsInstance(task_covar_module, IndexKernel)
+            self.assertIsInstance(data_covar_module, RBFKernel)
+            self.assertIsInstance(data_covar_module.lengthscale_prior, LogNormalPrior)
+            self.assertAlmostEqual(data_covar_module.lengthscale_prior.loc, 0.0)
+            self.assertAlmostEqual(data_covar_module.lengthscale_prior.scale, 1.0)
 
     def test_custom_mean_and_likelihood(self) -> None:
         tkwargs = {"device": self.device, "dtype": torch.double}
@@ -426,7 +426,7 @@ class TestMultiTaskGP(BotorchTestCase):
         )
         self.assertEqual(model.num_tasks, 4)
         # Check that IndexKernel knows of all tasks.
-        self.assertEqual(model.task_covar_module.raw_var.shape[-1], 4)
+        self.assertEqual(model.covar_module.kernels[1].raw_var.shape[-1], 4)
 
     def test_MultiTaskGP_construct_inputs(self) -> None:
         for dtype, fixed_noise, skip_task_features_in_datasets in zip(
