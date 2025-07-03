@@ -50,6 +50,11 @@ MAX_DISCRETE_VALUES = 20
 MAX_ITER_INIT = 100
 CONVERGENCE_TOL = 1e-8  # Optimizer convergence tolerance.
 DUPLICATE_TOL = 1e-6  # Tolerance for deduplicating initial candidates.
+STOP_AFTER_SHARE_CONVERGED = 1.0  # We optimize multiple configurations at once
+# in `optimize_acqf_mixed_alternating`. This option controls, whether to stop
+# optimizing after the given share has converged.
+# Convergence is defined as the improvements of one discrete, followed by a scalar
+# optimization yield less than `CONVERGENCE_TOL` improvements.
 
 SUPPORTED_OPTIONS = {
     "initialization_strategy",
@@ -564,63 +569,113 @@ def discrete_step(
         discrete_dims: A tensor of indices corresponding to binary and
             integer parameters.
         cat_dims: A tensor of indices corresponding to categorical parameters.
-        current_x: Starting point. A tensor of shape `d`.
+        current_x: Batch of starting points. A tensor of shape `b x d`.
 
     Returns:
-        A tuple of two tensors: a (d)-dim tensor of optimized point
+        A tuple of two tensors: a (b, d)-dim tensor of optimized point
             and a scalar tensor of correspondins acquisition value.
     """
     with torch.no_grad():
-        current_acqval = opt_inputs.acq_function(current_x.unsqueeze(0))
+        current_acqvals = opt_inputs.acq_function(current_x.unsqueeze(1))
     options = opt_inputs.options or {}
-    for _ in range(
-        assert_is_instance(options.get("maxiter_discrete", MAX_ITER_DISCRETE), int)
-    ):
-        neighbors = []
-        if discrete_dims.numel():
-            x_neighbors_discrete = get_nearest_neighbors(
-                current_x=current_x.detach(),
-                bounds=opt_inputs.bounds,
-                discrete_dims=discrete_dims,
-            )
-            x_neighbors_discrete = _filter_infeasible(
-                X=x_neighbors_discrete,
-                inequality_constraints=opt_inputs.inequality_constraints,
-            )
-            neighbors.append(x_neighbors_discrete)
+    maxiter_discrete = options.get("maxiter_discrete", MAX_ITER_DISCRETE)
+    done = torch.zeros(len(current_x), dtype=torch.bool)
+    for _ in range(assert_is_instance(maxiter_discrete, int)):
+        # we don't batch this, as the number of x_neighbors can be different
+        # for each entry (as duplicates are removed), and the most expensive
+        # op is the acq_function, which is batched
+        # TODO finding the set of neighbors currently is done sequentially
+        # for one item in the batch after the other
+        x_neighbors_list = [None for _ in done]
+        for i in range(len(done)):
+            # don't do anything if we are already done
+            if done[i]:
+                continue
 
-        if cat_dims.numel():
-            x_neighbors_cat = get_categorical_neighbors(
-                current_x=current_x.detach(),
-                bounds=opt_inputs.bounds,
-                cat_dims=cat_dims,
-            )
-            x_neighbors_cat = _filter_infeasible(
-                X=x_neighbors_cat,
-                inequality_constraints=opt_inputs.inequality_constraints,
-            )
-            neighbors.append(x_neighbors_cat)
+            neighbors = []
 
-        x_neighbors = torch.cat(neighbors, dim=0)
-        if x_neighbors.numel() == 0:
-            # Exit gracefully with last point if there are no feasible neighbors.
+            # if we have discrete_dims look for neighbors by stepping +1/-1
+            if discrete_dims.numel():
+                x_neighbors_discrete = get_nearest_neighbors(
+                    current_x=current_x[i].detach(),
+                    bounds=opt_inputs.bounds,
+                    discrete_dims=discrete_dims,
+                )
+                x_neighbors_discrete = _filter_infeasible(
+                    X=x_neighbors_discrete,
+                    inequality_constraints=opt_inputs.inequality_constraints,
+                )
+                neighbors.append(x_neighbors_discrete)
+
+            # if we have cat_dims look for neighbors by changing the cat's
+            if cat_dims.numel():
+                x_neighbors_cat = get_categorical_neighbors(
+                    current_x=current_x[i].detach(),
+                    bounds=opt_inputs.bounds,
+                    cat_dims=cat_dims,
+                )
+                x_neighbors_cat = _filter_infeasible(
+                    X=x_neighbors_cat,
+                    inequality_constraints=opt_inputs.inequality_constraints,
+                )
+                neighbors.append(x_neighbors_cat)
+
+            x_neighbors = torch.cat(neighbors, dim=0)
+            if x_neighbors.numel() == 0:
+                # If the i'th point has no neighbors, we mark it as done
+                done[i] = True
+            x_neighbors_list[i] = x_neighbors
+
+        # Exit if all batches converged or have no valid neighbors left.
+        if done.all():
             break
+
+        all_x_neighbors = torch.cat(
+            [
+                x_neighbors
+                for x_neighbors in x_neighbors_list
+                if x_neighbors is not None
+            ],
+            dim=0,
+        )  # shape: (sum(#neihbors of the items in the batch), d)
         with torch.no_grad():
+            # This is the most expensive call in this function.
+            # The reason that `discrete_step` uses a batched x
+            # rather than looping over each batch within x is so that
+            # we can batch this call. This leads to an overall speedup
+            # even though the above and below for loops cannot
+            # be sped up by batching.
             acq_vals = torch.cat(
                 [
                     opt_inputs.acq_function(X_.unsqueeze(-2))
-                    for X_ in x_neighbors.split(
+                    for X_ in all_x_neighbors.split(
                         options.get("init_batch_limit", MAX_BATCH_SIZE)
                     )
                 ]
             )
-        argmax = acq_vals.argmax()
-        improvement = acq_vals[argmax] - current_acqval
-        if improvement > 0:
-            current_acqval, current_x = acq_vals[argmax], x_neighbors[argmax]
-        if improvement <= options.get("tol", CONVERGENCE_TOL):
-            break
-    return current_x, current_acqval
+        offset = 0
+        for i in range(len(done)):
+            if done[i]:
+                continue
+
+            # We index into all_x_neighbors in the following convoluted way,
+            # as it is a flattened version of x_neighbors_list with the
+            # None entries removed. That is why we do not increase offset if done[i].
+            width = len(x_neighbors_list[i])
+            x_neighbors = all_x_neighbors[offset : offset + width]
+            max_acq, argmax = acq_vals[offset : offset + width].max(dim=0)
+            improvement = max_acq - current_acqvals[i]
+            if improvement > 0:
+                current_acqvals[i], current_x[i] = (
+                    max_acq,
+                    x_neighbors[argmax],
+                )
+            if improvement <= options.get("tol", CONVERGENCE_TOL):
+                done[i] = True
+
+            offset += width
+
+    return current_x, current_acqvals
 
 
 def continuous_step(
@@ -635,39 +690,49 @@ def continuous_step(
         opt_inputs: Common set of arguments for acquisition optimization.
             This function utilizes `acq_function`, `bounds`, `options`,
             `fixed_features` and constraints from `opt_inputs`.
+            `opt_inputs.return_best_only` should be `False`.
         discrete_dims: A tensor of indices corresponding to binary and
             integer parameters.
         cat_dims: A tensor of indices corresponding to categorical parameters.
-        current_x: Starting point. A tensor of shape `d`.
+        current_x: Starting point. A tensor of shape `b x d`.
 
     Returns:
-        A tuple of two tensors: a (1 x d)-dim tensor of optimized points
-            and a (1)-dim tensor of acquisition values.
+        A tuple of two tensors: a (b x d)-dim tensor of optimized points
+            and a (b)-dim tensor of acquisition values.
     """
+
+    if opt_inputs.return_best_only:
+        raise UnsupportedError(
+            "`continuous_step` does not support `return_best_only=True`."
+        )
+
+    d = current_x.shape[-1]
     options = opt_inputs.options or {}
     non_cont_dims = torch.cat((discrete_dims, cat_dims), dim=0)
 
-    if len(non_cont_dims) == len(current_x):  # nothing continuous to optimize
+    if len(non_cont_dims) == d:  # nothing continuous to optimize
         with torch.no_grad():
-            return current_x, opt_inputs.acq_function(current_x.unsqueeze(0))
+            return current_x, opt_inputs.acq_function(current_x.unsqueeze(1))
 
     updated_opt_inputs = dataclasses.replace(
         opt_inputs,
         q=1,
-        num_restarts=1,
         raw_samples=None,
-        batch_initial_conditions=current_x.unsqueeze(0),
+        # unsqueeze to add the q dimension
+        batch_initial_conditions=current_x.unsqueeze(1),
         fixed_features={
-            **dict(zip(non_cont_dims.tolist(), current_x[non_cont_dims])),
+            **{d: current_x[:, d] for d in non_cont_dims.tolist()},
             **(opt_inputs.fixed_features or {}),
         },
         options={
             "maxiter": options.get("maxiter_continuous", MAX_ITER_CONT),
             "tol": options.get("tol", CONVERGENCE_TOL),
             "batch_limit": options.get("batch_limit", MAX_BATCH_SIZE),
+            "max_optimization_problem_aggregation_size": 1,
         },
     )
-    return _optimize_acqf(opt_inputs=updated_opt_inputs)
+    best_X, best_acq_values = _optimize_acqf(opt_inputs=updated_opt_inputs)
+    return best_X.view_as(current_x), best_acq_values
 
 
 def optimize_acqf_mixed_alternating(
@@ -761,6 +826,12 @@ def optimize_acqf_mixed_alternating(
 
     fixed_features = fixed_features or {}
     options = options or {}
+    if options.get("max_optimization_problem_aggregation_size", 1) != 1:
+        raise UnsupportedError(
+            "optimize_acqf_mixed_alternating does not support "
+            "max_optimization_problem_aggregation_size != 1. "
+            "You might leave this option empty, though."
+        )
     options.setdefault("batch_limit", MAX_BATCH_SIZE)
     options.setdefault("init_batch_limit", options["batch_limit"])
     if not (keys := set(options.keys())).issubset(SUPPORTED_OPTIONS):
@@ -793,11 +864,18 @@ def optimize_acqf_mixed_alternating(
         fixed_features=fixed_features,
         post_processing_func=post_processing_func,
         batch_initial_conditions=None,
-        return_best_only=True,
+        return_best_only=False,  # We don't want to perform the cont. optimization
+        # step and only return best, but this function itself only returns best
         gen_candidates=gen_candidates_scipy,
-        sequential=sequential,
+        sequential=sequential,  # only relevant if all dims are cont.
     )
-    _validate_sequential_inputs(opt_inputs=opt_inputs)
+    if sequential:
+        # Sequential optimization requires return_best_only to be True
+        # But we turn it off here, as we "manually" perform the seq.
+        # conditioning in the loop below
+        _validate_sequential_inputs(
+            opt_inputs=dataclasses.replace(opt_inputs, return_best_only=True)
+        )
 
     base_X_pending = acq_function.X_pending if q > 1 else None
     dim = bounds.shape[-1]
@@ -808,7 +886,12 @@ def optimize_acqf_mixed_alternating(
     non_cont_dims = [*discrete_dims, *cat_dims]
     if len(non_cont_dims) == 0:
         # If the problem is fully continuous, fall back to standard optimization.
-        return _optimize_acqf(opt_inputs=opt_inputs)
+        return _optimize_acqf(
+            opt_inputs=dataclasses.replace(
+                opt_inputs,
+                return_best_only=True,
+            )
+        )
     if not (
         isinstance(non_cont_dims, list)
         and len(set(non_cont_dims)) == len(non_cont_dims)
@@ -842,26 +925,28 @@ def optimize_acqf_mixed_alternating(
             cont_dims=cont_dims,
         )
 
-        # TODO: Eliminate this for loop. Tensors being unequal sizes could potentially
-        # be handled by concatenating them rather than stacking, and keeping a list
-        # of indices.
-        for i in range(num_restarts):
-            alternate_steps = 0
-            while alternate_steps < options.get("maxiter_alternating", MAX_ITER_ALTER):
-                starting_acq_val = best_acq_val[i].clone()
-                alternate_steps += 1
-                for step in (discrete_step, continuous_step):
-                    best_X[i], best_acq_val[i] = step(
-                        opt_inputs=opt_inputs,
-                        discrete_dims=discrete_dims_t,
-                        cat_dims=cat_dims_t,
-                        current_x=best_X[i],
-                    )
+        done = torch.zeros(len(best_X), dtype=torch.bool, device=tkwargs["device"])
+        for _step in range(options.get("maxiter_alternating", MAX_ITER_ALTER)):
+            starting_acq_val = best_acq_val.clone()
+            best_X[~done], best_acq_val[~done] = discrete_step(
+                opt_inputs=opt_inputs,
+                discrete_dims=discrete_dims_t,
+                cat_dims=cat_dims_t,
+                current_x=best_X[~done],
+            )
 
-                improvement = best_acq_val[i] - starting_acq_val
-                if improvement < options.get("tol", CONVERGENCE_TOL):
-                    # Check for convergence
-                    break
+            best_X[~done], best_acq_val[~done] = continuous_step(
+                opt_inputs=opt_inputs,
+                discrete_dims=discrete_dims_t,
+                cat_dims=cat_dims_t,
+                current_x=best_X[~done],
+            )
+
+            improvement = best_acq_val - starting_acq_val
+            done_now = improvement < options.get("tol", CONVERGENCE_TOL)
+            done = done | done_now
+            if done.float().mean() >= STOP_AFTER_SHARE_CONVERGED:
+                break
 
         new_candidate = best_X[torch.argmax(best_acq_val)].unsqueeze(0)
         candidates = torch.cat([candidates, new_candidate], dim=-2)
