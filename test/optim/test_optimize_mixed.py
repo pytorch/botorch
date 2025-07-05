@@ -517,10 +517,10 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             X[b_i, cont_dims] = torch.rand(d_cont, device=self.device)
 
         best_f = model(X).min()
-        ei = PosteriorMean(model)
+        mean_as_acq = PosteriorMean(model)
         X_new, ei_val = continuous_step(
             opt_inputs=_make_opt_inputs(
-                acq_function=ei,
+                acq_function=mean_as_acq,
                 bounds=bounds,
                 options={"maxiter_continuous": 32},
                 return_best_only=False,
@@ -542,7 +542,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         X_[:, :2] = 1.0  # To satisfy the constraint.
         X_new, ei_val = continuous_step(
             opt_inputs=_make_opt_inputs(
-                acq_function=ei,
+                acq_function=mean_as_acq,
                 bounds=bounds,
                 options={"maxiter_continuous": 32},
                 fixed_features={fixed_binary: 1, fixed_cont: 0.5},
