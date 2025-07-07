@@ -54,7 +54,7 @@ def load_tutorial_metadata() -> list[dict[str, str]]:
         None
 
     Returns:
-        list[lict[str, str]]: A dictionary of metadata needed to convert notebooks
+        list[dict[str, str]]: A list of metadata needed to convert notebooks
             to MDX. Only those notebooks that are listed in the `tutorials.json` file
             will be included in the Docusaurus MDX output.
     """
@@ -76,7 +76,7 @@ def load_notebooks_community_metadata() -> list[dict[str, str]]:
         None
 
     Returns:
-        list[lict[str, str]]: A dictionary of metadata needed to convert notebooks
+        list[dict[str, str]]: A list of metadata needed to convert notebooks
             to MDX. Only those notebooks that are listed in the
             `notebooks_community.json` file will be included in the
             Docusaurus MDX output.
@@ -898,7 +898,9 @@ def aggregate_output_types(cell_outputs: list[NotebookNode]) -> CELL_OUTPUTS_TO_
         data = (
             cell_output["data"][prioritized_data_dtype]
             if "data" in cell_output
-            else cell_output["text"] if "text" in cell_output else cell_output["evalue"]
+            else cell_output["text"]
+            if "text" in cell_output
+            else cell_output["evalue"]
         )
         image_check = (
             prioritized_data_dtype.startswith("image")
