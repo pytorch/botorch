@@ -25,6 +25,7 @@ LIB_DIR = SCRIPTS_DIR.parent.resolve()
 WEBSITE_DIR = LIB_DIR.joinpath("website")
 DOCS_DIR = LIB_DIR.joinpath("docs")
 TUTORIALS_DIR = DOCS_DIR.joinpath("tutorials")
+NOTEBOOKS_COMMUNITY_DIR = DOCS_DIR.joinpath("notebooks_community")
 
 ORGANIZATION = "pytorch"
 PROJECT = "botorch"
@@ -45,7 +46,7 @@ priorities = [
 ]
 
 
-def load_nb_metadata() -> dict[str, dict[str, str]]:
+def load_tutorial_metadata() -> list[dict[str, str]]:
     """
     Load the metadata and list of notebooks that are to be converted to MDX.
 
@@ -53,7 +54,7 @@ def load_nb_metadata() -> dict[str, dict[str, str]]:
         None
 
     Returns:
-        Dict[str, Dict[str, str]]: A dictionary of metadata needed to convert notebooks
+        list[lict[str, str]]: A dictionary of metadata needed to convert notebooks
             to MDX. Only those notebooks that are listed in the `tutorials.json` file
             will be included in the Docusaurus MDX output.
     """
@@ -65,6 +66,25 @@ def load_nb_metadata() -> dict[str, dict[str, str]]:
         config for category in tutorials_data.values() for config in category
     ]
     return tutorial_configs
+
+
+def load_notebooks_community_metadata() -> list[dict[str, str]]:
+    """
+    Load the metadata and list of community notebooks that are to be converted to MDX.
+
+    Args:
+        None
+
+    Returns:
+        list[lict[str, str]]: A dictionary of metadata needed to convert notebooks
+            to MDX. Only those notebooks that are listed in the
+            `notebooks_community.json` file will be included in the
+            Docusaurus MDX output.
+    """
+    json_path = WEBSITE_DIR.joinpath("notebooks_community.json")
+    with json_path.open("r") as f:
+        configs = json.load(f)
+    return configs
 
 
 def load_notebook(path: Path) -> NotebookNode:
@@ -83,25 +103,27 @@ def load_notebook(path: Path) -> NotebookNode:
     return nb
 
 
-def create_folders(path: Path) -> tuple[str, Path]:
+def create_folders(path: Path, is_community: bool) -> tuple[str, Path]:
     """
-    Create asset folders for the tutorial.
+    Create asset folders for the notebook.
 
     Args:
-        path (Path): Path to the Jupyter notebook.
+        path: Path to the Jupyter notebook.
+        is_community: Whether the notebook is a community notebook (False for tutorial).
 
     Returns:
         Tuple[str, Path]: Returns a tuple with the filename to use for the MDX file
             and the path for the MDX assets folder.
     """
-    tutorial_folder_name = path.stem
-    filename = "".join([token.title() for token in tutorial_folder_name.split("_")])
-    tutorial_folder = TUTORIALS_DIR.joinpath(tutorial_folder_name)
-    assets_folder = tutorial_folder / "assets"
+    folder_name = path.stem
+    filename = "".join([token.title() for token in folder_name.split("_")])
+    base_folder_dir = NOTEBOOKS_COMMUNITY_DIR if is_community else TUTORIALS_DIR
+    folder = base_folder_dir.joinpath(folder_name)
+    assets_folder = folder / "assets"
     img_folder = assets_folder / "img"
     plot_data_folder = assets_folder / "plot_data"
-    if not tutorial_folder.exists():
-        tutorial_folder.mkdir(parents=True, exist_ok=True)
+    if not folder.exists():
+        folder.mkdir(parents=True, exist_ok=True)
     if not img_folder.exists():
         img_folder.mkdir(parents=True, exist_ok=True)
     if not plot_data_folder.exists():
@@ -876,9 +898,7 @@ def aggregate_output_types(cell_outputs: list[NotebookNode]) -> CELL_OUTPUTS_TO_
         data = (
             cell_output["data"][prioritized_data_dtype]
             if "data" in cell_output
-            else cell_output["text"]
-            if "text" in cell_output
-            else cell_output["evalue"]
+            else cell_output["text"] if "text" in cell_output else cell_output["evalue"]
         )
         image_check = (
             prioritized_data_dtype.startswith("image")
@@ -959,17 +979,19 @@ def handle_code_cell(cell: NotebookNode, plot_data_folder: Path) -> str:
     return cell_input_mdx + cell_output_mdx
 
 
-def transform_notebook(path: Path, nb_metadata: object) -> str:
+def transform_notebook(path: Path, nb_metadata: object, is_community: bool) -> str:
     """
     Transform a notebook located at the given path into MDX.
 
     Args:
-        path (Path): Path to the Jupyter notebook tutorial.
+        path: Path to the Jupyter notebook tutorial.
+        nb_metadata: Metadata for the notebook to be converted.
+        is_community: Whether the notebook is a community notebook (False for tutorial).
 
     Returns:
         str: MDX formatted string.
     """
-    filename, assets_folder = create_folders(path)
+    _, assets_folder = create_folders(path=path, is_community=is_community)
     img_folder = assets_folder / "img"
     plot_data_folder = assets_folder / "plot_data"
     save_folder = assets_folder.joinpath("..").resolve()
@@ -1007,12 +1029,13 @@ def clean_up_directories() -> None:
     Returns:
         None: Does not return anything.
     """
-    if TUTORIALS_DIR.exists():
-        # We intentionally leave the static `index.mdx` file in place since that is not
-        # autogenerated.
-        for item in os.scandir(TUTORIALS_DIR):
-            if item.is_dir():
-                shutil.rmtree(item.path)
+    for dir_ in [TUTORIALS_DIR, NOTEBOOKS_COMMUNITY_DIR]:
+        if dir_.exists():
+            # We intentionally leave the static `index.mdx` file in place since that is not
+            # autogenerated.
+            for item in os.scandir(dir_):
+                if item.is_dir():
+                    shutil.rmtree(item.path)
 
 
 if __name__ == "__main__":
@@ -1026,7 +1049,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    tutorials_metadata = load_nb_metadata()
+    tutorials_metadata = load_tutorial_metadata()
+    notebooks_community_metadata = load_notebooks_community_metadata()
     print("--------------------------------------------")
     print("Converting tutorial notebooks into mdx files")
     print("--------------------------------------------")
@@ -1037,5 +1061,17 @@ if __name__ == "__main__":
             LIB_DIR / "tutorials" / metadata["id"] / (metadata["id"] + ".ipynb")
         ).resolve()
         print(f"{path.stem}")
-        mdx = transform_notebook(path, metadata)
+        mdx = transform_notebook(path=path, nb_metadata=metadata, is_community=False)
+    print("--------------------------------------------")
+    print("Converting community notebooks into mdx files")
+    print("--------------------------------------------")
+    for metadata in notebooks_community_metadata:
+        path = (
+            LIB_DIR
+            / "notebooks_community"
+            / metadata["id"]
+            / (metadata["id"] + ".ipynb")
+        ).resolve()
+        print(f"{path.stem}")
+        mdx = transform_notebook(path=path, nb_metadata=metadata, is_community=True)
     print("")
