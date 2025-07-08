@@ -88,7 +88,7 @@ module.exports={
           "position": "left"
         },
         {
-          "type": "docSidebar",
+          "type": "custom-docSidebar",
           "sidebarId": "notebooks_community",
           "label": "Community Notebooks",
           "position": "left"
