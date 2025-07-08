@@ -10,7 +10,19 @@ on:
         required: false
         type: boolean
         default: false
+      dry_run:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
+      run_tutorials:
+        required: true
+        type: boolean
+        default: false
+      dry_run:
+        required: true
+        type: boolean
+        default: false
 
 
 jobs:
@@ -70,7 +82,7 @@ jobs:
                 sed -i "/\"$OLD_VERSION\"/d" website/versions.json
             fi
         done
-    - if: ${{ inputs.new_version }}
+    - if: ${{ inputs.new_version && !inputs.dry_run }}
       name: Create new docusaurus version
       run: |
         python3 scripts/convert_ipynb_to_mdx.py --clean
@@ -91,6 +103,7 @@ jobs:
         path: website/build/
 
   deploy-website:
+    if: ${{ !inputs.dry_run }}
     needs: build-website
     permissions:
       pages: write
