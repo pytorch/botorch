@@ -20,3 +20,7 @@ jobs:
     with:
       dry_run: true
       run_tutorials: false
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
