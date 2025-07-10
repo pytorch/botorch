@@ -18,6 +18,8 @@ from botorch.utils.containers import BotorchContainer, SliceContainer
 from pyre_extensions import none_throws
 from torch import long, ones, Tensor
 
+TASK_FEATURE_NAME = "task_feature"
+
 
 class SupervisedDataset:
     r"""Base class for datasets consisting of labelled pairs `(X, Y)`
@@ -351,7 +353,9 @@ class MultiTaskDataset(SupervisedDataset):
         self.target_outcome_name = target_outcome_name
         self.task_feature_index = task_feature_index
         self._validate_datasets(datasets=datasets)
-        self.feature_names = self.datasets[target_outcome_name].feature_names
+        self.feature_names = self.datasets[target_outcome_name].feature_names.copy()
+        if task_feature_index is None:
+            self.feature_names.append(TASK_FEATURE_NAME)
         self.outcome_names = [target_outcome_name]
 
         # Check if the datasets have identical feature sets.
