@@ -891,15 +891,17 @@ def optimize_acqf_mixed_alternating(
     discrete_dims = {dim: sorted(values) for dim, values in discrete_dims.items()}
 
     for dim, values in discrete_dims.items():
-        if not float(values[0]) == bounds[0, dim].item():
+        lower_bnd, upper_bnd = bounds[:, dim].tolist()
+        lower, upper = values[0], values[-1]
+        if lower != lower_bnd:
             raise ValueError(
                 f"Discrete dimension {dim} must start at the lower bound "
-                f"{bounds[0, dim].item()} but starts at {values[0]}."
+                f"{lower_bnd} but starts at {lower}."
             )
-        if not float(values[-1]) == bounds[1, dim].item():
+        if upper != upper_bnd:
             raise ValueError(
                 f"Discrete dimension {dim} must end at the upper bound "
-                f"{bounds[1, dim].item()} but end at {values[-1]}."
+                f"{upper_bnd} but end at {upper}."
             )
 
     fixed_features = fixed_features or {}
