@@ -158,8 +158,8 @@ def get_nearest_neighbors(
     Args:
         current_x: The design to find the neighbors of. A tensor of shape `d`.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
-        discrete_dims: A tensor of indices corresponding to binary and
-            integer parameters.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
 
     Returns:
         A tensor of shape `num_neighbors x d`, denoting all unique 1-Manhattan
@@ -297,7 +297,8 @@ def get_spray_points(
     Args:
         X_baseline: Tensor of best acquired points across BO run.
         cont_dims: Indices of continuous parameters/input dimensions.
-        discrete_dims: Indices of binary/integer parameters/input dimensions.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
         cat_dims: Indices of categorical parameters/input dimensions.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         num_spray_points: Number of spray points to return.
@@ -369,8 +370,8 @@ def sample_feasible_points(
 
     Args:
         opt_inputs: Common set of arguments for acquisition optimization.
-        discrete_dims: A tensor of indices corresponding to binary and
-            integer parameters.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
         cat_dims: A tensor of indices corresponding to categorical parameters.
         num_points: The number of points to sample.
 
@@ -435,8 +436,8 @@ def round_discrete_dims(X: Tensor, discrete_dims: dict[int, list[float]]) -> Ten
 
     Args:
         X: A tensor of shape `n x d`, where `d` is the number of dimensions.
-        discrete_dims: A dictionary mapping dimension indices to lists of allowed
-            values for that dimension.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
 
     Returns:
         A tensor of the same shape as `X`, with discrete dimensions rounded to
@@ -467,8 +468,8 @@ def generate_starting_points(
             This function utilizes `acq_function`, `bounds`, `num_restarts`,
             `raw_samples`, `options`, `fixed_features` and constraints
             from `opt_inputs`.
-        discrete_dims: A tensor of indices corresponding to integer and
-            binary parameters.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
         cat_dims: A tensor of indices corresponding to categorical parameters.
         cont_dims: A tensor of indices corresponding to continuous parameters.
 
@@ -634,8 +635,8 @@ def discrete_step(
         opt_inputs: Common set of arguments for acquisition optimization.
             This function utilizes `acq_function`, `bounds`, `options`
             and constraints from `opt_inputs`.
-        discrete_dims: A tensor of indices corresponding to binary and
-            integer parameters.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
         cat_dims: A tensor of indices corresponding to categorical parameters.
         current_x: Batch of starting points. A tensor of shape `b x d`.
 
@@ -759,8 +760,8 @@ def continuous_step(
             This function utilizes `acq_function`, `bounds`, `options`,
             `fixed_features` and constraints from `opt_inputs`.
             `opt_inputs.return_best_only` should be `False`.
-        discrete_dims: A tensor of indices corresponding to binary and
-            integer parameters.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
         cat_dims: A tensor of indices corresponding to categorical parameters.
         current_x: Starting point. A tensor of shape `b x d`.
 
@@ -824,7 +825,7 @@ def optimize_acqf_mixed_alternating(
     discrete/categorical local search and continuous optimization via (L-BFGS)
     is performed for a fixed number of iterations.
 
-    NOTE: This method assumes that all discrete and categorical variables are
+    NOTE: This method assumes that all categorical variables are
     integer valued.
     The discrete dimensions that have more than
     `options.get("max_discrete_values", MAX_DISCRETE_VALUES)` values will
@@ -835,7 +836,8 @@ def optimize_acqf_mixed_alternating(
     Args:
         acq_function: BoTorch Acquisition function.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
-        discrete_dims: A list of indices corresponding to integer and binary parameters.
+        discrete_dims: A dictionary mapping indices of discrete and binary
+            dimensions to a list of allowed values for that dimension.
         cat_dims: A list of indices corresponding to categorical parameters.
         options: Dictionary specifying optimization options. Supports the following:
         - "initialization_strategy": Strategy used to generate the initial candidates.
