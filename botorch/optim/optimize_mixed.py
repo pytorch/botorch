@@ -84,9 +84,9 @@ def _setup_continuous_relaxation(
     `discrete_dims` and `post_processing_func` is updated to round
     them to the nearest integer.
     """
-    discrete_dims_t = torch.tensor(sorted(discrete_dims.keys()), dtype=torch.long)
+    discrete_dims_t = torch.tensor(list(discrete_dims.keys()), dtype=torch.long)
     num_discrete_values = torch.tensor(
-        [len(discrete_dims[key]) for key in sorted(discrete_dims.keys())],
+        [len(discrete_dims[key]) for key in list(discrete_dims.keys())],
         dtype=torch.long,
     ).cpu()
     dims_to_relax = discrete_dims_t[num_discrete_values > max_discrete_values]
@@ -172,7 +172,7 @@ def get_nearest_neighbors(
     discrete_indices = []
 
     t_discrete_dims = torch.tensor(
-        sorted(discrete_dims.keys()), dtype=torch.long, device=current_x.device
+        list(discrete_dims.keys()), dtype=torch.long, device=current_x.device
     )
 
     for dim, values in discrete_dims.items():
@@ -311,7 +311,7 @@ def get_spray_points(
     device, dtype = X_baseline.device, X_baseline.dtype
     perturb_nbors = torch.zeros(0, dim, device=device, dtype=dtype)
     t_discrete_dims = torch.tensor(
-        sorted(discrete_dims.keys()), dtype=torch.long, device=device
+        list(discrete_dims.keys()), dtype=torch.long, device=device
     )
     for x in X_baseline:
         if len(discrete_dims) > 0:
@@ -991,7 +991,7 @@ def optimize_acqf_mixed_alternating(
             "integers between 0 and num_dims - 1."
         )
     discrete_dims_t = torch.tensor(
-        sorted(discrete_dims.keys()), dtype=torch.long, device=tkwargs["device"]
+        list(discrete_dims.keys()), dtype=torch.long, device=tkwargs["device"]
     )
     cat_dims_t = torch.tensor(cat_dims, dtype=torch.long, device=tkwargs["device"])
     non_cont_dims = torch.tensor(
