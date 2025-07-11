@@ -16,6 +16,10 @@ from botorch_community.acquisition.bayesian_active_learning import (
     qBayesianVarianceReduction,
     qStatisticalDistanceActiveLearning,
 )
+from botorch_community.acquisition.discretized import (
+    DiscretizedExpectedImprovement,
+    DiscretizedProbabilityOfImprovement,
+)
 from botorch_community.acquisition.scorebo import qSelfCorrectingBayesianOptimization
 
 
@@ -55,6 +59,33 @@ class InputConstructorBaseTestCase(BotorchTestCase):
             ),
         }
         self.bounds = 2 * [(0.0, 1.0)]
+
+
+class TestAnalyticalAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
+    def test_construct_inputs_best_f(self) -> None:
+        for acqf_cls in [
+            DiscretizedProbabilityOfImprovement,
+            DiscretizedExpectedImprovement,
+        ]:
+            with self.subTest(acqf_cls=acqf_cls):
+                c = get_acqf_input_constructor(acqf_cls)
+                mock_model = self.mock_model
+                kwargs = c(model=mock_model, training_data=self.blockX_blockY)
+                best_f_expected = self.blockX_blockY[0].Y.squeeze().max()
+                self.assertIs(kwargs["model"], mock_model)
+                self.assertIsNone(kwargs["posterior_transform"])
+                self.assertEqual(kwargs["best_f"], best_f_expected)
+                acqf = acqf_cls(**kwargs)
+                self.assertIs(acqf.model, mock_model)
+
+                kwargs = c(
+                    model=mock_model, training_data=self.blockX_blockY, best_f=0.1
+                )
+                self.assertIs(kwargs["model"], mock_model)
+                self.assertIsNone(kwargs["posterior_transform"])
+                self.assertEqual(kwargs["best_f"], 0.1)
+                acqf = acqf_cls(**kwargs)
+                self.assertIs(acqf.model, mock_model)
 
 
 class TestFullyBayesianAcquisitionFunctionInputConstructors(
