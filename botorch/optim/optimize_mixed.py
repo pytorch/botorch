@@ -84,25 +84,16 @@ def _setup_continuous_relaxation(
     `discrete_dims` and `post_processing_func` is updated to round
     them to the nearest integer.
     """
-    discrete_dims_t = torch.tensor(list(discrete_dims.keys()), dtype=torch.long)
-    num_discrete_values = torch.tensor(
-        [len(discrete_dims[key]) for key in list(discrete_dims.keys())],
-        dtype=torch.long,
-    ).cpu()
-    dims_to_relax = discrete_dims_t[num_discrete_values > max_discrete_values]
-    if dims_to_relax.numel() == 0:
-        # No dimension needs continuous relaxation.
+
+    dims_to_relax, dims_to_keep = {}, {}
+    for index, values in discrete_dims.items():
+        if len(values) > max_discrete_values:
+            dims_to_relax[index] = values
+        else:
+            dims_to_keep[index] = values
+
+    if len(dims_to_relax) == 0:
         return discrete_dims, post_processing_func
-    dims_to_relax = {
-        key: value for key, value in discrete_dims.items() if key in dims_to_relax
-    }
-    # Remove relaxed dims from `discrete_dims`.
-    discrete_dims = {
-        key: value
-        for key, value in discrete_dims.items()
-        if key not in dims_to_relax.keys()
-    }
-    #
 
     def new_post_processing_func(X: Tensor) -> Tensor:
         r"""Round the relaxed dimensions to the nearest integer and apply the original
@@ -113,7 +104,7 @@ def _setup_continuous_relaxation(
             X = post_processing_func(X)
         return X
 
-    return discrete_dims, new_post_processing_func
+    return dims_to_keep, new_post_processing_func
 
 
 def _filter_infeasible(
