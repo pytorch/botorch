@@ -31,21 +31,47 @@ class PFNModel(Model):
         train_X: Tensor,
         train_Y: Tensor,
         model: nn.Module,
+        train_Yvar: Tensor | None = None,
+        device: str = "cpu",
+        batch_first: bool = False,
+        constant_model_kwargs: dict | None = None,
     ) -> None:
         """Initialize a PFNModel.
 
         Args:
-            train_X: A `batch_shape x n x d` tensor of training features.
-            train_Y: A `batch_shape x n x m` tensor of training observations.
+            train_X: A `n x d` tensor of training features.
+            train_Y: A `n x m` tensor of training observations.
             model: A pre-trained PFN model with the following
                 forward(train_X, train_Y, X) -> logit predictions of shape
                 `n x b x c` where c is the number of discrete buckets
                 borders: A `c+1`-dim tensor of bucket borders
+            train_Yvar: Not yet supported.
+            device: The device on which the model will be instantiated.
+            batch_first: Whether the batch dimension is the first dimension of
+                the input tensors. This is needed to support different PFN
+                models. For batch-first x has shape `batch x seq_len x features`
+                and for non-batch-first it has shape `seq_len x batch x features`.
+            constant_model_kwargs: A dictionary of model kwargs that
+                will be passed to the model in each forward pass.
         """
+        if train_Yvar is not None:
+            raise UnsupportedError("train_Yvar is not supported for PFNModel.")
         super().__init__()
+
+        if not (1 <= train_Y.dim() <= 2):
+            raise UnsupportedError("train_Y must be 1- or 2-dimensional.")
+
+        if train_Y.dim() == 2:
+            if train_Y.shape[1] > 1:
+                raise UnsupportedError("Only 1 target allowed for PFNModel.")
+            train_Y = train_Y.squeeze(-1)
+
         self.train_X = train_X
         self.train_Y = train_Y
-        self.pfn = model.to(train_X)
+        self.pfn = model.to(device)
+        self.device = device
+        self.batch_first = batch_first
+        self.constant_model_kwargs = constant_model_kwargs
 
     def posterior(
         self,
@@ -86,11 +112,38 @@ class PFNModel(Model):
         if posterior_transform is not None:
             raise UnsupportedError("posterior_transform is not supported for PFNModel.")
 
-        if len(X.shape) > 2 and X.shape[-2] > 1:
-            raise NotImplementedError("q must be 1 for PFNModel.")  # add support later
+        if len(X.shape) > 2:
+            if X.shape[1] > 1:
+                raise NotImplementedError(
+                    "q must be 1 for PFNModel."
+                )  # add support later
+        else:
+            X = X.unsqueeze(1)
 
-        # flatten batch dimensions for PFN input
-        logits = self.pfn(self.train_X, self.train_Y, X)
+        train_X = self.train_X
+        train_Y = self.train_Y
+
+        self.pfn.to(self.device)
+        train_X = train_X.to(self.device)
+        train_Y = train_Y.to(self.device)
+        X = X.to(self.device)
+
+        constant_model_kwargs = self.constant_model_kwargs or {}
+
+        if self.batch_first:
+            logits = self.pfn(
+                train_X.unsqueeze(0).float(),
+                train_Y.unsqueeze(0).float(),
+                X.float().transpose(0, 1),
+                **constant_model_kwargs,
+            ).squeeze(0)
+        else:
+            logits = self.pfn(
+                train_X.unsqueeze(1).float(),
+                train_Y.unsqueeze(1).float(),
+                X.float(),
+                **constant_model_kwargs,
+            ).squeeze(1)
 
         probabilities = logits.softmax(dim=-1)
 
