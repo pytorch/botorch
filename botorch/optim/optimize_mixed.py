@@ -475,10 +475,7 @@ def generate_starting_points(
         if len(values) == 2:
             binary_dims.append(dim)
     num_binary = len(binary_dims)
-    num_integer = len(discrete_dims) - num_binary  # maybe rename to num_discrete???
-    # Remove binary dims from discrete_dims
-    # WHY?
-    # discrete_dims = {dim: values for dim, values in discrete_dims.items()}
+    num_discrete = len(discrete_dims) - num_binary
     num_restarts = opt_inputs.num_restarts
     raw_samples = none_throws(opt_inputs.raw_samples)
 
@@ -487,7 +484,7 @@ def generate_starting_points(
         "initialization_strategy",
         (
             "equally_spaced"
-            if num_integer == 0 and num_binary >= 2
+            if num_discrete == 0 and num_binary >= 2
             else "continuous_relaxation"
         ),
     )
@@ -532,7 +529,7 @@ def generate_starting_points(
         x_init_candts = x_init_candts.squeeze(-2)
 
     if initialization_strategy == "equally_spaced":
-        if num_integer > 0:
+        if num_discrete > 0:
             raise ValueError(  # pragma: no cover
                 "Equally spaced initialization is not supported with non-binary "
                 "discrete variables."
@@ -554,7 +551,7 @@ def generate_starting_points(
             x_init_candts[i, rand_binary_dims] = bounds[1, rand_binary_dims]
 
     num_spray_points = assert_is_instance(
-        options.get("num_spray_points", 20 if num_integer == 0 else 0), int
+        options.get("num_spray_points", 20 if num_discrete == 0 else 0), int
     )
     if (
         num_spray_points > 0
