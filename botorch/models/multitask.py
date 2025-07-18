@@ -172,6 +172,11 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
                 X=train_X, input_transform=input_transform
             )
         self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
+
+        # IndexKernel cannot work with negative task features, so we shift them to
+        # be positive here.
+        if task_feature < 0:
+            task_feature += transformed_X.shape[-1]
         (
             all_tasks_inferred,
             task_feature,
@@ -220,16 +225,29 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         )
         self.mean_module = mean_module or ConstantMean()
         if covar_module is None:
-            self.covar_module = get_covar_module_with_dim_scaled_prior(
-                ard_num_dims=self.num_non_task_features
+            data_covar_module = get_covar_module_with_dim_scaled_prior(
+                ard_num_dims=self.num_non_task_features,
+                active_dims=self._base_idxr,
             )
         else:
-            self.covar_module = covar_module
+            data_covar_module = covar_module
+            # This check enables models which don't adhere to the convention (e.g.
+            # adding additional feature dimensions, like HeteroMTGP) to be used.
+            if covar_module.active_dims is None:
+                # Since we no longer use the custom indexing which derived the
+                # task indexing in the forward pass, we need to explicitly set
+                # the active dims here to ensure that the forward pass works.
+                data_covar_module.active_dims = self._base_idxr
 
         self._rank = rank if rank is not None else self.num_tasks
-        self.task_covar_module = IndexKernel(
-            num_tasks=self.num_tasks, rank=self._rank, prior=task_covar_prior
+        task_covar_module = IndexKernel(
+            num_tasks=self.num_tasks,
+            rank=self._rank,
+            prior=task_covar_prior,
+            active_dims=[task_feature],
         )
+
+        self.covar_module = data_covar_module * task_covar_module
         task_mapper = get_task_value_remapping(
             task_values=torch.tensor(
                 all_tasks, dtype=torch.long, device=train_X.device
@@ -244,45 +262,41 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
             self.outcome_transform = outcome_transform
         self.to(train_X)
 
-    def _split_inputs(self, x: Tensor) -> tuple[Tensor, Tensor]:
-        r"""Extracts base features and task indices from input data.
+    def _split_inputs(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor]:
+        r"""Extracts features before task feature, task indices, and features after
+        the task feature.
 
         Args:
             x: The full input tensor with trailing dimension of size `d + 1`.
                 Should be of float/double data type.
 
         Returns:
-            2-element tuple containing
+            3-element tuple containing
 
-            - A `q x d` or `b x q x d` (batch mode) tensor with trailing
-            dimension made up of the `d` non-task-index columns of `x`, arranged
-            in the order as specified by the indexer generated during model
-            instantiation.
-            - A `q` or `b x q` (batch mode) tensor of long data type containing
-            the task indices.
+            - A  `q x d` or `b x q x d` tensor with features before the task feature
+            - A  `q` or `b x q` tensor with mapped task indices
+            - A  `q x d` or `b x q x d` tensor with features after the task feature
         """
-        batch_shape, d = x.shape[:-2], x.shape[-1]
-        x_basic = x[..., self._base_idxr].view(batch_shape + torch.Size([-1, d - 1]))
-        task_idcs = (
-            x[..., self._task_feature]
-            .view(batch_shape + torch.Size([-1, 1]))
-            .to(dtype=torch.long)
-        )
-        task_idcs = self._map_tasks(task_values=task_idcs)
-        return x_basic, task_idcs
+        batch_shape = x.shape[:-2]
+        # Extract task indices and convert to long
+        task_idcs = x[..., self._task_feature].view(batch_shape + torch.Size([-1, 1]))
+        task_idcs = self._map_tasks(task_values=task_idcs.to(dtype=torch.long))
+
+        # Extract features before and after task feature
+        x_before = x[..., : self._task_feature]
+        x_after = x[..., (self._task_feature + 1) :]
+        return x_before, task_idcs, x_after
 
     def forward(self, x: Tensor) -> MultivariateNormal:
         if self.training:
             x = self.transform_inputs(x)
-        x_basic, task_idcs = self._split_inputs(x)
-        # Compute base mean and covariance
-        mean_x = self.mean_module(x_basic)
-        covar_x = self.covar_module(x_basic)
-        # Compute task covariances
-        covar_i = self.task_covar_module(task_idcs)
-        # Combine the two in an ICM fashion
-        covar = covar_x.mul(covar_i)
-        return MultivariateNormal(mean_x, covar)
+
+        # Get features before task feature, task indices, and features after task the
+        # feature, with the feature mapping applied to the task indices.
+        x = torch.cat(self._split_inputs(x), dim=-1)
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return MultivariateNormal(mean_x, covar_x)
 
     @classmethod
     def get_all_tasks(
