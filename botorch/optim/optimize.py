@@ -826,7 +826,7 @@ def optimize_acqf_cyclic(
     if q > 1:
         cyclic_options = cyclic_options or {}
         stopping_criterion = ExpMAStoppingCriterion(**cyclic_options)
-        stop = stopping_criterion.evaluate(fvals=acq_vals)
+        stop = stopping_criterion(fvals=acq_vals)
         base_X_pending = acq_function.X_pending
         idxr = torch.ones(q, dtype=torch.bool, device=opt_inputs.bounds.device)
         while not stop:
@@ -847,7 +847,7 @@ def optimize_acqf_cyclic(
                 candidates[i] = candidate_i
                 acq_vals[i] = acq_val_i
                 idxr[i] = 1
-            stop = stopping_criterion.evaluate(fvals=acq_vals)
+            stop = stopping_criterion(fvals=acq_vals)
         acq_function.set_X_pending(base_X_pending)
     return candidates, acq_vals
 
