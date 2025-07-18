@@ -365,7 +365,6 @@ class TestVBLLModel(BotorchTestCase):
         ]
 
         for X_test in valid_inputs:
-            X_test = X_test.to(dtype=torch.float64)
             if X_test.ndim == 1:
                 expected_shape = torch.Size([1, 1])  # (1 sample, 1 output)
             elif X_test.ndim == 2:
@@ -396,6 +395,12 @@ class TestVBLLModel(BotorchTestCase):
                 f"Expected variance predictions to have shape {expected_shape},"
                 f" but got {post.variance.shape}.",
             )
+
+        # validate that posterior fails when x.dim > 3
+        X = torch.rand(torch.Size([2, 5]) + torch.Size([3, d]), dtype=torch.float64)
+
+        with self.assertRaises(ValueError):
+            _ = model.posterior(X)
 
     def test_validation_loss(self) -> None:
         """Test that the model properly handles validation data during fitting."""

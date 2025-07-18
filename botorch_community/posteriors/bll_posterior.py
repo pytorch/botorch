@@ -20,7 +20,7 @@ class BLLPosterior(GPyTorchPosterior):
     def __init__(
         self,
         model: AbstractBLLModel,
-        mvn_dist: MultivariateNormal,
+        distribution: MultivariateNormal,
         X: Tensor,
         output_dim: int,
     ):
@@ -28,12 +28,11 @@ class BLLPosterior(GPyTorchPosterior):
 
         Args:
             model: A BLL model
-            mvn_dist: MultivariantNormal distribution for the posterior.
+            distribution: MultivarianteNormal distribution for the posterior.
             X: Input data on which the posterior was computed.
             output_dim: Output dimension of the model.
         """
-        super().__init__(mvn_dist)
-        self.mvn_dist = mvn_dist
+        super().__init__(distribution=distribution)
         self.model = model
         self.output_dim = output_dim
         self.X = X

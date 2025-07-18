@@ -503,9 +503,9 @@ class VBLLModel(AbstractBLLModel):
             cov = cov.squeeze(0)
 
         # pass as MultivariateNormal to BLLPosterior
-        mvn_dist = MultivariateNormal(mean, cov)
+        distribution = MultivariateNormal(mean, cov)
         return BLLPosterior(
-            model=self, mvn_dist=mvn_dist, X=X, output_dim=self.num_outputs
+            model=self, distribution=distribution, X=X, output_dim=self.num_outputs
         )
 
     def __str__(self) -> str:
