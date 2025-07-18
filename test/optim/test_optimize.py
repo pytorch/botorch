@@ -450,6 +450,60 @@ class TestOptimizeAcqf(BotorchTestCase):
                 )
 
     @mock.patch(
+        "botorch.optim.optimize.gen_candidates_scipy", wraps=gen_candidates_scipy
+    )
+    def test_optimize_acqf_sequential(
+        self,
+        mock_gen_candidates_scipy,
+    ):
+        acqf_sequence = [MockAcquisitionFunction() for _ in range(3)]
+        bounds = torch.tensor([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        # Validation
+        with self.assertRaisesRegex(
+            ValueError,
+            "acqf_sequence requires sequential optimization",
+        ):
+            optimize_acqf(
+                acq_function=mock.MagicMock(),
+                bounds=bounds,
+                q=3,
+                num_restarts=2,
+                raw_samples=10,
+                sequential=False,
+                acqf_sequence=acqf_sequence,
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "acqf_sequence must have length q",
+        ):
+            optimize_acqf(
+                acq_function=mock.MagicMock(),
+                bounds=bounds,
+                q=2,
+                num_restarts=2,
+                raw_samples=10,
+                sequential=True,
+                acqf_sequence=acqf_sequence,
+            )
+        # Test that uses sequence of acquisitions
+        acq_function = mock.MagicMock()
+        acq_function.X_pending = None
+        _ = optimize_acqf(
+            acq_function=acq_function,
+            bounds=bounds,
+            q=3,
+            num_restarts=2,
+            raw_samples=10,
+            sequential=True,
+            acqf_sequence=acqf_sequence,
+        )
+        self.assertEqual(mock_gen_candidates_scipy.call_count, 3)
+        self.assertIsNone(acqf_sequence[0].X_pending)
+        for i in range(1, 3):
+            self.assertEqual(len(acqf_sequence[i].X_pending), i)
+        acq_function.assert_not_called()
+
+    @mock.patch(
         "botorch.generation.gen.minimize_with_timeout",
         wraps=minimize_with_timeout,
     )
