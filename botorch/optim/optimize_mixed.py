@@ -8,7 +8,6 @@ import dataclasses
 import itertools
 import random
 import warnings
-from collections import OrderedDict
 from typing import Any, Callable, Sequence
 
 import torch
@@ -883,7 +882,6 @@ def optimize_acqf_mixed_alternating(
     cat_dims = cat_dims or []
     discrete_dims = discrete_dims or {}
 
-    discrete_dims = OrderedDict(sorted(discrete_dims.items(), key=lambda x: x[0]))
     # sort the values in discrete dims in ascending order
     discrete_dims = {dim: sorted(values) for dim, values in discrete_dims.items()}
 
@@ -963,7 +961,7 @@ def optimize_acqf_mixed_alternating(
         if dim not in fixed_features
     }
     cat_dims = [dim for dim in cat_dims if dim not in fixed_features]
-    non_cont_dims = [*sorted(discrete_dims.keys()), *cat_dims]
+    non_cont_dims = [*discrete_dims.keys(), *cat_dims]
     if len(non_cont_dims) == 0:
         # If the problem is fully continuous, fall back to standard optimization.
         return _optimize_acqf(
