@@ -32,7 +32,7 @@ class TestRiemannPosterior(BotorchTestCase):
                 return (upper + lower) / 2
 
             result = posterior.integrate(ag_integrate)
-            expected_result = (0.0 + 0.5) / 2 * 0.2 + (1.5 + 0.5) / 2 * 0.8
+            expected_result = (0.0 + 0.5) / 2 * 0.2 / 0.5 + (1.5 + 0.5) / 2 * 0.8 / 1.0
             self.assertLess((result - expected_result).abs(), 1e-5)
 
     def test_rsample(self):
@@ -108,6 +108,45 @@ class TestRiemannPosterior(BotorchTestCase):
             mean = posterior.mean
             expected_mean = ((borders[1:] + borders[:-1]) / 2 * probabilities).sum(-1)
             self.assertLess((mean - expected_mean).abs().sum().item(), 1e-5)
+
+    def test_variance(self):
+        torch.manual_seed(13)
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+
+            # Create Riemann Posterior based on a normal distribution with non-zero mean
+            dist_mean = torch.tensor(2.5, **tkwargs)
+            dist_std = torch.tensor(1.5, **tkwargs)
+            test_distribution = torch.distributions.Normal(dist_mean, dist_std)
+            test_samples = test_distribution.rsample(torch.Size([100000]))
+            n_buckets = 5000
+            borders = torch.quantile(
+                test_samples, torch.linspace(0, 1, n_buckets + 1, **tkwargs)
+            )
+            probabilities = torch.ones(n_buckets, **tkwargs) / n_buckets
+            posterior = BoundedRiemannPosterior(borders, probabilities)
+
+            # Check that the variance approximately matches the true variance
+            true_variance = test_distribution.variance
+            computed_variance = posterior.variance
+            self.assertLess((computed_variance - true_variance).abs().item(), 0.05)
+
+            # Test with a different distribution (non-zero mean, different variance)
+            dist_mean = torch.tensor(-1.0, **tkwargs)
+            dist_std = torch.tensor(0.8, **tkwargs)
+            test_distribution = torch.distributions.Normal(dist_mean, dist_std)
+            test_samples = test_distribution.rsample(torch.Size([100000]))
+            n_buckets = 3000
+            borders = torch.quantile(
+                test_samples, torch.linspace(0, 1, n_buckets + 1, **tkwargs)
+            )
+            probabilities = torch.ones(n_buckets, **tkwargs) / n_buckets
+            posterior = BoundedRiemannPosterior(borders, probabilities)
+
+            # Check that the variance approximately matches the true variance
+            true_variance = test_distribution.variance
+            computed_variance = posterior.variance
+            self.assertLess((computed_variance - true_variance).abs().item(), 0.05)
 
     def test_confidence_region(self):
         torch.manual_seed(13)
