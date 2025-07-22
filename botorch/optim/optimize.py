@@ -85,6 +85,7 @@ class OptimizeAcqfInputs:
     return_full_tree: bool = False
     retry_on_optimization_warning: bool = True
     ic_gen_kwargs: dict = dataclasses.field(default_factory=dict)
+    acqf_sequence: list[AcquisitionFunction] | None = None
 
     @property
     def full_tree(self) -> bool:
@@ -167,6 +168,14 @@ class OptimizeAcqfInputs:
             (k < 0 for k in self.fixed_features)
         ):
             raise ValueError("All indices (keys) in `fixed_features` must be >= 0.")
+
+        if self.acqf_sequence is not None:
+            if not self.sequential:
+                raise ValueError("acqf_sequence requires sequential optimization.")
+            if len(self.acqf_sequence) != self.q:
+                raise ValueError("acqf_sequence must have length q.")
+            if self.q < 2:
+                raise ValueError("acqf_sequence requires q > 1.")
 
     def get_ic_generator(self) -> TGenInitialConditions:
         if self.ic_generator is not None:
@@ -266,26 +275,35 @@ def _optimize_acqf_sequential_q(
     candidate_list, acq_value_list = [], []
     base_X_pending = opt_inputs.acq_function.X_pending
 
-    new_inputs = dataclasses.replace(
-        opt_inputs,
-        q=1,
-        batch_initial_conditions=None,
-        return_best_only=True,
-        sequential=False,
-        timeout_sec=timeout_sec,
-    )
+    new_kwargs = {
+        "q": 1,
+        "batch_initial_conditions": None,
+        "return_best_only": True,
+        "sequential": False,
+        "timeout_sec": timeout_sec,
+        "acqf_sequence": None,
+    }
+
     for i in range(opt_inputs.q):
+        if opt_inputs.acqf_sequence is not None:
+            new_kwargs["acq_function"] = opt_inputs.acqf_sequence[i]
+        new_inputs = dataclasses.replace(opt_inputs, **new_kwargs)
+        if len(candidate_list) > 0:
+            candidates = torch.cat(candidate_list, dim=-2)
+            new_inputs.acq_function.set_X_pending(
+                torch.cat([base_X_pending, candidates], dim=-2)
+                if base_X_pending is not None
+                else candidates
+            )
         candidate, acq_value = _optimize_acqf_batch(new_inputs)
 
         candidate_list.append(candidate)
         acq_value_list.append(acq_value)
-        candidates = torch.cat(candidate_list, dim=-2)
-        new_inputs.acq_function.set_X_pending(
-            torch.cat([base_X_pending, candidates], dim=-2)
-            if base_X_pending is not None
-            else candidates
-        )
+
         logger.info(f"Generated sequential candidate {i + 1} of {opt_inputs.q}")
+        model_name = type(new_inputs.acq_function.model).__name__
+        logger.debug(f"Used model {model_name} for candidate generation.")
+    candidates = torch.cat(candidate_list, dim=-2)
     opt_inputs.acq_function.set_X_pending(base_X_pending)
     return candidates, torch.stack(acq_value_list)
 
@@ -532,6 +550,7 @@ def optimize_acqf(
     return_best_only: bool = True,
     gen_candidates: TGenCandidates | None = None,
     sequential: bool = False,
+    acqf_sequence: list[AcquisitionFunction] | None = None,
     *,
     ic_generator: TGenInitialConditions | None = None,
     timeout_sec: float | None = None,
@@ -627,6 +646,10 @@ def optimize_acqf(
             inputs. Default: `gen_candidates_scipy`
         sequential: If False, uses joint optimization, otherwise uses sequential
             optimization for optimizing multiple joint candidates (q > 1).
+        acqf_sequence: A list of acquisition functions to be optimized sequentially.
+            Must be of length q>1, and requires sequential=True. Used for ensembling
+            candidates from different acquisition functions. If omitted, use
+            `acq_function` to generate all `q` candidates.
         ic_generator: Function for generating initial conditions. Not needed when
             `batch_initial_conditions` are provided. Defaults to
             `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition
@@ -689,6 +712,7 @@ def optimize_acqf(
         return_full_tree=return_full_tree,
         retry_on_optimization_warning=retry_on_optimization_warning,
         ic_gen_kwargs=ic_gen_kwargs,
+        acqf_sequence=acqf_sequence,
     )
     return _optimize_acqf(opt_inputs=opt_acqf_inputs)
 
@@ -707,7 +731,9 @@ def _optimize_acqf(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor]:
         )
 
     # Perform sequential optimization via successive conditioning on pending points
-    if opt_inputs.sequential and opt_inputs.q > 1:
+    if (
+        opt_inputs.sequential and opt_inputs.q > 1
+    ) or opt_inputs.acqf_sequence is not None:
         return _optimize_acqf_sequential_q(opt_inputs=opt_inputs)
 
     # Batch optimization (including the case q=1)
