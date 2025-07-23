@@ -21,6 +21,8 @@ References
 
 from __future__ import annotations
 
+import random
+
 import warnings
 from collections.abc import Callable
 from copy import deepcopy
@@ -833,3 +835,56 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
             .to(self.ref_point)  # for m > 2, the partitioning is on the CPU
             .view(self._batch_sample_shape)
         )
+
+
+def get_hypervolume_maximizing_subset(
+    n: int, Y: Tensor, ref_point: Tensor
+) -> tuple[Tensor, Tensor]:
+    """Find an approximately hypervolume-maximizing subset of size `n`.
+
+    This greedily selects points from Y to maximize the hypervolume of
+    the subset sequentially. This has bounded error since hypervolume is
+    submodular.
+
+    Args:
+        n: The size of the subset to return.
+        Y: A `n' x m`-dim tensor of outcomes.
+        ref_point: A `m`-dim tensor containing the reference point.
+
+    Returns:
+        A two-element tuple containing
+            - A `n x m`-dim tensor of outcomes.
+            - A `n`-dim tensor of indices of the outcomes in the original set.
+    """
+    if Y.ndim != 2:
+        raise NotImplementedError(
+            "Only two dimensions are supported (no additional) batch dims."
+        )
+    elif Y.shape[0] < n:
+        raise ValueError(
+            f"Y has fewer points ({Y.shape[0]}) than the requested subset size ({n})."
+        )
+    Y_subset = torch.zeros(0, Y.shape[1], dtype=Y.dtype, device=Y.device)
+    selected_indices = []
+    remaining_idcs = set(range(Y.shape[0]))
+    best_hv = 0.0
+    for _ in range(n):
+        # Add each point and compute the hypervolume
+        best_idx = None
+        for i in remaining_idcs:
+            partitioning = DominatedPartitioning(
+                ref_point=ref_point, Y=torch.cat((Y_subset, Y[i : i + 1]), dim=0)
+            )
+            hv = partitioning.compute_hypervolume().item()
+            if hv > best_hv:
+                best_idx = i
+                best_hv = hv
+        if best_idx is None:
+            # no arm improved HV, so select a random arm. This will only happen if Y is
+            # not a Pareto frontier, where all points are better than the reference
+            # point
+            best_idx = random.choice(list(remaining_idcs))
+        remaining_idcs.remove(best_idx)
+        selected_indices.append(best_idx)
+        Y_subset = torch.cat((Y_subset, Y[best_idx : best_idx + 1]), dim=0)
+    return Y_subset, torch.tensor(selected_indices, dtype=torch.long, device=Y.device)
