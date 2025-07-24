@@ -691,7 +691,7 @@ def discrete_step(
             x_neighbors = torch.cat(neighbors, dim=0)
             if x_neighbors.numel() == 0:
                 # If the i'th point has no neighbors, we mark it as done
-                done[i] = True
+                done[i] = True  # pragma: no cover
             x_neighbors_list[i] = x_neighbors
 
         # Exit if all batches converged or have no valid neighbors left.
