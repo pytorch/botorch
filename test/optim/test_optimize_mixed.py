@@ -201,7 +201,25 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         expected_neighbors = torch.tensor(
             [[8.0, 2.0, 0.5], [3, 0.5, 0.5], [10.0, 0.5, 0.5]], device=self.device
         )
-
+        self.assertTrue(
+            torch.equal(
+                expected_neighbors.sort(dim=0).values,
+                get_nearest_neighbors(
+                    current_x=current_x, bounds=bounds, discrete_dims=discrete_dims
+                )
+                .sort(dim=0)
+                .values,
+            )
+        )
+        # Test with integer and continuous inputs in non-equidistant setting when
+        # starting with negative value
+        current_x = torch.tensor([8, 0.5, 0.5], device=self.device)
+        bounds = torch.tensor([[0.0, 0.0, 0.0], [3.0, 2.0, 1.0]], device=self.device)
+        discrete_dims = torch.tensor([0, 1], device=self.device)
+        discrete_dims = {0: [-3, 8, 10], 1: [0.5, 2.0]}
+        expected_neighbors = torch.tensor(
+            [[8.0, 2.0, 0.5], [-3, 0.5, 0.5], [10.0, 0.5, 0.5]], device=self.device
+        )
         self.assertTrue(
             torch.equal(
                 expected_neighbors.sort(dim=0).values,
