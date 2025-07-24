@@ -174,16 +174,28 @@ def get_nearest_neighbors(
     current_x_int[t_discrete_dims] = torch.tensor(
         discrete_indices, dtype=current_x.dtype, device=current_x.device
     )
+    lower_clamp = bounds[0].clone()
+    lower_clamp[t_discrete_dims] = torch.tensor(
+        [0 for _ in discrete_dims.values()],
+        dtype=lower_clamp.dtype,
+        device=lower_clamp.device,
+    )
+    upper_clamp = bounds[1].clone()
+    upper_clamp[t_discrete_dims] = torch.tensor(
+        [len(values) - 1 for values in discrete_dims.values()],
+        dtype=upper_clamp.dtype,
+        device=upper_clamp.device,
+    )
     num_discrete = len(discrete_dims)
     diag_ones = torch.eye(num_discrete, dtype=current_x.dtype, device=current_x.device)
     # Neighbors obtained by increasing a discrete dimension by one.
     plus_neighbors = current_x_int.repeat(num_discrete, 1)
     plus_neighbors[:, t_discrete_dims] += diag_ones
-    plus_neighbors.clamp_(max=bounds[1])
+    plus_neighbors.clamp_(max=upper_clamp)
     # Neighbors obtained by decreasing a discrete dimension by one.
     minus_neighbors = current_x_int.repeat(num_discrete, 1)
     minus_neighbors[:, t_discrete_dims] -= diag_ones
-    minus_neighbors.clamp_(min=bounds[0])
+    minus_neighbors.clamp_(min=lower_clamp)
     unique_neighbors = torch.cat([minus_neighbors, plus_neighbors], dim=0).unique(dim=0)
     # Also remove current_x if it is in unique_neighbors.
     unique_neighbors = unique_neighbors[
@@ -195,7 +207,7 @@ def get_nearest_neighbors(
         t_values = torch.tensor(
             values, device=unique_neighbors.device, dtype=unique_neighbors.dtype
         )
-        idx = unique_neighbors[:, dim].long().clamp(0, len(values) - 1)
+        idx = unique_neighbors[:, dim].long()
         unique_neighbors[:, dim] = t_values[idx]
 
     return unique_neighbors
