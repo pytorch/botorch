@@ -601,7 +601,7 @@ def gen_candidates_torch(
             return loss
 
         _optimizer.step(assign_grad)
-        stop = stopping_criterion.evaluate(fvals=loss.detach())
+        stop = stopping_criterion(fvals=loss.detach())
         if timeout_sec is not None:
             runtime = time.monotonic() - start_time
             if runtime > timeout_sec:
