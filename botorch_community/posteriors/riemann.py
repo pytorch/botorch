@@ -107,7 +107,7 @@ class BoundedRiemannPosterior(Posterior):
         r"""The mean of the posterior distribution."""
         bucket_widths = self.borders[1:] - self.borders[:-1]
         bucket_means = self.borders[:-1] + bucket_widths / 2
-        return (bucket_means * (self.probabilities)).sum(-1, keepdim=True)
+        return (self.probabilities @ bucket_means).unsqueeze(-1)
 
     @property
     def mean_of_square(self) -> torch.Tensor:
@@ -119,7 +119,7 @@ class BoundedRiemannPosterior(Posterior):
             + right_borders.square()
             + left_borders * right_borders
         ) / 3.0
-        return self.probabilities @ bucket_mean_of_square
+        return (self.probabilities @ bucket_mean_of_square).unsqueeze(-1)
 
     @property
     def variance(self) -> torch.Tensor:
