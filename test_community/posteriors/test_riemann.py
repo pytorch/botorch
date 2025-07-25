@@ -148,6 +148,13 @@ class TestRiemannPosterior(BotorchTestCase):
             computed_variance = posterior.variance
             self.assertLess((computed_variance - true_variance).abs().item(), 0.05)
 
+            # Check with batch dimension
+            probabilities = torch.rand(2, n_buckets, **tkwargs)
+            probabilities = probabilities / probabilities.sum(-1, keepdim=True)
+            posterior = BoundedRiemannPosterior(borders, probabilities)
+            self.assertEqual(posterior.variance.shape, torch.Size([2, 1]))
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
+
     def test_confidence_region(self):
         torch.manual_seed(13)
         for dtype in (torch.float, torch.double):
