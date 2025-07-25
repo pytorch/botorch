@@ -15,11 +15,22 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
-import torch.nn as nn
+import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
+
+from botorch.logging import logger
 from botorch.models.model import Model
+from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.utils.containers import BotorchContainer
+from botorch.utils.datasets import SupervisedDataset
+from botorch_community.models.utils.prior_fitted_network import (
+    download_model,
+    ModelPaths,
+)
 from botorch_community.posteriors.riemann import BoundedRiemannPosterior
+from gpytorch.distributions import MultivariateNormal
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 
 
@@ -30,12 +41,18 @@ class PFNModel(Model):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        model: nn.Module,
+        model: torch.nn.Module | None = None,
+        checkpoint_url: str = ModelPaths.pfns4bo_hebo,
+        proxies: dict[str, str] | None = None,
         train_Yvar: Tensor | None = None,
         batch_first: bool = False,
         constant_model_kwargs: dict | None = None,
     ) -> None:
         """Initialize a PFNModel.
+
+        Either a pre-trained PFN model can be provided via the model kwarg,
+        or a checkpoint_url can be provided from which the model will be
+        downloaded. This defaults to the pfns4bo_hebo model.
 
         Args:
             train_X: A `n x d` tensor of training features.
@@ -43,19 +60,28 @@ class PFNModel(Model):
             model: A pre-trained PFN model with the following
                 forward(train_X, train_Y, X) -> logit predictions of shape
                 `n x b x c` where c is the number of discrete buckets
-                borders: A `c+1`-dim tensor of bucket borders
-            train_Yvar: Not yet supported.
+                borders: A `c+1`-dim tensor of bucket borders.
+            checkpoint_url: The string URL of the PFN model to download and load.
+                Will be ignored if model is provided.
+            train_Yvar: Observed variance of train_Y. Currently ignored.
             batch_first: Whether the batch dimension is the first dimension of
                 the input tensors. This is needed to support different PFN
                 models. For batch-first x has shape `batch x seq_len x features`
                 and for non-batch-first it has shape `seq_len x batch x features`.
             constant_model_kwargs: A dictionary of model kwargs that
                 will be passed to the model in each forward pass.
+            proxies: An optional dictionary mapping from network protocols to proxy
+                addresses for downloading the model, like {"https": "myproxy:8080"}.
         """
         super().__init__()
+        if model is None:
+            model = download_model(
+                model_path=checkpoint_url,
+                proxies=proxies,
+            )
 
         if train_Yvar is not None:
-            raise UnsupportedError("train_Yvar is not supported for PFNModel.")
+            logger.debug("train_Yvar provided but ignored for PFNModel.")
 
         if not (1 <= train_Y.dim() <= 3):
             raise UnsupportedError("train_Y must be 1- to 3-dimensional.")
@@ -122,7 +148,9 @@ class PFNModel(Model):
                 "be a multi-output model."
             )
         if observation_noise:
-            raise UnsupportedError("observation_noise is not supported for PFNModel.")
+            logger.warning(
+                "observation_noise is not supported for PFNModel and is being ignored."
+            )
         if posterior_transform is not None:
             raise UnsupportedError("posterior_transform is not supported for PFNModel.")
 
@@ -183,3 +211,80 @@ class PFNModel(Model):
         probabilities = logits.softmax(dim=-1)
 
         return BoundedRiemannPosterior(self.pfn.criterion.borders, probabilities)
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        training_data: SupervisedDataset,
+        proxies: dict[str, str] | None = None,
+    ) -> dict[str, BotorchContainer | Tensor]:
+        parsed_data = super().construct_inputs(training_data=training_data)
+        parsed_data["proxies"] = proxies
+        return parsed_data
+
+
+class GaussianPFNModel(PFNModel):
+    """PFN model that produces a Gaussian posterior moment-matched to the
+    Riemannian posterior rather than directly returning the Riemannian
+    posterior. This is for downstream use in methods that expect Gaussian
+    posteriors."""
+
+    def __init__(
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        model: torch.nn.Module | None = None,
+        checkpoint_url: str = ModelPaths.pfns4bo_hebo,
+        proxies: dict[str, str] | None = None,
+        train_Yvar: Tensor | None = None,
+        batch_first: bool = False,
+        constant_model_kwargs: dict | None = None,
+    ) -> None:
+        """Initialize the model.
+
+        As in PFNModel, either a pre-trained model or a checkpoint_url can
+        be provided.
+
+        Args:
+            train_X: A `n x d` tensor of training features.
+            train_Y: A `n x m` tensor of training observations.
+            model: A pre-trained PFN model; see PFNModel.
+            checkpoint_url: The string URL of the PFN model to download and load.
+                Will be ignored if model is provided.
+            train_Yvar: Observed variance of train_Y. Currently not used.
+            batch_first: Whether the batch dimension is the first dimension of
+                the input tensors; see PFNModel.
+            constant_model_kwargs: A dictionary of model kwargs that
+                will be passed to the model in each forward pass.
+            proxies: proxies for model download; see PFNModel.
+        """
+        super().__init__(
+            train_X=train_X,
+            train_Y=train_Y,
+            train_Yvar=train_Yvar,
+            proxies=proxies,
+        )
+        # Set a likelihood function for downstream uses that require it.
+        # This will not actually be used in the model.
+        if train_Yvar is None:
+            train_Yvar = torch.zeros_like(train_Y)
+        self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
+
+    def posterior(
+        self,
+        X: Tensor,
+        output_indices: Optional[list[int]] = None,
+        observation_noise: Union[bool, Tensor] = False,
+        posterior_transform: Optional[PosteriorTransform] = None,
+    ) -> GPyTorchPosterior:
+        rp = super().posterior(
+            X=X,
+            output_indices=output_indices,
+            observation_noise=observation_noise,
+            posterior_transform=posterior_transform,
+        )
+        mvn = MultivariateNormal(
+            mean=rp.mean.squeeze(-1),
+            covariance_matrix=torch.diag_embed(rp.variance.squeeze(-1)),
+        )
+        return GPyTorchPosterior(distribution=mvn)
