@@ -35,6 +35,7 @@ from botorch.optim.optimize_mixed import (
     get_spray_points,
     MAX_DISCRETE_VALUES,
     optimize_acqf_mixed_alternating,
+    round_discrete_dims,
     sample_feasible_points,
 )
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
@@ -116,22 +117,57 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
     def _get_data(self) -> tuple[Tensor, Tensor, list[int], list[int]]:
         with torch.random.fork_rng():
             torch.manual_seed(0)
-            binary_dims, cont_dims, dim = [0, 3, 4], [1, 2], 5
+            binary_dims, cont_dims, dim = {0: [0, 1], 3: [0, 1], 4: [0, 1]}, [1, 2], 5
             train_X = torch.rand(3, dim, **self.tkwargs)
-            train_X[:, binary_dims] = train_X[:, binary_dims].round()
+            train_X[:, [0, 3, 4]] = train_X[:, [0, 3, 4]].round()
             train_Y = train_X.sin().sum(dim=-1).unsqueeze(-1)
         return train_X, train_Y, binary_dims, cont_dims
+
+    def test_round_discrete_dims(self) -> None:
+        discrete_dims = {1: [0, 1], 3: [2, 7, 10]}
+        for dtype in [torch.float, torch.double]:
+            # 1 dimensional case
+            X = torch.tensor([0.1, 0.9, 0.7, 6.5], device=self.device, dtype=dtype)
+            expected = torch.tensor([0.1, 1.0, 0.7, 7], device=self.device, dtype=dtype)
+            X_rounded = round_discrete_dims(X, discrete_dims)
+            self.assertTrue(torch.equal(X_rounded, expected))
+            # 2 dimensional case
+            X = torch.tensor(
+                [[0.1, 0.9, 0.7, 6.5], [0.3, 0.4, 0.2, 8.6]],
+                device=self.device,
+                dtype=dtype,
+            )
+            expected = torch.tensor(
+                [[0.1, 1.0, 0.7, 7], [0.3, 0.0, 0.2, 10]],
+                device=self.device,
+                dtype=dtype,
+            )
+            X_rounded = round_discrete_dims(X, discrete_dims)
+            self.assertTrue(torch.equal(X_rounded, expected))
+            # 3 dimensional case
+            X = torch.tensor(
+                [[[0.1, 0.9, 0.7, 6.5], [0.3, 0.4, 0.2, 8.6]]],
+                device=self.device,
+                dtype=dtype,
+            )
+            expected = torch.tensor(
+                [[[0.1, 1.0, 0.7, 7], [0.3, 0.0, 0.2, 10]]],
+                device=self.device,
+                dtype=dtype,
+            )
+            X_rounded = round_discrete_dims(X, discrete_dims)
+            self.assertTrue(torch.equal(X_rounded, expected))
 
     def test_get_nearest_neighbors(self) -> None:
         # For binary inputs, this should be equivalent to get_hamming_neighbors,
         # with potentially different ordering of the outputs.
         current_x = self._get_random_binary(16, 7)
         bounds = self.single_bound.repeat(1, 16)
-        discrete_dims = torch.arange(16, dtype=torch.long, device=self.device)
+        discrete_dims = {i: [0, 1] for i in range(16)}
         self.assertTrue(
             torch.equal(
                 get_nearest_neighbors(
-                    current_x=current_x, bounds=bounds, discrete_dims=discrete_dims
+                    current_x=current_x, discrete_dims=discrete_dims, bounds=bounds
                 )
                 .sort(dim=0)
                 .values,
@@ -142,8 +178,47 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         current_x = torch.tensor([1.0, 0.0, 0.5], device=self.device)
         bounds = torch.tensor([[0.0, 0.0, 0.0], [3.0, 2.0, 1.0]], device=self.device)
         discrete_dims = torch.tensor([0, 1], device=self.device)
+        discrete_dims = {0: [0, 1, 2], 1: [0, 1]}
         expected_neighbors = torch.tensor(
             [[0.0, 0.0, 0.5], [2.0, 0.0, 0.5], [1.0, 1.0, 0.5]], device=self.device
+        )
+        self.assertTrue(
+            torch.equal(
+                expected_neighbors.sort(dim=0).values,
+                get_nearest_neighbors(
+                    current_x=current_x, bounds=bounds, discrete_dims=discrete_dims
+                )
+                .sort(dim=0)
+                .values,
+            )
+        )
+        # Test with integer and continuous inputs in non-equidistant setting when
+        # not starting at zero
+        current_x = torch.tensor([8, 0.5, 0.5], device=self.device)
+        bounds = torch.tensor([[0.0, 0.0, 0.0], [3.0, 2.0, 1.0]], device=self.device)
+        discrete_dims = torch.tensor([0, 1], device=self.device)
+        discrete_dims = {0: [3, 8, 10], 1: [0.5, 2.0]}
+        expected_neighbors = torch.tensor(
+            [[8.0, 2.0, 0.5], [3, 0.5, 0.5], [10.0, 0.5, 0.5]], device=self.device
+        )
+        self.assertTrue(
+            torch.equal(
+                expected_neighbors.sort(dim=0).values,
+                get_nearest_neighbors(
+                    current_x=current_x, bounds=bounds, discrete_dims=discrete_dims
+                )
+                .sort(dim=0)
+                .values,
+            )
+        )
+        # Test with integer and continuous inputs in non-equidistant setting when
+        # starting with negative value
+        current_x = torch.tensor([8, 0.5, 0.5], device=self.device)
+        bounds = torch.tensor([[0.0, 0.0, 0.0], [3.0, 2.0, 1.0]], device=self.device)
+        discrete_dims = torch.tensor([0, 1], device=self.device)
+        discrete_dims = {0: [-3, 8, 10], 1: [0.5, 2.0]}
+        expected_neighbors = torch.tensor(
+            [[8.0, 2.0, 0.5], [-3, 0.5, 0.5], [10.0, 0.5, 0.5]], device=self.device
         )
         self.assertTrue(
             torch.equal(
@@ -218,24 +293,29 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             ),
         )
         # Check for error if feasible points cannot be found.
-        with self.assertRaisesRegex(
-            CandidateGenerationError, "Could not generate"
-        ), mock.patch(
-            f"{OPT_MODULE}._filter_infeasible",
-            return_value=torch.empty(0, 3, **self.tkwargs),
+        with (
+            self.assertRaisesRegex(CandidateGenerationError, "Could not generate"),
+            mock.patch(
+                f"{OPT_MODULE}._filter_infeasible",
+                return_value=torch.empty(0, 3, **self.tkwargs),
+            ),
         ):
             sample_feasible_points(
                 opt_inputs=opt_inputs,
-                discrete_dims=torch.tensor([0, 2], device=self.device),
+                discrete_dims={0: [0.0, 1.0], 2: [0.0, 1.0]},
                 cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
                 num_points=10,
             )
         # Generate a number of points.
         X = sample_feasible_points(
             opt_inputs=opt_inputs,
-            discrete_dims=torch.tensor([1], device=self.device),
+            # discrete_dims=torch.tensor([1], device=self.device),
+            discrete_dims={1: [2.0, 3.0, 5.0]},
             cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
             num_points=10,
+        )
+        self.assertTrue(
+            torch.all(torch.isin(X[..., 1], torch.tensor([2.0, 3.0, 5.0]).to(X)))
         )
         self.assertEqual(X.shape, torch.Size([10, 3]))
         self.assertTrue(torch.all(X[..., 0] == 0.5))
@@ -266,7 +346,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         self.assertGreaterEqual(ei_root_none.min(), 0.0)
 
         # each discrete step should reduce the best_f value by exactly 1
-        binary_dims = torch.arange(d)
+        binary_dims = {i: [0, 1] for i in range(d)}
         cat_dims = torch.tensor([], device=self.device, dtype=torch.long)
         for i in range(k):
             X, ei_val = discrete_step(
@@ -287,6 +367,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
         # Test with integer variables.
         bounds[1, :2] = 2.0
+        binary_dims[1] = [0, 1, 2]
         X = self._get_random_binary(d, k)[None]
         for i in range(k):
             X, ei_val = discrete_step(
@@ -401,7 +482,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         d = 4
         bounds = self.single_bound.repeat(1, d)
         root = torch.zeros(d, device=self.device)
-        binary_dims = torch.arange(d)
+        binary_dims = {i: [0, 1] for i in range(d)}
         cat_dims = torch.tensor([], device=self.device, dtype=torch.long)
 
         # Create a batch of 3 points with different distances from the optimum
@@ -609,7 +690,6 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         train_X, train_Y, binary_dims, cont_dims = self._get_data()
         dim = len(binary_dims) + len(cont_dims)
         bounds = self.single_bound.repeat(1, dim)
-        binary_dims_t = torch.tensor(binary_dims, device=self.device, dtype=torch.long)
         cont_dims_t = torch.tensor(cont_dims, device=self.device, dtype=torch.long)
         torch.manual_seed(0)
         model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
@@ -627,7 +707,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # testing spray points
         perturb_nbors = get_spray_points(
             X_baseline=X_baseline,
-            discrete_dims=binary_dims_t,
+            discrete_dims=binary_dims,
             cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
             cont_dims=cont_dims_t,
             bounds=bounds,
@@ -645,7 +725,8 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             num_restarts=2,
         )
         self.assertEqual(candidates.shape[-1], dim)
-        c_binary = candidates[:, binary_dims]
+        c_binary = candidates[:, list(binary_dims.keys())]
+
         self.assertTrue(((c_binary == 0) | (c_binary == 1)).all())
 
         # testing that continuous perturbations lead to lower acquisition values
@@ -681,7 +762,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             num_restarts=2,
         )
         self.assertEqual(candidates.shape, torch.Size([3, dim]))
-        c_binary = candidates[:, binary_dims]
+        c_binary = candidates[:, list(binary_dims.keys())]
         self.assertTrue(((c_binary == 0) | (c_binary == 1)).all())
 
         # testing that continuous perturbations lead to lower acquisition values
@@ -704,8 +785,10 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
         # Test only using one continuous variable
         cont_dims = [1]
-        binary_dims = complement_indices(cont_dims, dim)
-        X_baseline[:, binary_dims] = X_baseline[:, binary_dims].round()
+        binary_dims = {i: [0, 1] for i in complement_indices(cont_dims, dim)}
+        X_baseline[:, list(binary_dims.keys())] = X_baseline[
+            :, list(binary_dims.keys())
+        ].round()
         candidates, _ = optimize_acqf_mixed_alternating(
             acq_function=acqf,
             bounds=bounds,
@@ -717,7 +800,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             post_processing_func=lambda x: x,
         )
         self.assertEqual(candidates.shape[-1], dim)
-        c_binary = candidates[:, binary_dims + [2]]
+        c_binary = candidates[:, list(binary_dims.keys()) + [2]]
         self.assertTrue(((c_binary == 0) | (c_binary == 1)).all())
         # Only continuous parameters should fallback to optimize_acqf.
         with mock.patch(
@@ -759,7 +842,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         candidates, _ = optimize_acqf_mixed_alternating(
             acq_function=acqf,
             bounds=bounds,
-            discrete_dims=list(range(dim)),
+            discrete_dims={i: [0, 1] for i in range(dim)},
             options=options,
             q=1,
             raw_samples=20,
@@ -774,7 +857,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             optimize_acqf_mixed_alternating(
                 acq_function=acqf,
                 bounds=bounds,
-                discrete_dims=[-1],
+                discrete_dims={-1: [0, 1]},
                 options=options,
                 q=1,
                 raw_samples=20,
@@ -788,7 +871,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # Update the data to introduce integer dimensions.
         binary_dims = [0]
         integer_dims = [3, 4]
-        discrete_dims = binary_dims + integer_dims
+        discrete_dims = {0: [0, 1], 3: [0, 1, 2, 3, 4], 4: [0, 1, 2, 3, 4]}
         bounds = self.single_bound.repeat(1, dim)
         bounds[1, 3:5] = 4.0
         # Update the model to have a different optimizer.
@@ -846,10 +929,13 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             )
 
         # Test gracious fallback when continuous relaxation fails.
-        with mock.patch(
-            f"{OPT_MODULE}._optimize_acqf",
-            side_effect=RuntimeError,
-        ), self.assertWarnsRegex(OptimizationWarning, "Failed to initialize"):
+        with (
+            mock.patch(
+                f"{OPT_MODULE}._optimize_acqf",
+                side_effect=RuntimeError,
+            ),
+            self.assertWarnsRegex(OptimizationWarning, "Failed to initialize"),
+        ):
             candidates, _ = generate_starting_points(
                 opt_inputs=_make_opt_inputs(
                     acq_function=acqf,
@@ -858,7 +944,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     num_restarts=4,
                     options={"batch_limit": 2, "init_batch_limit": 2},
                 ),
-                discrete_dims=torch.tensor(discrete_dims, device=self.device),
+                discrete_dims=discrete_dims,
                 cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
                 cont_dims=torch.tensor(cont_dims, device=self.device),
             )
@@ -873,7 +959,8 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 options={"invalid": 5, "init_batch_limit": 20},
             )
 
-        # Test with fixed features and constraints. Using both discrete and continuous.
+        # Test with fixed features and constraints.
+        # Using both discrete and continuous.
         constraint = (  # X[..., 0] + X[..., 1] >= 1.
             torch.tensor([0, 1], device=self.device),
             torch.ones(2, device=self.device),
@@ -882,7 +969,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         candidates, _ = optimize_acqf_mixed_alternating(
             acq_function=acqf,
             bounds=bounds,
-            discrete_dims=integer_dims,
+            discrete_dims={
+                i: values for i, values in discrete_dims.items() if i in integer_dims
+            },
             q=3,
             raw_samples=32,
             num_restarts=4,
@@ -896,15 +985,18 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         )
 
         # Test fallback when initializer cannot generate enough feasible points.
-        with mock.patch(
-            f"{OPT_MODULE}._optimize_acqf",
-            return_value=(
-                torch.zeros(4, 1, dim, **self.tkwargs),
-                torch.zeros(4, **self.tkwargs),
+        with (
+            mock.patch(
+                f"{OPT_MODULE}._optimize_acqf",
+                return_value=(
+                    torch.zeros(4, 1, dim, **self.tkwargs),
+                    torch.zeros(4, **self.tkwargs),
+                ),
             ),
-        ), mock.patch(
-            f"{OPT_MODULE}.sample_feasible_points", wraps=sample_feasible_points
-        ) as wrapped_sample_feasible:
+            mock.patch(
+                f"{OPT_MODULE}.sample_feasible_points", wraps=sample_feasible_points
+            ) as wrapped_sample_feasible,
+        ):
             generate_starting_points(
                 opt_inputs=_make_opt_inputs(
                     acq_function=acqf,
@@ -913,7 +1005,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     num_restarts=4,
                     inequality_constraints=[constraint],
                 ),
-                discrete_dims=torch.tensor(discrete_dims, device=self.device),
+                discrete_dims=discrete_dims,
                 cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
                 cont_dims=torch.tensor(cont_dims, device=self.device),
             )
@@ -928,7 +1020,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # Update the data to introduce integer dimensions.
         binary_dims = [0]
         cat_dims = [3, 4]
-        discrete_dims = binary_dims
+        discrete_dims = {i: [0, 1] for i in binary_dims}
         bounds = self.single_bound.repeat(1, dim)
         bounds[1, 3:5] = 4.0
         # Update the model to have a different optimizer.
@@ -987,10 +1079,13 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             )
 
         # Test gracious fallback when continuous relaxation fails.
-        with mock.patch(
-            f"{OPT_MODULE}._optimize_acqf",
-            side_effect=RuntimeError,
-        ), self.assertWarnsRegex(OptimizationWarning, "Failed to initialize"):
+        with (
+            mock.patch(
+                f"{OPT_MODULE}._optimize_acqf",
+                side_effect=RuntimeError,
+            ),
+            self.assertWarnsRegex(OptimizationWarning, "Failed to initialize"),
+        ):
             candidates, _ = generate_starting_points(
                 opt_inputs=_make_opt_inputs(
                     acq_function=acqf,
@@ -999,7 +1094,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     num_restarts=4,
                     options={"batch_limit": 2, "init_batch_limit": 2},
                 ),
-                discrete_dims=torch.tensor(discrete_dims, device=self.device),
+                discrete_dims=discrete_dims,
                 cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
                 cont_dims=torch.tensor(cont_dims, device=self.device),
             )
@@ -1030,15 +1125,18 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         )
 
         # Test fallback when initializer cannot generate enough feasible points.
-        with mock.patch(
-            f"{OPT_MODULE}._optimize_acqf",
-            return_value=(
-                torch.zeros(4, 1, dim, **self.tkwargs),
-                torch.zeros(4, **self.tkwargs),
+        with (
+            mock.patch(
+                f"{OPT_MODULE}._optimize_acqf",
+                return_value=(
+                    torch.zeros(4, 1, dim, **self.tkwargs),
+                    torch.zeros(4, **self.tkwargs),
+                ),
             ),
-        ), mock.patch(
-            f"{OPT_MODULE}.sample_feasible_points", wraps=sample_feasible_points
-        ) as wrapped_sample_feasible:
+            mock.patch(
+                f"{OPT_MODULE}.sample_feasible_points", wraps=sample_feasible_points
+            ) as wrapped_sample_feasible,
+        ):
             generate_starting_points(
                 opt_inputs=_make_opt_inputs(
                     acq_function=acqf,
@@ -1047,7 +1145,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     num_restarts=4,
                     inequality_constraints=[constraint],
                 ),
-                discrete_dims=torch.tensor(discrete_dims, device=self.device),
+                discrete_dims=discrete_dims,
                 cat_dims=torch.tensor(cat_dims, device=self.device),
                 cont_dims=torch.tensor(cont_dims, device=self.device),
             )
@@ -1062,7 +1160,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # Update the data to introduce integer dimensions.
         binary_dims = [0]
         cat_dims = [3, 4]
-        discrete_dims = binary_dims
+        discrete_dims = {0: [0, 1]}
         bounds = self.single_bound.repeat(1, dim)
         bounds[1, 3:5] = 4.0
         # Update the model to have a different optimizer.
@@ -1094,6 +1192,44 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 },
             )
 
+    def test_optimize_acqf_mixed_alternating_invalid_bounds(self) -> None:
+        train_X, _, binary_dims, cont_dims = self._get_data()
+        dim = len(binary_dims) + len(cont_dims)
+        binary_dims[3] = [3, 8]
+        bounds = self.single_bound.repeat(1, dim)
+        torch.manual_seed(0)
+        root = torch.tensor([0.0, 0.0, 0.0, 4.0, 4.0], device=self.device)
+        model = QuadraticDeterministicModel(root)
+        acqf = qLogNoisyExpectedImprovement(model=model, X_baseline=train_X)
+        with self.assertRaisesRegex(
+            expected_regex=f"Discrete dimension {3} must start at the lower bound ",
+            expected_exception=ValueError,
+        ):
+            optimize_acqf_mixed_alternating(
+                acq_function=acqf,
+                bounds=bounds,
+                discrete_dims=binary_dims,
+                cat_dims=[],
+                q=3,
+                raw_samples=32,
+                num_restarts=4,
+            )
+        bounds[0, 3] = 3.0
+        bounds[1, 3] = 7.0
+        with self.assertRaisesRegex(
+            expected_regex=f"Discrete dimension {3} must end at the upper bound ",
+            expected_exception=ValueError,
+        ):
+            optimize_acqf_mixed_alternating(
+                acq_function=acqf,
+                bounds=bounds,
+                discrete_dims=binary_dims,
+                cat_dims=[],
+                q=3,
+                raw_samples=32,
+                num_restarts=4,
+            )
+
     def test_optimize_acqf_mixed_continuous_relaxation(self) -> None:
         # Testing with integer variables.
         train_X, train_Y, binary_dims, cont_dims = self._get_data()
@@ -1101,6 +1237,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         binary_dims = [0]
         integer_dims = [3, 4]
         discrete_dims = binary_dims + integer_dims
+        discrete_dims = {0: [0, 1], 3: list(range(41)), 4: list(range(16))}
         bounds = torch.tensor(
             [[0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 40.0, 15.0]],
             dtype=torch.double,
@@ -1127,12 +1264,15 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             }
             if max_discrete_values is not None:
                 options["max_discrete_values"] = max_discrete_values
-            with mock.patch(
-                f"{OPT_MODULE}._setup_continuous_relaxation",
-                wraps=_setup_continuous_relaxation,
-            ) as wrapped_setup, mock.patch(
-                f"{OPT_MODULE}.discrete_step", wraps=discrete_step
-            ) as wrapped_discrete:
+            with (
+                mock.patch(
+                    f"{OPT_MODULE}._setup_continuous_relaxation",
+                    wraps=_setup_continuous_relaxation,
+                ) as wrapped_setup,
+                mock.patch(
+                    f"{OPT_MODULE}.discrete_step", wraps=discrete_step
+                ) as wrapped_discrete,
+            ):
                 candidates, _ = optimize_acqf_mixed_alternating(
                     acq_function=acqf,
                     bounds=bounds,
@@ -1145,14 +1285,15 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 )
             wrapped_setup.assert_called_once_with(
                 discrete_dims=discrete_dims,
-                bounds=bounds,
                 max_discrete_values=max_discrete_values or MAX_DISCRETE_VALUES,
                 post_processing_func=post_processing_func,
             )
             discrete_call_args = wrapped_discrete.call_args.kwargs
             expected_dims = [0, 4] if max_discrete_values is None else [0]
             self.assertAllClose(
-                discrete_call_args["discrete_dims"],
+                torch.tensor(
+                    list(discrete_call_args["discrete_dims"].keys()), device=self.device
+                ),
                 torch.tensor(expected_dims, device=self.device),
             )
             # Check that dim 3 is rounded.
