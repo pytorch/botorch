@@ -253,25 +253,23 @@ def get_categorical_neighbors(
                 [v for v in cat_dims[dim] if v != current_value], k=max_num_cat_values
             )
 
+    new_cat_values_dict = {dim: _get_cat_values(dim) for dim in cat_dims.keys()}
     new_cat_values_lst = list(
-        itertools.chain.from_iterable(_get_cat_values(dim) for dim in cat_dims.keys())
+        itertools.chain.from_iterable(new_cat_values_dict.values())
     )
     new_cat_values = torch.tensor(
         new_cat_values_lst, device=current_x.device, dtype=current_x.dtype
     )
 
-    num_cat_values = torch.tensor(
-        [len(cat_dims[dim]) for dim in cat_dims.keys()],
-        device=current_x.device,
-        dtype=torch.long,
-    )
-    num_cat_values.clamp_(max=max_num_cat_values)
     new_cat_idcs = torch.cat(
         tuple(
-            torch.full((num_cat_values[dim].item(),), dim, device=current_x.device)
-            for dim in range(len(cat_dims))
+            torch.full(
+                (min(len(values), max_num_cat_values),), dim, device=current_x.device
+            )
+            for dim, values in new_cat_values_dict.items()
         )
     )
+
     neighbors = current_x.repeat(len(new_cat_values), 1)
     # Assign the new values to their corresponding columns.
     neighbors.scatter_(1, new_cat_idcs.view(-1, 1), new_cat_values.view(-1, 1))
