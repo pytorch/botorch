@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List
 
 import torch
 from botorch import models
@@ -52,19 +52,35 @@ def draw_kernel_feature_paths(
 
 
 def _draw_kernel_feature_paths_fallback(
-    mean_module: Optional[Module],
+    mean_module: Module | None,
     covar_module: Kernel,
     sample_shape: Size,
     map_generator: TKernelFeatureMapGenerator = gen_kernel_feature_map,
-    input_transform: Optional[TInputTransform] = None,
-    output_transform: Optional[TOutputTransform] = None,
-    weight_generator: Optional[Callable[[Size], Tensor]] = None,
+    input_transform: TInputTransform | None = None,
+    output_transform: TOutputTransform | None = None,
+    weight_generator: Callable[[Size], Tensor] | None = None,
     **kwargs: Any,
 ) -> GeneralizedLinearPath:
-    # Generate a kernel feature map
+    r"""Generate sample paths from a kernel-based prior using feature maps.
+
+    Generates a feature map for the kernel and combines it with random weights to
+    create sample paths. The weights are either generated using Sobol sequences or
+    provided by a custom weight generator.
+
+    Args:
+        mean_module: Optional mean function to add to the sample paths.
+        covar_module: The kernel to generate features for.
+        sample_shape: The shape of the sample paths to be drawn.
+        map_generator: A callable that generates feature maps from kernels.
+            Defaults to :func:`gen_kernel_feature_map`.
+        input_transform: Optional transform applied to input before feature generation.
+        output_transform: Optional transform applied to output after feature generation.
+        weight_generator: Optional callable to generate random weights. If None,
+            uses Sobol sequences to generate normally distributed weights.
+        **kwargs: Additional arguments passed to :func:`map_generator`.
+    """
     feature_map = map_generator(kernel=covar_module, **kwargs)
 
-    # Sample random weights with which to combine kernel features
     weight_shape = (
         *sample_shape,
         *covar_module.batch_shape,
@@ -82,7 +98,6 @@ def _draw_kernel_feature_paths_fallback(
             device=covar_module.device, dtype=covar_module.dtype
         )
 
-    # Return the sample paths
     return GeneralizedLinearPath(
         feature_map=feature_map,
         weight=weight,
@@ -110,7 +125,7 @@ def _draw_kernel_feature_paths_ExactGP(
 @DrawKernelFeaturePaths.register(models.ModelListGP)
 def _draw_kernel_feature_paths_ModelListGP(
     model: models.ModelListGP,
-    reducer: Optional[Callable[[List[Tensor]], Tensor]] = None,
+    reducer: Callable[[List[Tensor]], Tensor] | None = None,
     **kwargs: Any,
 ) -> PathList:
     paths = [draw_kernel_feature_paths(m, **kwargs) for m in model.models]
@@ -129,6 +144,7 @@ def _draw_kernel_feature_paths_MultiTaskGP(
         else model._task_feature
     )
 
+    # NOTE: May want to use a `ProductKernel` instead in `MultiTaskGP`
     base_kernel = deepcopy(model.covar_module)
     base_kernel.active_dims = torch.LongTensor(
         [index for index in range(train_X.shape[-1]) if index != task_index],

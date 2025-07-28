@@ -7,18 +7,7 @@
 from __future__ import annotations
 
 from sys import maxsize
-from typing import (
-    Callable,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    overload,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Callable, Iterable, Iterator, List, overload, Tuple, Type, TypeVar
 
 import torch
 from botorch.models.approximate_gp import SingleTaskVariationalGP
@@ -42,12 +31,16 @@ from torch import Size, Tensor
 TKernel = TypeVar("TKernel", bound=Kernel)
 GetTrainInputs = Dispatcher("get_train_inputs")
 GetTrainTargets = Dispatcher("get_train_targets")
-INF_DIM_KERNELS: Tuple[Type[Kernel], ...] = (kernels.MaternKernel, kernels.RBFKernel)
+INF_DIM_KERNELS: Tuple[Type[Kernel], ...] = (
+    kernels.MaternKernel,
+    kernels.RBFKernel,
+    kernels.MultitaskKernel,
+)
 
 
 def kernel_instancecheck(
     kernel: Kernel,
-    types: Union[TKernel, Tuple[TKernel, ...]],
+    types: TKernel | Tuple[TKernel, ...],
     reducer: Callable[[Iterator[bool]], bool] = any,
     max_depth: int = maxsize,
 ) -> bool:
@@ -133,7 +126,7 @@ def sparse_block_diag(
 def append_transform(
     module: TransformedModuleMixin,
     attr_name: str,
-    transform: Union[InputTransform, OutcomeTransform, TensorTransform],
+    transform: InputTransform | OutcomeTransform | TensorTransform,
 ) -> None:
     """Appends a transform to a module's transform chain.
 
@@ -152,7 +145,7 @@ def append_transform(
 def prepend_transform(
     module: TransformedModuleMixin,
     attr_name: str,
-    transform: Union[InputTransform, OutcomeTransform, TensorTransform],
+    transform: InputTransform | OutcomeTransform | TensorTransform,
 ) -> None:
     """Prepends a transform to a module's transform chain.
 
@@ -169,10 +162,10 @@ def prepend_transform(
 
 
 def untransform_shape(
-    transform: Union[TensorTransform, InputTransform, OutcomeTransform],
+    transform: TensorTransform | InputTransform | OutcomeTransform,
     shape: Size,
-    device: Optional[torch.device] = None,
-    dtype: Optional[torch.dtype] = None,
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
 ) -> Size:
     """Gets the shape after applying an inverse transform.
 
@@ -203,9 +196,9 @@ def untransform_shape(
 
 def get_kernel_num_inputs(
     kernel: Kernel,
-    num_ambient_inputs: Optional[int] = None,
-    default: Optional[Optional[int]] = MISSING,
-) -> Optional[int]:
+    num_ambient_inputs: int | None = None,
+    default: (int | None) | None = MISSING,
+) -> int | None:
     if kernel.active_dims is not None:
         return len(kernel.active_dims)
 
@@ -222,12 +215,12 @@ def get_kernel_num_inputs(
     return num_ambient_inputs
 
 
-def get_input_transform(model: GPyTorchModel) -> Optional[InputTransform]:
+def get_input_transform(model: GPyTorchModel) -> InputTransform | None:
     r"""Returns a model's input_transform or None."""
     return getattr(model, "input_transform", None)
 
 
-def get_output_transform(model: GPyTorchModel) -> Optional[OutcomeUntransformer]:
+def get_output_transform(model: GPyTorchModel) -> OutcomeUntransformer | None:
     r"""Returns a wrapped version of a model's outcome_transform or None."""
     transform = getattr(model, "outcome_transform", None)
     if transform is None:

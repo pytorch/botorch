@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Callable, Iterable, Iterator, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from string import ascii_letters
 from typing import Any
 
@@ -21,7 +21,7 @@ from botorch.sampling.pathwise.utils import (
     TransformedModuleMixin,
 )
 from torch import einsum, Tensor
-from torch.nn import Module, ModuleDict, ModuleList, Parameter
+from torch.nn import Module, Parameter
 
 
 class SamplePath(ABC, TransformedModuleMixin, Module):
@@ -54,49 +54,21 @@ class PathDict(SamplePath, ModuleDictMixin[SamplePath]):
             )
 
         SamplePath.__init__(self)
+        ModuleDictMixin.__init__(self, attr_name="paths", modules=paths)
         self.reducer = reducer
         self.input_transform = input_transform
         self.output_transform = output_transform
 
-        # Initialize paths dictionary - reuse ModuleDict if provided
-        self._paths_dict = (
-            paths
-            if isinstance(paths, ModuleDict)
-            else ModuleDict({} if paths is None else paths)
-        )
-        self.register_module("_paths_dict", self._paths_dict)
-
     def forward(self, x: Tensor, **kwargs: Any) -> Tensor | dict[str, Tensor]:
-        outputs = [path(x, **kwargs) for path in self._paths_dict.values()]
+        outputs = [path(x, **kwargs) for path in self.values()]
         return (
-            dict(zip(self._paths_dict, outputs))
-            if self.reducer is None
-            else self.reducer(outputs)
+            dict(zip(self, outputs)) if self.reducer is None else self.reducer(outputs)
         )
 
-    def items(self) -> Iterable[tuple[str, SamplePath]]:
-        return self._paths_dict.items()
-
-    def keys(self) -> Iterable[str]:
-        return self._paths_dict.keys()
-
-    def values(self) -> Iterable[SamplePath]:
-        return self._paths_dict.values()
-
-    def __len__(self) -> int:
-        return len(self._paths_dict)
-
-    def __iter__(self) -> Iterator[str]:
-        yield from self._paths_dict
-
-    def __delitem__(self, key: str) -> None:
-        del self._paths_dict[key]
-
-    def __getitem__(self, key: str) -> SamplePath:
-        return self._paths_dict[key]
-
-    def __setitem__(self, key: str, val: SamplePath) -> None:
-        self._paths_dict[key] = val
+    @property
+    def paths(self):
+        """Access the internal module dict."""
+        return getattr(self, "_paths_dict")
 
 
 class PathList(SamplePath, ModuleListMixin[SamplePath]):
@@ -125,36 +97,19 @@ class PathList(SamplePath, ModuleListMixin[SamplePath]):
             )
 
         SamplePath.__init__(self)
+        ModuleListMixin.__init__(self, attr_name="paths", modules=paths)
         self.reducer = reducer
         self.input_transform = input_transform
         self.output_transform = output_transform
 
-        # Initialize paths list - reuse ModuleList if provided
-        self._paths_list = (
-            paths
-            if isinstance(paths, ModuleList)
-            else ModuleList([] if paths is None else paths)
-        )
-        self.register_module("_paths_list", self._paths_list)
-
     def forward(self, x: Tensor, **kwargs: Any) -> Tensor | list[Tensor]:
-        outputs = [path(x, **kwargs) for path in self._paths_list]
+        outputs = [path(x, **kwargs) for path in self]
         return outputs if self.reducer is None else self.reducer(outputs)
 
-    def __len__(self) -> int:
-        return len(self._paths_list)
-
-    def __iter__(self) -> Iterator[SamplePath]:
-        yield from self._paths_list
-
-    def __delitem__(self, key: int) -> None:
-        del self._paths_list[key]
-
-    def __getitem__(self, key: int) -> SamplePath:
-        return self._paths_list[key]
-
-    def __setitem__(self, key: int, val: SamplePath) -> None:
-        self._paths_list[key] = val
+    @property
+    def paths(self):
+        """Access the internal module list."""
+        return getattr(self, "_paths_list")
 
 
 class GeneralizedLinearPath(SamplePath):

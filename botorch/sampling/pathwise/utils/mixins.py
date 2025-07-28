@@ -7,31 +7,19 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Iterable,
-    Iterator,
-    Mapping,
-    Optional,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Generic, Iterable, Iterator, Mapping, Tuple, TypeVar
 
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 
-# from botorch.utils.types import cast
 from torch import Tensor
 from torch.nn import Module, ModuleDict, ModuleList
 
 # Generic type variable for module types
 T = TypeVar("T")  # generic type variable
 TModule = TypeVar("TModule", bound=Module)  # must be a Module subclass
-TInputTransform = Union[InputTransform, Callable[[Tensor], Tensor]]
-TOutputTransform = Union[OutcomeTransform, Callable[[Tensor], Tensor]]
+TInputTransform = InputTransform | Callable[[Tensor], Tensor]
+TOutputTransform = OutcomeTransform | Callable[[Tensor], Tensor]
 
 
 class TransformedModuleMixin(Module):
@@ -46,8 +34,8 @@ class TransformedModuleMixin(Module):
         output_transform: Optional transform applied to output values after forward pass
     """
 
-    input_transform: Optional[TInputTransform]
-    output_transform: Optional[TOutputTransform]
+    input_transform: TInputTransform | None
+    output_transform: TOutputTransform | None
 
     def __init__(self):
         """Initialize the TransformedModuleMixin with default transforms."""
@@ -86,7 +74,7 @@ class TransformedModuleMixin(Module):
 
         This enforces the PyTorch pattern of implementing computation in forward().
         """
-        pass
+        pass  # pragma: no cover
 
 
 class ModuleDictMixin(ABC, Generic[TModule]):
@@ -100,7 +88,7 @@ class ModuleDictMixin(ABC, Generic[TModule]):
         TModule: The type of modules stored in the dictionary (must be Module subclass)
     """
 
-    def __init__(self, attr_name: str, modules: Optional[Mapping[str, TModule]] = None):
+    def __init__(self, attr_name: str, modules: Mapping[str, TModule] | None = None):
         r"""Initialize ModuleDictMixin.
 
         Args:
@@ -109,10 +97,15 @@ class ModuleDictMixin(ABC, Generic[TModule]):
         """
         # Use a unique name to avoid conflicts with existing attributes
         self.__module_dict_name = f"_{attr_name}_dict"
-        # Create and register the ModuleDict
-        self.register_module(
-            self.__module_dict_name, ModuleDict({} if modules is None else modules)
-        )
+
+        # If modules is already a ModuleDict, reuse it; otherwise create new one
+        if isinstance(modules, ModuleDict):
+            module_dict = modules
+        else:
+            module_dict = ModuleDict({} if modules is None else modules)
+
+        # Register the ModuleDict
+        self.register_module(self.__module_dict_name, module_dict)
 
     @property
     def __module_dict(self) -> ModuleDict:
@@ -168,7 +161,7 @@ class ModuleListMixin(ABC, Generic[TModule]):
         TModule: The type of modules stored in the list (must be Module subclass)
     """
 
-    def __init__(self, attr_name: str, modules: Optional[Iterable[TModule]] = None):
+    def __init__(self, attr_name: str, modules: Iterable[TModule] | None = None):
         r"""Initialize ModuleListMixin.
 
         Args:
@@ -177,10 +170,15 @@ class ModuleListMixin(ABC, Generic[TModule]):
         """
         # Use a unique name to avoid conflicts with existing attributes
         self.__module_list_name = f"_{attr_name}_list"
-        # Create and register the ModuleList
-        self.register_module(
-            self.__module_list_name, ModuleList([] if modules is None else modules)
-        )
+
+        # If modules is already a ModuleList, reuse it; otherwise create new one
+        if isinstance(modules, ModuleList):
+            module_list = modules
+        else:
+            module_list = ModuleList([] if modules is None else modules)
+
+        # Register the ModuleList
+        self.register_module(self.__module_list_name, module_list)
 
     @property
     def __module_list(self) -> ModuleList:

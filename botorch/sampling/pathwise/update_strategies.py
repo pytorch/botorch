@@ -49,17 +49,16 @@ def gaussian_update(
 ) -> GeneralizedLinearPath:
     r"""Computes a Gaussian pathwise update in exact arithmetic:
 
+     .. code-block:: text
+
         (f | y)(·) = f(·) + Cov(f(·), y) Cov(y, y)^{-1} (y - f(X) - ε),
                             \_______________________________________/
                                                 V
                                     "Gaussian pathwise update"
 
-    Args:
-        model: A Gaussian process prior together with a likelihood.
-        sample_values: Assumed values for :math:`f(X)`.
-        likelihood: An optional likelihood used to help define the desired
-            update. Defaults to `model.likelihood` if it exists else None.
-        **kwargs: Additional keyword arguments are passed to subroutines.
+    where `=` denotes equality in distribution, :math:`f \sim GP(0, k)`,
+    :math:`y \sim N(f(X), \Sigma)`, and :math:`\epsilon \sim N(0, \Sigma)`.
+    For more information, see [wilson2020sampling]_ and [wilson2021pathwise]_.
     """
     if likelihood is DEFAULT:
         likelihood = getattr(model, "likelihood", None)
@@ -161,6 +160,7 @@ def _draw_kernel_feature_paths_MultiTaskGP(
 
     # Prepare product kernel
     num_inputs = points.shape[-1]
+    # TODO: Changed `MultiTaskGP` to normalize the task feature in its constructor.
     task_index = (
         num_inputs + model._task_feature
         if model._task_feature < 0
@@ -207,28 +207,29 @@ def _gaussian_update_ModelListGP(
         A list of Gaussian pathwise updates.
     """
     if not isinstance(sample_values, list):
-        # Handle tensor input by splitting based on model batch shapes
-        # Each model may have different batch shapes, so we need to split accordingly
+        # Handle tensor input by splitting based on number of training points
+        # Each model may have different number of training points
         sample_values_list = []
         start_idx = 0
         for submodel in model.models:
-            # Get the batch shape for this submodel
-            batch_shape = submodel._input_batch_shape
-            # Calculate end index based on batch shape or default to single value
-            end_idx = start_idx + batch_shape[-1] if batch_shape else start_idx + 1
+            # Get the number of training points for this submodel
+            (train_inputs,) = get_train_inputs(submodel, transformed=True)
+            n_train = train_inputs.shape[-2]
             # Split the tensor for this submodel
+            end_idx = start_idx + n_train
             sample_values_list.append(sample_values[..., start_idx:end_idx])
             start_idx = end_idx
         sample_values = sample_values_list
 
     if target_values is not None and not isinstance(target_values, list):
-        # Similar splitting logic for target values
+        # Similar splitting logic for target values based on training points
         # This ensures each submodel gets its corresponding targets
         target_values_list = []
         start_idx = 0
         for submodel in model.models:
-            batch_shape = submodel._input_batch_shape
-            end_idx = start_idx + batch_shape[-1] if batch_shape else start_idx + 1
+            (train_inputs,) = get_train_inputs(submodel, transformed=True)
+            n_train = train_inputs.shape[-2]
+            end_idx = start_idx + n_train
             target_values_list.append(target_values[..., start_idx:end_idx])
             start_idx = end_idx
         target_values = target_values_list

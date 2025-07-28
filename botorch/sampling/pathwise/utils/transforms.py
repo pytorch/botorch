@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Iterable
 
 import torch
 from botorch.models.transforms.outcome import OutcomeTransform
@@ -69,7 +69,7 @@ class CosineTransform(TensorTransform):
 class SineCosineTransform(TensorTransform):
     r"""A transform that returns concatenated sine and cosine features."""
 
-    def __init__(self, scale: Optional[Tensor] = None):
+    def __init__(self, scale: Tensor | None = None):
         """Initialize SineCosineTransform with optional scaling.
 
         Args:
@@ -130,7 +130,7 @@ class FeatureSelector(TensorTransform):
     r"""A transform that returns a subset of its input's features
     along a given tensor dimension."""
 
-    def __init__(self, indices: Iterable[int], dim: Union[int, LongTensor] = -1):
+    def __init__(self, indices: Iterable[int], dim: int | LongTensor = -1):
         r"""Initializes a FeatureSelector instance.
 
         Args:
@@ -153,7 +153,7 @@ class OutcomeUntransformer(TensorTransform):
     def __init__(
         self,
         transform: OutcomeTransform,
-        num_outputs: Union[int, LongTensor],
+        num_outputs: int | LongTensor,
     ):
         r"""Initializes an OutcomeUntransformer instance.
 

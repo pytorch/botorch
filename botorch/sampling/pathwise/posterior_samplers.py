@@ -17,7 +17,7 @@ r"""
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -46,7 +46,7 @@ from botorch.utils.dispatcher import Dispatcher
 from botorch.utils.transforms import is_ensemble
 from gpytorch.models import ApproximateGP, ExactGP, GP
 from gpytorch.variational import _VariationalStrategy
-from torch import Size
+from torch import Size, Tensor
 
 DrawMatheronPaths = Dispatcher("draw_matheron_paths")
 
@@ -54,6 +54,7 @@ DrawMatheronPaths = Dispatcher("draw_matheron_paths")
 class MatheronPath(PathDict):
     r"""Represents function draws from a GP posterior via Matheron's rule:
 
+    .. code-block:: text
 
               "Prior path"
                    v
@@ -62,14 +63,17 @@ class MatheronPath(PathDict):
                                             v
                                       "Update path"
 
+    where `=` denotes equality in distribution, :math:`f \sim GP(0, k)`,
+    :math:`y \sim N(f(X), \Sigma)`, and :math:`\epsilon \sim N(0, \Sigma)`.
+    For more information, see [wilson2020sampling]_ and [wilson2021pathwise]_.
     """
 
     def __init__(
         self,
         prior_paths: SamplePath,
         update_paths: SamplePath,
-        input_transform: Optional[TInputTransform] = None,
-        output_transform: Optional[TOutputTransform] = None,
+        input_transform: TInputTransform | None = None,
+        output_transform: TOutputTransform | None = None,
     ) -> None:
         r"""Initializes a MatheronPath instance.
 
@@ -111,10 +115,15 @@ def get_matheron_path_model(
     sample_shape = Size() if sample_shape is None else sample_shape
     path = draw_matheron_paths(model, sample_shape=sample_shape)
     num_outputs = model.num_outputs
-    if isinstance(model, ModelList) and len(model.models) != num_outputs:
-        raise UnsupportedError("A model-list of multi-output models is not supported.")
+    if isinstance(model, ModelList):
+        # Check if any model in the list a multi-output model
+        for m in model.models:
+            if hasattr(m, "_task_feature") or "MultiTask" in type(m).__name__:
+                raise UnsupportedError(
+                    "A model-list of multi-output models is not supported."
+                )
 
-    def f(X: torch.Tensor) -> torch.Tensor:
+    def f(X: Tensor) -> Tensor:
         r"""Reshapes the path evaluations to bring the output dimension to the end.
 
         Args:
@@ -126,16 +135,34 @@ def get_matheron_path_model(
             The output tensor of shape `batch_shape x q x m`.
         """
         if num_outputs == 1:
-            # For single-output, we lack the output dimension. Add one.
             res = path(X).unsqueeze(-1)
         elif isinstance(model, ModelList):
-            # For model list, path evaluates to a list of tensors. Stack them.
-            res = torch.stack(path(X), dim=-1)
+            path_outputs = path(X)
+            # For ModelListGP with batched models, concatenate along output dimension
+            # Each element in path_outputs may have shape [..., q] or [..., batch, q]
+            # We need to handle both cases correctly
+            if isinstance(model, ModelListGP) and model.models:
+                # Check if models are batched
+                first_model = model.models[0]
+                if (
+                    hasattr(first_model, "_num_outputs")
+                    and first_model._num_outputs > 1
+                ):
+                    # Models are batched, concatenate along the batch dimension
+                    res = torch.cat(path_outputs, dim=-2)
+                    # Transpose to put outputs last: [..., q, m]
+                    res = res.transpose(-1, -2)
+                else:
+                    # Models are not batched, stack them
+                    res = torch.stack(path_outputs, dim=-1)
+            else:
+                # Handle empty path_outputs (e.g., from empty ModelList)
+                if not path_outputs:
+                    # Return tensor with shape (..., 0) for empty model list
+                    res = torch.empty(*X.shape[:-1], 0, device=X.device, dtype=X.dtype)
+                else:
+                    res = torch.stack(path_outputs, dim=-1)
         else:
-            # For multi-output, path expects inputs broadcastable to
-            # `model._aug_batch_shape x q x d` and returns outputs of shape
-            # `model._aug_batch_shape x q`. Augmented batch shape includes the
-            # `m` dimension, so we will unsqueeze that and transpose after.
             res = path(X.unsqueeze(-3)).transpose(-1, -2)
         return res
 
