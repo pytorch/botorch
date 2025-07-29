@@ -38,7 +38,10 @@ from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.sampling.normal import SobolQMCNormalSampler
-from botorch.utils.transforms import t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 
@@ -107,6 +110,7 @@ class qHEntropySearch(MCAcquisitionFunction, OneShotAcquisitionFunction):
         )
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor, A: Tensor) -> Tensor:
         r"""Evaluate qHEntropySearch objective (q-HES) on the candidate set `X`.
 

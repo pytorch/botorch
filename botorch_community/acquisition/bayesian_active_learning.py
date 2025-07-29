@@ -40,7 +40,11 @@ from botorch.acquisition.bayesian_active_learning import (
     FullyBayesianAcquisitionFunction,
 )
 from botorch.models.fully_bayesian import MCMC_DIM, SaasFullyBayesianSingleTaskGP
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    concatenate_pending_points,
+    t_batch_mode_transform,
+)
 
 from botorch_community.utils.stat_dist import mvn_hellinger_distance, mvn_kl_divergence
 from torch import Tensor
@@ -71,6 +75,7 @@ class qBayesianVarianceReduction(FullyBayesianAcquisitionFunction):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         posterior = self.model.posterior(X, observation_noise=True)
         res = torch.logdet(posterior.mixture_covariance_matrix).exp()
@@ -100,6 +105,7 @@ class qBayesianQueryByComittee(FullyBayesianAcquisitionFunction):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         posterior = self.model.posterior(X)
         posterior_mean = posterior.mean
@@ -139,6 +145,7 @@ class qStatisticalDistanceActiveLearning(FullyBayesianAcquisitionFunction):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         posterior = self.model.posterior(X, observation_noise=True)
         cond_means = posterior.mean

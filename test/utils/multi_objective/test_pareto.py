@@ -164,6 +164,12 @@ class TestPareto(BotorchTestCase):
         Y[3, 1] = float("nan")
         Y[7, 0] = float("nan")
         self.assertFalse(is_non_dominated(Y)[[3, 7]].any())
+        # Check edge case if all elements are NaN
+        nans = torch.full((2, 2, 3), torch.nan)
+        rands = torch.rand((2, 2, 3))
+        Y = torch.hstack([nans, rands])
+        non_dominated = is_non_dominated(Y)
+        self.assertFalse(non_dominated[..., :, :2].any().item())
 
     def test_is_non_dominated_loop(self):
         n = 20

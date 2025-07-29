@@ -48,6 +48,11 @@ MAX_DISCRETE_VALUES = 20
 MAX_ITER_INIT = 100
 CONVERGENCE_TOL = 1e-8  # Optimizer convergence tolerance.
 DUPLICATE_TOL = 1e-6  # Tolerance for deduplicating initial candidates.
+STOP_AFTER_SHARE_CONVERGED = 1.0  # We optimize multiple configurations at once
+# in `optimize_acqf_mixed_alternating`. This option controls, whether to stop
+# optimizing after the given share has converged.
+# Convergence is defined as the improvements of one discrete, followed by a scalar
+# optimization yield less than `CONVERGENCE_TOL` improvements.
 
 SUPPORTED_OPTIONS = {
     "initialization_strategy",
@@ -66,8 +71,7 @@ SUPPORTED_INITIALIZATION = {"continuous_relaxation", "equally_spaced", "random"}
 
 
 def _setup_continuous_relaxation(
-    discrete_dims: list[int],
-    bounds: Tensor,
+    discrete_dims: dict[int, list[float]],
     max_discrete_values: int,
     post_processing_func: Callable[[Tensor], Tensor] | None,
 ) -> tuple[list[int], Callable[[Tensor], Tensor] | None]:
@@ -77,26 +81,27 @@ def _setup_continuous_relaxation(
     `discrete_dims` and `post_processing_func` is updated to round
     them to the nearest integer.
     """
-    discrete_dims_t = torch.tensor(discrete_dims, dtype=torch.long)
-    num_discrete_values = (
-        bounds[1, discrete_dims_t] - bounds[0, discrete_dims_t]
-    ).cpu()
-    dims_to_relax = discrete_dims_t[num_discrete_values > max_discrete_values]
-    if dims_to_relax.numel() == 0:
-        # No dimension needs continuous relaxation.
+
+    dims_to_relax, dims_to_keep = {}, {}
+    for index, values in discrete_dims.items():
+        if len(values) > max_discrete_values:
+            dims_to_relax[index] = values
+        else:
+            dims_to_keep[index] = values
+
+    if len(dims_to_relax) == 0:
         return discrete_dims, post_processing_func
-    # Remove relaxed dims from `discrete_dims`.
-    discrete_dims = list(set(discrete_dims).difference(dims_to_relax.tolist()))
 
     def new_post_processing_func(X: Tensor) -> Tensor:
         r"""Round the relaxed dimensions to the nearest integer and apply the original
         `post_processing_func`."""
-        X[..., dims_to_relax] = X[..., dims_to_relax].round()
+
+        X = round_discrete_dims(X=X, discrete_dims=dims_to_relax)
         if post_processing_func is not None:
             X = post_processing_func(X)
         return X
 
-    return discrete_dims, new_post_processing_func
+    return dims_to_keep, new_post_processing_func
 
 
 def _filter_infeasible(
@@ -130,7 +135,7 @@ def _filter_infeasible(
 def get_nearest_neighbors(
     current_x: Tensor,
     bounds: Tensor,
-    discrete_dims: Tensor,
+    discrete_dims: dict[int, list[float]],
 ) -> Tensor:
     r"""Generate all 1-Manhattan distance neighbors of a given input. The neighbors
     are generated for the discrete dimensions only.
@@ -141,24 +146,134 @@ def get_nearest_neighbors(
     Args:
         current_x: The design to find the neighbors of. A tensor of shape `d`.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
-        discrete_dims: A tensor of indices corresponding to binary and
-            integer parameters.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
 
     Returns:
         A tensor of shape `num_neighbors x d`, denoting all unique 1-Manhattan
         distance neighbors.
     """
+    # we first transform the discrete values in the current_x to its index in the
+    # values of the discrete_dims, so that we can easily increase/decrease
+    # the discrete dimensions by one.
+    # Map discrete values in current_x to their indices in discrete_dims
+    discrete_indices = []
+
+    t_discrete_dims = torch.tensor(
+        list(discrete_dims.keys()), dtype=torch.long, device=current_x.device
+    )
+
+    for dim, values in discrete_dims.items():
+        val = current_x[dim].item()
+        # Find the index of the closest value in values
+        idx = min(range(len(values)), key=lambda i: abs(values[i] - val))
+        discrete_indices.append(idx)
+    current_x_int = current_x.clone()
+    current_x_int[t_discrete_dims] = torch.tensor(
+        discrete_indices, dtype=current_x.dtype, device=current_x.device
+    )
+    lower_clamp = bounds[0].clone()
+    lower_clamp[t_discrete_dims] = torch.tensor(
+        [0 for _ in discrete_dims.values()],
+        dtype=lower_clamp.dtype,
+        device=lower_clamp.device,
+    )
+    upper_clamp = bounds[1].clone()
+    upper_clamp[t_discrete_dims] = torch.tensor(
+        [len(values) - 1 for values in discrete_dims.values()],
+        dtype=upper_clamp.dtype,
+        device=upper_clamp.device,
+    )
     num_discrete = len(discrete_dims)
     diag_ones = torch.eye(num_discrete, dtype=current_x.dtype, device=current_x.device)
     # Neighbors obtained by increasing a discrete dimension by one.
-    plus_neighbors = current_x.repeat(num_discrete, 1)
-    plus_neighbors[:, discrete_dims] += diag_ones
-    plus_neighbors.clamp_(max=bounds[1])
+    plus_neighbors = current_x_int.repeat(num_discrete, 1)
+    plus_neighbors[:, t_discrete_dims] += diag_ones
+    plus_neighbors.clamp_(max=upper_clamp)
     # Neighbors obtained by decreasing a discrete dimension by one.
-    minus_neighbors = current_x.repeat(num_discrete, 1)
-    minus_neighbors[:, discrete_dims] -= diag_ones
-    minus_neighbors.clamp_(min=bounds[0])
+    minus_neighbors = current_x_int.repeat(num_discrete, 1)
+    minus_neighbors[:, t_discrete_dims] -= diag_ones
+    minus_neighbors.clamp_(min=lower_clamp)
     unique_neighbors = torch.cat([minus_neighbors, plus_neighbors], dim=0).unique(dim=0)
+    # Also remove current_x if it is in unique_neighbors.
+    unique_neighbors = unique_neighbors[
+        ~(unique_neighbors == current_x_int).all(dim=-1)
+    ]
+
+    # Transform unique_neighbors back to the original non-integer space
+    for dim, values in discrete_dims.items():
+        t_values = torch.tensor(
+            values, device=unique_neighbors.device, dtype=unique_neighbors.dtype
+        )
+        idx = unique_neighbors[:, dim].long()
+        unique_neighbors[:, dim] = t_values[idx]
+
+    return unique_neighbors
+
+
+def get_categorical_neighbors(
+    current_x: Tensor,
+    bounds: Tensor,
+    cat_dims: Tensor,
+    max_num_cat_values: int = MAX_DISCRETE_VALUES,
+) -> Tensor:
+    r"""Generate all 1-Hamming distance neighbors of a given input. The neighbors
+    are generated for the categorical dimensions only.
+
+    We assume that all categorical values are equidistant. If the number of values
+    is greater than `max_num_cat_values`, we sample uniformly from the
+    possible values for that dimension.
+
+    NOTE: This assumes that `current_x` is detached and uses in-place operations,
+    which are known to be incompatible with autograd.
+
+    Args:
+        current_x: The design to find the neighbors of. A tensor of shape `d`.
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+        cat_dims: A tensor of indices corresponding to categorical parameters.
+        max_num_cat_values: Maximum number of values for a categorical parameter,
+            beyond which values are uniformly sampled.
+
+    Returns:
+        A tensor of shape `num_neighbors x d`, denoting up to `max_num_cat_values`
+        unique 1-Hamming distance neighbors for each categorical dimension.
+    """
+
+    # Neighbors are generated by considering all possible values for each
+    # categorical dimension, one at a time.
+    def _get_cat_values(dim: int) -> Sequence[int]:
+        r"""Get a sequence of up to `max_num_cat_values` values that a categorical
+        feature may take."""
+        lb, ub = bounds[:, dim].long()
+        current_value = current_x[dim]
+        cat_values = range(lb, ub + 1)
+        if ub - lb + 1 <= max_num_cat_values:
+            return cat_values
+        else:
+            return random.sample(
+                [v for v in cat_values if v != current_value], k=max_num_cat_values
+            )
+
+    new_cat_values_lst = list(
+        itertools.chain.from_iterable(_get_cat_values(dim) for dim in cat_dims)
+    )
+    new_cat_values = torch.tensor(
+        new_cat_values_lst, device=current_x.device, dtype=current_x.dtype
+    )
+
+    num_cat_values = (bounds[1, :] - bounds[0, :] + 1).to(dtype=torch.long)
+    num_cat_values.clamp_(max=max_num_cat_values)
+    new_cat_idcs = torch.cat(
+        tuple(
+            torch.full((num_cat_values[dim].item(),), dim, device=current_x.device)
+            for dim in cat_dims
+        )
+    )
+    neighbors = current_x.repeat(len(new_cat_values), 1)
+    # Assign the new values to their corresponding columns.
+    neighbors.scatter_(1, new_cat_idcs.view(-1, 1), new_cat_values.view(-1, 1))
+
+    unique_neighbors = neighbors.unique(dim=0)
     # Also remove current_x if it is in unique_neighbors.
     unique_neighbors = unique_neighbors[~(unique_neighbors == current_x).all(dim=-1)]
     return unique_neighbors
@@ -167,7 +282,8 @@ def get_nearest_neighbors(
 def get_spray_points(
     X_baseline: Tensor,
     cont_dims: Tensor,
-    discrete_dims: Tensor,
+    discrete_dims: dict[int, list[float]],
+    cat_dims: Tensor,
     bounds: Tensor,
     num_spray_points: int,
     std_cont_perturbation: float = STD_CONT_PERTURBATION,
@@ -181,7 +297,9 @@ def get_spray_points(
     Args:
         X_baseline: Tensor of best acquired points across BO run.
         cont_dims: Indices of continuous parameters/input dimensions.
-        discrete_dims: Indices of binary/integer parameters/input dimensions.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
+        cat_dims: Indices of categorical parameters/input dimensions.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         num_spray_points: Number of spray points to return.
         std_cont_perturbation: standard deviation of Normal perturbations of
@@ -193,13 +311,27 @@ def get_spray_points(
     dim = bounds.shape[-1]
     device, dtype = X_baseline.device, X_baseline.dtype
     perturb_nbors = torch.zeros(0, dim, device=device, dtype=dtype)
+    t_discrete_dims = torch.tensor(
+        list(discrete_dims.keys()), dtype=torch.long, device=device
+    )
     for x in X_baseline:
-        discrete_perturbs = get_nearest_neighbors(
-            current_x=x, bounds=bounds, discrete_dims=discrete_dims
-        )
-        discrete_perturbs = discrete_perturbs[
-            torch.randint(len(discrete_perturbs), (num_spray_points,), device=device)
-        ]
+        if len(discrete_dims) > 0:
+            discrete_perturbs = get_nearest_neighbors(
+                current_x=x, bounds=bounds, discrete_dims=discrete_dims
+            )
+            discrete_perturbs = discrete_perturbs[
+                torch.randint(
+                    len(discrete_perturbs), (num_spray_points,), device=device
+                )
+            ]
+        if cat_dims.numel():
+            cat_perturbs = get_categorical_neighbors(
+                current_x=x, bounds=bounds, cat_dims=cat_dims
+            )
+            cat_perturbs = cat_perturbs[
+                torch.randint(len(cat_perturbs), (num_spray_points,), device=device)
+            ]
+
         cont_perturbs = x[cont_dims] + std_cont_perturbation * torch.randn(
             num_spray_points, len(cont_dims), device=device, dtype=dtype
         )
@@ -207,7 +339,11 @@ def get_spray_points(
             min=bounds[0, cont_dims], max=bounds[1, cont_dims]
         )
         nbds = torch.zeros(num_spray_points, dim, device=device, dtype=dtype)
-        nbds[..., discrete_dims] = discrete_perturbs[..., discrete_dims]
+        if len(discrete_dims) > 0:
+            nbds[..., t_discrete_dims] = discrete_perturbs[..., t_discrete_dims]
+        if cat_dims.numel():
+            nbds[..., cat_dims] = cat_perturbs[..., cat_dims]
+
         nbds[..., cont_dims] = cont_perturbs
         perturb_nbors = torch.cat([perturb_nbors, nbds], dim=0)
     return perturb_nbors
@@ -215,7 +351,8 @@ def get_spray_points(
 
 def sample_feasible_points(
     opt_inputs: OptimizeAcqfInputs,
-    discrete_dims: Tensor,
+    discrete_dims: dict[int, list[float]],
+    cat_dims: Tensor,
     num_points: int,
 ) -> Tensor:
     r"""Sample feasible points from the optimization domain.
@@ -233,8 +370,9 @@ def sample_feasible_points(
 
     Args:
         opt_inputs: Common set of arguments for acquisition optimization.
-        discrete_dims: A tensor of indices corresponding to binary and
-            integer parameters.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
+        cat_dims: A tensor of indices corresponding to categorical parameters.
         num_points: The number of points to sample.
 
     Returns:
@@ -272,10 +410,13 @@ def sample_feasible_points(
         # Generate twice as many, since we're likely to filter out some points.
         base_points = generator(n=num_remaining * 2)
         # Round the discrete dimensions to the nearest integer.
-        base_points[:, discrete_dims] = base_points[:, discrete_dims].round()
+        base_points = round_discrete_dims(X=base_points, discrete_dims=discrete_dims)
+        base_points[:, cat_dims] = base_points[:, cat_dims].round()
         # Fix the fixed features.
         base_points = fix_features(
-            X=base_points, fixed_features=opt_inputs.fixed_features
+            X=base_points,
+            fixed_features=opt_inputs.fixed_features,
+            replace_current_value=True,
         )
         # Filter out infeasible points.
         feasible_points = _filter_infeasible(
@@ -290,9 +431,31 @@ def sample_feasible_points(
     return all_points[:num_points]
 
 
+def round_discrete_dims(X: Tensor, discrete_dims: dict[int, list[float]]) -> Tensor:
+    """Round the discrete dimensions of a tensor to the nearest allowed values.
+
+    Args:
+        X: A tensor of shape `n x d`, where `d` is the number of dimensions.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
+
+    Returns:
+        A tensor of the same shape as `X`, with discrete dimensions rounded to
+        the nearest allowed values.
+    """
+    X = X.clone()
+    for dim, values in discrete_dims.items():
+        allowed = torch.tensor(values, device=X.device, dtype=X.dtype)
+        diffs = torch.abs(X[..., dim].unsqueeze(-1) - allowed)
+        idx = torch.argmin(diffs, dim=-1)
+        X[..., dim] = allowed[idx]
+    return X
+
+
 def generate_starting_points(
     opt_inputs: OptimizeAcqfInputs,
-    discrete_dims: Tensor,
+    discrete_dims: dict[int, list[float]],
+    cat_dims: Tensor,
     cont_dims: Tensor,
 ) -> tuple[Tensor, Tensor]:
     """Generate initial starting points for the alternating optimization.
@@ -305,8 +468,9 @@ def generate_starting_points(
             This function utilizes `acq_function`, `bounds`, `num_restarts`,
             `raw_samples`, `options`, `fixed_features` and constraints
             from `opt_inputs`.
-        discrete_dims: A tensor of indices corresponding to integer and
-            binary parameters.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
+        cat_dims: A tensor of indices corresponding to categorical parameters.
         cont_dims: A tensor of indices corresponding to continuous parameters.
 
     Returns:
@@ -316,11 +480,11 @@ def generate_starting_points(
     """
     bounds = opt_inputs.bounds
     binary_dims = []
-    for dim in discrete_dims:
-        if bounds[0, dim] == 0 and bounds[1, dim] == 1:
+    for dim, values in discrete_dims.items():
+        if len(values) == 2:
             binary_dims.append(dim)
     num_binary = len(binary_dims)
-    num_integer = len(discrete_dims) - num_binary
+    num_discrete = len(discrete_dims) - num_binary
     num_restarts = opt_inputs.num_restarts
     raw_samples = none_throws(opt_inputs.raw_samples)
 
@@ -329,7 +493,7 @@ def generate_starting_points(
         "initialization_strategy",
         (
             "equally_spaced"
-            if num_integer == 0 and num_binary >= 2
+            if num_discrete == 0 and num_binary >= 2
             else "continuous_relaxation"
         ),
     )
@@ -374,7 +538,7 @@ def generate_starting_points(
         x_init_candts = x_init_candts.squeeze(-2)
 
     if initialization_strategy == "equally_spaced":
-        if num_integer > 0:
+        if num_discrete > 0:
             raise ValueError(  # pragma: no cover
                 "Equally spaced initialization is not supported with non-binary "
                 "discrete variables."
@@ -387,16 +551,16 @@ def generate_starting_points(
             dtype=torch.int64,
             device=bounds.device,
         )
-        x_init_candts[:, binary_dims] = 0
+        x_init_candts[:, binary_dims] = bounds[0, binary_dims]
         binary_dims_t = torch.as_tensor(binary_dims, device=bounds.device)
         for i, xi in enumerate(x_init_candts):
             rand_binary_dims = binary_dims_t[
                 torch.randperm(num_binary, device=xi.device)[: k[i]]
             ]
-            x_init_candts[i, rand_binary_dims] = 1
+            x_init_candts[i, rand_binary_dims] = bounds[1, rand_binary_dims]
 
     num_spray_points = assert_is_instance(
-        options.get("num_spray_points", 20 if num_integer == 0 else 0), int
+        options.get("num_spray_points", 20 if num_discrete == 0 else 0), int
     )
     if (
         num_spray_points > 0
@@ -415,10 +579,12 @@ def generate_starting_points(
         )
         x_init_candts = torch.cat([x_init_candts, perturb_nbors], dim=0)
 
-    # Process the candidates to make sure they are all feasible.
-    x_init_candts[..., discrete_dims] = x_init_candts[..., discrete_dims].round()
+    # For each discrete dimension, map to the nearest allowed value
+    x_init_candts = round_discrete_dims(X=x_init_candts, discrete_dims=discrete_dims)
     x_init_candts = fix_features(
-        X=x_init_candts, fixed_features=opt_inputs.fixed_features
+        X=x_init_candts,
+        fixed_features=opt_inputs.fixed_features,
+        replace_current_value=True,
     )
     x_init_candts = _filter_infeasible(
         X=x_init_candts, inequality_constraints=opt_inputs.inequality_constraints
@@ -448,12 +614,14 @@ def generate_starting_points(
         x_init_candts, acq_vals = initialize_q_batch(
             X=x_init_candts, acq_vals=acq_vals, n=num_restarts
         )
+
     return x_init_candts, acq_vals
 
 
 def discrete_step(
     opt_inputs: OptimizeAcqfInputs,
-    discrete_dims: Tensor,
+    discrete_dims: dict[int, list[float]],
+    cat_dims: Tensor,
     current_x: Tensor,
 ) -> tuple[Tensor, Tensor]:
     """Discrete nearest neighbour search.
@@ -462,47 +630,116 @@ def discrete_step(
         opt_inputs: Common set of arguments for acquisition optimization.
             This function utilizes `acq_function`, `bounds`, `options`
             and constraints from `opt_inputs`.
-        discrete_dims: A tensor of indices corresponding to binary and
-            integer parameters.
-        current_x: Starting point. A tensor of shape `d`.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
+        cat_dims: A tensor of indices corresponding to categorical parameters.
+        current_x: Batch of starting points. A tensor of shape `b x d`.
 
     Returns:
-        A tuple of two tensors: a (d)-dim tensor of optimized point
+        A tuple of two tensors: a (b, d)-dim tensor of optimized point
             and a scalar tensor of correspondins acquisition value.
     """
     with torch.no_grad():
-        current_acqval = opt_inputs.acq_function(current_x.unsqueeze(0))
+        current_acqvals = opt_inputs.acq_function(current_x.unsqueeze(1))
     options = opt_inputs.options or {}
-    for _ in range(
-        assert_is_instance(options.get("maxiter_discrete", MAX_ITER_DISCRETE), int)
-    ):
-        x_neighbors = get_nearest_neighbors(
-            current_x=current_x.detach(),
-            bounds=opt_inputs.bounds,
-            discrete_dims=discrete_dims,
-        )
-        x_neighbors = _filter_infeasible(
-            X=x_neighbors, inequality_constraints=opt_inputs.inequality_constraints
-        )
-        if x_neighbors.numel() == 0:
-            # Exit gracefully with last point if there are no feasible neighbors.
+    maxiter_discrete = options.get("maxiter_discrete", MAX_ITER_DISCRETE)
+    done = torch.zeros(len(current_x), dtype=torch.bool)
+    for _ in range(assert_is_instance(maxiter_discrete, int)):
+        # we don't batch this, as the number of x_neighbors can be different
+        # for each entry (as duplicates are removed), and the most expensive
+        # op is the acq_function, which is batched
+        # TODO finding the set of neighbors currently is done sequentially
+        # for one item in the batch after the other
+        x_neighbors_list = [None for _ in done]
+        for i in range(len(done)):
+            # don't do anything if we are already done
+            if done[i]:
+                continue
+
+            neighbors = []
+
+            # if we have discrete_dims look for neighbors by stepping +1/-1
+            if len(discrete_dims) > 0:
+                x_neighbors_discrete = get_nearest_neighbors(
+                    current_x=current_x[i].detach(),
+                    bounds=opt_inputs.bounds,
+                    discrete_dims=discrete_dims,
+                )
+                x_neighbors_discrete = _filter_infeasible(
+                    X=x_neighbors_discrete,
+                    inequality_constraints=opt_inputs.inequality_constraints,
+                )
+                neighbors.append(x_neighbors_discrete)
+
+            # if we have cat_dims look for neighbors by changing the cat's
+            if cat_dims.numel():
+                x_neighbors_cat = get_categorical_neighbors(
+                    current_x=current_x[i].detach(),
+                    bounds=opt_inputs.bounds,
+                    cat_dims=cat_dims,
+                )
+                x_neighbors_cat = _filter_infeasible(
+                    X=x_neighbors_cat,
+                    inequality_constraints=opt_inputs.inequality_constraints,
+                )
+                neighbors.append(x_neighbors_cat)
+
+            x_neighbors = torch.cat(neighbors, dim=0)
+            if x_neighbors.numel() == 0:
+                # If the i'th point has no neighbors, we mark it as done
+                done[i] = True  # pragma: no cover
+            x_neighbors_list[i] = x_neighbors
+
+        # Exit if all batches converged or have no valid neighbors left.
+        if done.all():
             break
+
+        all_x_neighbors = torch.cat(
+            [
+                x_neighbors
+                for x_neighbors in x_neighbors_list
+                if x_neighbors is not None
+            ],
+            dim=0,
+        )  # shape: (sum(#neihbors of the items in the batch), d)
         with torch.no_grad():
+            # This is the most expensive call in this function.
+            # The reason that `discrete_step` uses a batched x
+            # rather than looping over each batch within x is so that
+            # we can batch this call. This leads to an overall speedup
+            # even though the above and below for loops cannot
+            # be sped up by batching.
             acq_vals = torch.cat(
                 [
                     opt_inputs.acq_function(X_.unsqueeze(-2))
-                    for X_ in x_neighbors.split(
+                    for X_ in all_x_neighbors.split(
                         options.get("init_batch_limit", MAX_BATCH_SIZE)
                     )
                 ]
             )
-        argmax = acq_vals.argmax()
-        improvement = acq_vals[argmax] - current_acqval
-        if improvement > 0:
-            current_acqval, current_x = acq_vals[argmax], x_neighbors[argmax]
-        if improvement <= options.get("tol", CONVERGENCE_TOL):
-            break
-    return current_x, current_acqval
+        offset = 0
+        for i in range(len(done)):
+            if done[i]:
+                continue
+
+            # We index into all_x_neighbors in the following convoluted way,
+            # as it is a flattened version of x_neighbors_list with the
+            # None entries removed. That is why we do not increase offset if done[i].
+            width = len(x_neighbors_list[i])
+            x_neighbors = all_x_neighbors[offset : offset + width]
+            max_acq, argmax = acq_vals[offset : offset + width].max(dim=0)
+            improvement = max_acq - current_acqvals[i]
+            if improvement > 0:
+                current_acqvals[i], current_x[i] = (
+                    max_acq,
+                    x_neighbors[argmax],
+                )
+            if improvement <= options.get("tol", CONVERGENCE_TOL):
+                done[i] = True
+
+            offset += width
+
+    return current_x, current_acqvals
 
 
 def continuous_step(
@@ -516,42 +753,56 @@ def continuous_step(
         opt_inputs: Common set of arguments for acquisition optimization.
             This function utilizes `acq_function`, `bounds`, `options`,
             `fixed_features` and constraints from `opt_inputs`.
-        discrete_dims: A tensor of indices corresponding to binary and
-            integer parameters.
-        current_x: Starting point. A tensor of shape `d`.
+            `opt_inputs.return_best_only` should be `False`.
+        discrete_dims: A dictionary mapping indices of discrete dimensions
+            to a list of allowed values for that dimension.
+        cat_dims: A tensor of indices corresponding to categorical parameters.
+        current_x: Starting point. A tensor of shape `b x d`.
 
     Returns:
-        A tuple of two tensors: a (1 x d)-dim tensor of optimized points
-            and a (1)-dim tensor of acquisition values.
+        A tuple of two tensors: a (b x d)-dim tensor of optimized points
+            and a (b)-dim tensor of acquisition values.
     """
+
+    if opt_inputs.return_best_only:
+        raise UnsupportedError(
+            "`continuous_step` does not support `return_best_only=True`."
+        )
+
+    d = current_x.shape[-1]
     options = opt_inputs.options or {}
-    if len(discrete_dims) == len(current_x):  # nothing continuous to optimize
+    non_cont_dims = torch.cat((discrete_dims, cat_dims), dim=0)
+
+    if len(non_cont_dims) == d:  # nothing continuous to optimize
         with torch.no_grad():
-            return current_x, opt_inputs.acq_function(current_x.unsqueeze(0))
+            return current_x, opt_inputs.acq_function(current_x.unsqueeze(1))
 
     updated_opt_inputs = dataclasses.replace(
         opt_inputs,
         q=1,
-        num_restarts=1,
         raw_samples=None,
-        batch_initial_conditions=current_x.unsqueeze(0),
+        # unsqueeze to add the q dimension
+        batch_initial_conditions=current_x.unsqueeze(1),
         fixed_features={
-            **dict(zip(discrete_dims.tolist(), current_x[discrete_dims])),
+            **{d: current_x[:, d] for d in non_cont_dims.tolist()},
             **(opt_inputs.fixed_features or {}),
         },
         options={
             "maxiter": options.get("maxiter_continuous", MAX_ITER_CONT),
             "tol": options.get("tol", CONVERGENCE_TOL),
             "batch_limit": options.get("batch_limit", MAX_BATCH_SIZE),
+            "max_optimization_problem_aggregation_size": 1,
         },
     )
-    return _optimize_acqf(opt_inputs=updated_opt_inputs)
+    best_X, best_acq_values = _optimize_acqf(opt_inputs=updated_opt_inputs)
+    return best_X.view_as(current_x), best_acq_values
 
 
 def optimize_acqf_mixed_alternating(
     acq_function: AcquisitionFunction,
     bounds: Tensor,
-    discrete_dims: list[int],
+    discrete_dims: dict[int, list[float]] | None = None,
+    cat_dims: list[int] | None = None,
     options: dict[str, Any] | None = None,
     q: int = 1,
     raw_samples: int = RAW_SAMPLES,
@@ -568,7 +819,8 @@ def optimize_acqf_mixed_alternating(
     and continuous optimization via (L-BFGS) is performed for a fixed number of
     iterations.
 
-    NOTE: This method assumes that all discrete variables are integer valued.
+    NOTE: This method assumes that all categorical variables are
+    integer valued.
     The discrete dimensions that have more than
     `options.get("max_discrete_values", MAX_DISCRETE_VALUES)` values will
     be optimized using continuous relaxation.
@@ -578,7 +830,9 @@ def optimize_acqf_mixed_alternating(
     Args:
         acq_function: BoTorch Acquisition function.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
-        discrete_dims: A list of indices corresponding to integer and binary parameters.
+        discrete_dims: A dictionary mapping indices of discrete and binary
+            dimensions to a list of allowed values for that dimension.
+        cat_dims: A list of indices corresponding to categorical parameters.
         options: Dictionary specifying optimization options. Supports the following:
         - "initialization_strategy": Strategy used to generate the initial candidates.
             "random", "continuous_relaxation" or "equally_spaced" (linspace style).
@@ -625,14 +879,41 @@ def optimize_acqf_mixed_alternating(
         A tuple of two tensors: a (q x d)-dim tensor of optimized points
             and a (q)-dim tensor of their respective acquisition values.
     """
+
     if sequential is False:  # pragma: no cover
         raise NotImplementedError(
             "`optimize_acqf_mixed_alternating` only supports "
             "sequential optimization."
         )
 
+    cat_dims = cat_dims or []
+    discrete_dims = discrete_dims or {}
+
+    # sort the values in discrete dims in ascending order
+    discrete_dims = {dim: sorted(values) for dim, values in discrete_dims.items()}
+
+    for dim, values in discrete_dims.items():
+        lower_bnd, upper_bnd = bounds[:, dim].tolist()
+        lower, upper = values[0], values[-1]
+        if lower != lower_bnd:
+            raise ValueError(
+                f"Discrete dimension {dim} must start at the lower bound "
+                f"{lower_bnd} but starts at {lower}."
+            )
+        if upper != upper_bnd:
+            raise ValueError(
+                f"Discrete dimension {dim} must end at the upper bound "
+                f"{upper_bnd} but end at {upper}."
+            )
+
     fixed_features = fixed_features or {}
     options = options or {}
+    if options.get("max_optimization_problem_aggregation_size", 1) != 1:
+        raise UnsupportedError(
+            "optimize_acqf_mixed_alternating does not support "
+            "max_optimization_problem_aggregation_size != 1. "
+            "You might leave this option empty, though."
+        )
     options.setdefault("batch_limit", MAX_BATCH_SIZE)
     options.setdefault("init_batch_limit", options["batch_limit"])
     if not (keys := set(options.keys())).issubset(SUPPORTED_OPTIONS):
@@ -645,7 +926,6 @@ def optimize_acqf_mixed_alternating(
     # dimensions that should be using continuous relaxation.
     discrete_dims, post_processing_func = _setup_continuous_relaxation(
         discrete_dims=discrete_dims,
-        bounds=bounds,
         max_discrete_values=assert_is_instance(
             options.get("max_discrete_values", MAX_DISCRETE_VALUES), int
         ),
@@ -665,19 +945,38 @@ def optimize_acqf_mixed_alternating(
         fixed_features=fixed_features,
         post_processing_func=post_processing_func,
         batch_initial_conditions=None,
-        return_best_only=True,
+        return_best_only=False,  # We don't want to perform the cont. optimization
+        # step and only return best, but this function itself only returns best
         gen_candidates=gen_candidates_scipy,
-        sequential=sequential,
+        sequential=sequential,  # only relevant if all dims are cont.
     )
-    _validate_sequential_inputs(opt_inputs=opt_inputs)
+    if sequential:
+        # Sequential optimization requires return_best_only to be True
+        # But we turn it off here, as we "manually" perform the seq.
+        # conditioning in the loop below
+        _validate_sequential_inputs(
+            opt_inputs=dataclasses.replace(opt_inputs, return_best_only=True)
+        )
 
     base_X_pending = acq_function.X_pending if q > 1 else None
     dim = bounds.shape[-1]
     tkwargs: dict[str, Any] = {"device": bounds.device, "dtype": bounds.dtype}
     # Remove fixed features from dims, so they don't get optimized.
-    discrete_dims = [dim for dim in discrete_dims if dim not in fixed_features]
-    if len(discrete_dims) == 0:
-        return _optimize_acqf(opt_inputs=opt_inputs)
+    discrete_dims = {
+        dim: values
+        for dim, values in discrete_dims.items()
+        if dim not in fixed_features
+    }
+    cat_dims = [dim for dim in cat_dims if dim not in fixed_features]
+    non_cont_dims = [*discrete_dims.keys(), *cat_dims]
+    if len(non_cont_dims) == 0:
+        # If the problem is fully continuous, fall back to standard optimization.
+        return _optimize_acqf(
+            opt_inputs=dataclasses.replace(
+                opt_inputs,
+                return_best_only=True,
+            )
+        )
     if not (
         isinstance(discrete_dims, list)
         and len(set(discrete_dims)) == len(discrete_dims)
@@ -689,9 +988,13 @@ def optimize_acqf_mixed_alternating(
             "between 0 and num_dims - 1."
         )
     discrete_dims_t = torch.tensor(
-        discrete_dims, dtype=torch.long, device=tkwargs["device"]
+        list(discrete_dims.keys()), dtype=torch.long, device=tkwargs["device"]
     )
-    cont_dims = complement_indices_like(indices=discrete_dims_t, d=dim)
+    cat_dims_t = torch.tensor(cat_dims, dtype=torch.long, device=tkwargs["device"])
+    non_cont_dims = torch.tensor(
+        non_cont_dims, dtype=torch.long, device=tkwargs["device"]
+    )
+    cont_dims = complement_indices_like(indices=non_cont_dims, d=dim)
     # Fixed features are all in cont_dims. Remove them, so they don't get optimized.
     ff_idcs = torch.tensor(
         list(fixed_features.keys()), dtype=torch.long, device=tkwargs["device"]
@@ -702,29 +1005,33 @@ def optimize_acqf_mixed_alternating(
         # Generate starting points.
         best_X, best_acq_val = generate_starting_points(
             opt_inputs=opt_inputs,
-            discrete_dims=discrete_dims_t,
+            discrete_dims=discrete_dims,
+            cat_dims=cat_dims_t,
             cont_dims=cont_dims,
         )
 
-        # TODO: Eliminate this for loop. Tensors being unequal sizes could potentially
-        # be handled by concatenating them rather than stacking, and keeping a list
-        # of indices.
-        for i in range(num_restarts):
-            alternate_steps = 0
-            while alternate_steps < options.get("maxiter_alternating", MAX_ITER_ALTER):
-                starting_acq_val = best_acq_val[i].clone()
-                alternate_steps += 1
-                for step in (discrete_step, continuous_step):
-                    best_X[i], best_acq_val[i] = step(
-                        opt_inputs=opt_inputs,
-                        discrete_dims=discrete_dims_t,
-                        current_x=best_X[i],
-                    )
+        done = torch.zeros(len(best_X), dtype=torch.bool, device=tkwargs["device"])
+        for _step in range(options.get("maxiter_alternating", MAX_ITER_ALTER)):
+            starting_acq_val = best_acq_val.clone()
+            best_X[~done], best_acq_val[~done] = discrete_step(
+                opt_inputs=opt_inputs,
+                discrete_dims=discrete_dims,
+                cat_dims=cat_dims_t,
+                current_x=best_X[~done],
+            )
 
-                improvement = best_acq_val[i] - starting_acq_val
-                if improvement < options.get("tol", CONVERGENCE_TOL):
-                    # Check for convergence
-                    break
+            best_X[~done], best_acq_val[~done] = continuous_step(
+                opt_inputs=opt_inputs,
+                discrete_dims=discrete_dims_t,
+                cat_dims=cat_dims_t,
+                current_x=best_X[~done],
+            )
+
+            improvement = best_acq_val - starting_acq_val
+            done_now = improvement < options.get("tol", CONVERGENCE_TOL)
+            done = done | done_now
+            if done.float().mean() >= STOP_AFTER_SHARE_CONVERGED:
+                break
 
         new_candidate = best_X[torch.argmax(best_acq_val)].unsqueeze(0)
         candidates = torch.cat([candidates, new_candidate], dim=-2)

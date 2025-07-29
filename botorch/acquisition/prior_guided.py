@@ -21,7 +21,11 @@ from __future__ import annotations
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.monte_carlo import SampleReducingMCAcquisitionFunction
 from botorch.exceptions.errors import BotorchError
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    concatenate_pending_points,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 from torch.nn import Module
@@ -81,6 +85,7 @@ class PriorGuidedAcquisitionFunction(AcquisitionFunction):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Compute the acquisition function weighted by the prior."""
         # batch_shape x q

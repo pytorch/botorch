@@ -54,15 +54,18 @@ from gpytorch.means import ConstantMean
 EXPECTED_KEYS = [
     "latent_features",
     "mean_module.raw_constant",
-    "covar_module.raw_outputscale",
-    "covar_module.base_kernel.raw_lengthscale",
-    "covar_module.base_kernel.raw_lengthscale_constraint.lower_bound",
-    "covar_module.base_kernel.raw_lengthscale_constraint.upper_bound",
-    "covar_module.raw_outputscale_constraint.lower_bound",
-    "covar_module.raw_outputscale_constraint.upper_bound",
-    "task_covar_module.raw_lengthscale",
-    "task_covar_module.raw_lengthscale_constraint.lower_bound",
-    "task_covar_module.raw_lengthscale_constraint.upper_bound",
+    "covar_module.kernels.1.raw_var",
+    "covar_module.kernels.1.active_dims",
+    "covar_module.kernels.0.base_kernel.raw_lengthscale",
+    "covar_module.kernels.0.base_kernel.raw_lengthscale_constraint.lower_bound",
+    "covar_module.kernels.0.active_dims",
+    "covar_module.kernels.1.raw_var_constraint.upper_bound",
+    "covar_module.kernels.0.base_kernel.raw_lengthscale_constraint.upper_bound",
+    "covar_module.kernels.0.raw_outputscale_constraint.lower_bound",
+    "covar_module.kernels.1.covar_factor",
+    "covar_module.kernels.0.raw_outputscale_constraint.upper_bound",
+    "covar_module.kernels.1.raw_var_constraint.lower_bound",
+    "covar_module.kernels.0.raw_outputscale",
 ]
 EXPECTED_KEYS_NOISE = EXPECTED_KEYS + [
     "likelihood.noise_covar.raw_noise",
@@ -251,14 +254,15 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         fit_fully_bayesian_model_nuts(
             model, warmup_steps=8, num_samples=5, thinning=2, disable_progbar=True
         )
+        data_covar_module, task_covar_module = model.covar_module.kernels
         self.assertEqual(model.batch_shape, torch.Size([3]))
         self.assertIsInstance(model.mean_module, ConstantMean)
         self.assertEqual(model.mean_module.raw_constant.shape, model.batch_shape)
-        self.assertIsInstance(model.covar_module, ScaleKernel)
-        self.assertEqual(model.covar_module.outputscale.shape, model.batch_shape)
-        self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
+        self.assertIsInstance(data_covar_module, ScaleKernel)
+        self.assertEqual(data_covar_module.outputscale.shape, model.batch_shape)
+        self.assertIsInstance(data_covar_module.base_kernel, MaternKernel)
         self.assertEqual(
-            model.covar_module.base_kernel.lengthscale.shape, torch.Size([3, 1, d])
+            data_covar_module.base_kernel.lengthscale.shape, torch.Size([3, 1, d])
         )
         if infer_noise:
             self.assertIsInstance(model.likelihood, GaussianLikelihood)
@@ -267,14 +271,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             )
         else:
             self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
-        self.assertIsInstance(model.task_covar_module, MaternKernel)
-        self.assertEqual(
-            model.task_covar_module.lengthscale.shape, torch.Size([3, 1, task_rank])
-        )
-        self.assertEqual(
-            model.latent_features.shape, torch.Size([3, self.num_tasks, task_rank])
-        )
-
+        self.assertIsInstance(task_covar_module, IndexKernel)
         # Predict on some test points
         for batch_shape in [[5], [5, 2], [5, 2, 6]]:
             test_X = torch.rand(*batch_shape, d, **tkwargs)
@@ -449,7 +446,6 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         self.assertIsNone(model.mean_module)
         self.assertIsNone(model.covar_module)
         self.assertIsNone(model.likelihood)
-        self.assertIsNone(model.task_covar_module)
 
     def test_fit_model_float(self):
         self.test_fit_model(dtype=torch.float)
@@ -623,16 +619,16 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 **tkwargs,
             )
             model.load_mcmc_samples(mcmc_samples)
-
+            data_covar_module, task_covar_module = model.covar_module.kernels
             self.assertTrue(
                 torch.allclose(
-                    model.covar_module.base_kernel.lengthscale,
+                    data_covar_module.base_kernel.lengthscale,
                     mcmc_samples["lengthscale"],
                 )
             )
             self.assertTrue(
                 torch.allclose(
-                    model.covar_module.outputscale,
+                    data_covar_module.outputscale,
                     mcmc_samples["outputscale"],
                 )
             )
@@ -643,6 +639,15 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 )
             )
 
+            self.assertTrue(
+                torch.allclose(
+                    task_covar_module.covar_matrix.to_dense(),
+                    matern52_kernel(
+                        mcmc_samples["latent_features"],
+                        mcmc_samples["task_lengthscale"],
+                    ),
+                )
+            )
             # Handle outcome transforms (if used)
             train_Y_tf, train_Yvar_tf = train_Y, train_Yvar
             if use_outcome_transform:
@@ -704,3 +709,18 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             self.assertEqual(data_dict["task_feature"], task_feature)
             self.assertEqual(data_dict["rank"], 1)
             self.assertTrue("task_covar_prior" not in data_dict)
+
+            task_feature = -1
+            datasets, (train_X, train_Y, train_Yvar) = gen_multi_task_dataset(
+                yvar=None if infer_noise else 0.05, **tkwargs
+            )
+
+            d = train_X.shape[1] - 1
+            model = SaasFullyBayesianMultiTaskGP(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Yvar=train_Yvar,
+                task_feature=task_feature,
+            )
+            self.assertEqual(model._task_feature, d)
+            self.assertEqual(model.pyro_model.task_feature, d)

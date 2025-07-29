@@ -21,7 +21,11 @@ from botorch.acquisition.multi_objective.joint_entropy_search import (
 )
 from botorch.models.model import Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    concatenate_pending_points,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 
@@ -228,6 +232,7 @@ class qLowerBoundMultiObjectiveMaxValueEntropySearch(
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluates qLowerBoundMultiObjectiveMaxValueEntropySearch at the design
         points `X`.

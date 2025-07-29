@@ -5,8 +5,10 @@
 # LICENSE file in the root directory of this source tree.
 
 from typing import Any
+from unittest import mock
 
 import torch
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.models import (
     GenericDeterministicModel,
     HigherOrderGP,
@@ -23,6 +25,7 @@ from botorch.models.multitask import MultiTaskGP
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch.utils.transforms import (
     _verify_output_shape,
+    average_over_ensemble_models,
     concatenate_pending_points,
     is_ensemble,
     is_fully_bayesian,
@@ -34,6 +37,85 @@ from botorch.utils.transforms import (
     unnormalize,
 )
 from torch import Tensor
+
+
+class EnsembleAcquisition(AcquisitionFunction):
+    """An acquisition function that returns a `batch_shape x ensemble_shape` tensor"""
+
+    def __init__(self, mc_samples: int = 3, num_ensembles: int = 1) -> None:
+        """Initialize the acquisition function.
+
+        Args:
+            mc_samples: The number of MC samples to use.
+            num_ensembles: The number of ensembles to use.
+        """
+        self.mc_samples = mc_samples
+        self.num_ensembles = num_ensembles
+        self.model = None  # dummy model attribute
+
+    def forward(self, X: Tensor) -> Tensor:
+        """Forward method.
+
+        Args:
+            X: A `batch_shape x n x d`-dim Tensor of model inputs.
+
+        Returns:
+            A `batch_shape x ensemble_shape`-dim Tensor of acquisition values.
+        """
+        _ = X.shape[-1]
+        q = X.shape[-2]
+        n = X.shape[-3] if len(X.shape) >= 3 else 1
+        batch_shape = X.shape[:-3]
+        # shape is `sample_sample x batch_shape x ensemble_shape x q`
+        acqvals = torch.randn(self.mc_samples, *batch_shape, n, self.num_ensembles, q)
+        # return shape is `batch_shape x ensemble_shape`
+        return acqvals.mean(dim=0).amax(dim=-1)
+
+
+# With decorator, forward returns a `batch_shape`-dim tensor
+class EnsembleAveragedAcquisition(EnsembleAcquisition):
+    """An acquisition function that returns a `batch_shape`-dim tensor"""
+
+    @average_over_ensemble_models
+    def forward(self, X: Tensor) -> Tensor:
+        """Forward method.
+
+        Args:
+            X: A `batch_shape x n x d`-dim Tensor of model inputs.
+
+        Returns:
+            A batch_shape-dim Tensor of acquisition values.
+        """
+        # return shape through decorator is `batch_shape`
+        return super().forward(X)
+
+
+class TestAverageOverEnsembleModels(BotorchTestCase):
+    def test_average_over_ensemble_models(self):
+        mc_samples = 3
+        num_ensembles = 2
+        ens_acqf = EnsembleAcquisition(
+            mc_samples=mc_samples, num_ensembles=num_ensembles
+        )
+        n, q, d = 4, 5, 1
+        batch_shape = torch.Size([2])
+        X = torch.randn(*batch_shape, n, q, d)
+        ens_val = ens_acqf.forward(X)
+        self.assertEqual(ens_val.shape, torch.Size([*batch_shape, n, num_ensembles]))
+
+        ave_acqf = EnsembleAveragedAcquisition(
+            mc_samples=mc_samples, num_ensembles=num_ensembles
+        )
+        # the decorator leaves the output unchanged as long as the model is not an
+        # ensemble model
+        ave_val = ave_acqf.forward(X)
+        self.assertEqual(ave_val.shape, torch.Size([*batch_shape, n, num_ensembles]))
+
+        # if the model is an ensemble model, the decorator averages over the ensemble
+        # dimension
+        with mock.patch("botorch.utils.transforms.is_ensemble", return_value=True):
+            ave_val = ave_acqf.forward(X)
+        self.assertEqual(ave_val.shape, torch.Size([*batch_shape, n]))
 
 
 class TestStandardize(BotorchTestCase):
@@ -100,31 +182,38 @@ class TestNormalizeAndUnnormalize(BotorchTestCase):
 
 class BMIMTestClass(BotorchTestCase):
     @t_batch_mode_transform(assert_output_shape=False)
+    @average_over_ensemble_models
     def q_method(self, X: Tensor) -> None:
         return X
 
     @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
+    @average_over_ensemble_models
     def q1_method(self, X: Tensor) -> None:
         return X
 
     @t_batch_mode_transform(assert_output_shape=False)
+    @average_over_ensemble_models
     def kw_method(self, X: Tensor, dummy_arg: Any = None):
         self.assertIsNotNone(dummy_arg)
         return X
 
     @t_batch_mode_transform(assert_output_shape=True)
+    @average_over_ensemble_models
     def wrong_shape_method(self, X: Tensor):
         return X
 
     @t_batch_mode_transform(assert_output_shape=True)
+    @average_over_ensemble_models
     def correct_shape_method(self, X: Tensor):
         return X.mean(dim=(-1, -2)).squeeze(-1)
 
     @concatenate_pending_points
+    @average_over_ensemble_models
     def dummy_method(self, X: Tensor) -> Tensor:
         return X
 
     @t_batch_mode_transform(assert_output_shape=True)
+    @average_over_ensemble_models
     def broadcast_batch_shape_method(self, X: Tensor):
         return X.mean(dim=(-1, -2)).repeat(2, *[1] * (X.dim() - 2))
 
@@ -227,8 +316,20 @@ class TestBatchModeTransform(BotorchTestCase):
         self.assertEqual(Xout.shape, torch.Size())
         # test with model batch shape
         c.model = MockModel(MockPosterior(mean=X))
-        with self.assertRaises(AssertionError):
+        with self.assertRaisesRegex(
+            AssertionError,
+            "Expected the output shape to match either the t-batch shape of X",
+        ):
             c.broadcast_batch_shape_method(X)
+
+        # testing more informative error message when the decorator adds the batch dim
+        with self.assertRaisesRegex(
+            AssertionError,
+            "Expected the output shape to match either the t-batch shape of X"
+            r".*Note that `X\.shape` was originally torch\.Size\(\[1, 2\]\) before the "
+            r"`t_batch_mode_transform` decorator added a batch dimension\.",
+        ):
+            c.broadcast_batch_shape_method(X[0])
         c.model = MockModel(MockPosterior(mean=X.repeat(2, *[1] * X.dim())))
         Xout = c.broadcast_batch_shape_method(X)
         self.assertEqual(Xout.shape, c.model.batch_shape)

@@ -23,6 +23,7 @@ from botorch.sampling.pathwise.utils import (
 )
 from botorch.utils.dispatcher import Dispatcher
 from botorch.utils.sampling import draw_sobol_normal_samples
+from botorch.utils.transforms import is_ensemble
 from gpytorch.kernels import Kernel
 from gpytorch.models import ApproximateGP, ExactGP, GP
 from gpytorch.variational import _VariationalStrategy
@@ -59,6 +60,7 @@ def _draw_kernel_feature_paths_fallback(
     input_transform: TInputTransform | None = None,
     output_transform: TOutputTransform | None = None,
     weight_generator: Callable[[Size], Tensor] | None = None,
+    is_ensemble: bool = False,
     **kwargs: Any,
 ) -> GeneralizedLinearPath:
     r"""Generate sample paths from a kernel-based prior using feature maps.
@@ -87,6 +89,7 @@ def _draw_kernel_feature_paths_fallback(
         *feature_map.output_shape,
     )
     if weight_generator is None:
+        # weight is sample_shape x batch_shape x num_outputs
         weight = draw_sobol_normal_samples(
             n=sample_shape.numel() * covar_module.batch_shape.numel(),
             d=feature_map.output_shape.numel(),
@@ -104,6 +107,7 @@ def _draw_kernel_feature_paths_fallback(
         bias_module=mean_module,
         input_transform=input_transform,
         output_transform=output_transform,
+        is_ensemble=is_ensemble,
     )
 
 
@@ -117,6 +121,7 @@ def _draw_kernel_feature_paths_ExactGP(
         covar_module=model.covar_module,
         input_transform=get_input_transform(model),
         output_transform=get_output_transform(model),
+        is_ensemble=is_ensemble(model),
         num_ambient_inputs=train_X.shape[-1],
         **kwargs,
     )
@@ -192,5 +197,6 @@ def _draw_kernel_feature_paths_ApproximateGP_fallback(
     return _draw_kernel_feature_paths_fallback(
         mean_module=model.mean_module,
         covar_module=model.covar_module,
+        is_ensemble=is_ensemble(model),
         **kwargs,
     )

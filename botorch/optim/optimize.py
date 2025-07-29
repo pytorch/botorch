@@ -367,7 +367,18 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
     def _optimize_batch_candidates() -> tuple[Tensor, Tensor, list[Warning]]:
         batch_candidates_list: list[Tensor] = []
         batch_acq_values_list: list[Tensor] = []
+
         batched_ics = batch_initial_conditions.split(batch_limit)
+        if opt_inputs.fixed_features is None:
+            batched_fixed_features = {}
+        else:
+            batched_fixed_features = {
+                k: ff.split(batch_limit)
+                if torch.is_tensor(ff) and ff.numel() > 1
+                else [ff] * len(batched_ics)
+                for k, ff in opt_inputs.fixed_features.items()
+            }
+
         opt_warnings = []
         timeout_sec = (
             opt_inputs.timeout_sec / len(batched_ics)
@@ -393,7 +404,7 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
                     lower_bounds=lower_bounds,
                     upper_bounds=upper_bounds,
                     options=gen_options,
-                    fixed_features=opt_inputs.fixed_features,
+                    fixed_features={k: v[i] for k, v in batched_fixed_features.items()},
                     timeout_sec=timeout_sec,
                     **gen_kwargs,
                 )
@@ -789,7 +800,7 @@ def optimize_acqf_cyclic(
     if q > 1:
         cyclic_options = cyclic_options or {}
         stopping_criterion = ExpMAStoppingCriterion(**cyclic_options)
-        stop = stopping_criterion.evaluate(fvals=acq_vals)
+        stop = stopping_criterion(fvals=acq_vals)
         base_X_pending = acq_function.X_pending
         idxr = torch.ones(q, dtype=torch.bool, device=opt_inputs.bounds.device)
         while not stop:
@@ -810,7 +821,7 @@ def optimize_acqf_cyclic(
                 candidates[i] = candidate_i
                 acq_vals[i] = acq_val_i
                 idxr[i] = 1
-            stop = stopping_criterion.evaluate(fvals=acq_vals)
+            stop = stopping_criterion(fvals=acq_vals)
         acq_function.set_X_pending(base_X_pending)
     return candidates, acq_vals
 

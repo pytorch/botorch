@@ -33,7 +33,11 @@ from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.models.fully_bayesian import MCMC_DIM, SaasFullyBayesianSingleTaskGP
 from botorch.models.utils import fantasize as fantasize_flag
 from botorch.models.utils.gpytorch_modules import MIN_INFERRED_NOISE_LEVEL
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    concatenate_pending_points,
+    t_batch_mode_transform,
+)
 from botorch_community.acquisition.bayesian_active_learning import DISTANCE_METRICS
 from torch import Tensor
 
@@ -119,6 +123,7 @@ class qSelfCorrectingBayesianOptimization(
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         # since we have two MC dims (over models and optima), we need to
         # unsqueeze a second dim to accomodate the posterior pass

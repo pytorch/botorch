@@ -43,6 +43,7 @@ from botorch.utils.multi_objective.hypervolume import (
 )
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from botorch.utils.transforms import (
+    average_over_ensemble_models,
     concatenate_pending_points,
     is_ensemble,
     match_batch_shape,
@@ -224,6 +225,7 @@ class qExpectedHypervolumeImprovement(
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         posterior = self.model.posterior(X)
         samples = self.get_posterior_samples(posterior)
@@ -349,6 +351,7 @@ class qNoisyExpectedHypervolumeImprovement(
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         X_full = torch.cat([match_batch_shape(self.X_baseline, X), X], dim=-2)
         # NOTE: To ensure that we correctly sample `f(X)` from the joint distribution
