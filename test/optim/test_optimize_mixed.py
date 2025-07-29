@@ -276,7 +276,6 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # where we fall back to randomly sampling a subset.
         random.seed(0)
         current_x = torch.tensor([50.0, 5.0], device=self.device)
-        # cat_dims = torch.tensor([0, 1], device=self.device, dtype=torch.long)
         cat_dims = {0: list(range(101)), 1: list(range(9))}
 
         neighbors = get_categorical_neighbors(
