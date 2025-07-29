@@ -8,7 +8,8 @@ import dataclasses
 import itertools
 import random
 import warnings
-from typing import Any, Callable, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any, Callable
 
 import torch
 from botorch.acquisition import AcquisitionFunction
@@ -807,8 +808,8 @@ def continuous_step(
 def optimize_acqf_mixed_alternating(
     acq_function: AcquisitionFunction,
     bounds: Tensor,
-    discrete_dims: dict[int, list[float]] | None = None,
-    cat_dims: dict[int, list[float]] | None = None,
+    discrete_dims: Mapping[int, Sequence[float]] | None = None,
+    cat_dims: Mapping[int, Sequence[float]] | None = None,
     options: dict[str, Any] | None = None,
     q: int = 1,
     raw_samples: int = RAW_SAMPLES,
