@@ -8,8 +8,7 @@ import dataclasses
 import itertools
 import random
 import warnings
-from collections.abc import Sequence
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 import torch
 from botorch.acquisition import AcquisitionFunction
@@ -574,6 +573,7 @@ def generate_starting_points(
             X_baseline=X_baseline,
             cont_dims=cont_dims,
             discrete_dims=discrete_dims,
+            cat_dims=cat_dims,
             bounds=bounds,
             num_spray_points=num_spray_points,
             std_cont_perturbation=assert_is_instance(
@@ -598,6 +598,7 @@ def generate_starting_points(
         new_x_init = sample_feasible_points(
             opt_inputs=opt_inputs,
             discrete_dims=discrete_dims,
+            cat_dims=cat_dims,
             num_points=num_restarts - len(x_init_candts),
         )
         x_init_candts = torch.cat([x_init_candts, new_x_init], dim=0)
@@ -817,19 +818,19 @@ def optimize_acqf_mixed_alternating(
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""
-    Optimizes acquisition function over mixed binary and continuous input spaces.
-    Multiple random restarting starting points are picked by evaluating a large set
-    of initial candidates. From each starting point, alternating discrete local search
-    and continuous optimization via (L-BFGS) is performed for a fixed number of
-    iterations.
+    Optimizes acquisition function over mixed integer, categorical, and continuous
+    input spaces. Multiple random restarting starting points are picked by evaluating
+    a large set of initial candidates. From each starting point, alternating
+    discrete/categorical local search and continuous optimization via (L-BFGS)
+    is performed for a fixed number of iterations.
 
     NOTE: This method assumes that all categorical variables are
     integer valued.
     The discrete dimensions that have more than
     `options.get("max_discrete_values", MAX_DISCRETE_VALUES)` values will
     be optimized using continuous relaxation.
-
-    # TODO: Support categorical variables.
+    The categorical dimensions that have more than `MAX_DISCRETE_VALUES` values
+    be optimized by selecting random subsamples of the possible values.
 
     Args:
         acq_function: BoTorch Acquisition function.
@@ -982,14 +983,14 @@ def optimize_acqf_mixed_alternating(
             )
         )
     if not (
-        isinstance(discrete_dims, list)
-        and len(set(discrete_dims)) == len(discrete_dims)
-        and min(discrete_dims) >= 0
-        and max(discrete_dims) <= dim - 1
+        isinstance(non_cont_dims, list)
+        and len(set(non_cont_dims)) == len(non_cont_dims)
+        and min(non_cont_dims) >= 0
+        and max(non_cont_dims) <= dim - 1
     ):
         raise ValueError(
-            "`discrete_dims` must be a list with unique integers "
-            "between 0 and num_dims - 1."
+            "`discrete_dims` and `cat_dims` must be lists with unique, disjoint "
+            "integers between 0 and num_dims - 1."
         )
     discrete_dims_t = torch.tensor(
         list(discrete_dims.keys()), dtype=torch.long, device=tkwargs["device"]

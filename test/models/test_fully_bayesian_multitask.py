@@ -56,7 +56,6 @@ from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
 from gpytorch.means import ConstantMean
 
 EXPECTED_KEYS = [
-    "latent_features",
     "mean_module.raw_constant",
     "covar_module.kernels.1.raw_var",
     "covar_module.kernels.1.active_dims",
@@ -112,7 +111,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
         )
         return train_X, train_Y, train_Yvar, model
 
-    def _get_unnormalized_data(self, **tkwargs):
+    def _get_unnormalized_data(self, infer_noise: bool = False, **tkwargs):
         with torch.random.fork_rng():
             torch.manual_seed(0)
             train_X = torch.rand(10, 4, **tkwargs)
@@ -122,8 +121,27 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
             )
             train_X = torch.cat([5 + 5 * train_X, task_indices], dim=1)
             test_X = 5 + 5 * torch.rand(5, 4, **tkwargs)
-            train_Yvar = 0.1 * torch.arange(10, **tkwargs).unsqueeze(-1)
+            if infer_noise:
+                train_Yvar = None
+            else:
+                train_Yvar = 0.1 * torch.arange(10, **tkwargs).unsqueeze(-1)
         return train_X, train_Y, train_Yvar, test_X
+
+    def _get_unnormalized_condition_data(
+        self, num_models: int, num_cond: int, dim: int, infer_noise: bool, **tkwargs
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None]:
+        with torch.random.fork_rng():
+            torch.manual_seed(0)
+            cond_X = 5 + 5 * torch.rand(num_models, num_cond, dim, **tkwargs)
+            cond_Y = 10 + torch.sin(cond_X[..., :1])
+            cond_Yvar = (
+                None if infer_noise else 0.1 * torch.ones(cond_Y.shape, **tkwargs)
+            )
+        # adding the task dimension
+        cond_X = torch.cat(
+            [cond_X, torch.zeros(num_models, num_cond, 1, **tkwargs)], dim=-1
+        )
+        return cond_X, cond_Y, cond_Yvar
 
     def _get_mcmc_samples(self, num_samples: int, dim: int, task_rank: int, **tkwargs):
         mcmc_samples = {
@@ -604,6 +622,110 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                         )
                     self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
 
+    def test_condition_on_observation(self) -> None:
+        # The following conditioned data shapes should work (output describes):
+        # training data shape after cond(batch shape in output is req. in gpytorch)
+        # X: num_models x n x d, Y: num_models x n x d --> num_models x n x d
+        # X: n x d, Y: n x d --> num_models x n x d
+        # X: n x d, Y: num_models x n x d --> num_models x n x d
+        num_models = 3
+        num_cond = 2
+        task_rank = 2
+        for infer_noise, dtype in itertools.product(
+            (True, False), (torch.float, torch.double)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X, _, _, model = self._get_data_and_model(
+                task_rank=task_rank,
+                infer_noise=infer_noise,
+                **tkwargs,
+            )
+            num_dims = train_X.shape[1] - 1
+            mcmc_samples = self._get_mcmc_samples(
+                num_samples=3,
+                dim=num_dims,
+                task_rank=task_rank,
+                **tkwargs,
+            )
+            model.load_mcmc_samples(mcmc_samples)
+
+            num_train = train_X.shape[0]
+            test_X = torch.rand(num_models, num_dims, **tkwargs)
+
+            cond_X, cond_Y, cond_Yvar = self._get_unnormalized_condition_data(
+                num_models=num_models,
+                num_cond=num_cond,
+                infer_noise=infer_noise,
+                dim=num_dims,
+                **tkwargs,
+            )
+
+            # need to forward pass before conditioning
+            model.posterior(train_X)
+            cond_model = model.condition_on_observations(
+                cond_X, cond_Y, noise=cond_Yvar
+            )
+            posterior = cond_model.posterior(test_X)
+            self.assertEqual(
+                posterior.mean.shape, torch.Size([num_models, len(test_X), 2])
+            )
+
+            # since the data is not equal for the conditioned points, a batch size
+            # is added to the training data
+            self.assertEqual(
+                cond_model.train_inputs[0].shape,
+                torch.Size([num_models, num_train + num_cond, num_dims + 1]),
+            )
+
+            # the batch shape of the condition model is added during conditioning
+            self.assertEqual(cond_model.batch_shape, torch.Size([num_models]))
+
+            # condition on identical sets of data (i.e. one set) for all models
+            # i.e, with no batch shape. This infers the batch shape.
+            cond_X_nobatch, cond_Y_nobatch = cond_X[0], cond_Y[0]
+
+            # conditioning without a batch size - the resulting conditioned model
+            # will still have a batch size
+            model.posterior(train_X)
+            cond_model = model.condition_on_observations(
+                cond_X_nobatch, cond_Y_nobatch, noise=cond_Yvar
+            )
+            self.assertEqual(
+                cond_model.train_inputs[0].shape,
+                torch.Size([num_models, num_train + num_cond, num_dims + 1]),
+            )
+
+            # With batch size only on Y.
+            cond_model = model.condition_on_observations(
+                cond_X_nobatch, cond_Y, noise=cond_Yvar
+            )
+            self.assertEqual(
+                cond_model.train_inputs[0].shape,
+                torch.Size([num_models, num_train + num_cond, num_dims + 1]),
+            )
+
+            # test repeated conditioning
+            repeat_cond_X = cond_X.clone()
+            repeat_cond_X[..., 0:-1] += 2
+            repeat_cond_model = cond_model.condition_on_observations(
+                repeat_cond_X, cond_Y, noise=cond_Yvar
+            )
+            self.assertEqual(
+                repeat_cond_model.train_inputs[0].shape,
+                torch.Size([num_models, num_train + 2 * num_cond, num_dims + 1]),
+            )
+
+            # test repeated conditioning without a batch size
+            repeat_cond_X_nobatch = cond_X_nobatch.clone()
+            repeat_cond_X_nobatch[..., 0:-1] += 2
+            repeat_cond_model2 = repeat_cond_model.condition_on_observations(
+                repeat_cond_X_nobatch, cond_Y_nobatch, noise=cond_Yvar
+            )
+            self.assertEqual(
+                repeat_cond_model2.train_inputs[0].shape,
+                torch.Size([num_models, num_train + 3 * num_cond, num_dims + 1]),
+            )
+
     def test_load_samples(self):
         for task_rank, dtype, use_outcome_transform in itertools.product(
             [1, 2], [torch.float, torch.double], (False, True)
@@ -669,18 +791,6 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                 torch.allclose(
                     model.pyro_model.train_Yvar,
                     train_Yvar_tf.clamp(MIN_INFERRED_NOISE_LEVEL),
-                )
-            )
-            self.assertTrue(
-                torch.allclose(
-                    model.task_covar_module.lengthscale,
-                    mcmc_samples["task_lengthscale"],
-                )
-            )
-            self.assertTrue(
-                torch.allclose(
-                    model.latent_features,
-                    mcmc_samples["latent_features"],
                 )
             )
 
