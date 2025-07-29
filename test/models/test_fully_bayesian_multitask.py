@@ -31,7 +31,11 @@ from botorch.acquisition.multi_objective.logei import (
 )
 from botorch.models import ModelList, ModelListGP
 from botorch.models.deterministic import GenericDeterministicModel
-from botorch.models.fully_bayesian import MCMC_DIM, MIN_INFERRED_NOISE_LEVEL
+from botorch.models.fully_bayesian import (
+    matern52_kernel,
+    MCMC_DIM,
+    MIN_INFERRED_NOISE_LEVEL,
+)
 from botorch.models.fully_bayesian_multitask import (
     MultitaskSaasPyroModel,
     SaasFullyBayesianMultiTaskGP,
@@ -46,7 +50,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 )
 from botorch.utils.test_helpers import gen_multi_task_dataset
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
 from gpytorch.means import ConstantMean

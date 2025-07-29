@@ -234,3 +234,91 @@ class TestGaussianUpdates(BotorchTestCase):
             outputs = update_paths(X)
             self.assertIsInstance(outputs, list)
             self.assertEqual(len(outputs), len(model_list.models))
+
+    def test_error_branches(self):
+        """Test error branches in gaussian_update to achieve full coverage."""
+        from botorch.models import SingleTaskVariationalGP
+        from linear_operator.operators import DiagLinearOperator
+
+        # Test exact model with non-Gaussian likelihood (lines 195-196)
+        config = TestCaseConfig(device=self.device)
+        model = gen_module(models.SingleTaskGP, config)
+        model.likelihood = BernoulliLikelihood()
+
+        sample_values = torch.randn(config.num_train)
+
+        with self.assertRaises(NotImplementedError):
+            gaussian_update(model=model, sample_values=sample_values)
+
+        # Test variational model with non-zero noise covariance (lines 203-204)
+        variational_model = SingleTaskVariationalGP(
+            train_X=torch.rand(5, 2),
+            train_Y=torch.rand(5, 1),
+        )
+        variational_model.likelihood = BernoulliLikelihood()
+
+        with self.assertRaisesRegex(NotImplementedError, "not yet supported"):
+            gaussian_update(
+                model=variational_model,
+                sample_values=torch.randn(5),
+                noise_covariance=DiagLinearOperator(torch.ones(5)),
+            )
+
+        # Test the tensor splitting with None target_values (line 217)
+        config = TestCaseConfig(device=self.device)
+        model_list = gen_module(models.ModelListGP, config)
+
+        # Create combined sample values tensor
+        total_train_points = sum(
+            get_train_inputs(m, transformed=True)[0].shape[-2]
+            for m in model_list.models
+        )
+        sample_values = torch.randn(total_train_points)
+
+        # This should trigger the tensor splitting with target_values=None
+        update_paths = gaussian_update(
+            model=model_list,
+            sample_values=sample_values,
+            target_values=None,
+        )
+
+        from botorch.sampling.pathwise.paths import PathList
+
+        self.assertIsInstance(update_paths, PathList)
+
+    def test_multitask_gp_kernel_handling(self):
+        """Test MultiTaskGP kernel handling in update strategies."""
+        from botorch.models import MultiTaskGP
+        from gpytorch.kernels import IndexKernel, ProductKernel, RBFKernel
+
+        train_X = torch.rand(8, 3, device=self.device, dtype=torch.float64)
+        train_Y = torch.rand(8, 1, device=self.device, dtype=torch.float64)
+
+        # Test automatic IndexKernel creation when task kernel is missing
+        model1 = MultiTaskGP(train_X=train_X, train_Y=train_Y, task_feature=2)
+        k1 = RBFKernel()
+        k1.active_dims = torch.tensor([0])
+        k2 = RBFKernel()
+        k2.active_dims = torch.tensor([1])
+        model1.covar_module = ProductKernel(k1, k2)  # No task kernel
+
+        sample_values = torch.randn(8, device=self.device, dtype=torch.float64)
+        update_paths1 = gaussian_update(model=model1, sample_values=sample_values)
+        self.assertIsNotNone(update_paths1)
+
+        # Test fallback to simple kernel structure
+        model2 = MultiTaskGP(train_X=train_X, train_Y=train_Y, task_feature=2)
+        simple_kernel = RBFKernel(ard_num_dims=3)
+        model2.covar_module = simple_kernel  # Non-ProductKernel
+
+        update_paths2 = gaussian_update(model=model2, sample_values=sample_values)
+        self.assertIsNotNone(update_paths2)
+
+        # Test kernel without active_dims to trigger active_dims assignment
+        model3 = MultiTaskGP(train_X=train_X, train_Y=train_Y, task_feature=2)
+        k3 = RBFKernel()  # No active_dims set
+        k4 = IndexKernel(num_tasks=2, rank=1, active_dims=[2])  # Task kernel
+        model3.covar_module = ProductKernel(k3, k4)
+
+        update_paths3 = gaussian_update(model=model3, sample_values=sample_values)
+        self.assertIsNotNone(update_paths3)

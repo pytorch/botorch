@@ -153,3 +153,118 @@ class TestDrawKernelFeaturePaths(BotorchTestCase):
         self.assertIsNotNone(result.weight)
         # Weight should be all ones (from our custom generator)
         self.assertTrue(torch.allclose(result.weight, torch.ones_like(result.weight)))
+
+    def test_fallback_edge_cases(self):
+        """Test edge cases in _draw_kernel_feature_paths_fallback."""
+        from botorch.sampling.pathwise.prior_samplers import (
+            _draw_kernel_feature_paths_fallback,
+        )
+        from gpytorch.kernels import RBFKernel
+        from gpytorch.means import ZeroMean
+
+        # Test with is_ensemble=True
+        kernel = RBFKernel(ard_num_dims=2)
+        result = _draw_kernel_feature_paths_fallback(
+            mean_module=ZeroMean(),
+            covar_module=kernel,
+            sample_shape=Size([2]),
+            is_ensemble=True,
+        )
+        self.assertTrue(result.is_ensemble)
+
+        # Test with custom weight generator
+        def custom_weight_generator(shape):
+            return torch.ones(shape)
+
+        result = _draw_kernel_feature_paths_fallback(
+            mean_module=None,
+            covar_module=kernel,
+            sample_shape=Size([2]),
+            weight_generator=custom_weight_generator,
+        )
+        self.assertTrue(torch.allclose(result.weight, torch.ones_like(result.weight)))
+
+    def test_weight_generator_device_handling(self):
+        """Test weight generator with proper device handling."""
+        from botorch.sampling.pathwise.prior_samplers import (
+            _draw_kernel_feature_paths_fallback,
+        )
+        from gpytorch.kernels import RBFKernel
+
+        kernel = RBFKernel(ard_num_dims=2)
+
+        def custom_weight_generator(shape):
+            return torch.zeros(shape)
+
+        result = _draw_kernel_feature_paths_fallback(
+            mean_module=None,
+            covar_module=kernel,
+            sample_shape=Size([2]),
+            weight_generator=custom_weight_generator,
+        )
+
+        # This should exercise the device handling code
+        self.assertTrue(torch.allclose(result.weight, torch.zeros_like(result.weight)))
+
+    def test_approximategp_dispatcher(self):
+        """Test ApproximateGP dispatcher registration (line 193)."""
+        from botorch.sampling.pathwise.prior_samplers import DrawKernelFeaturePaths
+        from gpytorch.models import ApproximateGP
+        from gpytorch.variational import VariationalStrategy
+
+        # Create a proper ApproximateGP with variational strategy
+        inducing_points = torch.rand(5, 2)
+        variational_strategy = VariationalStrategy(
+            None, inducing_points, torch.rand(5, 2)
+        )
+
+        class MockApproximateGP(ApproximateGP):
+            def __init__(self, variational_strategy):
+                super().__init__(variational_strategy)
+                from gpytorch.kernels import RBFKernel
+                from gpytorch.means import ZeroMean
+
+                self.mean_module = ZeroMean()
+                self.covar_module = RBFKernel(ard_num_dims=2)
+
+        model = MockApproximateGP(variational_strategy)
+
+        # This should trigger the dispatcher registration for ApproximateGP
+        result = DrawKernelFeaturePaths(model, sample_shape=Size([2]))
+        self.assertIsNotNone(result)
+
+    def test_multitask_gp_kernel_handling(self):
+        """Test MultiTaskGP kernel handling for various kernel configurations."""
+        from botorch.models import MultiTaskGP
+        from gpytorch.kernels import IndexKernel, ProductKernel, RBFKernel
+
+        train_X = torch.rand(8, 3, device=self.device, dtype=torch.float64)
+        train_Y = torch.rand(8, 1, device=self.device, dtype=torch.float64)
+
+        # Test automatic IndexKernel creation when task kernel is missing
+        model1 = MultiTaskGP(train_X=train_X, train_Y=train_Y, task_feature=2)
+        k1 = RBFKernel()
+        k1.active_dims = torch.tensor([0])
+        k2 = RBFKernel()
+        k2.active_dims = torch.tensor([1])
+        model1.covar_module = ProductKernel(k1, k2)  # No task kernel
+
+        paths1 = draw_kernel_feature_paths(model1, sample_shape=Size([1]))
+        self.assertIsNotNone(paths1)
+
+        # Test fallback to simple kernel structure
+        model2 = MultiTaskGP(train_X=train_X, train_Y=train_Y, task_feature=2)
+        simple_kernel = RBFKernel(ard_num_dims=3)
+        model2.covar_module = simple_kernel  # Non-ProductKernel
+
+        paths2 = draw_kernel_feature_paths(model2, sample_shape=Size([1]))
+        self.assertIsNotNone(paths2)
+
+        # Test kernel without active_dims to trigger active_dims assignment
+        model3 = MultiTaskGP(train_X=train_X, train_Y=train_Y, task_feature=2)
+        k3 = RBFKernel()  # No active_dims set
+        k4 = IndexKernel(num_tasks=2, rank=1, active_dims=[2])  # Task kernel
+        model3.covar_module = ProductKernel(k3, k4)
+
+        paths3 = draw_kernel_feature_paths(model3, sample_shape=Size([1]))
+        self.assertIsNotNone(paths3)

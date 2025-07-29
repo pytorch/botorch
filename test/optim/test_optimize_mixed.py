@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import random
 from dataclasses import fields
 from itertools import product
 from typing import Any, Callable
@@ -29,6 +30,7 @@ from botorch.optim.optimize_mixed import (
     continuous_step,
     discrete_step,
     generate_starting_points,
+    get_categorical_neighbors,
     get_nearest_neighbors,
     get_spray_points,
     MAX_DISCRETE_VALUES,

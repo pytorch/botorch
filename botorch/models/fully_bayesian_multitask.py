@@ -24,7 +24,7 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.posteriors.fully_bayesian import GaussianMixturePosterior
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.kernels import MaternKernel
+from gpytorch.kernels import IndexKernel, MaternKernel
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.means.mean import Mean

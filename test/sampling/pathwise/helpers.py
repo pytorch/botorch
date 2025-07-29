@@ -84,7 +84,28 @@ def gen_random_inputs(
         tkwargs = {"device": train_X.device, "dtype": train_X.dtype}
         X = torch.rand((*batch_shape, train_X.shape[-1]), **tkwargs)
         if isinstance(model, models.MultiTaskGP):
-            num_tasks = model.task_covar_module.raw_var.shape[-1]
+            # Extract task kernel from the product kernel structure
+            from gpytorch.kernels import ProductKernel
+
+            if isinstance(model.covar_module, ProductKernel):
+                # Find the task kernel based on active_dims
+                task_kernel = None
+                for kernel in model.covar_module.kernels:
+                    if (
+                        hasattr(kernel, "active_dims")
+                        and kernel.active_dims is not None
+                    ):
+                        if model._task_feature in kernel.active_dims:
+                            task_kernel = kernel
+                            break
+
+                if task_kernel is not None and hasattr(task_kernel, "raw_var"):
+                    num_tasks = task_kernel.raw_var.shape[-1]
+                else:
+                    num_tasks = model.num_tasks
+            else:
+                num_tasks = model.num_tasks
+
             X[..., model._task_feature] = (
                 torch.randint(num_tasks, size=X.shape[:-1], **tkwargs)
                 if task_id is None

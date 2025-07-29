@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable, Iterator, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from string import ascii_letters
 from typing import Any
 
@@ -140,7 +140,6 @@ class PathList(SamplePath, ModuleListMixin[SamplePath]):
         """
         for path in self.paths:
             path.set_ensemble_as_batch(ensemble_as_batch)
-
 
 
 class GeneralizedLinearPath(SamplePath):

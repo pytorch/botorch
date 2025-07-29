@@ -5,7 +5,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import dataclasses
+import itertools
+import random
 import warnings
+from collections.abc import Sequence
 from typing import Any, Callable
 
 import torch
@@ -745,6 +748,7 @@ def discrete_step(
 def continuous_step(
     opt_inputs: OptimizeAcqfInputs,
     discrete_dims: Tensor,
+    cat_dims: Tensor,
     current_x: Tensor,
 ) -> tuple[Tensor, Tensor]:
     """Continuous search using L-BFGS-B through optimize_acqf.
