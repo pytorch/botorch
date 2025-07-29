@@ -15,12 +15,13 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
-import torch.nn as nn
+import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
 
 from botorch.logging import logger
 from botorch.models.model import Model
+from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.containers import BotorchContainer
 from botorch.utils.datasets import SupervisedDataset
 from botorch_community.models.utils.prior_fitted_network import (
@@ -28,6 +29,8 @@ from botorch_community.models.utils.prior_fitted_network import (
     ModelPaths,
 )
 from botorch_community.posteriors.riemann import BoundedRiemannPosterior
+from gpytorch.distributions import MultivariateNormal
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 
 
@@ -38,7 +41,7 @@ class PFNModel(Model):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        model: nn.Module | None = None,
+        model: torch.nn.Module | None = None,
         checkpoint_url: str = ModelPaths.pfns4bo_hebo,
         train_Yvar: Tensor | None = None,
         batch_first: bool = False,
@@ -214,3 +217,70 @@ class PFNModel(Model):
         parsed_data = super().construct_inputs(training_data=training_data)
         parsed_data["proxies"] = proxies
         return parsed_data
+
+
+class GaussianPFNModel(PFNModel):
+    """PFN model that produces a Gaussian posterior moment-matched to the
+    Riemannian posterior rather than directly returning the Riemannian
+    posterior. This is for downstream use in methods that expect Gaussian
+    posteriors."""
+
+    def __init__(
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        model: torch.nn.Module | None = None,
+        checkpoint_url: str = ModelPaths.pfns4bo_hebo,
+        proxies: dict[str, str] | None = None,
+        train_Yvar: Tensor | None = None,
+        batch_first: bool = False,
+        constant_model_kwargs: dict | None = None,
+    ) -> None:
+        """Initialize the model.
+
+        As in PFNModel, either a pre-trained model or a checkpoint_url can
+        be provided.
+
+        Args:
+            train_X: A `n x d` tensor of training features.
+            train_Y: A `n x m` tensor of training observations.
+            model: A pre-trained PFN model; see PFNModel.
+            checkpoint_url: The string URL of the PFN model to download and load.
+                Will be ignored if model is provided.
+            train_Yvar: Observed variance of train_Y. Currently not used.
+            batch_first: Whether the batch dimension is the first dimension of
+                the input tensors; see PFNModel.
+            constant_model_kwargs: A dictionary of model kwargs that
+                will be passed to the model in each forward pass.
+            proxies: proxies for model download; see PFNModel.
+        """
+        super().__init__(
+            train_X=train_X,
+            train_Y=train_Y,
+            train_Yvar=train_Yvar,
+            proxies=proxies,
+        )
+        # Set a likelihood function for downstream uses that require it.
+        # This will not actually be used in the model.
+        if train_Yvar is None:
+            train_Yvar = torch.zeros_like(train_Y)
+        self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
+
+    def posterior(
+        self,
+        X: Tensor,
+        output_indices: Optional[list[int]] = None,
+        observation_noise: Union[bool, Tensor] = False,
+        posterior_transform: Optional[PosteriorTransform] = None,
+    ) -> GPyTorchPosterior:
+        rp = super().posterior(
+            X=X,
+            output_indices=output_indices,
+            observation_noise=observation_noise,
+            posterior_transform=posterior_transform,
+        )
+        mvn = MultivariateNormal(
+            mean=rp.mean.squeeze(-1),
+            covariance_matrix=torch.diag_embed(rp.variance.squeeze(-1)),
+        )
+        return GPyTorchPosterior(distribution=mvn)
