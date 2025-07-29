@@ -240,7 +240,7 @@ class TestGaussianUpdates(BotorchTestCase):
         from botorch.models import SingleTaskVariationalGP
         from linear_operator.operators import DiagLinearOperator
 
-        # Test exact model with non-Gaussian likelihood (lines 195-196)
+        # Test exact model with non-Gaussian likelihood
         config = TestCaseConfig(device=self.device)
         model = gen_module(models.SingleTaskGP, config)
         model.likelihood = BernoulliLikelihood()
@@ -250,7 +250,7 @@ class TestGaussianUpdates(BotorchTestCase):
         with self.assertRaises(NotImplementedError):
             gaussian_update(model=model, sample_values=sample_values)
 
-        # Test variational model with non-zero noise covariance (lines 203-204)
+        # Test variational model with non-zero noise covariance
         variational_model = SingleTaskVariationalGP(
             train_X=torch.rand(5, 2),
             train_Y=torch.rand(5, 1),
@@ -264,7 +264,7 @@ class TestGaussianUpdates(BotorchTestCase):
                 noise_covariance=DiagLinearOperator(torch.ones(5)),
             )
 
-        # Test the tensor splitting with None target_values (line 217)
+        # Test the tensor splitting with None target_values
         config = TestCaseConfig(device=self.device)
         model_list = gen_module(models.ModelListGP, config)
 

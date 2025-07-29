@@ -547,7 +547,7 @@ class TestKernelFeatureMaps(BotorchTestCase):
         map_3d = MixedDimFeatureMap(Size([2, 3, 5]))  # 3D: max_ndim will be 3
         map_2d = MixedDimFeatureMap(Size([4, 6]))  # 2D: will be expanded to 3D
 
-        # This should trigger lines where ndim < max_ndim and we're in the else branch
+        # This should trigger code where ndim < max_ndim and we're in the else branch
         # for i in range(max_ndim - 1), specifically the else part where
         # idx = i - (max_ndim - ndim)
         mixed_direct_sum_2 = maps.DirectSumFeatureMap([map_3d, map_2d])
@@ -558,7 +558,7 @@ class TestKernelFeatureMaps(BotorchTestCase):
         # map_2d has ndim = 2, so ndim < max_ndim
         # For i in range(2): i=0,1
         # For map_2d: when i >= max_ndim - ndim (i.e., i >= 3-2=1), we go to else branch
-        # So when i=1, we execute lines 179-180: idx = 1 - (3-2) = 0,
+        # So when i=1, we execute: idx = 1 - (3-2) = 0,
         # result_shape[1] = max(result_shape[1], shape[0])
         self.assertEqual(len(shape_2), 3)  # Should have 3 dimensions
         self.assertEqual(shape_2[-1], 5 + 6)  # Concatenation: last dims added

@@ -232,7 +232,7 @@ class TestGenKernelFeatureMap(BotorchTestCase):
             )
 
     def test_rbf_weight_generator_shape_error(self):
-        """Test shape validation error in RBF weight generator"""
+        """Test shape validation in RBF weight generator"""
         from unittest.mock import patch
 
         from botorch.sampling.pathwise.features.generators import (
@@ -242,38 +242,24 @@ class TestGenKernelFeatureMap(BotorchTestCase):
         config = TestCaseConfig(seed=0, device=self.device, num_inputs=2)
         kernel = gen_module(kernels.RBFKernel, config)
 
-        # Mock draw_sobol_normal_samples to trigger the shape error
-        def mock_weight_gen(shape):
-            if len(shape) != 2:
-                raise ValueError("Wrong shape dimensions")
-            return torch.randn(shape, device=kernel.device, dtype=kernel.dtype)
-
-        # Trigger the internal weight generator with wrong shape
+        # Patch _gen_fourier_features to call weight generator with invalid shape
         with patch(
-            "botorch.sampling.pathwise.features.generators.draw_sobol_normal_samples",
-            side_effect=mock_weight_gen,
-        ):
-            # This should call the weight generator with a 1D shape to trigger the error
-            with patch(
-                "botorch.sampling.pathwise.features.generators._gen_fourier_features"
-            ) as mock_fourier:
+            "botorch.sampling.pathwise.features.generators._gen_fourier_features"
+        ) as mock_fourier:
 
-                def mock_fourier_call(*args, **kwargs):
-                    # Call the weight generator with malformed shape to trigger lines
-                    weight_gen = kwargs["weight_generator"]
-                    try:
-                        weight_gen(
-                            torch.Size([10])
-                        )  # 1D shape should trigger the error
-                    except UnsupportedError:
-                        pass
-                    return torch.nn.Identity()  # Return dummy
+            def mock_fourier_call(weight_generator, **kwargs):
+                # Call the weight generator with 1D shape to trigger ValueError
+                with self.assertRaisesRegex(
+                    UnsupportedError, "Expected.*2-dimensional"
+                ):
+                    weight_generator(torch.Size([10]))  # 1D shape
+                return None
 
-                mock_fourier.side_effect = mock_fourier_call
-                _gen_kernel_feature_map_rbf(kernel, num_random_features=64)
+            mock_fourier.side_effect = mock_fourier_call
+            _gen_kernel_feature_map_rbf(kernel, num_random_features=64)
 
     def test_matern_weight_generator_shape_error(self):
-        """Test shape validation error in Matern weight generator"""
+        """Test shape validation in Matern weight generator"""
         from unittest.mock import patch
 
         from botorch.sampling.pathwise.features.generators import (
@@ -283,35 +269,21 @@ class TestGenKernelFeatureMap(BotorchTestCase):
         config = TestCaseConfig(seed=0, device=self.device, num_inputs=2)
         kernel = gen_module(kernels.MaternKernel, config)
 
-        # Mock draw_sobol_normal_samples to trigger the shape error
-        def mock_weight_gen(shape):
-            if len(shape) != 2:
-                raise ValueError("Wrong shape dimensions")
-            return torch.randn(shape, device=kernel.device, dtype=kernel.dtype)
-
-        # Trigger the internal weight generator with wrong shape
+        # Patch _gen_fourier_features to call weight generator with invalid shape
         with patch(
-            "botorch.sampling.pathwise.features.generators.draw_sobol_normal_samples",
-            side_effect=mock_weight_gen,
-        ):
-            # This should call the weight generator with a 1D shape to trigger the error
-            with patch(
-                "botorch.sampling.pathwise.features.generators._gen_fourier_features"
-            ) as mock_fourier:
+            "botorch.sampling.pathwise.features.generators._gen_fourier_features"
+        ) as mock_fourier:
 
-                def mock_fourier_call(*args, **kwargs):
-                    # Call the weight generator with malformed shape to trigger lines
-                    weight_gen = kwargs["weight_generator"]
-                    try:
-                        weight_gen(
-                            torch.Size([10])
-                        )  # 1D shape should trigger the error
-                    except UnsupportedError:
-                        pass
-                    return torch.nn.Identity()  # Return dummy
+            def mock_fourier_call(weight_generator, **kwargs):
+                # Call the weight generator with 1D shape to trigger ValueError
+                with self.assertRaisesRegex(
+                    UnsupportedError, "Expected.*2-dimensional"
+                ):
+                    weight_generator(torch.Size([10]))  # 1D shape
+                return None
 
-                mock_fourier.side_effect = mock_fourier_call
-                _gen_kernel_feature_map_matern(kernel, num_random_features=64)
+            mock_fourier.side_effect = mock_fourier_call
+            _gen_kernel_feature_map_matern(kernel, num_random_features=64)
 
     def test_scale_kernel_coverage(self):
         """Test ScaleKernel condition - active_dims different from base kernel"""

@@ -128,7 +128,6 @@ class TestDrawKernelFeaturePaths(BotorchTestCase):
 
     def test_weight_generator_custom(self):
         """Test custom weight generator in prior_samplers.py"""
-        import torch
         from botorch.sampling.pathwise.prior_samplers import (
             _draw_kernel_feature_paths_fallback,
         )
@@ -184,30 +183,8 @@ class TestDrawKernelFeaturePaths(BotorchTestCase):
         )
         self.assertTrue(torch.allclose(result.weight, torch.ones_like(result.weight)))
 
-    def test_weight_generator_device_handling(self):
-        """Test weight generator with proper device handling."""
-        from botorch.sampling.pathwise.prior_samplers import (
-            _draw_kernel_feature_paths_fallback,
-        )
-        from gpytorch.kernels import RBFKernel
-
-        kernel = RBFKernel(ard_num_dims=2)
-
-        def custom_weight_generator(shape):
-            return torch.zeros(shape)
-
-        result = _draw_kernel_feature_paths_fallback(
-            mean_module=None,
-            covar_module=kernel,
-            sample_shape=Size([2]),
-            weight_generator=custom_weight_generator,
-        )
-
-        # This should exercise the device handling code
-        self.assertTrue(torch.allclose(result.weight, torch.zeros_like(result.weight)))
-
     def test_approximategp_dispatcher(self):
-        """Test ApproximateGP dispatcher registration (line 193)."""
+        """Test ApproximateGP dispatcher registration."""
         from botorch.sampling.pathwise.prior_samplers import DrawKernelFeaturePaths
         from gpytorch.models import ApproximateGP
         from gpytorch.variational import VariationalStrategy

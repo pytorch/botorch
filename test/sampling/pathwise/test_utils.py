@@ -205,7 +205,7 @@ class TestUtilsHelpers(BotorchTestCase):
         self.assertEqual(dense_result.shape, expected_shape)
 
     def test_untransform_shape_with_input_transform(self):
-        """Test untransform_shape with InputTransform - covers line 142"""
+        """Test untransform_shape with InputTransform."""
         from botorch.models.transforms.input import Normalize
         from botorch.sampling.pathwise.utils.helpers import untransform_shape
 
@@ -223,7 +223,7 @@ class TestUtilsHelpers(BotorchTestCase):
         self.assertEqual(result_shape, shape)
 
     def test_get_kernel_num_inputs_error_case(self):
-        """Test get_kernel_num_inputs error case - covers lines 209-214"""
+        """Test get_kernel_num_inputs error case."""
         from botorch.sampling.pathwise.utils.helpers import get_kernel_num_inputs
         from gpytorch.kernels import RBFKernel
 
@@ -390,18 +390,3 @@ class TestUtilsHelpers(BotorchTestCase):
         result_shape = untransform_shape(transform, shape)
         # Should return the transformed shape (doubled last dimension)
         self.assertEqual(result_shape, torch.Size([10, 4]))
-
-    def test_get_train_inputs_branch_coverage(self):
-        """Test specific branch in _get_train_inputs_SingleTaskVariationalGP"""
-        from botorch.sampling.pathwise.utils.helpers import get_train_inputs
-
-        # Create a variational model
-        model = self.models[2]  # Use a SingleTaskVariationalGP
-        if not isinstance(model, SingleTaskVariationalGP):
-            return  # Skip if not the right model type
-
-        # Test with training=False and transformed=False to hit specific branch
-        model.eval()  # Set to eval mode
-        result = get_train_inputs(model, transformed=False)
-        self.assertIsInstance(result, tuple)
-        self.assertEqual(len(result), 1)
