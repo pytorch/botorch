@@ -18,7 +18,15 @@ from typing import Optional, Union
 import torch.nn as nn
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
+
+from botorch.logging import logger
 from botorch.models.model import Model
+from botorch.utils.containers import BotorchContainer
+from botorch.utils.datasets import SupervisedDataset
+from botorch_community.models.utils.prior_fitted_network import (
+    download_model,
+    ModelPaths,
+)
 from botorch_community.posteriors.riemann import BoundedRiemannPosterior
 from torch import Tensor
 
@@ -30,12 +38,17 @@ class PFNModel(Model):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        model: nn.Module,
+        model: nn.Module | None = None,
+        checkpoint_url: str = ModelPaths.pfns4bo_hebo,
         train_Yvar: Tensor | None = None,
         batch_first: bool = False,
         constant_model_kwargs: dict | None = None,
     ) -> None:
         """Initialize a PFNModel.
+
+        Either a pre-trained PFN model can be provided via the model kwarg,
+        or a checkpoint_url can be provided from which the model will be
+        downloaded. This defaults to the pfns4bo_hebo model.
 
         Args:
             train_X: A `n x d` tensor of training features.
@@ -43,8 +56,10 @@ class PFNModel(Model):
             model: A pre-trained PFN model with the following
                 forward(train_X, train_Y, X) -> logit predictions of shape
                 `n x b x c` where c is the number of discrete buckets
-                borders: A `c+1`-dim tensor of bucket borders
-            train_Yvar: Not yet supported.
+                borders: A `c+1`-dim tensor of bucket borders.
+            checkpoint_url: The string URL of the PFN model to download and load.
+                Will be ignored if model is provided.
+            train_Yvar: Observed variance of train_Y. Currently ignored.
             batch_first: Whether the batch dimension is the first dimension of
                 the input tensors. This is needed to support different PFN
                 models. For batch-first x has shape `batch x seq_len x features`
@@ -53,9 +68,13 @@ class PFNModel(Model):
                 will be passed to the model in each forward pass.
         """
         super().__init__()
+        if model is None:
+            model = download_model(
+                model_path=checkpoint_url,
+            )
 
         if train_Yvar is not None:
-            raise UnsupportedError("train_Yvar is not supported for PFNModel.")
+            logger.debug("train_Yvar provided but ignored for PFNModel.")
 
         if not (1 <= train_Y.dim() <= 3):
             raise UnsupportedError("train_Y must be 1- to 3-dimensional.")
@@ -122,7 +141,9 @@ class PFNModel(Model):
                 "be a multi-output model."
             )
         if observation_noise:
-            raise UnsupportedError("observation_noise is not supported for PFNModel.")
+            logger.warning(
+                "observation_noise is not supported for PFNModel and is being ignored."
+            )
         if posterior_transform is not None:
             raise UnsupportedError("posterior_transform is not supported for PFNModel.")
 
@@ -183,3 +204,13 @@ class PFNModel(Model):
         probabilities = logits.softmax(dim=-1)
 
         return BoundedRiemannPosterior(self.pfn.criterion.borders, probabilities)
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        training_data: SupervisedDataset,
+        proxies: dict[str, str] | None = None,
+    ) -> dict[str, BotorchContainer | Tensor]:
+        parsed_data = super().construct_inputs(training_data=training_data)
+        parsed_data["proxies"] = proxies
+        return parsed_data

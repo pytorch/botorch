@@ -10,6 +10,8 @@ import os
 from enum import Enum
 from typing import Optional
 
+from botorch.logging import logger
+
 try:
     import requests
 except ImportError:  # pragma: no cover
@@ -18,6 +20,12 @@ except ImportError:  # pragma: no cover
         "You can install it using pip: `pip install requests`"
     )
 
+try:
+    import pfns4bo  # noqa: F401
+except ImportError:  # pragma: no cover
+    logger.warning(
+        "pfns4bo is not installed, unable to automatically download PFN model."
+    )
 
 import torch
 import torch.nn as nn
@@ -72,10 +80,10 @@ def download_model(
 
         # Save the model to cache
         torch.save(model, cache_path)
-        print("saved at: ", cache_path)
+        logger.debug("Model file saved at: ", cache_path)
     else:
         # Load the model from cache
         model = torch.load(cache_path, map_location=torch.device("cpu"))
-        print("loaded from cache: ", cache_path)
+        logger.debug("Model file loaded from cache: ", cache_path)
 
     return model

@@ -6,6 +6,7 @@
 
 
 import os
+from logging import DEBUG, WARN
 from unittest.mock import MagicMock, mock_open, patch
 
 import torch
@@ -50,9 +51,12 @@ class TestPriorFittedNetwork(BotorchTestCase):
             train_Yvar = torch.rand(10, 1, **tkwargs)
             test_X = torch.rand(5, 3, **tkwargs)
 
-            # Test that UnsupportedError is raised when train_Yvar is passed
-            with self.assertRaises(UnsupportedError):
+            with self.assertLogs(logger="botorch", level=DEBUG) as log:
                 PFNModel(train_X, train_Y, DummyPFN(), train_Yvar=train_Yvar)
+                self.assertIn(
+                    "train_Yvar provided but ignored for PFNModel.",
+                    log.output[0],
+                )
 
             train_Y_4d = torch.rand(10, 2, 2, 1, **tkwargs)
             with self.assertRaises(UnsupportedError):
@@ -72,8 +76,12 @@ class TestPriorFittedNetwork(BotorchTestCase):
 
             with self.assertRaises(RuntimeError):
                 pfn.posterior(test_X, output_indices=[0, 1])
-            with self.assertRaises(UnsupportedError):
+            with self.assertLogs(logger="botorch", level=WARN) as log:
                 pfn.posterior(test_X, observation_noise=True)
+                self.assertIn(
+                    "observation_noise is not supported for PFNModel",
+                    log.output[0],
+                )
             with self.assertRaises(UnsupportedError):
                 pfn.posterior(
                     test_X,
