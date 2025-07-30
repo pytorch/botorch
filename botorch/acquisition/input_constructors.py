@@ -97,7 +97,7 @@ from botorch.acquisition.utils import (
     get_optimal_samples,
     project_to_target_fidelity,
 )
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.gpytorch import GPyTorchModel
@@ -226,6 +226,13 @@ def allow_only_specific_variable_kwargs(f: Callable[..., T]) -> Callable[..., T]
         # Used in input constructors for some lookahead acquisition functions
         # such as qKnowledgeGradient.
         "bounds",
+        # Needed for LogProbabilityOfFeasibility
+        # and LogConstrainedExpectedImprovement
+        "constraints_tuple",
+        "posterior_transform",
+        # not used by analytic acquisition functions
+        "objective",
+        "constraints",
     }
 
     def g(*args: Any, **kwargs: Any) -> T:
@@ -338,28 +345,42 @@ def construct_inputs_best_f(
     }
 
 
-@acqf_input_constructor(
-    LogProbabilityOfFeasibility,
-)
+@acqf_input_constructor(LogProbabilityOfFeasibility)
 def construct_inputs_pof(
-    model: Model,
-    constraints: dict[int, tuple[float | None, float | None]],
+    model: Model, constraints_tuple: tuple[Tensor, Tensor]
 ) -> dict[str, Any]:
     r"""Construct kwargs for the log probability of feasibility acquisition function.
 
     Args:
         model: The model to be used in the acquisition function.
-        constraints: A dictionary of the form `{i: [lower, upper]}`, where `i` is the
-            output index, and `lower` and `upper` are lower and upper bounds on that
-            output (resp. interpreted as -Inf / Inf if None).
+        constraints_tuple: A tuple of `(A, b)`. For `k` outcome constraints
+            and `m` outputs at `f(x)``, `A` is `k x m` and `b` is `k x 1` such
+            that `A f(x) <= b`.
+
 
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
-    return {
-        "model": model,
-        "constraints": constraints,
-    }
+    # Construct a dictionary of the form `{i: [lower, upper]}`,
+    # where `i` is the output index, and `lower` and `upper` are
+    # lower and upper bounds on that output (resp. interpreted
+    # as -Inf / Inf if None).
+    weights, bounds = constraints_tuple
+    constraints_dict = {}
+    for w, b in zip(weights, bounds):
+        nonzero_w = w.nonzero()
+        if nonzero_w.numel() != 1:
+            raise BotorchError(
+                "LogProbabilityOfFeasibility only support constraints on single"
+                " outcomes."
+            )
+        i = nonzero_w.item()
+        w_i = w[i]
+        is_ub = torch.sign(w_i) == 1.0
+        b = b.item()
+        bounds = (None, b / w_i) if is_ub else (b / w_i, None)
+        constraints_dict[i] = bounds
+    return {"model": model, "constraints": constraints_dict}
 
 
 @acqf_input_constructor(UpperConfidenceBound)

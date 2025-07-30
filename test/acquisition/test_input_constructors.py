@@ -110,7 +110,7 @@ from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
 )
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.models import MultiTaskGP, SaasFullyBayesianSingleTaskGP, SingleTaskGP
 from botorch.models.deterministic import FixedSingleSampleModel
 from botorch.models.model_list_gp_regression import ModelListGP
@@ -636,11 +636,26 @@ class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
     def test_construct_inputs_LogPOF(self) -> None:
         c = get_acqf_input_constructor(LogProbabilityOfFeasibility)
         mock_model = self.mock_model
-        constraints = {1: [None, 0]}
-        kwargs = c(model=mock_model, constraints=constraints)
+        constraints_tuple = [torch.tensor([[0.0, 1.0]]), torch.tensor([[2.0]])]
+        constraints = {1: (None, 2.0)}
+        kwargs = c(model=mock_model, constraints_tuple=constraints_tuple)
         self.assertEqual(set(kwargs.keys()), {"model", "constraints"})
         self.assertIs(kwargs["model"], mock_model)
         self.assertEqual(kwargs["constraints"], constraints)
+        constraints_tuple = [torch.tensor([[0.0, -1.0]]), torch.tensor([[-2.0]])]
+        kwargs = c(model=mock_model, constraints_tuple=constraints_tuple)
+        constraints = {1: (2.0, None)}
+        self.assertEqual(kwargs["constraints"], constraints)
+        # test that constraints on multiple outcomes raises an exception
+        with self.assertRaisesRegex(
+            BotorchError,
+            "LogProbabilityOfFeasibility only support constraints on single"
+            " outcomes.",
+        ):
+            c(
+                model=mock_model,
+                constraints_tuple=[torch.tensor([[1.0, 1.0]]), torch.tensor([[2.0]])],
+            )
 
     def test_construct_inputs_qEI(self) -> None:
         c = get_acqf_input_constructor(qExpectedImprovement)
@@ -1781,6 +1796,9 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
     def setUp(self, suppress_input_warnings: bool = True) -> None:
         super().setUp(suppress_input_warnings=suppress_input_warnings)
         # {key: (list of acquisition functions, arguments they accept)}
+        constraints_tuple_dict = {
+            "constraints_tuple": (torch.tensor([[0.0, 1.0]]), torch.tensor([[2.0]])),
+        }
         self.cases = {
             "PosteriorMean-type": (
                 [
@@ -1789,7 +1807,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                     qUpperConfidenceBound,
                     qLowerConfidenceBound,
                 ],
-                {"model": self.mock_model},
+                {"model": self.mock_model, **constraints_tuple_dict},
             ),
         }
         st_soo_model = SingleTaskGP(
@@ -1811,12 +1829,20 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 qLogNoisyExpectedImprovement,
                 qProbabilityOfImprovement,
             ],
-            {"model": st_soo_model, "training_data": self.blockX_blockY},
+            {
+                "model": st_soo_model,
+                "training_data": self.blockX_blockY,
+                **constraints_tuple_dict,
+            },
         )
 
         self.cases["LogPoF"] = (
             [LogProbabilityOfFeasibility],
-            {"model": st_soo_model, "constraints": {0: [-5, 5]}},
+            {
+                "model": st_soo_model,
+                "constraints": {0: [-5, 5]},
+                **constraints_tuple_dict,
+            },
         )
 
         def constraint(X: Tensor) -> Tensor:
@@ -1824,7 +1850,11 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
 
         self.cases["qLogPoF"] = (
             [qLogProbabilityOfFeasibility],
-            {"model": st_soo_model, "constraints": [constraint]},
+            {
+                "model": st_soo_model,
+                "constraints": [constraint],
+                **constraints_tuple_dict,
+            },
         )
 
         bounds = torch.ones((1, 2))
@@ -1835,6 +1865,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "model": kg_model,
                 "training_data": self.blockX_blockY,
                 "bounds": bounds,
+                **constraints_tuple_dict,
             },
         )
         self.cases["MF look-ahead"] = (
@@ -1845,6 +1876,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "bounds": bounds,
                 "target_fidelities": {0: 0.987},
                 "num_fantasies": 30,
+                **constraints_tuple_dict,
             },
         )
         bounds = torch.ones((2, 2))
@@ -1857,6 +1889,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "bounds": bounds,
                 "target_fidelities": {0: 0.987},
                 "num_fantasies": 30,
+                **constraints_tuple_dict,
             },
         )
 
@@ -1877,6 +1910,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "model": st_moo_model,
                 "objective_thresholds": objective_thresholds,
                 "training_data": self.blockX_blockY,
+                **constraints_tuple_dict,
             },
         )
 
@@ -1893,6 +1927,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "training_data": self.blockX_blockY,
                 "bounds": bounds,
                 "objective_thresholds": objective_thresholds,
+                **constraints_tuple_dict,
             },
         )
         self.cases["MF HV Look-ahead"] = (
@@ -1904,6 +1939,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "target_fidelities": {0: 0.987},
                 "num_fantasies": 30,
                 "objective_thresholds": objective_thresholds,
+                **constraints_tuple_dict,
             },
         )
 
@@ -1913,13 +1949,14 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
 
         self.cases["EUBO"] = (
             [AnalyticExpectedUtilityOfBestOption, qExpectedUtilityOfBestOption],
-            {"model": st_moo_model, "pref_model": pref_model},
+            {"model": st_moo_model, "pref_model": pref_model, **constraints_tuple_dict},
         )
         self.cases["qJES"] = (
             [qJointEntropySearch],
             {
                 "model": SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y),
                 "bounds": self.bounds,
+                **constraints_tuple_dict,
             },
         )
         self.cases["qSimpleRegret"] = (
@@ -1928,6 +1965,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "model": SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y),
                 "training_data": self.blockX_blockY,
                 "objective": LinearMCObjective(torch.rand(2)),
+                **constraints_tuple_dict,
             },
         )
         self.cases["BayesianActiveLearning"] = (
@@ -1936,6 +1974,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "model": SaasFullyBayesianSingleTaskGP(
                     self.blockX_blockY[0].X, self.blockX_blockY[0].Y
                 ),
+                **constraints_tuple_dict,
             },
         )
         self.cases["ActiveLearning"] = (
@@ -1944,6 +1983,7 @@ class TestInstantiationFromInputConstructor(InputConstructorBaseTestCase):
                 "model": SingleTaskGP(self.blockX_blockY[0].X, self.blockX_blockY[0].Y),
                 "training_data": self.blockX_blockY,
                 "bounds": self.bounds,
+                **constraints_tuple_dict,
             },
         )
 
