@@ -289,7 +289,11 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         # Check that neighbors are sampled without replacement.
         self.assertTrue(neighbors.unique(dim=0).shape[0] == neighbors.shape[0])
 
-    def test_sample_feasible_points(self, with_constraints: bool = False) -> None:
+    def test_sample_feasible_points(
+        self,
+        with_inequality_constraints: bool = False,
+        with_equality_constraints: bool = False,
+    ) -> None:
         bounds = torch.tensor([[0.0, 2.0, 0.0], [1.0, 5.0, 1.0]], **self.tkwargs)
         opt_inputs = _make_opt_inputs(
             acq_function=MockAcquisitionFunction(),
@@ -303,7 +307,18 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                         4.0,
                     )
                 ]
-                if with_constraints
+                if with_inequality_constraints
+                else None
+            ),
+            equality_constraints=(
+                [
+                    (
+                        torch.tensor([2], device=self.device),
+                        torch.tensor([1.0], **self.tkwargs),
+                        0.5,
+                    )
+                ]
+                if with_equality_constraints
                 else None
             ),
         )
@@ -333,7 +348,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         )
         self.assertEqual(X.shape, torch.Size([10, 3]))
         self.assertTrue(torch.all(X[..., 0] == 0.5))
-        if with_constraints:
+        if with_inequality_constraints:
             self.assertTrue(torch.all(X[..., 1] >= 4.0))
         self.assertAllClose(X[..., 1], X[..., 1].round())
         # Test with categorical dimensions.
@@ -348,12 +363,15 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         )
         self.assertEqual(X.shape, torch.Size([10, 3]))
         self.assertTrue(torch.all(X[..., 0] == 0.5))
-        if with_constraints:
+        if with_inequality_constraints:
             self.assertTrue(torch.all(X[..., 1] >= 4.0))
         self.assertAllClose(X[..., 1], X[..., 1].round())
 
-    def test_sample_feasible_points_with_constraints(self) -> None:
-        self.test_sample_feasible_points(with_constraints=True)
+    def test_sample_feasible_points_with_inequality_constraints(self) -> None:
+        self.test_sample_feasible_points(with_inequality_constraints=True)
+
+    def test_sample_feasible_points_with_equality_constraints(self) -> None:
+        self.test_sample_feasible_points(with_equality_constraints=True)
 
     def test_discrete_step(self):
         d = 16
@@ -676,6 +694,40 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             )
         )
         self.assertAllClose(X_new[:, :2], X_[:, :2])
+
+        # test with equality constraints
+        X_ = X[:1, :].clone()
+        X_[:, 8] = 0.5  # To satisfy the constraint.
+        X_[:, 9] = 0.5  # To satisfy the constraint.
+        X_new, ei_val = continuous_step(
+            opt_inputs=_make_opt_inputs(
+                acq_function=mean_as_acq,
+                bounds=bounds,
+                options={"maxiter_continuous": 32},
+                equality_constraints=[
+                    (  # X[..., 0] + X[..., 1] >= 2.
+                        torch.tensor([8, 9], device=self.device),
+                        torch.ones(2, device=self.device),
+                        1.0,
+                    )
+                ],
+                return_best_only=False,
+            ),
+            discrete_dims=binary_dims,
+            cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
+            current_x=X_,
+        )
+        self.assertTrue(
+            torch.isclose(
+                X_new[0, [8, 9]].sum(),
+                torch.tensor(
+                    [
+                        1.0,
+                    ],
+                    device=self.device,
+                ),
+            )
+        )
 
         # test edge case when all parameters are binary
         root = torch.rand(d_bin, device=self.device)
@@ -1013,6 +1065,53 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             torch.tensor([0.5, 0.5, 2.0], device=self.device).repeat(3, 1),
         )
 
+        # Test with equality constraints.
+        constraint = (  # X[..., 0] + X[..., 1] >= 1.
+            torch.tensor([1, 2], device=self.device),
+            torch.ones(2, device=self.device),
+            1.0,
+        )
+        candidates, _ = optimize_acqf_mixed_alternating(
+            acq_function=acqf,
+            bounds=bounds,
+            discrete_dims={
+                i: values for i, values in discrete_dims.items() if i in integer_dims
+            },
+            q=3,
+            raw_samples=32,
+            num_restarts=4,
+            options={"batch_limit": 5, "init_batch_limit": 20},
+            equality_constraints=[constraint],
+        )
+        self.assertAllClose(
+            candidates[:, [1, 2]].sum(dim=-1),
+            torch.ones(3, device=self.device),
+        )
+
+        # Test with equality constraint and fixed feature in constraint.
+        constraint = (  # X[..., 0] + X[..., 1] >= 1.
+            torch.tensor([1, 2], device=self.device),
+            torch.ones(2, device=self.device),
+            1.0,
+        )
+        candidates, _ = optimize_acqf_mixed_alternating(
+            acq_function=acqf,
+            bounds=bounds,
+            discrete_dims={
+                i: values for i, values in discrete_dims.items() if i in integer_dims
+            },
+            q=3,
+            raw_samples=32,
+            num_restarts=4,
+            options={"batch_limit": 5, "init_batch_limit": 20},
+            equality_constraints=[constraint],
+            fixed_features={1: 0.3},
+        )
+        self.assertAllClose(
+            candidates[:, [1, 2]],
+            torch.tensor([0.3, 0.7], device=self.device).repeat(3, 1),
+        )
+
         # Test fallback when initializer cannot generate enough feasible points.
         with (
             mock.patch(
@@ -1257,6 +1356,31 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 q=3,
                 raw_samples=32,
                 num_restarts=4,
+            )
+
+    def test_optimize_acqf_mixed_alternating_invalid_equality_constraints(self) -> None:
+        train_X, _, binary_dims, cont_dims = self._get_data()
+        dim = len(binary_dims) + len(cont_dims)
+        bounds = self.single_bound.repeat(1, dim)
+        torch.manual_seed(0)
+        root = torch.tensor([0.0, 0.0, 0.0, 4.0, 4.0], device=self.device)
+        model = QuadraticDeterministicModel(root)
+        acqf = qLogNoisyExpectedImprovement(model=model, X_baseline=train_X)
+        with self.assertRaisesRegex(
+            expected_regex="Equality constraints can only be used with continuous",
+            expected_exception=ValueError,
+        ):
+            optimize_acqf_mixed_alternating(
+                acq_function=acqf,
+                bounds=bounds,
+                discrete_dims=binary_dims,
+                cat_dims={},
+                q=3,
+                raw_samples=32,
+                num_restarts=4,
+                equality_constraints=[
+                    (torch.tensor([0, 1, 2]), torch.tensor([1.0, 1.0, 1.0]), 3.0)
+                ],
             )
 
     def test_optimize_acqf_mixed_continuous_relaxation(self) -> None:
