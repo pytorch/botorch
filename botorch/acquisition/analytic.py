@@ -37,7 +37,6 @@ from botorch.utils.probability.utils import (
 from botorch.utils.safe_math import log1mexp, logmeanexp
 from botorch.utils.transforms import (
     average_over_ensemble_models,
-    convert_to_target_pre_hook,
     t_batch_mode_transform,
 )
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
@@ -100,7 +99,7 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
             posterior. Removes the last two dimensions if they have size one. Only
             returns a single tensor of means if compute_sigma is True.
         """
-        self.to(device=X.device)  # ensures buffers / parameters are on the same device
+        self.to(X)  # ensures buffers / parameters are on the same device and dtype
         posterior = self.model.posterior(
             X=X, posterior_transform=self.posterior_transform
         )
@@ -584,7 +583,6 @@ class LogConstrainedExpectedImprovement(
         self.objective_index = objective_index
         self.register_buffer("best_f", torch.as_tensor(best_f))
         ConstrainedAnalyticAcquisitionFunctionMixin.__init__(self, constraints)
-        self.register_forward_pre_hook(convert_to_target_pre_hook)
 
     @t_batch_mode_transform(expected_q=1)
     @average_over_ensemble_models
@@ -638,9 +636,7 @@ class LogProbabilityOfFeasibility(
     _log: bool = True
 
     def __init__(
-        self,
-        model: Model,
-        constraints: dict[int, tuple[float | None, float | None]],
+        self, model: Model, constraints: dict[int, tuple[float | None, float | None]]
     ) -> None:
         r"""Analytic Log Probability of Feasibility.
 
@@ -654,7 +650,6 @@ class LogProbabilityOfFeasibility(
         AcquisitionFunction.__init__(self, model=model)
         self.posterior_transform = None
         ConstrainedAnalyticAcquisitionFunctionMixin.__init__(self, constraints)
-        self.register_forward_pre_hook(convert_to_target_pre_hook)
 
     @t_batch_mode_transform(expected_q=1)
     @average_over_ensemble_models
@@ -730,7 +725,6 @@ class ConstrainedExpectedImprovement(
         self.objective_index = objective_index
         self.register_buffer("best_f", torch.as_tensor(best_f))
         ConstrainedAnalyticAcquisitionFunctionMixin.__init__(self, constraints)
-        self.register_forward_pre_hook(convert_to_target_pre_hook)
 
     @t_batch_mode_transform(expected_q=1)
     @average_over_ensemble_models

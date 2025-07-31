@@ -140,7 +140,7 @@ class TestMock(BotorchTestCase):
             warnings.simplefilter("ignore", category=BadInitialCandidatesWarning)
             cand, value = optimize_acqf(
                 acq_function=acqf,
-                bounds=torch.tensor([[-2.0], [2.0]]),
+                bounds=torch.tensor([[-2.0], [2.0]], dtype=torch.double),
                 q=1,
                 num_restarts=32,
                 raw_samples=16,
