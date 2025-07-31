@@ -579,6 +579,8 @@ def handle_pandas(
             # pd.read_html() raises an error if there's no dataframe.
             continue
         df = pd.read_html(io.StringIO(data), flavor="lxml")
+        if len(df) == 0:
+            continue
         # NOTE: The return is a list of dataframes and we only care about the first
         #       one.
         md_df = df[0]
