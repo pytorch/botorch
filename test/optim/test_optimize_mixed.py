@@ -717,16 +717,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
             cat_dims=torch.tensor([], device=self.device, dtype=torch.long),
             current_x=X_,
         )
-        self.assertTrue(
-            torch.isclose(
-                X_new[0, [8, 9]].sum(),
-                torch.tensor(
-                    [
-                        1.0,
-                    ],
-                    device=self.device,
-                ),
-            )
+        self.assertAllClose(
+            X_new[0, [8, 9]].sum(),
+            torch.tensor([1.0], device=self.device),
         )
 
         # test edge case when all parameters are binary
@@ -1066,7 +1059,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         )
 
         # Test with equality constraints.
-        constraint = (  # X[..., 0] + X[..., 1] >= 1.
+        constraint = (  # X[..., 1] + X[..., 2] >= 1.
             torch.tensor([1, 2], device=self.device),
             torch.ones(2, device=self.device),
             1.0,
@@ -1089,7 +1082,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         )
 
         # Test with equality constraint and fixed feature in constraint.
-        constraint = (  # X[..., 0] + X[..., 1] >= 1.
+        constraint = (  # X[..., 1] + X[..., 2] >= 1.
             torch.tensor([1, 2], device=self.device),
             torch.ones(2, device=self.device),
             1.0,

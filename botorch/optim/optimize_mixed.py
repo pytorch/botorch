@@ -920,8 +920,8 @@ def optimize_acqf_mixed_alternating(
         equality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an equality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) == rhs`. `indices` and
-            `coefficients` should be torch tensors. See the docstring of
-            `make_scipy_linear_constraints` for an example. Equality
+            `coefficients` should be torch tensors. Example:
+            `[(torch.tensor([1, 3]), torch.tensor([1.0, 0.5]), -0.1)]` Equality
             constraints can only be used with continuous degrees of freedom.
 
     Returns:
