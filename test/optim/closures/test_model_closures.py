@@ -111,9 +111,9 @@ class TestLossClosures(BotorchTestCase):
             with gpytorch_settings.debug(False):  # disables GPyTorch's internal check
                 (b, dbs) = B()
 
-            self.assertTrue(a.allclose(b))
+            self.assertAllClose(a, b)
             for da, db in zip_longest(das, dbs):
-                self.assertTrue(da.allclose(db))
+                self.assertAllClose(da, db)
 
         loader = DataLoader(mll.model.train_targets, len(mll.model.train_targets))
         closure = get_loss_closure_with_grads(mll, params, data_loader=loader)
