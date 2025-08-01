@@ -719,7 +719,7 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
         )
         self.assertAllClose(
             X_new[0, [8, 9]].sum(),
-            torch.tensor([1.0], device=self.device),
+            torch.tensor(1.0, device=self.device),
         )
 
         # test edge case when all parameters are binary
