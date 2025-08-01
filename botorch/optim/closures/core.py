@@ -63,6 +63,7 @@ class NdarrayOptimizationClosure:
         get_state: Callable[[], npt.NDArray] = None,  # pyre-ignore [9]
         set_state: Callable[[npt.NDArray], None] = None,  # pyre-ignore [9]
         fill_value: float = 0.0,
+        persistent: bool = True,
     ) -> None:
         r"""Initializes a NdarrayOptimizationClosure instance.
 
