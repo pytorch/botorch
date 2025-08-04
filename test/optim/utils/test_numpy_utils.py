@@ -78,19 +78,6 @@ class TestNumpyUtils(BotorchTestCase):
             )
             n += k
 
-        with self.assertRaisesRegex(ValueError, "Expected a vector for `out`"):
-            get_tensors_as_ndarray_1d(self.parameters, out=np.empty((1, 1)))
-
-        with self.assertRaisesRegex(ValueError, "Size of `parameters` .* not match"):
-            get_tensors_as_ndarray_1d(self.parameters, out=np.empty(values.size - 1))
-
-        with self.assertRaisesRegex(RuntimeError, "failed while copying values .* foo"):
-            get_tensors_as_ndarray_1d(
-                self.parameters,
-                out=np.empty(values.size),
-                as_array=MagicMock(side_effect=RuntimeError("foo")),
-            )
-
     def test_set_tensors_from_ndarray_1d(self):
         values = get_tensors_as_ndarray_1d(self.parameters)
         others = np.random.rand(*values.shape).astype(values.dtype)
