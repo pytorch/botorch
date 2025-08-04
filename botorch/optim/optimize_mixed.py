@@ -975,8 +975,7 @@ def optimize_acqf_mixed_alternating(
         )
 
     if equality_constraints is not None:
-        for eq in equality_constraints:
-            indices = eq[0]
+        for indices, _, __ in equality_constraints:
             # Raise an error if any index in indices is in discrete_dims or cat_dims
             if any(idx in discrete_dims or idx in cat_dims for idx in indices.tolist()):
                 raise ValueError(
