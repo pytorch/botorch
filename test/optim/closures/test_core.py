@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from contextlib import nullcontext
 from functools import partial
 from unittest.mock import MagicMock
 
@@ -68,6 +67,7 @@ class TestForwardBackwardClosure(BotorchTestCase):
             self.assertTrue(dw.equal(module.x))
             self.assertTrue(dx.equal(module.w))
             self.assertEqual(dd, None)
+
 
 class TestNdarrayOptimizationClosure(BotorchTestCase):
     def setUp(self, suppress_input_warnings: bool = True) -> None:
