@@ -100,11 +100,13 @@ class NdarrayOptimizationClosure:
 
     @property
     def state(self) -> npt.NDArray:
-        return get_tensors_as_ndarray_1d(tensors=self.parameters, dtype=np_float64)
+        return get_tensors_as_ndarray_1d(
+            tensors=list(self.parameters.values()), dtype=np_float64
+        )
 
     @state.setter
     def state(self, state: npt.NDArray) -> None:
-        set_tensors_from_ndarray_1d(tensors=self.parameters, array=state)
+        set_tensors_from_ndarray_1d(tensors=list(self.parameters.values()), array=state)
 
     def _get_gradient_ndarray(self) -> npt.NDArray:
         if self._gradient_ndarray is not None:

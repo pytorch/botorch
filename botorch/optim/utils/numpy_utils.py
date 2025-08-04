@@ -8,8 +8,7 @@ r"""Utilities for interfacing Numpy and Torch."""
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from itertools import tee
+from collections.abc import Sequence
 
 import numpy as np
 import numpy.typing as npt
@@ -65,66 +64,40 @@ def as_ndarray(
 
 
 def get_tensors_as_ndarray_1d(
-    tensors: Iterator[Tensor] | dict[str, Tensor],
+    tensors: Sequence[Tensor],
     dtype: np.dtype | str | None = None,
 ) -> npt.NDArray:
-    # Create a pair of iterators, one for setup and one for data transfer
-    named_tensors_iter, named_tensors_iter2 = tee(
-        iter(tensors.items()) if isinstance(tensors, dict) else enumerate(tensors), 2
-    )
-
-    # Use `named_tensors_iter` to get size of `out` and `dtype` when None
-    try:
-        name, tnsr = next(named_tensors_iter)
-    except StopIteration:
+    if len(tensors) == 0:
         raise RuntimeError(f"Argument `tensors` with type {type(tensors)} is empty.")
-    size = tnsr.numel() + sum(tnsr.numel() for _, tnsr in named_tensors_iter)
+
+    size = sum(tnsr.numel() for tnsr in tensors)
+    tnsr = tensors[0]
     dtype = torch_to_numpy_dtype_dict[tnsr.dtype] if dtype is None else dtype
 
-    # Preallocate or validate `out`
     out = np.empty([size], dtype=dtype)
 
-    # Use `named_tensors_iter2` to transfer data from `tensors` to `out`
     index = 0
-    for name, tnsr in named_tensors_iter2:
-        try:
-            size = tnsr.numel()
-            out[index : index + size] = as_ndarray(tnsr.view(-1))
-            index += size
-        except Exception as e:
-            raise RuntimeError(
-                "`get_tensors_as_ndarray_1d` failed while copying values from "
-                f"tensor {name}; rethrowing original exception."
-            ) from e
+    for tnsr in tensors:
+        size = tnsr.numel()
+        out[index : index + size] = as_ndarray(tnsr.view(-1))
+        index += size
 
     return out
 
 
-def set_tensors_from_ndarray_1d(
-    tensors: Iterator[Tensor] | dict[str, Tensor],
-    array: npt.NDArray,
-) -> None:
+def set_tensors_from_ndarray_1d(tensors: Sequence[Tensor], array: npt.NDArray) -> None:
     r"""Sets the values of one more tensors based off of a vector of assignments."""
-    named_tensors_iter = (
-        iter(tensors.items()) if isinstance(tensors, dict) else enumerate(tensors)
-    )
     with torch.no_grad():
         index = 0
-        for name, tnsr in named_tensors_iter:
-            try:
-                size = tnsr.numel()
-                vals = array[index : index + size] if tnsr.ndim else array[index]
-                tnsr.copy_(
-                    torch.as_tensor(vals, device=tnsr.device, dtype=tnsr.dtype).view(
-                        tnsr.shape
-                    )
+        for tnsr in tensors:
+            size = tnsr.numel()
+            vals = array[index : index + size] if tnsr.ndim else array[index]
+            tnsr.copy_(
+                torch.as_tensor(vals, device=tnsr.device, dtype=tnsr.dtype).view(
+                    tnsr.shape
                 )
-                index += size
-            except Exception as e:
-                raise RuntimeError(
-                    "`set_tensors_from_ndarray_1d` failed while copying values to "
-                    f"tensor {name}; rethrowing original exception."
-                ) from e
+            )
+            index += size
 
 
 def get_bounds_as_ndarray(

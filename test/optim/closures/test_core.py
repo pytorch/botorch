@@ -86,7 +86,9 @@ class TestNdarrayOptimizationClosure(BotorchTestCase):
     def test_main(self):
         for wrapper in self.wrappers.values():
             # Test setter/getter
-            state = get_tensors_as_ndarray_1d(wrapper.closure.parameters)
+            state = get_tensors_as_ndarray_1d(
+                tensors=list(wrapper.closure.parameters.values())
+            )
             other = np.random.randn(*state.shape).astype(state.dtype)
 
             wrapper.state = other

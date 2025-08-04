@@ -64,11 +64,19 @@ class TestNumpyUtils(BotorchTestCase):
 
     def test_get_tensors_as_ndarray_1d(self):
         with self.assertRaisesRegex(RuntimeError, "Argument `tensors` .* is empty"):
-            get_tensors_as_ndarray_1d(())
+            get_tensors_as_ndarray_1d([])
 
-        values = get_tensors_as_ndarray_1d(self.parameters)
+        values = get_tensors_as_ndarray_1d(tensors=list(self.parameters.values()))
         self.assertTrue(
-            np.allclose(values, get_tensors_as_ndarray_1d(self.parameters.values()))
+            np.allclose(
+                values,
+                np.concatenate(
+                    (
+                        self.parameters["foo"].detach().numpy(),
+                        self.parameters["bar"].detach().numpy(),
+                    )
+                ),
+            )
         )
         n = 0
         for param in self.parameters.values():
@@ -79,12 +87,10 @@ class TestNumpyUtils(BotorchTestCase):
             n += k
 
     def test_set_tensors_from_ndarray_1d(self):
-        values = get_tensors_as_ndarray_1d(self.parameters)
+        values = get_tensors_as_ndarray_1d(list(self.parameters.values()))
         others = np.random.rand(*values.shape).astype(values.dtype)
-        with self.assertRaisesRegex(RuntimeError, "failed while copying values to"):
-            set_tensors_from_ndarray_1d(self.parameters, np.empty([1]))
 
-        set_tensors_from_ndarray_1d(self.parameters, others)
+        set_tensors_from_ndarray_1d(list(self.parameters.values()), others)
         n = 0
         for param in self.parameters.values():
             k = param.numel()
