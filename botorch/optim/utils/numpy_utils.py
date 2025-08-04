@@ -8,7 +8,7 @@ r"""Utilities for interfacing Numpy and Torch."""
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from itertools import tee
 
 import numpy as np
@@ -66,9 +66,7 @@ def as_ndarray(
 
 def get_tensors_as_ndarray_1d(
     tensors: Iterator[Tensor] | dict[str, Tensor],
-    out: npt.NDArray | None = None,
     dtype: np.dtype | str | None = None,
-    as_array: Callable[[Tensor], npt.NDArray] = as_ndarray,
 ) -> npt.NDArray:
     # Create a pair of iterators, one for setup and one for data transfer
     named_tensors_iter, named_tensors_iter2 = tee(
@@ -84,21 +82,14 @@ def get_tensors_as_ndarray_1d(
     dtype = torch_to_numpy_dtype_dict[tnsr.dtype] if dtype is None else dtype
 
     # Preallocate or validate `out`
-    if out is None:  # use first tensor as a reference when `dtype` is None
-        out = np.empty([size], dtype=dtype)
-    elif out.ndim != 1:
-        raise ValueError(f"Expected a vector for `out`, but out.shape={out.shape}.")
-    elif out.size != size:
-        raise ValueError(
-            f"Size of `parameters` ({size}) does not match size of `out` ({out.size})."
-        )
+    out = np.empty([size], dtype=dtype)
 
     # Use `named_tensors_iter2` to transfer data from `tensors` to `out`
     index = 0
     for name, tnsr in named_tensors_iter2:
         try:
             size = tnsr.numel()
-            out[index : index + size] = as_array(tnsr.view(-1))
+            out[index : index + size] = as_ndarray(tnsr.view(-1))
             index += size
         except Exception as e:
             raise RuntimeError(

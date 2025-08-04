@@ -4,18 +4,17 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from functools import partial
 from unittest.mock import MagicMock
 
 import numpy as np
 import torch
 from botorch.optim.closures.core import (
+    FILL_VALUE,
     ForwardBackwardClosure,
     get_tensors_as_ndarray_1d,
     NdarrayOptimizationClosure,
 )
 from botorch.optim.utils import as_ndarray
-from botorch.utils.context_managers import zero_grad_ctx
 from botorch.utils.testing import BotorchTestCase
 from linear_operator.utils.errors import NanError, NotPSDError
 from torch.nn import Module, Parameter
@@ -58,8 +57,6 @@ class TestForwardBackwardClosure(BotorchTestCase):
             # Test __init__
             closure = ForwardBackwardClosure(module, module.free_parameters)
             self.assertEqual(module.free_parameters, closure.parameters)
-            self.assertIsInstance(closure.context_manager, partial)
-            self.assertEqual(closure.context_manager.func, zero_grad_ctx)
 
             # Test return values
             value, (dw, dx, dd) = closure()
@@ -99,9 +96,7 @@ class TestNdarrayOptimizationClosure(BotorchTestCase):
             for param in wrapper.closure.parameters.values():
                 size = param.numel()
                 self.assertTrue(
-                    np.allclose(
-                        other[index : index + size], wrapper.as_array(param.view(-1))
-                    )
+                    np.allclose(other[index : index + size], as_ndarray(param.view(-1)))
                 )
                 index += size
 
@@ -116,29 +111,26 @@ class TestNdarrayOptimizationClosure(BotorchTestCase):
 
             # Test return values
             value_tensor, grad_tensors = wrapper.closure()  # get raw Tensor equivalents
-            self.assertTrue(np.allclose(value, wrapper.as_array(value_tensor)))
+            self.assertTrue(np.allclose(value, as_ndarray(value_tensor)))
             index = 0
-            for x, dx in zip(wrapper.parameters.values(), grad_tensors):
+            for x, dx in zip(wrapper.parameters.values(), grad_tensors, strict=True):
                 size = x.numel()
                 grad = grads[index : index + size]
                 if dx is None:
-                    self.assertTrue((grad == wrapper.fill_value).all())
+                    self.assertTrue((grad == FILL_VALUE).all())
                 else:
-                    self.assertTrue(np.allclose(grad, wrapper.as_array(dx)))
+                    self.assertTrue(np.allclose(grad, as_ndarray(dx)))
                 index += size
 
             module = wrapper.closure.forward
             self.assertTrue(np.allclose(grads[0], as_ndarray(module.x)))
             self.assertTrue(np.allclose(grads[1], as_ndarray(module.w)))
-            self.assertEqual(grads[2], wrapper.fill_value)
+            self.assertEqual(grads[2], FILL_VALUE)
 
-            # Test persistent buffers
-            for mode in (False, True):
-                wrapper.persistent = mode
-                self.assertEqual(
-                    mode,
-                    wrapper._get_gradient_ndarray() is wrapper._get_gradient_ndarray(),
-                )
+            # Test persistence
+            self.assertIs(
+                wrapper._get_gradient_ndarray(), wrapper._get_gradient_ndarray()
+            )
 
     def test_exceptions(self):
         for wrapper in self.wrappers.values():
