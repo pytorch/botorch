@@ -15,7 +15,6 @@ from typing import Any
 
 import numpy.typing as npt
 
-import torch
 from botorch.optim.utils import (
     _handle_numerical_errors,
     get_tensors_as_ndarray_1d,
@@ -31,48 +30,24 @@ class ForwardBackwardClosure:
     r"""Wrapper for fused forward and backward closures."""
 
     def __init__(
-        self,
-        forward: Callable[[], Tensor],
-        parameters: dict[str, Tensor],
-        backward: Callable[[Tensor], None] = Tensor.backward,
-        reducer: Callable[[Tensor], Tensor] | None = torch.sum,
-        callback: Callable[[Tensor, Sequence[Tensor | None]], None] | None = None,
-        context_manager: Callable = None,  # pyre-ignore [9]
+        self, forward: Callable[[], Tensor], parameters: dict[str, Tensor]
     ) -> None:
         r"""Initializes a ForwardBackwardClosure instance.
 
         Args:
-            closure: Callable that returns a tensor.
+            forward: Callable that returns a tensor.
             parameters: A dictionary of tensors whose `grad` fields are to be returned.
-            backward: Callable that takes the (reduced) output of `forward` and sets the
-                `grad` attributes of tensors in `parameters`.
-            reducer: Optional callable used to reduce the output of the forward pass.
-            callback: Optional callable that takes the reduced output of `forward` and
-                the gradients of `parameters` as positional arguments.
-            context_manager: A ContextManager used to wrap each forward-backward call.
-                When passed as `None`, `context_manager` defaults to a `zero_grad_ctx`
-                that zeroes the gradients of `parameters` upon entry.
         """
-        if context_manager is None:
-            context_manager = partial(zero_grad_ctx, parameters)
-
         self.forward = forward
-        self.backward = backward
         self.parameters = parameters
-        self.reducer = reducer
-        self.callback = callback
-        self.context_manager = context_manager
+        self.context_manager = partial(zero_grad_ctx, parameters)
 
     def __call__(self, **kwargs: Any) -> tuple[Tensor, tuple[Tensor | None, ...]]:
         with self.context_manager():
-            values = self.forward(**kwargs)
-            value = values if self.reducer is None else self.reducer(values)
-            self.backward(value)
+            value = self.forward(**kwargs).sum()
+            value.backward()
 
             grads = tuple(param.grad for param in self.parameters.values())
-            if self.callback:
-                self.callback(value, grads)
-
             return value, grads
 
 
