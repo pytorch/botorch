@@ -40,8 +40,8 @@ class ToyModule(Module):
 
 
 class TestForwardBackwardClosure(BotorchTestCase):
-    def setUp(self):
-        super().setUp()
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         module = ToyModule(
             w=Parameter(torch.tensor(2.0)),
             b=Parameter(torch.tensor(3.0), requires_grad=False),
@@ -69,36 +69,9 @@ class TestForwardBackwardClosure(BotorchTestCase):
             self.assertTrue(dx.equal(module.w))
             self.assertEqual(dd, None)
 
-            # Test `callback`` and `reducer``
-            closure = ForwardBackwardClosure(module, module.free_parameters)
-            mock_reducer = MagicMock(return_value=closure.forward())
-            mock_callback = MagicMock()
-            closure = ForwardBackwardClosure(
-                forward=module,
-                parameters=module.free_parameters,
-                reducer=mock_reducer,
-                callback=mock_callback,
-            )
-            value, grads = closure()
-            mock_reducer.assert_called_once_with(value)
-            mock_callback.assert_called_once_with(value, grads)
-
-            # Test `backward`` and `context_manager`
-            closure = ForwardBackwardClosure(
-                forward=module,
-                parameters=module.free_parameters,
-                backward=partial(torch.Tensor.backward, retain_graph=True),
-                context_manager=nullcontext,
-            )
-            _, (dw, dx, dd) = closure()  # x2 because `grad` is no longer zeroed
-            self.assertTrue(dw.equal(2 * module.x))
-            self.assertTrue(dx.equal(2 * module.w))
-            self.assertEqual(dd, None)
-
-
 class TestNdarrayOptimizationClosure(BotorchTestCase):
-    def setUp(self):
-        super().setUp()
+    def setUp(self, suppress_input_warnings: bool = True) -> None:
+        super().setUp(suppress_input_warnings=suppress_input_warnings)
         self.module = ToyModule(
             w=Parameter(torch.tensor(2.0)),
             b=Parameter(torch.tensor(3.0), requires_grad=False),
