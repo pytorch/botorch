@@ -12,13 +12,11 @@ from collections.abc import Callable, Sequence
 
 from typing import Any
 
+import numpy as np
 import numpy.typing as npt
+import torch
 
-from botorch.optim.utils import (
-    _handle_numerical_errors,
-    get_tensors_as_ndarray_1d,
-    set_tensors_from_ndarray_1d,
-)
+from botorch.optim.utils import _handle_numerical_errors
 from botorch.optim.utils.numpy_utils import as_ndarray
 from botorch.utils.context_managers import zero_grad_ctx
 from numpy import float64 as np_float64, zeros as np_zeros
@@ -100,13 +98,36 @@ class NdarrayOptimizationClosure:
 
     @property
     def state(self) -> npt.NDArray:
-        return get_tensors_as_ndarray_1d(
-            tensors=list(self.parameters.values()), dtype=np_float64
-        )
+        if len(self.parameters) == 0:
+            raise RuntimeError("No parameters to get state from.")
+
+        size = sum(tnsr.numel() for tnsr in self.parameters.values())
+        tnsr = next(iter(self.parameters.values()))
+        dtype = np_float64
+
+        out = np.empty([size], dtype=dtype)
+
+        index = 0
+        for tnsr in self.parameters.values():
+            size = tnsr.numel()
+            out[index : index + size] = as_ndarray(tnsr.view(-1))
+            index += size
+
+        return out
 
     @state.setter
     def state(self, state: npt.NDArray) -> None:
-        set_tensors_from_ndarray_1d(tensors=list(self.parameters.values()), array=state)
+        with torch.no_grad():
+            index = 0
+            for tnsr in self.parameters.values():
+                size = tnsr.numel()
+                vals = state[index : index + size] if tnsr.ndim else state[index]
+                tnsr.copy_(
+                    torch.as_tensor(vals, device=tnsr.device, dtype=tnsr.dtype).view(
+                        tnsr.shape
+                    )
+                )
+                index += size
 
     def _get_gradient_ndarray(self) -> npt.NDArray:
         if self._gradient_ndarray is not None:

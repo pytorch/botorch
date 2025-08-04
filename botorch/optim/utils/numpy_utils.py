@@ -8,8 +8,6 @@ r"""Utilities for interfacing Numpy and Torch."""
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 import numpy as np
 import numpy.typing as npt
 import torch
@@ -61,43 +59,6 @@ def as_ndarray(
         # Convert to ndarray and maybe cast to `dtype`
         out = out.numpy()
         return out.astype(dtype, copy=False)
-
-
-def get_tensors_as_ndarray_1d(
-    tensors: Sequence[Tensor],
-    dtype: np.dtype | str | None = None,
-) -> npt.NDArray:
-    if len(tensors) == 0:
-        raise RuntimeError(f"Argument `tensors` with type {type(tensors)} is empty.")
-
-    size = sum(tnsr.numel() for tnsr in tensors)
-    tnsr = tensors[0]
-    dtype = torch_to_numpy_dtype_dict[tnsr.dtype] if dtype is None else dtype
-
-    out = np.empty([size], dtype=dtype)
-
-    index = 0
-    for tnsr in tensors:
-        size = tnsr.numel()
-        out[index : index + size] = as_ndarray(tnsr.view(-1))
-        index += size
-
-    return out
-
-
-def set_tensors_from_ndarray_1d(tensors: Sequence[Tensor], array: npt.NDArray) -> None:
-    r"""Sets the values of one more tensors based off of a vector of assignments."""
-    with torch.no_grad():
-        index = 0
-        for tnsr in tensors:
-            size = tnsr.numel()
-            vals = array[index : index + size] if tnsr.ndim else array[index]
-            tnsr.copy_(
-                torch.as_tensor(vals, device=tnsr.device, dtype=tnsr.dtype).view(
-                    tnsr.shape
-                )
-            )
-            index += size
 
 
 def get_bounds_as_ndarray(

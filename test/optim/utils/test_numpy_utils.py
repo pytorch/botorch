@@ -10,11 +10,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import torch
-from botorch.optim.closures.core import (
-    as_ndarray,
-    get_tensors_as_ndarray_1d,
-    set_tensors_from_ndarray_1d,
-)
+from botorch.optim.closures.core import as_ndarray
 from botorch.optim.utils import get_bounds_as_ndarray
 from botorch.optim.utils.numpy_utils import torch_to_numpy_dtype_dict
 from botorch.utils.testing import BotorchTestCase
@@ -61,43 +57,6 @@ class TestNumpyUtils(BotorchTestCase):
             self.assertEqual(torch_dtype, tens.dtype)
             self.assertEqual(tens.numpy().dtype, np_dtype)
             self.assertEqual(as_ndarray(tens, np_dtype).dtype, np_dtype)
-
-    def test_get_tensors_as_ndarray_1d(self):
-        with self.assertRaisesRegex(RuntimeError, "Argument `tensors` .* is empty"):
-            get_tensors_as_ndarray_1d([])
-
-        values = get_tensors_as_ndarray_1d(tensors=list(self.parameters.values()))
-        self.assertTrue(
-            np.allclose(
-                values,
-                np.concatenate(
-                    (
-                        self.parameters["foo"].detach().numpy(),
-                        self.parameters["bar"].detach().numpy(),
-                    )
-                ),
-            )
-        )
-        n = 0
-        for param in self.parameters.values():
-            k = param.numel()
-            self.assertTrue(
-                np.allclose(values[n : n + k], param.view(-1).detach().cpu().numpy())
-            )
-            n += k
-
-    def test_set_tensors_from_ndarray_1d(self):
-        values = get_tensors_as_ndarray_1d(list(self.parameters.values()))
-        others = np.random.rand(*values.shape).astype(values.dtype)
-
-        set_tensors_from_ndarray_1d(list(self.parameters.values()), others)
-        n = 0
-        for param in self.parameters.values():
-            k = param.numel()
-            self.assertTrue(
-                np.allclose(others[n : n + k], param.view(-1).detach().cpu().numpy())
-            )
-            n += k
 
     def test_get_bounds_as_ndarray(self):
         params = {"a": torch.rand(1), "b": torch.rand(1), "c": torch.rand(2)}
