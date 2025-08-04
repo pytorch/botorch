@@ -185,5 +185,5 @@ class TestNdarrayOptimizationClosure(BotorchTestCase):
             wrapper = NdarrayOptimizationClosure(
                 closure=lambda: torch.tensor(), parameters={}
             )
-            with self.assertRaisesRegex(RuntimeError, "No parameteters"):
+            with self.assertRaisesRegex(RuntimeError, "No parameters"):
                 wrapper.state
