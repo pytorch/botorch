@@ -4,18 +4,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from functools import partial
 from unittest.mock import MagicMock
 
 import numpy as np
 import torch
 from botorch.optim.closures.core import (
+    FILL_VALUE,
     ForwardBackwardClosure,
-    get_tensors_as_ndarray_1d,
     NdarrayOptimizationClosure,
 )
 from botorch.optim.utils import as_ndarray
-from botorch.utils.context_managers import zero_grad_ctx
 from botorch.utils.testing import BotorchTestCase
 from linear_operator.utils.errors import NanError, NotPSDError
 from torch.nn import Module, Parameter
@@ -31,7 +29,7 @@ class ToyModule(Module):
         self.dummy = dummy
 
     def forward(self) -> torch.Tensor:
-        return self.w * self.x + self.b
+        return self.w.sum() * self.x + self.b
 
     @property
     def free_parameters(self) -> dict[str, torch.Tensor]:
@@ -58,8 +56,6 @@ class TestForwardBackwardClosure(BotorchTestCase):
             # Test __init__
             closure = ForwardBackwardClosure(module, module.free_parameters)
             self.assertEqual(module.free_parameters, closure.parameters)
-            self.assertIsInstance(closure.context_manager, partial)
-            self.assertEqual(closure.context_manager.func, zero_grad_ctx)
 
             # Test return values
             value, (dw, dx, dd) = closure()
@@ -79,32 +75,56 @@ class TestNdarrayOptimizationClosure(BotorchTestCase):
             dummy=Parameter(torch.tensor(5.0)),
         ).to(self.device)
 
+        self.module_non_scalar = ToyModule(
+            w=Parameter(torch.full((2,), 2.0)),
+            b=Parameter(torch.tensor(3.0), requires_grad=False),
+            x=Parameter(torch.tensor(4.0)),
+            dummy=Parameter(torch.tensor(5.0)),
+        ).to(self.device)
+
         self.wrappers = {}
         for dtype in ("float32", "float64"):
-            module = self.module.to(dtype=getattr(torch, dtype))
-            closure = ForwardBackwardClosure(module, module.free_parameters)
-            wrapper = NdarrayOptimizationClosure(closure, closure.parameters)
-            self.wrappers[dtype] = wrapper
+            for module, name in (
+                (self.module, ""),
+                (self.module_non_scalar, "non_scalar"),
+            ):
+                module = module.to(dtype=getattr(torch, dtype))
+                closure = ForwardBackwardClosure(module, module.free_parameters)
+                wrapper = NdarrayOptimizationClosure(closure, closure.parameters)
+                self.wrappers[f"{name}_dtype"] = wrapper
 
     def test_main(self):
         for wrapper in self.wrappers.values():
             # Test setter/getter
-            state = get_tensors_as_ndarray_1d(wrapper.closure.parameters)
+            state = wrapper.state
             other = np.random.randn(*state.shape).astype(state.dtype)
 
             wrapper.state = other
             self.assertTrue(np.allclose(other, wrapper.state))
+            n = 0
+            for param in wrapper.parameters.values():
+                k = param.numel()
+                # Check that parameters are set correctly when setting state
+                self.assertTrue(
+                    np.allclose(other[n : n + k], param.view(-1).detach().cpu().numpy())
+                )
+                # Check getting state
+                self.assertTrue(
+                    np.allclose(
+                        wrapper.state[n : n + k], param.view(-1).detach().cpu().numpy()
+                    )
+                )
+                n += k
 
             index = 0
             for param in wrapper.closure.parameters.values():
                 size = param.numel()
                 self.assertTrue(
-                    np.allclose(
-                        other[index : index + size], wrapper.as_array(param.view(-1))
-                    )
+                    np.allclose(other[index : index + size], as_ndarray(param.view(-1)))
                 )
                 index += size
 
+            # Test that getting and setting state work as expected
             wrapper.state = state
             self.assertTrue(np.allclose(state, wrapper.state))
 
@@ -116,29 +136,30 @@ class TestNdarrayOptimizationClosure(BotorchTestCase):
 
             # Test return values
             value_tensor, grad_tensors = wrapper.closure()  # get raw Tensor equivalents
-            self.assertTrue(np.allclose(value, wrapper.as_array(value_tensor)))
+            self.assertTrue(np.allclose(value, as_ndarray(value_tensor)))
             index = 0
-            for x, dx in zip(wrapper.parameters.values(), grad_tensors):
+            for x, dx in zip(wrapper.parameters.values(), grad_tensors, strict=True):
                 size = x.numel()
                 grad = grads[index : index + size]
                 if dx is None:
-                    self.assertTrue((grad == wrapper.fill_value).all())
+                    self.assertTrue((grad == FILL_VALUE).all())
                 else:
-                    self.assertTrue(np.allclose(grad, wrapper.as_array(dx)))
+                    self.assertTrue(np.allclose(grad, as_ndarray(dx)))
                 index += size
 
             module = wrapper.closure.forward
-            self.assertTrue(np.allclose(grads[0], as_ndarray(module.x)))
-            self.assertTrue(np.allclose(grads[1], as_ndarray(module.w)))
-            self.assertEqual(grads[2], wrapper.fill_value)
+            # The forward function is w.sum() * x + b, and there is no grad for b,
+            # so the gradients are
+            # x, w.sum(), FILL_VALUE
+            n_w = module.w.numel()
+            self.assertTrue(np.allclose(grads[:n_w], as_ndarray(module.x)))
+            self.assertTrue(np.allclose(grads[n_w], as_ndarray(module.w.sum())))
+            self.assertEqual(grads[n_w + 1], FILL_VALUE)
 
-            # Test persistent buffers
-            for mode in (False, True):
-                wrapper.persistent = mode
-                self.assertEqual(
-                    mode,
-                    wrapper._get_gradient_ndarray() is wrapper._get_gradient_ndarray(),
-                )
+            # Test persistence
+            self.assertIs(
+                wrapper._get_gradient_ndarray(), wrapper._get_gradient_ndarray()
+            )
 
     def test_exceptions(self):
         for wrapper in self.wrappers.values():
@@ -159,3 +180,10 @@ class TestNdarrayOptimizationClosure(BotorchTestCase):
                 value, grads = mock_wrapper()
                 self.assertTrue(np.isnan(value).all())
                 self.assertTrue(np.isnan(grads).all())
+
+        with self.subTest("No-parameters exception"):
+            wrapper = NdarrayOptimizationClosure(
+                closure=lambda: torch.tensor(), parameters={}
+            )
+            with self.assertRaisesRegex(RuntimeError, "No parameters"):
+                wrapper.state
