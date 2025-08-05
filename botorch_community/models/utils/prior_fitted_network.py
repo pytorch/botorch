@@ -10,6 +10,8 @@ import os
 from enum import Enum
 from typing import Optional
 
+from botorch.logging import logger
+
 try:
     import requests
 except ImportError:  # pragma: no cover
@@ -18,6 +20,12 @@ except ImportError:  # pragma: no cover
         "You can install it using pip: `pip install requests`"
     )
 
+try:
+    import pfns4bo  # noqa: F401
+except ImportError:  # pragma: no cover
+    logger.warning(
+        "pfns4bo is not installed, unable to automatically download PFN model."
+    )
 
 import torch
 import torch.nn as nn
@@ -28,15 +36,11 @@ class ModelPaths(Enum):
 
     pfns4bo_hebo = (
         "https://github.com/automl/PFNs4BO/raw/refs/heads/main/pfns4bo"
-        "/final_models/hebo_morebudget_9_unused_features_3_userpriorperdim2_8.pt.gz"
+        "/final_models/model_hebo_morebudget_9_unused_features_3.pt.gz"
     )
     pfns4bo_bnn = (
         "https://github.com/automl/PFNs4BO/raw/refs/heads/main/pfns4bo"
         "/final_models/model_sampled_warp_simple_mlp_for_hpob_46.pt.gz"
-    )
-    pfns4bo_hebo_userprior = (
-        "https://github.com/automl/PFNs4BO/raw/refs/heads/main/pfns4bo"
-        "/final_models/hebo_morebudget_9_unused_features_3_userpriorperdim2_8.pt.gz"
     )
 
 
@@ -72,14 +76,16 @@ def download_model(
 
         # Decompress the gzipped model weights
         with gzip.GzipFile(fileobj=io.BytesIO(response.content)) as gz:
-            model = torch.load(gz, map_location=torch.device("cpu"))
+            model = torch.load(gz, weights_only=False, map_location=torch.device("cpu"))
 
         # Save the model to cache
         torch.save(model, cache_path)
-        print("saved at: ", cache_path)
+        logger.debug("Model file saved at: ", cache_path)
     else:
         # Load the model from cache
-        model = torch.load(cache_path, map_location=torch.device("cpu"))
-        print("loaded from cache: ", cache_path)
+        model = torch.load(
+            cache_path, weights_only=False, map_location=torch.device("cpu")
+        )
+        logger.debug("Model file loaded from cache: ", cache_path)
 
     return model

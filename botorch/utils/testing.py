@@ -12,8 +12,9 @@ from abc import abstractmethod
 from collections import OrderedDict
 from collections.abc import Sequence
 from itertools import product
-from typing import Any
+from typing import Any, Callable
 from unittest import mock, TestCase
+from warnings import warn
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
@@ -28,7 +29,11 @@ from botorch.posteriors.posterior import Posterior
 from botorch.sampling.base import MCSampler
 from botorch.sampling.get_sampler import GetSampler
 from botorch.sampling.stochastic_samplers import StochasticSampler
-from botorch.test_functions.base import BaseTestProblem, CorruptedTestProblem
+from botorch.test_functions.base import (
+    BaseTestProblem,
+    ConstrainedBaseTestProblem,
+    CorruptedTestProblem,
+)
 from botorch.test_functions.synthetic import Rosenbrock
 from botorch.utils.transforms import unnormalize
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -37,6 +42,57 @@ from torch import Tensor
 
 
 EMPTY_SIZE = torch.Size()
+
+
+def skip_if_import_error(func: Callable) -> Callable:
+    def f(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ImportError as e:
+            warn(
+                "Skipping test because module is not installed. Received the "
+                f"following error: {e}"
+            )
+
+    return f
+
+
+def sample_random_feasible(
+    f: BaseTestProblem, dtype: torch.dtype, device: torch.device
+) -> Tensor:
+    r"""Sample random feasible point for the given test function.
+
+    Args:
+        f: The test function instance.
+        dtype: The dtype of the random point.
+        device: The device of the random point.
+
+    Returns:
+        A random feasible point of shape `1 x f.dim`.
+    """
+    round_ids = f.discrete_inds + f.categorical_inds
+    if isinstance(f, ConstrainedBaseTestProblem):
+        # Sample a bunch of points and hope that one of them is feasible.
+        # We could repeat this in a loop but it is not worth risking the
+        # tests hanging forever. If no feasible point is found, we can bypass the test.
+        X = unnormalize(
+            torch.rand(2**12, f.dim, dtype=dtype, device=device),
+            bounds=f.bounds,
+        )
+        X[..., round_ids] = X[..., round_ids].round()
+        feasible = (f.evaluate_slack(X) >= 0).all(dim=-1)
+        if feasible.any():
+            return X[feasible][0]
+        else:  # pragma: no cover
+            raise RuntimeError(
+                f"No feasible point found for {f.__class__.__name__}. Skipping test."
+            )
+    X = unnormalize(
+        torch.rand(1, f.dim, dtype=dtype, device=device),
+        bounds=f.bounds,
+    )
+    X[..., round_ids] = X[..., round_ids].round()
+    return X
 
 
 class BotorchTestCase(TestCase):
@@ -196,7 +252,9 @@ class SyntheticTestFunctionTestCaseMixin:
                     self.assertEqual(optval, optval_exp)
 
     def test_optimizer(self):
-        r"""Test that optimizers are correctly computed."""
+        r"""Test that optimizers are correctly computed and the optimizer value is
+        better than the function value at some random point.
+        """
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(device=self.device, dtype=dtype)
@@ -211,6 +269,21 @@ class SyntheticTestFunctionTestCaseMixin:
                 if f._check_grad_at_opt:
                     grad = torch.autograd.grad([*res], Xopt)[0]
                     self.assertLess(grad.abs().max().item(), 1e-3)
+                # Check that the optimizer is better than (or equal to) a random point.
+                try:
+                    random_point = sample_random_feasible(
+                        f=f, dtype=dtype, device=self.device
+                    )
+                except RuntimeError:  # pragma: no cover
+                    # If no feasible point is found, we can skip the test.
+                    # Infeasible points can have better than optimal values.
+                    continue
+                f_random = f(random_point, noise=False).item()
+                f_opt = res[0].item()
+                if f.is_minimization_problem:
+                    self.assertLessEqual(f_opt, f_random)
+                else:
+                    self.assertGreaterEqual(f_opt, f_random)
 
     @property
     @abstractmethod
@@ -593,6 +666,12 @@ class MockAcquisitionFunction:
     r"""Mock acquisition function object that implements dummy methods."""
 
     def __init__(self):  # noqa: D107
+        """
+        Initialize the MockAcquisitionFunction.
+        This function does not really do anything,
+        but it takes an input of shape (b,q,d)
+        and returns a tensor of shape (b,).
+        """
         self.model = None
         self.X_pending = None
 

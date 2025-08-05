@@ -367,7 +367,18 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
     def _optimize_batch_candidates() -> tuple[Tensor, Tensor, list[Warning]]:
         batch_candidates_list: list[Tensor] = []
         batch_acq_values_list: list[Tensor] = []
+
         batched_ics = batch_initial_conditions.split(batch_limit)
+        if opt_inputs.fixed_features is None:
+            batched_fixed_features = {}
+        else:
+            batched_fixed_features = {
+                k: ff.split(batch_limit)
+                if torch.is_tensor(ff) and ff.numel() > 1
+                else [ff] * len(batched_ics)
+                for k, ff in opt_inputs.fixed_features.items()
+            }
+
         opt_warnings = []
         timeout_sec = (
             opt_inputs.timeout_sec / len(batched_ics)
@@ -393,7 +404,7 @@ def _optimize_acqf_batch(opt_inputs: OptimizeAcqfInputs) -> tuple[Tensor, Tensor
                     lower_bounds=lower_bounds,
                     upper_bounds=upper_bounds,
                     options=gen_options,
-                    fixed_features=opt_inputs.fixed_features,
+                    fixed_features={k: v[i] for k, v in batched_fixed_features.items()},
                     timeout_sec=timeout_sec,
                     **gen_kwargs,
                 )
@@ -528,7 +539,29 @@ def optimize_acqf(
     retry_on_optimization_warning: bool = True,
     **ic_gen_kwargs: Any,
 ) -> tuple[Tensor, Tensor]:
-    r"""Generate a set of candidates via multi-start optimization.
+    r"""Optimize the acquisition function for a single or multiple joint candidates.
+
+    A high-level description (missing exceptions for special setups):
+
+    This function optimizes the acquisition function `acq_function` in two steps:
+
+    i) It will sample `raw_samples` random points using Sobol sampling in the bounds
+    `bounds` and pass on the "best" `num_restarts` many.
+    The default way to find these "best" is via `gen_batch_initial_conditions`
+    (deviating for some acq functions, see `get_ic_generator`),
+    which by default performs Boltzmann sampling on the acquisition function value
+    (The behavior of step (i) can be further controlled by specifying `ic_generator`
+    or `batch_initial_conditions`.)
+
+    ii) A batch of the `num_restarts` points (or joint sets of points)
+    with the highest acquisition values in the previous step are then further
+    optimized. This is by default done by LBFGS-B optimization, if no constraints are
+    present, and SLSQP, if constraints are present (can be changed to
+    other optmizers via `gen_candidates`).
+
+    While the optimization procedure runs on CPU by default for this function,
+    the acq_function can be implemented on GPU and simply move the inputs
+    to GPU internally.
 
     Args:
         acq_function: An AcquisitionFunction.
@@ -537,10 +570,13 @@ def optimize_acqf(
             +inf, respectively).
         q: The number of candidates.
         num_restarts: The number of starting points for multistart acquisition
-            function optimization.
+            function optimization. Even though the name suggests this happens
+            sequentually, it is done in parallel (using batched evaluations)
+            for up to `options.batch_limit` candidates (by default completely parallel).
         raw_samples: The number of samples for initialization. This is required
             if `batch_initial_conditions` is not specified.
-        options: Options for candidate generation.
+        options: Options for both optimization, passed to `gen_candidates`,
+            and initialization, passed to the `ic_generator` via the `options` kwarg.
         inequality_constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
@@ -586,10 +622,11 @@ def optimize_acqf(
             acquisition values) given a tensor of initial conditions and an
             acquisition function. Other common inputs include lower and upper bounds
             and a dictionary of options, but refer to the documentation of specific
-            generation functions (e.g gen_candidates_scipy and gen_candidates_torch)
-            for method-specific inputs. Default: `gen_candidates_scipy`
+            generation functions (e.g., botorch.optim.optimize.gen_candidates_scipy
+            and botorch.generation.gen.gen_candidates_torch) for method-specific
+            inputs. Default: `gen_candidates_scipy`
         sequential: If False, uses joint optimization, otherwise uses sequential
-            optimization.
+            optimization for optimizing multiple joint candidates (q > 1).
         ic_generator: Function for generating initial conditions. Not needed when
             `batch_initial_conditions` are provided. Defaults to
             `gen_one_shot_kg_initial_conditions` for `qKnowledgeGradient` acquisition
@@ -789,7 +826,7 @@ def optimize_acqf_cyclic(
     if q > 1:
         cyclic_options = cyclic_options or {}
         stopping_criterion = ExpMAStoppingCriterion(**cyclic_options)
-        stop = stopping_criterion.evaluate(fvals=acq_vals)
+        stop = stopping_criterion(fvals=acq_vals)
         base_X_pending = acq_function.X_pending
         idxr = torch.ones(q, dtype=torch.bool, device=opt_inputs.bounds.device)
         while not stop:
@@ -810,7 +847,7 @@ def optimize_acqf_cyclic(
                 candidates[i] = candidate_i
                 acq_vals[i] = acq_val_i
                 idxr[i] = 1
-            stop = stopping_criterion.evaluate(fvals=acq_vals)
+            stop = stopping_criterion(fvals=acq_vals)
         acq_function.set_X_pending(base_X_pending)
     return candidates, acq_vals
 

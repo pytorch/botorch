@@ -29,6 +29,7 @@ from botorch.models.fully_bayesian import MCMC_DIM, SaasFullyBayesianSingleTaskG
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.utils.transforms import (
+    average_over_ensemble_models,
     concatenate_pending_points,
     is_fully_bayesian,
     t_batch_mode_transform,
@@ -104,6 +105,7 @@ class qBayesianActiveLearningByDisagreement(
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qBayesianActiveLearningByDisagreement on the candidate set `X`.
         A monte carlo-estimated information gain is computed over a Gaussian Mixture

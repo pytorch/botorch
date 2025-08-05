@@ -58,7 +58,8 @@ class TestDeterministicModels(BotorchTestCase):
 
         model = GenericDeterministicModel(f)
         self.assertEqual(model.num_outputs, 1)
-        X = torch.rand(3, 2)
+        d = 2
+        X = torch.rand(3, d)
         # basic test
         p = model.posterior(X)
         self.assertIsInstance(p, EnsemblePosterior)
@@ -80,6 +81,25 @@ class TestDeterministicModels(BotorchTestCase):
         self.assertIsInstance(subset_model, GenericDeterministicModel)
         p_sub = subset_model.posterior(X)
         self.assertTrue(torch.equal(p_sub.mean, X[..., [0]]))
+
+        # testing batched model
+        batch_shape = torch.Size([2, 4])
+        batch_coefficients = torch.rand(*batch_shape, 1, d)
+
+        def batched_f(X):
+            return (X * batch_coefficients).sum(dim=-1, keepdim=True)
+
+        model = GenericDeterministicModel(batched_f, batch_shape=batch_shape)
+        Y = model(X)
+        self.assertEqual(Y.shape, torch.Size([2, 4, 3, 1]))
+
+        # testing with wrong batch shape
+        model = GenericDeterministicModel(batched_f, batch_shape=torch.Size([2]))
+
+        with self.assertRaisesRegex(
+            ValueError, "GenericDeterministicModel was initialized with batch_shape="
+        ):
+            model(X)
 
     def test_AffineDeterministicModel(self):
         # test error on bad shape of a

@@ -23,7 +23,7 @@ from botorch.logging import logger
 from botorch.models import SingleTaskGP
 from botorch.models.approximate_gp import ApproximateGPyTorchModel
 from botorch.models.fully_bayesian import (
-    FullyBayesianSingleTaskGP,
+    AbstractFullyBayesianSingleTaskGP,
     SaasFullyBayesianSingleTaskGP,
 )
 from botorch.models.fully_bayesian_multitask import SaasFullyBayesianMultiTaskGP
@@ -337,7 +337,7 @@ def _fit_fallback_approximate(
 
 
 def fit_fully_bayesian_model_nuts(
-    model: FullyBayesianSingleTaskGP | SaasFullyBayesianMultiTaskGP,
+    model: AbstractFullyBayesianSingleTaskGP | SaasFullyBayesianMultiTaskGP,
     max_tree_depth: int = 6,
     warmup_steps: int = 512,
     num_samples: int = 256,
@@ -349,7 +349,7 @@ def fit_fully_bayesian_model_nuts(
 
 
     Args:
-        model: SaasFullyBayesianSingleTaskGP to be fitted.
+        model: Fully Bayesian GP to be fitted.
         max_tree_depth: Maximum tree depth for NUTS
         warmup_steps: The number of burn-in steps for NUTS.
         num_samples:  The number of MCMC samples. Note that with thinning,

@@ -20,6 +20,7 @@ from typing import Any
 import numpy.typing as npt
 
 from botorch.optim.closures import NdarrayOptimizationClosure
+from botorch.optim.stopping import StoppingCriterion
 from botorch.optim.utils.numpy_utils import get_bounds_as_ndarray
 from botorch.optim.utils.timeout import minimize_with_timeout
 from numpy import asarray, float64 as np_float64
@@ -78,8 +79,8 @@ def scipy_minimize(
         bounds: A dictionary mapping parameter names to lower and upper bounds.
         callback: A callable taking `parameters` and an OptimizationResult as arguments.
         x0: An optional initialization vector passed to scipy.optimize.minimize.
-        method: Solver type, passed along to scipy.minimize.
-        options: Dictionary of solver options, passed along to scipy.minimize.
+        method: Solver type, passed along to scipy.optimize.minimize.
+        options: Dictionary of solver options, passed along to scipy.optimize.minimize.
         timeout_sec: Timeout in seconds to wait before aborting the optimization loop
             if not converged (will return the best found solution thus far).
 
@@ -153,7 +154,7 @@ def torch_minimize(
     scheduler: LRScheduler | Callable[[Optimizer], LRScheduler] | None = None,
     step_limit: int | None = None,
     timeout_sec: float | None = None,
-    stopping_criterion: Callable[[Tensor], bool] | None = None,
+    stopping_criterion: StoppingCriterion | None = None,
 ) -> OptimizationResult:
     r"""Generic torch.optim-based optimization routine.
 
@@ -189,6 +190,10 @@ def torch_minimize(
 
     if not (scheduler is None or isinstance(scheduler, LRScheduler)):
         scheduler = scheduler(optimizer)
+
+    if stopping_criterion is not None:
+        # Reset stopping criterion to ensure clean state for new optimization run
+        stopping_criterion.reset()
 
     _bounds = (
         {}

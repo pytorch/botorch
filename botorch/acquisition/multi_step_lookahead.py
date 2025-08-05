@@ -35,6 +35,7 @@ from botorch.optim.initializers import initialize_q_batch
 from botorch.sampling.base import MCSampler
 from botorch.sampling.normal import SobolQMCNormalSampler
 from botorch.utils.transforms import (
+    average_over_ensemble_models,
     match_batch_shape,
     t_batch_mode_transform,
     unnormalize,
@@ -165,6 +166,7 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
         self._collapse_fantasy_base_samples = collapse_fantasy_base_samples
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qMultiStepLookahead on the candidate set X.
 
