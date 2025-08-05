@@ -19,13 +19,6 @@ Sampling Strategies
 .. automodule:: botorch.generation.sampling
     :members:
 
-
-Batched L-BFGS-B Scipy Port
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. automodule:: botorch.generation.batched_lbfgs_b
-    :members:
-
 Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

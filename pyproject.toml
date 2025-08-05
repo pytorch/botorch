@@ -13,4 +13,4 @@ first_party_detection = false
 formatter = "ruff-api"
 
 [tool.coverage.report]
-omit = ["test/*", "setup.py", "botorch/generation/batched_lbfgs_b.py"]
+omit = ["test/*", "setup.py"]
