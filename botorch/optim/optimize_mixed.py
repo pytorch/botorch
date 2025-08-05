@@ -22,6 +22,7 @@ from botorch.optim.optimize import (
     _validate_sequential_inputs,
     OptimizeAcqfInputs,
 )
+from botorch.optim.parameter_constraints import evaluate_feasibility
 from botorch.optim.utils.acquisition_utils import fix_features, get_X_baseline
 from botorch.utils.sampling import (
     draw_sobol_samples,
@@ -134,17 +135,16 @@ def _filter_infeasible(
     Returns:
         The tensor `X` with infeasible points removed.
     """
-    if inequality_constraints is None and equality_constraints is None:
-        return X
-    is_feasible = torch.ones(X.shape[:-1], device=X.device, dtype=torch.bool)
-    if inequality_constraints is not None:
-        for idx, coef, rhs in inequality_constraints:
-            is_feasible &= (X[..., idx] * coef).sum(dim=-1) >= rhs
-    if equality_constraints is not None:
-        for idx, coef, rhs in equality_constraints:
-            is_feasible &= torch.isclose(
-                (X[..., idx] * coef).sum(dim=-1), torch.tensor(rhs).to(coef)
-            )
+    # X is reshaped to [n, 1, d] in order to be able to apply
+    # `evaluate_feasibility` which operates on the batch level
+    Xb = X.clone()
+    Xb = X.reshape(X.shape[0], 1, X.shape[-1])
+    is_feasible = evaluate_feasibility(
+        X=Xb,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+        nonlinear_inequality_constraints=None,
+    )
     return X[is_feasible]
 
 
