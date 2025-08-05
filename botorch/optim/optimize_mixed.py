@@ -138,7 +138,7 @@ def _filter_infeasible(
     # X is reshaped to [n, 1, d] in order to be able to apply
     # `evaluate_feasibility` which operates on the batch level
     is_feasible = evaluate_feasibility(
-        X=X.reshape(X.shape[0], 1, X.shape[-1]),
+        X=X.unsqueeze(-2),
         inequality_constraints=inequality_constraints,
         equality_constraints=equality_constraints,
         nonlinear_inequality_constraints=None,
