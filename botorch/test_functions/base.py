@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Iterable, Iterator, Protocol
 
 import torch
-from botorch.exceptions.errors import InputDataError
+from botorch.exceptions.errors import InputDataError, UnsupportedError
 from pyre_extensions import none_throws
 from torch import Tensor
 from torch.nn import Module
@@ -125,6 +125,8 @@ class BaseTestProblem(Module, ABC):
     continuous_inds: list[int] = []  # Float-valued range parameters (bounds inclusive)
     discrete_inds: list[int] = []  # Ordered integer parameters (bounds inclusive)
     categorical_inds: list[int] = []  # Unordered integer parameters (bounds inclusive)
+    # Whether the problem is a minimization problem by default, with `negate=False`.
+    _is_minimization_by_default: bool = True
 
     def __init__(
         self,
@@ -212,6 +214,17 @@ class BaseTestProblem(Module, ABC):
             A `batch_shape`-dim tensor.
         """
         pass  # pragma: no cover
+
+    @property
+    def is_minimization_problem(self) -> bool:
+        r"""Whether the problem is a minimization problem, after accounting
+        for the `negate` option.
+        """
+        return (
+            self._is_minimization_by_default
+            if not self.negate
+            else not self._is_minimization_by_default
+        )
 
 
 class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
@@ -350,6 +363,13 @@ class MultiObjectiveTestProblem(BaseTestProblem, ABC):
     def gen_pareto_front(self, n: int) -> Tensor:
         r"""Generate `n` pareto optimal points."""
         raise NotImplementedError
+
+    @property
+    def is_minimization_problem(self) -> bool:
+        raise UnsupportedError(
+            "`is_minimization_problem` is not a valid property for "
+            "multi-objective problems. "
+        )
 
 
 class SeedingMixin(ABC):

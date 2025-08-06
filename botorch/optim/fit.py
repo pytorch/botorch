@@ -22,7 +22,7 @@ from botorch.optim.core import (
     scipy_minimize,
     torch_minimize,
 )
-from botorch.optim.stopping import ExpMAStoppingCriterion
+from botorch.optim.stopping import ExpMAStoppingCriterion, StoppingCriterion
 from botorch.optim.utils import get_parameters_and_bounds, TorchAttr
 from botorch.utils.types import DEFAULT
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
@@ -69,8 +69,8 @@ def fit_gpytorch_mll_scipy(
             Responsible for setting the `grad` attributes of `parameters`. If no closure
             is provided, one will be obtained by calling `get_loss_closure_with_grads`.
         closure_kwargs: Keyword arguments passed to `closure`.
-        method: Solver type, passed along to scipy.minimize.
-        options: Dictionary of solver options, passed along to scipy.minimize.
+        method: Solver type, passed along to scipy.optimize.minimize.
+        options: Dictionary of solver options, passed along to scipy.optimize.minimize.
         callback: Optional callback taking `parameters` and an OptimizationResult as its
             sole arguments.
         timeout_sec: Timeout in seconds after which to terminate the fitting loop
@@ -118,7 +118,7 @@ def fit_gpytorch_mll_torch(
     closure: Callable[[], tuple[Tensor, Sequence[Tensor | None]]] | None = None,
     closure_kwargs: dict[str, Any] | None = None,
     step_limit: int | None = None,
-    stopping_criterion: Callable[[Tensor], bool] | None = DEFAULT,  # pyre-ignore [9]
+    stopping_criterion: StoppingCriterion | None = DEFAULT,
     optimizer: Optimizer | Callable[..., Optimizer] = Adam,
     scheduler: _LRScheduler | Callable[..., _LRScheduler] | None = None,
     callback: Callable[[dict[str, Tensor], OptimizationResult], None] | None = None,

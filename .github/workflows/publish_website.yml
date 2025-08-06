@@ -10,7 +10,19 @@ on:
         required: false
         type: boolean
         default: false
+      dry_run:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
+      run_tutorials:
+        required: true
+        type: boolean
+        default: false
+      dry_run:
+        required: true
+        type: boolean
+        default: false
 
 
 jobs:
@@ -50,6 +62,27 @@ jobs:
       run: |
         uv pip install ."[dev, tutorials]"
     - if: ${{ inputs.new_version }}
+      name: Delete existing similar versions from Docusaurus
+      run: |
+        # Delete existing versions for same Major and Minor version numbers.
+        # We do this to keep only the latest patch for a given major/minor version.
+        MAJOR_MINOR_VERSION=$(cut -d '.' -f 1-2 <<< ${{ inputs.new_version }}) # remove patch number
+        MAJOR_MINOR_VERSION=${MAJOR_MINOR_VERSION#v}                           # remove optional "v" prefix
+        for dir in website/versioned_docs/version-$MAJOR_MINOR_VERSION.*; do
+            if [ -d "$dir" ]; then
+                OLD_VERSION=$(basename "$dir" | sed 's/^version-//') # remove "version-" prefix from the directory name
+                echo "Deleting older version $OLD_VERSION with the same major and minor version numbers as $NEW_VERSION"
+                # Delete version from the three locations Docusaurus uses:
+                #   - versioned_docs/version-X.Y.Z/
+                #   - versioned_sidebars/version-X.Y.Z-sidebars.json
+                #   - versions.json
+                # https://docusaurus.io/docs/versioning#deleting-an-existing-version
+                rm -rf "$dir"
+                rm "website/versioned_sidebars/version-$OLD_VERSION-sidebars.json"
+                sed -i "/\"$OLD_VERSION\"/d" website/versions.json
+            fi
+        done
+    - if: ${{ inputs.new_version && !inputs.dry_run }}
       name: Create new docusaurus version
       run: |
         python3 scripts/convert_ipynb_to_mdx.py --clean
@@ -70,6 +103,7 @@ jobs:
         path: website/build/
 
   deploy-website:
+    if: ${{ !inputs.dry_run }}
     needs: build-website
     permissions:
       pages: write

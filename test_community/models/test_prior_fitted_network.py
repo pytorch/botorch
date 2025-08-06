@@ -6,11 +6,13 @@
 
 
 import os
+from logging import DEBUG, WARN
 from unittest.mock import MagicMock, mock_open, patch
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models.transforms.input import Normalize
 from botorch.utils.testing import BotorchTestCase
 from botorch_community.models.prior_fitted_network import PFNModel
 from botorch_community.models.utils.prior_fitted_network import (
@@ -47,14 +49,40 @@ class TestPriorFittedNetwork(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             train_X = torch.rand(10, 3, **tkwargs)
             train_Y = torch.rand(10, 1, **tkwargs)
+            train_Yvar = torch.rand(10, 1, **tkwargs)
             test_X = torch.rand(5, 3, **tkwargs)
+
+            with self.assertLogs(logger="botorch", level=DEBUG) as log:
+                PFNModel(train_X, train_Y, DummyPFN(), train_Yvar=train_Yvar)
+                self.assertIn(
+                    "train_Yvar provided but ignored for PFNModel.",
+                    log.output[0],
+                )
+
+            train_Y_4d = torch.rand(10, 2, 2, 1, **tkwargs)
+            with self.assertRaises(UnsupportedError):
+                PFNModel(train_X, train_Y_4d, DummyPFN())
+
+            train_Y_2d = torch.rand(10, 2, **tkwargs)
+            with self.assertRaises(UnsupportedError):
+                PFNModel(train_X, train_Y_2d, DummyPFN())
+
+            with self.assertRaises(UnsupportedError):
+                PFNModel(torch.rand(10, 3, 3, 2, **tkwargs), train_Y, DummyPFN())
+
+            with self.assertRaises(UnsupportedError):
+                PFNModel(train_X, torch.rand(11, **tkwargs), DummyPFN())
 
             pfn = PFNModel(train_X, train_Y, DummyPFN())
 
             with self.assertRaises(RuntimeError):
                 pfn.posterior(test_X, output_indices=[0, 1])
-            with self.assertRaises(UnsupportedError):
+            with self.assertLogs(logger="botorch", level=WARN) as log:
                 pfn.posterior(test_X, observation_noise=True)
+                self.assertIn(
+                    "observation_noise is not supported for PFNModel",
+                    log.output[0],
+                )
             with self.assertRaises(UnsupportedError):
                 pfn.posterior(
                     test_X,
@@ -65,36 +93,74 @@ class TestPriorFittedNetwork(BotorchTestCase):
 
             # q should be 1
             test_X = torch.rand(5, 4, 2, **tkwargs)
-            with self.assertRaises(NotImplementedError):
+            with self.assertRaises(UnsupportedError):
+                pfn.posterior(test_X)
+
+            # X dims should be 1 to 4
+            test_X = torch.rand(5, 4, 2, 1, 2, **tkwargs)
+            with self.assertRaises(UnsupportedError):
                 pfn.posterior(test_X)
 
     def test_shapes(self):
-        for dtype in (torch.float, torch.double):
-            tkwargs = {"device": self.device, "dtype": dtype}
+        tkwargs = {"device": self.device, "dtype": torch.float}
 
-            # no batch dimension
-            train_X = torch.rand(10, 3, **tkwargs)
-            train_Y = torch.rand(10, 1, **tkwargs)
-            test_X = torch.rand(5, 3, **tkwargs)
+        # no q dimension
+        train_X = torch.rand(10, 3, **tkwargs)
+        train_Y = torch.rand(10, 1, **tkwargs)
+        test_X = torch.rand(5, 3, **tkwargs)
 
-            pfn = PFNModel(train_X, train_Y, DummyPFN(n_buckets=100))
-            posterior = pfn.posterior(test_X)
+        pfn = PFNModel(train_X, train_Y, DummyPFN(n_buckets=100))
 
-            self.assertEqual(posterior.probabilities.shape, torch.Size([5, 100]))
-            self.assertEqual(posterior.mean.shape, torch.Size([5, 1]))
+        for batch_first in [True, False]:
+            with self.subTest(batch_first=batch_first):
+                pfn.batch_first = batch_first
+                posterior = pfn.posterior(test_X)
 
-            # batch dimensions
-            train_X = torch.rand(2, 3, 4, 10, 3, **tkwargs)
-            train_Y = torch.rand(2, 3, 4, 10, 1, **tkwargs)
-            test_X = torch.rand(2, 3, 4, 1, 3, **tkwargs)
+                self.assertEqual(posterior.probabilities.shape, torch.Size([5, 100]))
+                self.assertEqual(posterior.mean.shape, torch.Size([5, 1]))
 
-            pfn = PFNModel(train_X, train_Y, DummyPFN(n_buckets=100))
-            posterior = pfn.posterior(test_X)
+        # q=1
+        test_X = torch.rand(5, 1, 3, **tkwargs)
+        posterior = pfn.posterior(test_X)
 
-            self.assertEqual(
-                posterior.probabilities.shape, torch.Size([2, 3, 4, 1, 100])
-            )
-            self.assertEqual(posterior.mean.shape, torch.Size([2, 3, 4, 1, 1]))
+        self.assertEqual(posterior.probabilities.shape, torch.Size([5, 100]))
+        self.assertEqual(posterior.mean.shape, torch.Size([5, 1]))
+
+        # no shape basically
+        test_X = torch.rand(3, **tkwargs)
+        posterior = pfn.posterior(test_X)
+
+        self.assertEqual(posterior.probabilities.shape, torch.Size([100]))
+        self.assertEqual(posterior.mean.shape, torch.Size([1]))
+
+    def test_batching(self):
+        tkwargs = {"device": self.device, "dtype": torch.float}
+
+        # no q dimension
+        train_X = torch.rand(2, 10, 3, **tkwargs)
+        train_Y = torch.rand(2, 10, 1, **tkwargs)
+
+        pfn = PFNModel(train_X, train_Y, DummyPFN(n_buckets=100))
+
+        test_X = torch.rand(5, 2, 1, 3, **tkwargs)
+        posterior = pfn.posterior(test_X)
+
+        self.assertEqual(posterior.probabilities.shape, torch.Size([5, 2, 100]))
+
+        test_X = torch.rand(2, 1, 3, **tkwargs)
+        posterior = pfn.posterior(test_X)
+
+        self.assertEqual(posterior.probabilities.shape, torch.Size([2, 100]))
+
+    def test_input_transform(self):
+        model = PFNModel(
+            train_X=torch.rand(10, 3),
+            train_Y=torch.rand(10, 1),
+            input_transform=Normalize(d=3),
+            model=DummyPFN(),
+        )
+        self.assertIsInstance(model.input_transform, Normalize)
+        self.assertEqual(model.input_transform.bounds.shape, torch.Size([2, 3]))
 
 
 class TestPriorFittedNetworkUtils(BotorchTestCase):
@@ -143,6 +209,13 @@ class TestPriorFittedNetworkUtils(BotorchTestCase):
         mock_torch_load.assert_called_once()
         mock_torch_save.assert_called_once()
         self.assertEqual(model, fake_model)
+
+        # Test loading in model init
+        model = PFNModel(
+            train_X=torch.rand(10, 3),
+            train_Y=torch.rand(10, 1),
+        )
+        self.assertEqual(model.pfn, fake_model)
 
     @patch("botorch_community.models.utils.prior_fitted_network.torch.load")
     @patch("botorch_community.models.utils.prior_fitted_network.os.path.exists")

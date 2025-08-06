@@ -30,7 +30,11 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.utils import check_no_nans
-from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    concatenate_pending_points,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 from torch.distributions import Normal
 
@@ -473,6 +477,7 @@ class qMultiObjectivePredictiveEntropySearch(AcquisitionFunction):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qMultiObjectivePredictiveEntropySearch on the candidate set `X`.
 

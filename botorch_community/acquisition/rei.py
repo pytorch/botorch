@@ -60,7 +60,10 @@ from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTrans
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.utils.safe_math import logmeanexp
-from botorch.utils.transforms import t_batch_mode_transform
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 TAU_RELU = 1e-6
@@ -113,6 +116,7 @@ class LogRegionalExpectedImprovement(AnalyticAcquisitionFunction):
             )
 
     @t_batch_mode_transform(expected_q=1)
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         batch_shape = X.shape[0]
         q = X.shape[1]

@@ -11,3 +11,6 @@ first_party_detection = false
 
 [tool.ufmt]
 formatter = "ruff-api"
+
+[tool.coverage.report]
+omit = ["test/*", "setup.py"]

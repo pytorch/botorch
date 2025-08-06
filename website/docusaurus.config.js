@@ -88,6 +88,12 @@ module.exports={
           "position": "left"
         },
         {
+          "type": "custom-docSidebar",
+          "sidebarId": "notebooks_community",
+          "label": "Community Notebooks",
+          "position": "left"
+        },
+        {
           "href": "https://botorch.readthedocs.io/",
           "label": "API Reference",
           "position": "left",
