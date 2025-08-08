@@ -1237,6 +1237,24 @@ class TestInputTransforms(BotorchTestCase):
                     2: partial(one_hot, num_classes=3),
                 },
             )
+        with self.assertRaises(
+            ValueError,
+            msg="The number of categorical features must be at least 1.",
+        ):
+            NumericToCategoricalEncoding(
+                dim=2,
+                categorical_features={},
+                encoders={},
+            )
+        with self.assertRaises(
+            ValueError,
+            msg="Categorical feature at index 1",
+        ):
+            NumericToCategoricalEncoding(
+                dim=2,
+                categorical_features={1: 1},
+                encoders={1: partial(one_hot, num_classes=1)},
+            )
 
         torch.manual_seed(42)
         for dtype in (torch.float, torch.double):
@@ -1249,14 +1267,14 @@ class TestInputTransforms(BotorchTestCase):
                 encoders={0: partial(one_hot, num_classes=3)},
             )
             tf.eval()
-            cat_numeric = torch.randint(0, 3, (3,), device=self.device, dtype=dtype)
+            cat_numeric = torch.randint(0, 3, (3,), device=self.device)
             cat_one_hot = one_hot(cat_numeric, num_classes=3)
             cont = torch.rand(3, 2, dtype=dtype, device=self.device)
 
             X_numeric = torch.cat(
                 [cat_numeric.view(-1, 1), cont],
                 dim=-1,
-            )
+            ).to(dtype=dtype)
 
             expected = torch.cat(
                 [cat_one_hot, cont],
@@ -1276,9 +1294,9 @@ class TestInputTransforms(BotorchTestCase):
                 },
             )
             tf.eval()
-            cat_numeric1 = torch.randint(0, 3, (3,), device=self.device, dtype=dtype)
+            cat_numeric1 = torch.randint(0, 3, (3,), device=self.device)
             cat_one_hot1 = one_hot(cat_numeric1, num_classes=3)
-            cat_numeric2 = torch.randint(0, 2, (3,), device=self.device, dtype=dtype)
+            cat_numeric2 = torch.randint(0, 2, (3,), device=self.device)
             cat_one_hot2 = one_hot(cat_numeric2, num_classes=2)
             cont = torch.rand(3, 2, dtype=dtype, device=self.device)
 
@@ -1289,7 +1307,7 @@ class TestInputTransforms(BotorchTestCase):
                     cat_numeric2.view(-1, 1),
                 ],
                 dim=-1,
-            )
+            ).to(dtype=dtype)
 
             expected = torch.cat(
                 [cont, cat_one_hot1, cat_one_hot2],

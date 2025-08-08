@@ -1645,7 +1645,8 @@ class NumericToCategoricalEncoding(InputTransform):
         Args:
             dim: The dimension of the numerically encoded input.
             categorical_features: A dictionary mapping the index of each
-                categorical feature to its cardinality. This assumes that categoricals
+                categorical feature to its cardinality which has to be
+                greater than 1. This assumes that categoricals
                 are integer encoded.
             encoders: A dictionary mapping the index of each categorical feature to
                 a callable that encodes the categorical feature into a vector
@@ -1665,10 +1666,22 @@ class NumericToCategoricalEncoding(InputTransform):
         self.encoders = encoders
         self.categorical_features = categorical_features
 
+        if len(self.categorical_features) == 0:
+            raise ValueError(
+                "At least one categorical feature for encoding must be provided."
+            )
+
         if len(self.categorical_features) > dim:
             raise ValueError(
                 "The number of categorical features exceeds the provided dimension."
             )
+
+        for idx, card in self.categorical_features.items():
+            if card == 1:
+                raise ValueError(
+                    f"Categorical feature at index {idx} has cardinality 1, "
+                    f"which is not allowed."
+                )
 
         # check that the encoders match the categorical features
         if set(self.encoders.keys()) != set(self.categorical_features.keys()):
@@ -1710,17 +1723,15 @@ class NumericToCategoricalEncoding(InputTransform):
             A `batch_shape x n x d'`-dim tensor of where the integer encoded
             categoricals are transformed to a vector representation.
         """
-        if len(self.categorical_features) > 0:
-            s = list(X.shape)
-            s[-1] = len(self.numerical_idx) + len(np.concatenate(self.encoded_idx))
-            X_encoded = torch.zeros(size=s).to(X)
-            X_encoded[..., self.new_numerical_idx] = X[..., self.numerical_idx]
-            for i, idx in enumerate(self.categorical_features.keys()):
-                X_encoded[..., self.encoded_idx[i]] = self.encoders[idx](
-                    X[..., idx].long(),
-                ).to(X_encoded)
-            return X_encoded
-        return X
+        s = list(X.shape)
+        s[-1] = len(self.numerical_idx) + len(np.concatenate(self.encoded_idx))
+        X_encoded = torch.zeros(size=s).to(X)
+        X_encoded[..., self.new_numerical_idx] = X[..., self.numerical_idx]
+        for i, idx in enumerate(self.categorical_features.keys()):
+            X_encoded[..., self.encoded_idx[i]] = self.encoders[idx](
+                X[..., idx].long(),
+            ).to(X_encoded)
+        return X_encoded
 
     def equals(self, other: InputTransform) -> bool:
         r"""Check if another input transform is equivalent.
