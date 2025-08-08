@@ -674,11 +674,14 @@ class MockAcquisitionFunction:
         """
         self.model = None
         self.X_pending = None
+        self._call_args = {"__call__": [], "set_X_pending": []}
 
     def __call__(self, X):
+        self._call_args["__call__"].append(X)
         return X[..., 0].max(dim=-1).values
 
     def set_X_pending(self, X_pending: Tensor | None = None):
+        self._call_args["set_X_pending"].append(X_pending)
         self.X_pending = X_pending
 
 
