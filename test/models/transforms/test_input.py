@@ -1238,7 +1238,7 @@ class TestInputTransforms(BotorchTestCase):
                 },
             )
 
-        torch.manual_seed(randint(0, 1000))
+        torch.manual_seed(42)
         for dtype in (torch.float, torch.double):
             # one categorical at start
             dim = 3
@@ -1249,12 +1249,12 @@ class TestInputTransforms(BotorchTestCase):
                 encoders={0: partial(one_hot, num_classes=3)},
             )
             tf.eval()
-            cat_numeric = torch.randint(0, 3, (3,), device=self.device)
+            cat_numeric = torch.randint(0, 3, (3,), device=self.device, dtype=dtype)
             cat_one_hot = one_hot(cat_numeric, num_classes=3)
             cont = torch.rand(3, 2, dtype=dtype, device=self.device)
 
             X_numeric = torch.cat(
-                [cat_numeric.view(-1, 1).to(dtype=dtype, device=self.device), cont],
+                [cat_numeric.view(-1, 1), cont],
                 dim=-1,
             )
 
@@ -1276,17 +1276,17 @@ class TestInputTransforms(BotorchTestCase):
                 },
             )
             tf.eval()
-            cat_numeric1 = torch.randint(0, 3, (3,), device=self.device)
+            cat_numeric1 = torch.randint(0, 3, (3,), device=self.device, dtype=dtype)
             cat_one_hot1 = one_hot(cat_numeric1, num_classes=3)
-            cat_numeric2 = torch.randint(0, 2, (3,), device=self.device)
+            cat_numeric2 = torch.randint(0, 2, (3,), device=self.device, dtype=dtype)
             cat_one_hot2 = one_hot(cat_numeric2, num_classes=2)
             cont = torch.rand(3, 2, dtype=dtype, device=self.device)
 
             X_numeric = torch.cat(
                 [
                     cont,
-                    cat_numeric1.view(-1, 1).to(dtype=dtype, device=self.device),
-                    cat_numeric2.view(-1, 1).to(dtype=dtype, device=self.device),
+                    cat_numeric1.view(-1, 1),
+                    cat_numeric2.view(-1, 1),
                 ],
                 dim=-1,
             )
