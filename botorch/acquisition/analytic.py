@@ -1078,13 +1078,12 @@ class PosteriorStandardDeviation(AnalyticAcquisitionFunction):
         >>> import torch
         >>> from botorch.models.gp_regression import SingleTaskGP
         >>> from botorch.models.transforms.input import Normalize
-        >>> from botorch.models.transforms.outcome import Standardize
         >>>
         >>> # Set up a model
         >>> train_X = torch.rand(20, 2, dtype=torch.float64)
         >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
         >>> model = SingleTaskGP(
-        ...     train_X, train_Y, outcome_transform=Standardize(m=1),
+        ...     train_X, train_Y,
         ...     input_transform=Normalize(d=2),
         ... )
         >>> # Now set up the acquisition function
