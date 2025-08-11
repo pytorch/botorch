@@ -63,7 +63,6 @@ def _get_mlls(
         train_X=train_X,
         train_Y=train_Y,
         input_transform=Normalize(d=1),
-        outcome_transform=Standardize(m=1),
     )
     if wrap_likelihood:
         model.likelihood = WrapperLikelihood(model.likelihood)

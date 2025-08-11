@@ -1718,9 +1718,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             with self.subTest(acqf_class.__name__):
                 train_x = torch.rand(3, 2, dtype=torch.float64)
                 train_y = torch.randn(3, 2, dtype=torch.float64)
-                model = SingleTaskGP(
-                    train_x, train_y, outcome_transform=Standardize(m=2)
-                )
+                model = SingleTaskGP(train_x, train_y)
                 with catch_warnings():
                     simplefilter("ignore", category=NumericsWarning)
                     acqf = acqf_class(

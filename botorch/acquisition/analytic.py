@@ -1084,7 +1084,7 @@ class PosteriorStandardDeviation(AnalyticAcquisitionFunction):
         >>> train_X = torch.rand(20, 2, dtype=torch.float64)
         >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
         >>> model = SingleTaskGP(
-        ...     train_X, train_Y, outcome_transform=Standardize(m=1),
+        ...     train_X, train_Y,
         ...     input_transform=Normalize(d=2),
         ... )
         >>> # Now set up the acquisition function

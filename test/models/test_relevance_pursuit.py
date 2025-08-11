@@ -122,7 +122,6 @@ class TestRobustGP(BotorchTestCase):
             mean_module=ZeroMean(),
             covar_module=kernel,
             input_transform=Normalize(d=X.shape[-1]),
-            outcome_transform=Standardize(m=Y.shape[-1]),
             likelihood=likelihood,
         )
         model.to(dtype=X.dtype, device=self.device)

@@ -41,7 +41,6 @@ class TestFitGPyTorchMLLScipy(BotorchTestCase):
             train_X=train_X,
             train_Y=train_Y,
             input_transform=Normalize(d=1),
-            outcome_transform=Standardize(m=1),
         )
         self.mlls[SingleTaskGP, 1] = ExactMarginalLogLikelihood(model.likelihood, model)
 
@@ -188,7 +187,6 @@ class TestFitGPyTorchMLLTorch(BotorchTestCase):
             train_X=train_X,
             train_Y=train_Y,
             input_transform=Normalize(d=1),
-            outcome_transform=Standardize(m=1),
         )
         self.mlls[SingleTaskGP, 1] = ExactMarginalLogLikelihood(model.likelihood, model)
 
