@@ -1379,6 +1379,68 @@ class TestInputTransforms(BotorchTestCase):
             )
             X_one_hot = tf(X_numeric)
             self.assertTrue(torch.equal(X_one_hot, expected))
+        # test no transform on eval
+        tf = NumericToCategoricalEncoding(
+            dim=dim,
+            categorical_features=categorical_features,
+            encoders={
+                0: partial(one_hot, num_classes=3),
+                1: partial(one_hot, num_classes=2),
+            },
+            transform_on_eval=False,
+        )
+        tf.eval()
+        X_tf = tf(X_numeric)
+        self.assertTrue(torch.equal(X_numeric, X_tf))
+
+        # test no transform on train
+        tf = NumericToCategoricalEncoding(
+            dim=dim,
+            categorical_features=categorical_features,
+            encoders={
+                0: partial(one_hot, num_classes=3),
+                1: partial(one_hot, num_classes=2),
+            },
+            transform_on_train=False,
+        )
+        X_tf = tf(X_numeric)
+        self.assertTrue(torch.equal(X_numeric, X_tf))
+        tf.eval()
+        X_tf = tf(X_numeric)
+        self.assertFalse(torch.equal(X_numeric, X_tf))
+
+        # test equals
+        tf2 = NumericToCategoricalEncoding(
+            dim=dim,
+            categorical_features=categorical_features,
+            encoders={
+                0: partial(one_hot, num_classes=3),
+                1: partial(one_hot, num_classes=2),
+            },
+            transform_on_train=False,
+        )
+        self.assertTrue(tf.equals(tf2))
+        # test different transform_on_train
+        tf3 = NumericToCategoricalEncoding(
+            dim=dim,
+            categorical_features=categorical_features,
+            encoders={
+                0: partial(one_hot, num_classes=3),
+                1: partial(one_hot, num_classes=2),
+            },
+            transform_on_train=True,
+        )
+        self.assertFalse(tf3.equals(tf2))
+        # test categorical features
+        tf4 = NumericToCategoricalEncoding(
+            dim=dim,
+            categorical_features={0: 3},
+            encoders={
+                0: partial(one_hot, num_classes=3),
+            },
+            transform_on_train=True,
+        )
+        self.assertFalse(tf4.equals(tf3))
 
     def test_one_hot_to_numeric(self) -> None:
         dim = 8
