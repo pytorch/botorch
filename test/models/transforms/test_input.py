@@ -1255,6 +1255,15 @@ class TestInputTransforms(BotorchTestCase):
                 categorical_features={1: 1},
                 encoders={1: partial(one_hot, num_classes=1)},
             )
+        with self.assertRaises(
+            ValueError,
+            msg="Categorical feature at index 1",
+        ):
+            NumericToCategoricalEncoding(
+                dim=2,
+                categorical_features={1: 2.0},
+                encoders={1: partial(one_hot, num_classes=2)},
+            )
 
         torch.manual_seed(42)
         for dtype in (torch.float, torch.double):
@@ -1282,7 +1291,7 @@ class TestInputTransforms(BotorchTestCase):
             )
             X_one_hot = tf(X_numeric)
             self.assertTrue(torch.equal(X_one_hot, expected))
-            
+
             # two categoricals at end
             dim = 4
             categorical_features = {2: 3, 3: 2}
@@ -1316,7 +1325,7 @@ class TestInputTransforms(BotorchTestCase):
             )
             X_one_hot = tf(X_numeric)
             self.assertTrue(torch.equal(X_one_hot, expected))
-            
+
             # two categoricals, one at start, one at end
             dim = 4
             categorical_features = {0: 3, 3: 2}
@@ -1350,7 +1359,7 @@ class TestInputTransforms(BotorchTestCase):
             )
             X_one_hot = tf(X_numeric)
             self.assertTrue(torch.equal(X_one_hot, expected))
-            
+
             # only categoricals
             dim = 2
             categorical_features = {0: 3, 1: 2}
@@ -1382,7 +1391,7 @@ class TestInputTransforms(BotorchTestCase):
             )
             X_one_hot = tf(X_numeric)
             self.assertTrue(torch.equal(X_one_hot, expected))
-        
+
         # test no transform on eval
         tf = NumericToCategoricalEncoding(
             dim=dim,
@@ -1424,7 +1433,7 @@ class TestInputTransforms(BotorchTestCase):
             transform_on_train=False,
         )
         self.assertTrue(tf.equals(tf2))
-        
+
         # test different transform_on_train
         tf3 = NumericToCategoricalEncoding(
             dim=dim,
@@ -1436,7 +1445,7 @@ class TestInputTransforms(BotorchTestCase):
             transform_on_train=True,
         )
         self.assertFalse(tf3.equals(tf2))
-        
+
         # test categorical features
         tf4 = NumericToCategoricalEncoding(
             dim=dim,

@@ -1699,10 +1699,11 @@ class NumericToCategoricalEncoding(InputTransform):
             )
 
         for idx, card in self.categorical_features.items():
-            if card <= 1:
+            if card <= 1 or not isinstance(card, int):
                 raise ValueError(
                     f"Categorical feature at index {idx} has cardinality {card}. "
-                    f"All categorial features must have cardinality greater than 1."
+                    f"All categorical features must be an integer and have cardinality "
+                    "greater than 1."
                 )
 
         # check that the encoders match the categorical features
