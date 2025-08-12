@@ -10,7 +10,6 @@ from math import pi
 import torch
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.transforms.input import Normalize
-from botorch.models.transforms.outcome import Standardize
 from botorch.optim.closures.model_closures import (
     get_loss_closure,
     get_loss_closure_with_grads,
@@ -63,7 +62,6 @@ def _get_mlls(
         train_X=train_X,
         train_Y=train_Y,
         input_transform=Normalize(d=1),
-        outcome_transform=Standardize(m=1),
     )
     if wrap_likelihood:
         model.likelihood = WrapperLikelihood(model.likelihood)

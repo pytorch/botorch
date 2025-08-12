@@ -450,6 +450,97 @@ class TestOptimizeAcqf(BotorchTestCase):
                 )
 
     @mock.patch(
+        "botorch.optim.optimize.gen_candidates_scipy", wraps=gen_candidates_scipy
+    )
+    def test_optimize_acq_function_sequence(
+        self,
+        mock_gen_candidates_scipy,
+    ):
+        acq_function_sequence = [MockAcquisitionFunction() for _ in range(3)]
+        bounds = torch.tensor([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        # Validation
+        with self.assertRaisesRegex(
+            ValueError,
+            "Either `acq_function` or `acq_function_sequence` must be specified",
+        ):
+            optimize_acqf(
+                acq_function=None,
+                bounds=bounds,
+                q=3,
+                num_restarts=2,
+                raw_samples=10,
+                sequential=True,
+                acq_function_sequence=None,
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "acq_function_sequence requires sequential optimization",
+        ):
+            optimize_acqf(
+                acq_function=mock.MagicMock(),
+                bounds=bounds,
+                q=3,
+                num_restarts=2,
+                raw_samples=10,
+                sequential=False,
+                acq_function_sequence=acq_function_sequence,
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "acq_function_sequence must have length q",
+        ):
+            optimize_acqf(
+                acq_function=mock.MagicMock(),
+                bounds=bounds,
+                q=2,
+                num_restarts=2,
+                raw_samples=10,
+                sequential=True,
+                acq_function_sequence=acq_function_sequence,
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "acq_function_sequence requires q > 1",
+        ):
+            optimize_acqf(
+                acq_function=mock.MagicMock(),
+                bounds=bounds,
+                q=1,
+                num_restarts=2,
+                raw_samples=10,
+                sequential=True,
+                acq_function_sequence=acq_function_sequence[:1],
+            )
+        # Test that uses sequence of acquisitions
+        acq_function = mock.MagicMock()
+        acq_function.X_pending = None
+        acq_function_sequence[2].X_pending = torch.ones(2, 3)
+        _ = optimize_acqf(
+            acq_function=acq_function,
+            bounds=bounds,
+            q=3,
+            num_restarts=2,
+            raw_samples=10,
+            sequential=True,
+            acq_function_sequence=acq_function_sequence,
+        )
+        self.assertEqual(mock_gen_candidates_scipy.call_count, 3)
+        self.assertEqual(acq_function_sequence[0]._call_args["set_X_pending"], [None])
+        for i in range(1, 2):
+            set_X_args = acq_function_sequence[i]._call_args["set_X_pending"]
+            self.assertEqual(len(set_X_args), 2)
+            self.assertEqual(len(set_X_args[0]), i)
+            self.assertIsNone(set_X_args[1])
+        set_X_args = acq_function_sequence[2]._call_args["set_X_pending"]
+        self.assertEqual(len(set_X_args), 2)
+        self.assertEqual(len(set_X_args[0]), 4)
+        self.assertTrue(
+            torch.equal(set_X_args[0][:2, :], torch.ones(2, 3))
+        )  # base X_pending
+        self.assertTrue(torch.equal(set_X_args[1], torch.ones(2, 3)))  # reset
+        acq_function.assert_not_called()
+
+    @mock.patch(
         "botorch.generation.gen.minimize_with_timeout",
         wraps=minimize_with_timeout,
     )
