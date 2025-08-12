@@ -1699,16 +1699,18 @@ class NumericToCategoricalEncoding(InputTransform):
             )
 
         for idx, card in self.categorical_features.items():
-            if card == 1:
+            if card <= 1:
                 raise ValueError(
-                    f"Categorical feature at index {idx} has cardinality 1. "
+                    f"Categorical feature at index {idx} has cardinality {card}. "
                     f"All categorial features must have cardinality greater than 1."
                 )
 
         # check that the encoders match the categorical features
-        if (enc_keys := set(self.encoders)) != (cf_keys := set(self.categorical_features)):
+        if (enc_keys := set(self.encoders)) != (
+            cf_keys := set(self.categorical_features)
+        ):
             raise ValueError(
-                "The keys of `encoders` ({enc_keys}) must match the keys of "
+                f"The keys of `encoders` ({enc_keys}) must match the keys of "
                 f"of `categorical_features`  ({cf_keys})."
             )
 
@@ -1743,8 +1745,9 @@ class NumericToCategoricalEncoding(InputTransform):
             X: A `batch_shape x n x d`-dim tensor of inputs.
 
         Returns:
-            A `batch_shape x n x d'`-dim tensor with `d' = d + sum(categorical_features.values())`
-            in which the integer-encoded categoricals are transformed to a vector representation.
+            A `batch_shape x n x d'`-dim tensor with
+            `d' = d + sum(categorical_features.values())` in which the
+            integer-encoded categoricals are transformed to a vector representation.
         """
         s = list(X.shape)
         s[-1] = len(self.numerical_idx) + len(np.concatenate(self.encoded_idx))
