@@ -1660,7 +1660,7 @@ class NumericToCategoricalEncoding(InputTransform):
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
-    ):
+    ) -> None:
         r"""Initialize.
 
         Args:
@@ -1692,22 +1692,24 @@ class NumericToCategoricalEncoding(InputTransform):
                 "At least one categorical feature for encoding must be provided."
             )
 
-        if len(self.categorical_features) > dim:
+        if (num_cat := len(self.categorical_features)) > dim:
             raise ValueError(
-                "The number of categorical features exceeds the provided dimension."
+                f"The number of categorical features ({num_cat}) exceeds the "
+                f"provided dimension ({dim})."
             )
 
         for idx, card in self.categorical_features.items():
             if card == 1:
                 raise ValueError(
-                    f"Categorical feature at index {idx} has cardinality 1, "
-                    f"which is not allowed."
+                    f"Categorical feature at index {idx} has cardinality 1. "
+                    f"All categorial features must have cardinality greater than 1."
                 )
 
         # check that the encoders match the categorical features
-        if set(self.encoders.keys()) != set(self.categorical_features.keys()):
+        if (enc_keys := set(self.encoders)) != (cf_keys := set(self.categorical_features)):
             raise ValueError(
-                "The keys of `encoders` must match the keys of `categorical_features`."
+                "The keys of `encoders` ({enc_keys}) must match the keys of "
+                f"of `categorical_features`  ({cf_keys})."
             )
 
         self.ordinal_idx = list(
@@ -1741,17 +1743,16 @@ class NumericToCategoricalEncoding(InputTransform):
             X: A `batch_shape x n x d`-dim tensor of inputs.
 
         Returns:
-            A `batch_shape x n x d'`-dim tensor of where the integer encoded
-            categoricals are transformed to a vector representation.
+            A `batch_shape x n x d'`-dim tensor with `d' = d + sum(categorical_features.values())`
+            in which the integer-encoded categoricals are transformed to a vector representation.
         """
         s = list(X.shape)
         s[-1] = len(self.numerical_idx) + len(np.concatenate(self.encoded_idx))
-        X_encoded = torch.zeros(size=s).to(X)
+        X_encoded = torch.zeros(size=s, device=X.device, dtype=X.dtype)
         X_encoded[..., self.new_numerical_idx] = X[..., self.numerical_idx]
         for i, idx in enumerate(self.categorical_features.keys()):
-            X_encoded[..., self.encoded_idx[i]] = self.encoders[idx](
-                X[..., idx].long(),
-            ).to(X_encoded)
+            encoded_val = self.encoders[idx](X[..., idx].long()).to(X_encoded)
+            X_encoded[..., self.encoded_idx[i]] = encoded_val
         return X_encoded
 
     def equals(self, other: InputTransform) -> bool:
