@@ -1626,9 +1626,30 @@ class InputPerturbation(InputTransform):
 
 
 class NumericToCategoricalEncoding(InputTransform):
-    """Transform categorical parameters from an integer representation
+    """Transform categorical parameters from an integer/numeric representation
     to a vector based representation like one-hot encoding or a descriptor
     encoding.
+
+    The vector encoding is inserted at the position of the categorical feature
+    in the input tensor. This is demonstrated in the example below in which a
+    categorical feature of cardinality 3 at position 1 in the original
+    representation is one-hot encoded.
+
+    Example:
+
+        >>> import torch
+        >>> from torch.nn.functional import one_hot
+        >>> from functools import partial
+        >>> from botorch.models.transforms.input import NumericToCategoricalEncoding
+        >>> tf = NumericToCategoricalEncoding(
+        ...     dim=3,
+        ...     categorical_features={1: 3},
+        ...     encoders={1: partial(one_hot, num_classes=3)},
+        ... )
+        >>> X = torch.tensor([[0.5, 2, 1.2], [1.1, 0, 0.8]])
+        >>> tf.transform(X)
+        tensor([[0.5000, 0.0000, 0.0000, 1.0000, 1.2000],
+                [1.1000, 1.0000, 0.0000, 0.0000, 0.8000]])
     """
 
     def __init__(
