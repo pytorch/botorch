@@ -562,9 +562,10 @@ class TestModelListGP(BotorchTestCase):
                 Y = torch.cat([Y1, Y2], dim=-1)
                 target_x = torch.tensor([[0.5]], **tkwargs)
 
+                # Default behavior is to Standardize outcomes
                 model_with_transform = ModelListGP(
-                    SingleTaskGP(X, Y1, outcome_transform=Standardize(m=1)),
-                    SingleTaskGP(X, Y2, outcome_transform=Standardize(m=1)),
+                    SingleTaskGP(X, Y1),
+                    SingleTaskGP(X, Y2),
                 )
                 outcome_transform = Standardize(m=2)
                 y_standardized, _ = outcome_transform(Y)
@@ -682,8 +683,8 @@ class TestModelListGP(BotorchTestCase):
                 yvar = torch.full_like(Y, 1e-4)
                 yvar2 = 2 * yvar
                 model = ModelListGP(
-                    SingleTaskGP(X, Y, yvar, outcome_transform=Standardize(m=1)),
-                    SingleTaskGP(X, Y2, yvar2, outcome_transform=Standardize(m=1)),
+                    SingleTaskGP(X, Y, yvar),
+                    SingleTaskGP(X, Y2, yvar2),
                 )
                 # test exceptions
                 eval_mask = torch.zeros(

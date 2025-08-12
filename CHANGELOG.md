@@ -2,6 +2,12 @@
 
 The release log for BoTorch.
 
+## [0.15.1] -- Aug 12, 2025
+This is a compatibility release, coming only one week after 0.15.0.
+
+#### New features
+* Enable optimizing a sequence of acquisition functions in `optimize_acqf` (#2931).
+
 ## [0.15.0] -- Aug 5, 2025
 
 #### New Features
