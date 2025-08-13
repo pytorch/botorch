@@ -168,11 +168,6 @@ class OptimizeAcqfInputs:
                     "`batch_initial_conditions` is None`."
                 )
 
-        if self.fixed_features is not None and any(
-            (k < 0 for k in self.fixed_features)
-        ):
-            raise ValueError("All indices (keys) in `fixed_features` must be >= 0.")
-
         if self.acq_function_sequence is not None:
             if not self.sequential:
                 raise ValueError(
@@ -643,8 +638,7 @@ def optimize_acqf(
             is set to 1, which will be done automatically if not specified in
             `options`.
         fixed_features: A map `{feature_index: value}` for features that
-            should be fixed to a particular value during generation. All indices
-            should be non-negative.
+            should be fixed to a particular value during generation.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -706,6 +700,13 @@ def optimize_acqf(
     # using a default of None simplifies unit testing
     if gen_candidates is None:
         gen_candidates = gen_candidates_scipy
+
+    # Negative indices in fixed features
+    if fixed_features is not None:
+        fixed_features = {
+            idx % bounds.shape[-1]: val for idx, val in fixed_features.items()
+        }
+
     opt_acqf_inputs = OptimizeAcqfInputs(
         acq_function=acq_function,
         bounds=bounds,
@@ -793,8 +794,7 @@ def optimize_acqf_cyclic(
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
         fixed_features: A map `{feature_index: value}` for features that
-            should be fixed to a particular value during generation. All indices
-            should be non-negative.
+            should be fixed to a particular value during generation.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -833,6 +833,12 @@ def optimize_acqf_cyclic(
         >>>     qEI, bounds, 3, 15, 256, cyclic_options={"maxiter": 4}
         >>> )
     """
+    # Negative indices in fixed features
+    if fixed_features is not None:
+        fixed_features = {
+            idx % bounds.shape[-1]: val for idx, val in fixed_features.items()
+        }
+
     opt_inputs = OptimizeAcqfInputs(
         acq_function=acq_function,
         bounds=bounds,
@@ -943,12 +949,10 @@ def optimize_acqf_list(
             is set to 1, which will be done automatically if not specified in
             `options`.
         fixed_features: A map `{feature_index: value}` for features that should
-            be fixed to a particular value during generation. All indices
-            (`feature_index`) should be non-negative.
+            be fixed to a particular value during generation.
         fixed_features_list: A list of maps `{feature_index: value}`. The i-th
             item represents the fixed_feature for the i-th optimization. If
             `fixed_features_list` is provided, `optimize_acqf_mixed` is invoked.
-            All indices (`feature_index`) should be non-negative.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -1062,8 +1066,7 @@ def optimize_acqf_mixed(
         raw_samples: Number of samples for initialization. This is required
             if `batch_initial_conditions` is not specified.
         fixed_features_list: A list of maps `{feature_index: value}`. The i-th
-            item represents the fixed_feature for the i-th optimization. All
-            indices (`feature_index`) should be non-negative.
+            item represents the fixed_feature for the i-th optimization.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
