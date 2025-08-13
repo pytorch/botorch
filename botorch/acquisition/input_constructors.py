@@ -20,6 +20,7 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
 from botorch.acquisition.analytic import (
     ExpectedImprovement,
+    LogConstrainedExpectedImprovement,
     LogExpectedImprovement,
     LogNoisyExpectedImprovement,
     LogProbabilityOfFeasibility,
@@ -345,8 +346,8 @@ def construct_inputs_best_f(
     }
 
 
-@acqf_input_constructor(LogProbabilityOfFeasibility)
-def construct_inputs_pof(
+@acqf_input_constructor(LogProbabilityOfFeasibility, LogConstrainedExpectedImprovement)
+def construct_inputs_constraints(
     model: Model, constraints_tuple: tuple[Tensor, Tensor]
 ) -> dict[str, Any]:
     r"""Construct kwargs for the log probability of feasibility acquisition function.
@@ -370,10 +371,7 @@ def construct_inputs_pof(
     for w, b in zip(weights, bounds):
         nonzero_w = w.nonzero()
         if nonzero_w.numel() != 1:
-            raise BotorchError(
-                "LogProbabilityOfFeasibility only support constraints on single"
-                " outcomes."
-            )
+            raise BotorchError("Only supports constraints on single outcomes.")
         i = nonzero_w.item()
         w_i = w[i]
         is_ub = torch.sign(w_i) == 1.0

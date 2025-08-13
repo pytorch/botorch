@@ -24,6 +24,7 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
 from botorch.acquisition.analytic import (
     ExpectedImprovement,
+    LogConstrainedExpectedImprovement,
     LogExpectedImprovement,
     LogNoisyExpectedImprovement,
     LogProbabilityOfFeasibility,
@@ -649,8 +650,30 @@ class TestMCAcquisitionFunctionInputConstructors(InputConstructorBaseTestCase):
         # test that constraints on multiple outcomes raises an exception
         with self.assertRaisesRegex(
             BotorchError,
-            "LogProbabilityOfFeasibility only support constraints on single"
-            " outcomes.",
+            "Only supports constraints on single outcomes.",
+        ):
+            c(
+                model=mock_model,
+                constraints_tuple=[torch.tensor([[1.0, 1.0]]), torch.tensor([[2.0]])],
+            )
+
+    def test_construct_inputs_LogCEI(self) -> None:
+        c = get_acqf_input_constructor(LogConstrainedExpectedImprovement)
+        mock_model = self.mock_model
+        constraints_tuple = [torch.tensor([[0.0, 1.0]]), torch.tensor([[2.0]])]
+        constraints = {1: (None, 2.0)}
+        kwargs = c(model=mock_model, constraints_tuple=constraints_tuple)
+        self.assertEqual(set(kwargs.keys()), {"model", "constraints"})
+        self.assertIs(kwargs["model"], mock_model)
+        self.assertEqual(kwargs["constraints"], constraints)
+        constraints_tuple = [torch.tensor([[0.0, -1.0]]), torch.tensor([[-2.0]])]
+        kwargs = c(model=mock_model, constraints_tuple=constraints_tuple)
+        constraints = {1: (2.0, None)}
+        self.assertEqual(kwargs["constraints"], constraints)
+        # test that constraints on multiple outcomes raises an exception
+        with self.assertRaisesRegex(
+            BotorchError,
+            "Only supports constraints on single outcomes.",
         ):
             c(
                 model=mock_model,
