@@ -128,8 +128,8 @@ class InverseCostWeightedUtility(CostAwareUtility):
                 un-transform predictions/samples of a cost model fit on the
                 log-transformed cost (often done to ensure non-negativity). If the
                 cost model is multi-output, then by default this will sum the cost
-                across outputs. NOTE: Keep in mind that cost_objective must output
-                strictly positive values; forward will raise a ValueError otherwise.
+                across outputs. NOTE: ``cost_objective`` must output
+                strictly positive values; forward will raise a ``ValueError`` otherwise.
             min_cost: A value used to clamp the cost samples so that they are not
                 too close to zero, which may cause numerical issues.
         Returns:

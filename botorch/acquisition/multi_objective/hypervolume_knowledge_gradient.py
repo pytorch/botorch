@@ -275,16 +275,7 @@ class qHypervolumeKnowledgeGradient(
 
         if self.cost_aware_utility is not None:
             if self._log:
-                # check whether cost_aware_utility has a _log flag
-                # raises an error if it does not or if _log is False
-                if (
-                    not hasattr(self.cost_aware_utility, "_log")
-                    or not self.cost_aware_utility._log
-                ):
-                    raise BotorchError(
-                        "Cost-aware HVKG has _log=True and requires cost_aware_utility"
-                        "to output log utilities."
-                    )
+                _check_log_utilities(self.cost_aware_utility)
             values = self.cost_aware_utility(
                 # exclude pending points
                 X=X_actual[..., :q, :],
@@ -521,16 +512,7 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
 
         if self.cost_aware_utility is not None:
             if self._log:
-                # check whether cost_aware_utility has a _log flag
-                # raises an error if it does not or if _log is False
-                if (
-                    not hasattr(self.cost_aware_utility, "_log")
-                    or not self.cost_aware_utility._log
-                ):
-                    raise BotorchError(
-                        "Cost-aware HVKG has _log=True and requires cost_aware_utility"
-                        "to output log utilities."
-                    )
+                _check_log_utilities(self.cost_aware_utility)
             values = self.cost_aware_utility(
                 # exclude pending points
                 X=X_actual[..., :q, :],
@@ -630,3 +612,11 @@ def _split_hvkg_fantasy_points(
     X_fantasies = X_fantasies.reshape(new_shape)
     # n_f x b x num_pareto x d
     return X_actual, X_fantasies
+
+
+def _check_log_utilities(cost_aware_utility: CostAwareUtility) -> None:
+    if not hasattr(cost_aware_utility, "_log") or not cost_aware_utility._log:
+        raise BotorchError(
+            "Cost-aware HVKG has _log=True and requires cost_aware_utility "
+            "to output log utilities."
+        )
