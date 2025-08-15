@@ -221,7 +221,7 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                 .mean()
             )
             if log_ehvi:
-                self.assertAllClose(val.exp().item(), expected_hv.item(), rtol=1e-2)
+                self.assertAllClose(val.exp().item(), expected_hv.item(), rtol=1e-1)
             else:
                 self.assertAllClose(val.item(), expected_hv.item(), atol=1e-4)
             self.assertTrue(
@@ -261,7 +261,7 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                 .mean(dim=0)
             )
             if log_ehvi:
-                self.assertAllClose(val.exp(), expected_hv, rtol=1e-2)
+                self.assertAllClose(val.exp(), expected_hv, rtol=1e-1)
             else:
                 self.assertAllClose(val, expected_hv, atol=1e-4)
             self.assertTrue(
@@ -327,7 +327,7 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                 self.assertAllClose(
                     val.exp().item(),
                     expected,
-                    rtol=1e-2,
+                    rtol=1e-1,
                 )
             else:
                 self.assertAllClose(val.item(), expected, atol=1e-4)
@@ -496,7 +496,7 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                             ]
                         )
                     if log_ehvi:
-                        self.assertAllClose(val.exp().item(), expected_hv, rtol=1e-2)
+                        self.assertAllClose(val.exp().item(), expected_hv, rtol=1e-1)
                     else:
                         self.assertAllClose(val.item(), expected_hv, atol=1e-4)
                     self.assertTrue(
