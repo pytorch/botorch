@@ -360,7 +360,7 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                     # raises error when log=False
                     with self.assertRaisesRegex(
                         BotorchError,
-                        "Cost-aware HVKG has _log=True and requires cost_aware_utility"
+                        "Cost-aware HVKG has _log=True and requires cost_aware_utility "
                         "to output log utilities.",
                     ):
                         val = qHVKG(X)
@@ -389,7 +389,7 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                     # raises error when log is not a class variable
                     with self.assertRaisesRegex(
                         BotorchError,
-                        "Cost-aware HVKG has _log=True and requires cost_aware_utility"
+                        "Cost-aware HVKG has _log=True and requires cost_aware_utility "
                         "to output log utilities.",
                     ):
                         val = qHVKG(X)
