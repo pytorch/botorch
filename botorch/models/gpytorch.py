@@ -231,10 +231,15 @@ class GPyTorchModel(Model, ABC):
 
         Example:
             >>> train_X = torch.rand(20, 2)
-            >>> train_Y = torch.sin(train_X[:, 0]) + torch.cos(train_X[:, 1])
+            >>> train_Y = torch.sin(train_X[:, :1]) + torch.cos(train_X[:, 1:])
             >>> model = SingleTaskGP(train_X, train_Y)
+            >>> model.eval()
+            >>> test_X = torch.rand(10, 2)
+            # Need to evaluate once to fill test independent caches
+            # so that condition_on_observations works.
+            >>> model(test_X)
             >>> new_X = torch.rand(5, 2)
-            >>> new_Y = torch.sin(new_X[:, 0]) + torch.cos(new_X[:, 1])
+            >>> new_Y = torch.sin(new_X[:, :1]) + torch.cos(new_X[:, 1:])
             >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
         Yvar = noise
