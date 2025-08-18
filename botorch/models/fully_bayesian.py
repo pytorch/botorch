@@ -701,7 +701,7 @@ class AbstractFullyBayesianSingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel
         self.mean_module = None
         self.covar_module = None
         self.likelihood = None
-        self.pyro_model = self._pyro_model_class(**pyro_model_kwargs)
+        self.pyro_model = self._pyro_model_class(**(pyro_model_kwargs or {}))
         self.pyro_model.set_inputs(
             train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
