@@ -349,10 +349,21 @@ class qNoisyExpectedHypervolumeImprovement(
         )
         self.fat = fat
 
-    @concatenate_pending_points
     @t_batch_mode_transform()
     @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
+        # Manually concatenate pending points only if:
+        # - pending points are not cached, or
+        # - number of pending points is less than max_iep
+        if self.X_pending is not None:
+            num_pending = self.X_pending.shape[-2]
+            num_uncached_points = (
+                (num_pending + self._X_baseline.shape[-2] - self.X_baseline.shape[-2])
+                if self.cache_pending
+                else num_pending
+            )
+            X_pending_uncached = self.X_pending[..., -num_uncached_points:, :]
+            X = torch.cat([X, match_batch_shape(X_pending_uncached, X)], dim=-2)
         X_full = torch.cat([match_batch_shape(self.X_baseline, X), X], dim=-2)
         # NOTE: To ensure that we correctly sample `f(X)` from the joint distribution
         # `f((X_baseline, X)) ~ P(f | D)`, it is critical to compute the joint posterior

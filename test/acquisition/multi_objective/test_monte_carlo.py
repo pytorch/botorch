@@ -1054,7 +1054,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             acqf.set_X_pending(X_pending)
             if not incremental_nehvi:
                 self.assertAllClose(expected_val, acqf._prev_nehvi)
-            self.assertIsNone(acqf.X_pending)
+            self.assertEqual(acqf.X_pending, X_pending)
             # check that X_baseline has been updated
             self.assertTrue(torch.equal(acqf.X_baseline[:-1], acqf._X_baseline))
             self.assertTrue(torch.equal(acqf.X_baseline[-1:], X_pending))
@@ -1112,7 +1112,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
         )
         mm._posterior._samples = mm._posterior._samples.squeeze(0)
         acqf.set_X_pending(X_pending2)
-        self.assertIsNone(acqf.X_pending)
+        self.assertEqual(acqf.X_pending, X_pending2)
         # check that X_baseline has been updated
         self.assertTrue(torch.equal(acqf.X_baseline[:-2], acqf._X_baseline))
         self.assertTrue(torch.equal(acqf.X_baseline[-2:], X_pending2))
@@ -1294,7 +1294,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
     def test_constrained_q_log_noisy_expected_hypervolume_improvement(self) -> None:
         for dtype, fat in product(
             (torch.float, torch.double),
-            (True, False),
+            (False, True),
         ):
             with self.subTest(dtype=dtype, fat=fat):
                 self._test_constrained_q_noisy_expected_hypervolume_improvement(
@@ -1378,6 +1378,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             dim=1,
         )
         mm._posterior._samples = samples
+        print(fat, dtype)
         res = evaluate(acqf, X)
         self.assertAlmostEqual(res.item(), 0.5 * 0.5, places=4)
 
