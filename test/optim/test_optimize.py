@@ -53,6 +53,7 @@ from botorch.optim.parameter_constraints import (
     _make_f_and_grad_nonlinear_inequality_constraints,
 )
 from botorch.optim.utils.timeout import minimize_with_timeout
+from botorch.test_utils.mock import mock_optimize
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 from scipy.optimize import OptimizeResult
 from torch import Tensor
@@ -448,6 +449,97 @@ class TestOptimizeAcqf(BotorchTestCase):
                     batch_initial_conditions=torch.zeros((1, 1, 3)),
                     sequential=True,
                 )
+
+    @mock.patch(
+        "botorch.optim.optimize.gen_candidates_scipy", wraps=gen_candidates_scipy
+    )
+    def test_optimize_acq_function_sequence(
+        self,
+        mock_gen_candidates_scipy,
+    ):
+        acq_function_sequence = [MockAcquisitionFunction() for _ in range(3)]
+        bounds = torch.tensor([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        # Validation
+        with self.assertRaisesRegex(
+            ValueError,
+            "Either `acq_function` or `acq_function_sequence` must be specified",
+        ):
+            optimize_acqf(
+                acq_function=None,
+                bounds=bounds,
+                q=3,
+                num_restarts=2,
+                raw_samples=10,
+                sequential=True,
+                acq_function_sequence=None,
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "acq_function_sequence requires sequential optimization",
+        ):
+            optimize_acqf(
+                acq_function=mock.MagicMock(),
+                bounds=bounds,
+                q=3,
+                num_restarts=2,
+                raw_samples=10,
+                sequential=False,
+                acq_function_sequence=acq_function_sequence,
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "acq_function_sequence must have length q",
+        ):
+            optimize_acqf(
+                acq_function=mock.MagicMock(),
+                bounds=bounds,
+                q=2,
+                num_restarts=2,
+                raw_samples=10,
+                sequential=True,
+                acq_function_sequence=acq_function_sequence,
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "acq_function_sequence requires q > 1",
+        ):
+            optimize_acqf(
+                acq_function=mock.MagicMock(),
+                bounds=bounds,
+                q=1,
+                num_restarts=2,
+                raw_samples=10,
+                sequential=True,
+                acq_function_sequence=acq_function_sequence[:1],
+            )
+        # Test that uses sequence of acquisitions
+        acq_function = mock.MagicMock()
+        acq_function.X_pending = None
+        acq_function_sequence[2].X_pending = torch.ones(2, 3)
+        _ = optimize_acqf(
+            acq_function=acq_function,
+            bounds=bounds,
+            q=3,
+            num_restarts=2,
+            raw_samples=10,
+            sequential=True,
+            acq_function_sequence=acq_function_sequence,
+        )
+        self.assertEqual(mock_gen_candidates_scipy.call_count, 3)
+        self.assertEqual(acq_function_sequence[0]._call_args["set_X_pending"], [None])
+        for i in range(1, 2):
+            set_X_args = acq_function_sequence[i]._call_args["set_X_pending"]
+            self.assertEqual(len(set_X_args), 2)
+            self.assertEqual(len(set_X_args[0]), i)
+            self.assertIsNone(set_X_args[1])
+        set_X_args = acq_function_sequence[2]._call_args["set_X_pending"]
+        self.assertEqual(len(set_X_args), 2)
+        self.assertEqual(len(set_X_args[0]), 4)
+        self.assertTrue(
+            torch.equal(set_X_args[0][:2, :], torch.ones(2, 3))
+        )  # base X_pending
+        self.assertTrue(torch.equal(set_X_args[1], torch.ones(2, 3)))  # reset
+        acq_function.assert_not_called()
 
     @mock.patch(
         "botorch.generation.gen.minimize_with_timeout",
@@ -1265,42 +1357,128 @@ class TestOptimizeAcqf(BotorchTestCase):
 
 
 class TestAllOptimizers(BotorchTestCase):
-    def test_raises_with_negative_fixed_features(self) -> None:
-        cases = {
+    @mock_optimize
+    def test_negative_fixed_features(self) -> None:
+        optim_funcs = {
             "optimize_acqf": partial(
                 optimize_acqf,
                 acq_function=MockAcquisitionFunction(),
-                fixed_features={-1: 0.0},
-                q=1,
+                q=5,
             ),
             "optimize_acqf_cyclic": partial(
                 optimize_acqf_cyclic,
                 acq_function=MockAcquisitionFunction(),
-                fixed_features={-1: 0.0},
-                q=1,
+                q=3,
             ),
             "optimize_acqf_mixed": partial(
                 optimize_acqf_mixed,
                 acq_function=MockAcquisitionFunction(),
-                fixed_features_list=[{-1: 0.0}],
-                q=1,
+                q=5,
             ),
             "optimize_acqf_list": partial(
                 optimize_acqf_list,
                 acq_function_list=[MockAcquisitionFunction()],
-                fixed_features={-1: 0.0},
             ),
         }
 
-        for name, func in cases.items():
-            with self.subTest(name), self.assertRaisesRegex(
-                ValueError, "must be >= 0."
-            ):
-                func(
-                    bounds=torch.tensor([[0.0, 0.0], [1.0, 1.0]], device=self.device),
-                    num_restarts=4,
-                    raw_samples=16,
-                )
+        cases = [
+            {
+                "num_features": 2,
+                "fixed_features_match": [
+                    {"orig_idx": 0, "neg_idx": -2, "val": 0.1},
+                ],
+            },
+            {
+                "num_features": 2,
+                "fixed_features_match": [
+                    {"orig_idx": 1, "neg_idx": -1, "val": 0.1},
+                ],
+            },
+            {
+                "num_features": 5,
+                "fixed_features_match": [
+                    {"orig_idx": 0, "neg_idx": -5, "val": 0.1},
+                    {"orig_idx": 3, "neg_idx": 3, "val": 0.2},
+                    {"orig_idx": 4, "neg_idx": -1, "val": 0.3},
+                ],
+            },
+            {
+                "num_features": 7,
+                "fixed_features_match": [
+                    {"orig_idx": 0, "neg_idx": -7, "val": 0.1},
+                    {"orig_idx": 1, "neg_idx": -6, "val": 0.2},
+                    {"orig_idx": 2, "neg_idx": -5, "val": 0.3},
+                    {"orig_idx": 3, "neg_idx": -4, "val": 0.4},
+                    {"orig_idx": 4, "neg_idx": -3, "val": 0.5},
+                    {"orig_idx": 5, "neg_idx": -2, "val": 0.6},
+                ],
+            },
+            {
+                "num_features": 3,
+                "fixed_features_match": [
+                    {"orig_idx": 0, "neg_idx": 0, "val": 0.1},
+                    {"orig_idx": 1, "neg_idx": 1, "val": 0.2},
+                ],
+            },
+        ]
+
+        for name, func in optim_funcs.items():
+            for case in cases:
+                num_features = case["num_features"]
+                fixed_features_match = case["fixed_features_match"]
+
+                # optimize_acqf_mixed raises an error if fixed_features_list
+                # is the same length as num_features
+                if name == "optimize_acqf_mixed":
+                    if len(fixed_features_match) == num_features:
+                        fixed_features_match.pop(0)
+
+                # Common opt args
+                common_kwargs = {
+                    "bounds": torch.tensor(
+                        [[0.0] * num_features, [1.0] * num_features], device=self.device
+                    ),
+                    "num_restarts": 2,
+                    "raw_samples": 10,
+                }
+
+                # Verify that this is the correct mapping of indices
+                test_list = list(range(num_features))
+                for a in fixed_features_match:
+                    self.assertEqual(test_list[a["orig_idx"]], test_list[a["neg_idx"]])
+
+                # Create fixed_features with non-negative indices and negative indices
+                nonneg_fixed_features = {
+                    a["orig_idx"]: a["val"] for a in fixed_features_match
+                }
+                neg_fixed_features = {
+                    a["neg_idx"]: a["val"] for a in fixed_features_match
+                }
+
+                # Setup separate kwargs for the two fixed_features
+                nonneg_func_kwargs = common_kwargs.copy()
+                neg_func_kwargs = common_kwargs.copy()
+
+                # If optimize_acqf_mixed, then need to pass fixed_features_list
+                if name in ["optimize_acqf_mixed"]:
+                    nonneg_func_kwargs["fixed_features_list"] = [nonneg_fixed_features]
+                    neg_func_kwargs["fixed_features_list"] = [neg_fixed_features]
+                else:
+                    nonneg_func_kwargs["fixed_features"] = nonneg_fixed_features
+                    neg_func_kwargs["fixed_features"] = neg_fixed_features
+
+                # Run the optimization with both fixed_features
+                nonneg_x, acq = func(**nonneg_func_kwargs)
+                neg_x, acq = func(**neg_func_kwargs)
+
+                # Verify that the fixed_features are the same and equal to val
+                # for the original index values
+                nonneg_x = nonneg_x[0]
+                neg_x = neg_x[0]
+
+                for a in fixed_features_match:
+                    self.assertAlmostEqual(nonneg_x[a["orig_idx"]], a["val"], places=4)
+                    self.assertAlmostEqual(neg_x[a["orig_idx"]], a["val"], places=4)
 
 
 class TestOptimizeAcqfCyclic(BotorchTestCase):

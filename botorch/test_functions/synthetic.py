@@ -119,7 +119,11 @@ class SyntheticTestFunction(BaseTestProblem, ABC):
 
     @property
     def optimal_value(self) -> float:
-        r"""The global minimum (maximum if negate=True) of the function."""
+        r"""The global optimum of the function.
+
+        This can be either the minimum or maximum depending the value of
+        `self.is_minimization_problem`.
+        """
         if self._optimal_value is not None:
             return -self._optimal_value if self.negate else self._optimal_value
         else:
@@ -250,6 +254,7 @@ class Cosine8(SyntheticTestFunction):
     _bounds = [(-1.0, 1.0) for _ in range(8)]
     _optimal_value = 0.8
     _optimizers = [tuple(0.0 for _ in range(8))]
+    _is_minimization_by_default = False
 
     def _evaluate_true(self, X: Tensor) -> Tensor:
         return torch.sum(0.1 * torch.cos(5 * math.pi * X) - X.pow(2), dim=-1)
@@ -930,6 +935,7 @@ class Labs(SyntheticTestFunction):
     """
 
     _check_grad_at_opt = False
+    _is_minimization_by_default = False
 
     def __init__(
         self,

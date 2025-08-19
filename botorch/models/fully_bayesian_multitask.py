@@ -14,6 +14,7 @@ import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.fully_bayesian import (
     matern52_kernel,
+    MCMC_DIM,
     MIN_INFERRED_NOISE_LEVEL,
     reshape_and_detach,
     SaasPyroModel,
@@ -22,7 +23,7 @@ from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
-from botorch.posteriors.fully_bayesian import GaussianMixturePosterior, MCMC_DIM
+from botorch.posteriors.fully_bayesian import GaussianMixturePosterior
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel
 from gpytorch.kernels.index_kernel import IndexKernel
@@ -66,6 +67,10 @@ class MultitaskSaasPyroModel(SaasPyroModel):
             task_rank: The num of learned task embeddings to be used in the task kernel.
                 If omitted, use a full rank (i.e. number of tasks) kernel.
         """
+        # NOTE PyTorch does not support negative indexing for tensors in index_select,
+        # (https://github.com/pytorch/pytorch/issues/76347), so we have to make sure
+        # that the task feature is positive.
+        task_feature = task_feature % train_X.shape[-1]
         super().set_inputs(train_X, train_Y, train_Yvar)
         # obtain a list of task indicies
         all_tasks = train_X[:, task_feature].unique().to(dtype=torch.long).tolist()
@@ -140,15 +145,19 @@ class MultitaskSaasPyroModel(SaasPyroModel):
         num_mcmc_samples = len(mcmc_samples["mean"])
         batch_shape = torch.Size([num_mcmc_samples])
 
-        mean_module, covar_module, likelihood, _ = super().load_mcmc_samples(
+        mean_module, data_covar_module, likelihood, _ = super().load_mcmc_samples(
             mcmc_samples=mcmc_samples
         )
+        data_indices = torch.arange(self.train_X.shape[-1] - 1)
+        data_indices[self.task_feature :] += 1  # exclude task feature
 
+        data_covar_module.active_dims = data_indices.to(device=tkwargs["device"])
         latent_covar_module = MaternKernel(
             nu=2.5,
             ard_num_dims=self.task_rank,
             batch_shape=batch_shape,
         ).to(**tkwargs)
+
         latent_covar_module.lengthscale = reshape_and_detach(
             target=latent_covar_module.lengthscale,
             new_value=mcmc_samples["task_lengthscale"],
@@ -159,22 +168,27 @@ class MultitaskSaasPyroModel(SaasPyroModel):
             num_tasks=self.num_tasks,
             rank=self.task_rank,
             batch_shape=latent_features.shape[:-2],
-        ).to(**tkwargs)
+            active_dims=torch.tensor([self.task_feature], device=tkwargs["device"]),
+        )
         task_covar_module.covar_factor = Parameter(
             task_covar.cholesky().to_dense().detach()
         )
+        task_covar_module = task_covar_module.to(**tkwargs)
+        # NOTE: The IndexKernel has a learnable 'var' parameter in addition to the
+        # task covariances, corresponding do task-specific variances along the diagonal
+        # of the task covariance matrix. As this parameter is not sampled in `sample()`
+        # we implicitly assume it to be zero. This is consistent with the previous
+        # SAASFBMTGP implementation, but means that the non-fully Bayesian and fully
+        # Bayesian models run on slightly different task covar modules.
 
-        # NOTE: 'var' is implicitly assumed to be zero from the sampling procedure in
-        # the FBMTGP model but not in the regular MTGP. I dont how if the var parameter
-        # affects predictions in practice, but setting it to zero is consistent with the
-        # previous implementation.
+        # We set the aforementioned task covar module var parameter to zero here.
         task_covar_module.var = torch.zeros_like(task_covar_module.var)
-        return mean_module, covar_module, likelihood, task_covar_module
+        covar_module = data_covar_module * task_covar_module
+        return mean_module, covar_module, likelihood, None
 
 
 class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
     r"""A fully Bayesian multi-task GP model with the SAAS prior.
-
     This model assumes that the inputs have been normalized to [0, 1]^d and that the
     output has been stratified standardized to have zero mean and unit variance for
     each task. The SAAS model [Eriksson2021saasbo]_ with a Matern-5/2 is used as data
@@ -286,8 +300,6 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
         self.mean_module = None
         self.covar_module = None
         self.likelihood = None
-        self.task_covar_module = None
-        self.register_buffer("latent_features", None)
         if pyro_model is None:
             pyro_model = MultitaskSaasPyroModel()
         pyro_model.set_inputs(
@@ -321,21 +333,20 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             self.mean_module = None
             self.covar_module = None
             self.likelihood = None
-            self.task_covar_module = None
         return self
 
     @property
     def median_lengthscale(self) -> Tensor:
         r"""Median lengthscales across the MCMC samples."""
         self._check_if_fitted()
-        lengthscale = self.covar_module.base_kernel.lengthscale.clone()
+        lengthscale = self.covar_module.kernels[0].base_kernel.lengthscale.clone()
         return lengthscale.median(0).values.squeeze(0)
 
     @property
     def num_mcmc_samples(self) -> int:
         r"""Number of MCMC samples in the model."""
         self._check_if_fitted()
-        return len(self.covar_module.outputscale)
+        return self.covar_module.kernels[0].batch_shape[0]
 
     @property
     def batch_shape(self) -> torch.Size:
@@ -367,7 +378,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             self.mean_module,
             self.covar_module,
             self.likelihood,
-            self.task_covar_module,
+            _,
         ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
 
     def posterior(
@@ -438,7 +449,7 @@ class SaasFullyBayesianMultiTaskGP(MultiTaskGP):
             self.mean_module,
             self.covar_module,
             self.likelihood,
-            self.task_covar_module,
+            _,  # Possibly space for input transform
         ) = self.pyro_model.load_mcmc_samples(mcmc_samples=mcmc_samples)
         # Load the actual samples from the state dict
         super().load_state_dict(state_dict=state_dict, strict=strict)
