@@ -362,7 +362,9 @@ class qNoisyExpectedHypervolumeImprovement(
                 if self.cache_pending
                 else num_pending
             )
-            X_pending_uncached = self.X_pending[..., -num_uncached_points:, :]
+            X_pending_uncached = self.X_pending[
+                ..., num_pending - num_uncached_points :, :
+            ]
             X = torch.cat([X, match_batch_shape(X_pending_uncached, X)], dim=-2)
         X_full = torch.cat([match_batch_shape(self.X_baseline, X), X], dim=-2)
         # NOTE: To ensure that we correctly sample `f(X)` from the joint distribution
