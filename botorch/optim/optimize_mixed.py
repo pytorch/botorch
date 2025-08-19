@@ -614,6 +614,7 @@ def generate_starting_points(
 
     # For each discrete dimension, map to the nearest allowed value
     x_init_candts = round_discrete_dims(X=x_init_candts, discrete_dims=discrete_dims)
+    x_init_candts = round_discrete_dims(X=x_init_candts, discrete_dims=cat_dims)
     x_init_candts = fix_features(
         X=x_init_candts,
         fixed_features=opt_inputs.fixed_features,
