@@ -1216,10 +1216,15 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     options={"batch_limit": 2, "init_batch_limit": 2},
                 ),
                 discrete_dims=discrete_dims,
-                cat_dims={},
+                cat_dims=cat_dims,
                 cont_dims=torch.tensor(cont_dims, device=self.device),
             )
         self.assertEqual(candidates.shape, torch.Size([4, dim]))
+        # Check that the candidates are rounded to discrete / categorical values.
+        self.assertAllClose(
+            candidates,
+            round_discrete_dims(X=candidates, discrete_dims=discrete_dims | cat_dims),
+        )
 
         # Test with fixed features and constraints. Using both discrete and continuous.
         constraint = (  # X[..., 0] + X[..., 1] >= 1.
