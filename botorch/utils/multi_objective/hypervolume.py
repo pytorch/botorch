@@ -793,8 +793,7 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
                     BotorchWarning,
                     stacklevel=2,
                 )
-            X_pending = X_pending.detach().clone()
-            self.X_pending = X_pending
+            self.X_pending = X_pending.detach().clone()
             if self.cache_pending:
                 X_baseline = torch.cat([self._X_baseline, X_pending], dim=-2)
                 # Number of new points is the total number of points minus
