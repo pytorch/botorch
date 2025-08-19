@@ -447,13 +447,15 @@ class qLogNoisyExpectedHypervolumeImprovement(
         # - number of pending points is less than max_iep
         if self.X_pending is not None:
             num_pending = self.X_pending.shape[-2]
-            num_uncached_points = (
-                (num_pending + self._X_baseline.shape[-2] - self.X_baseline.shape[-2])
+            num_X_baseline = self._X_baseline.shape[-2]
+            num_X_baseline_and_cached_pending = self.X_baseline.shape[-2]
+            num_uncached_pending = (
+                (num_pending + num_X_baseline - num_X_baseline_and_cached_pending)
                 if self.cache_pending
                 else num_pending
             )
             X_pending_uncached = self.X_pending[
-                ..., num_pending - num_uncached_points :, :
+                ..., num_pending - num_uncached_pending :, :
             ]
             X = torch.cat([X, match_batch_shape(X_pending_uncached, X)], dim=-2)
         X_full = torch.cat([match_batch_shape(self.X_baseline, X), X], dim=-2)

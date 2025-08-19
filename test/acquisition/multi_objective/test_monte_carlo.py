@@ -1380,7 +1380,6 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             dim=1,
         )
         mm._posterior._samples = samples
-        print(fat, dtype)
         res = evaluate(acqf, X)
         self.assertAlmostEqual(res.item(), 0.5 * 0.5, places=4)
 
