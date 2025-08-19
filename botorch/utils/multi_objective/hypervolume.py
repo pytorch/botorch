@@ -792,6 +792,7 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
                     stacklevel=2,
                 )
             X_pending = X_pending.detach().clone()
+            self.X_pending = X_pending
             if self.cache_pending:
                 X_baseline = torch.cat([self._X_baseline, X_pending], dim=-2)
                 # Number of new points is the total number of points minus
@@ -810,16 +811,9 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
                                 .clamp_min(0.0)
                                 .mean()
                             )
-                        # Set to None so that pending points are not concatenated in
-                        # forward.
-                        self.X_pending = None
                         # Set q_in=-1 to so that self.sampler is updated at the next
                         # forward call.
                         self.q_in = -1
-                    else:
-                        self.X_pending = X_pending[-num_new_points:]
-            else:
-                self.X_pending = X_pending
 
     @property
     def _hypervolumes(self) -> Tensor:
