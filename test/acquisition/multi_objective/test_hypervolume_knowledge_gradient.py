@@ -172,6 +172,7 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                     )
 
     def test_evaluate_q_hvkg(self):
+        torch.manual_seed(torch.randint(low=0, high=10, size=(1,)).item())
         tkwargs = {"device": self.device}
         num_pareto = 3
         for dtype, acqf_class, log_ehvi in product(
