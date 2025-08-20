@@ -45,8 +45,6 @@ from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from botorch.utils.transforms import (
     average_over_ensemble_models,
     concatenate_pending_points,
-    is_ensemble,
-    match_batch_shape,
     t_batch_mode_transform,
 )
 from torch import Tensor
@@ -352,43 +350,6 @@ class qNoisyExpectedHypervolumeImprovement(
     @t_batch_mode_transform()
     @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
-        # Manually concatenate pending points only if:
-        # - pending points are not cached, or
-        # - number of pending points is less than max_iep
-        if self.X_pending is not None:
-            num_pending = self.X_pending.shape[-2]
-            num_X_baseline = self._X_baseline.shape[-2]
-            num_X_baseline_and_cached_pending = self.X_baseline.shape[-2]
-            num_uncached_pending = (
-                (num_pending + num_X_baseline - num_X_baseline_and_cached_pending)
-                if self.cache_pending
-                else num_pending
-            )
-            X_pending_uncached = self.X_pending[
-                ..., num_pending - num_uncached_pending :, :
-            ]
-            X = torch.cat([X, match_batch_shape(X_pending_uncached, X)], dim=-2)
-        X_full = torch.cat([match_batch_shape(self.X_baseline, X), X], dim=-2)
-        # NOTE: To ensure that we correctly sample `f(X)` from the joint distribution
-        # `f((X_baseline, X)) ~ P(f | D)`, it is critical to compute the joint posterior
-        # over X *and* X_baseline -- which also contains pending points whenever there
-        # are any --  since the baseline and pending values `f(X_baseline)` are
-        # generally pre-computed and cached before the `forward` call, see the docs of
-        # `cache_pending` for details.
-        # TODO: Improve the efficiency by not re-computing the X_baseline-X_baseline
-        # covariance matrix, but only the covariance of
-        # 1) X and X, and
-        # 2) X and X_baseline.
-        posterior = self.model.posterior(X_full)
-        # Account for possible one-to-many transform and the MCMC batch dimension in
-        # `SaasFullyBayesianSingleTaskGP`
-        event_shape_lag = 1 if is_ensemble(self.model) else 2
-        n_w = (
-            posterior._extended_shape()[X_full.dim() - event_shape_lag]
-            // X_full.shape[-2]
-        )
-        q_in = X.shape[-2] * n_w
-        self._set_sampler(q_in=q_in, posterior=posterior)
-        samples = self._get_f_X_samples(posterior=posterior, q_in=q_in)
+        samples = super().forward(X)
         # Add previous nehvi from pending points.
         return self._compute_qehvi(samples=samples, X=X) + self._prev_nehvi
