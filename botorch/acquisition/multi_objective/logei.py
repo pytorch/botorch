@@ -440,7 +440,7 @@ class qLogNoisyExpectedHypervolumeImprovement(
     @t_batch_mode_transform()
     @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
-        samples = super().forward(X)
+        samples, X = super().forward(X)
         # Add previous nehvi from pending points.
         nehvi = self._compute_log_qehvi(samples=samples, X=X)
         if self.incremental_nehvi:

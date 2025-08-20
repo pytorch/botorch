@@ -831,7 +831,7 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
             .view(self._batch_sample_shape)
         )
 
-    def forward(self, X: Tensor) -> Tensor:
+    def forward(self, X: Tensor) -> tuple[Tensor, Tensor]:
         # Manually concatenate pending points only if:
         # - pending points are not cached, or
         # - number of pending points is less than max_iep
@@ -869,7 +869,7 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
         )
         q_in = X.shape[-2] * n_w
         self._set_sampler(q_in=q_in, posterior=posterior)
-        return self._get_f_X_samples(posterior=posterior, q_in=q_in)
+        return self._get_f_X_samples(posterior=posterior, q_in=q_in), X
 
 
 def get_hypervolume_maximizing_subset(
