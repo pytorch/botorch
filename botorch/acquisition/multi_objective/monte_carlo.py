@@ -350,6 +350,8 @@ class qNoisyExpectedHypervolumeImprovement(
     @t_batch_mode_transform()
     @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
-        samples, X = super().forward(X)
+        # Get samples from the posterior, and manually concatenate pending points that
+        # have not yet been cached. Shared with qLogNEHVI.
+        samples, X = self._compute_posterior_samples_and_concat_pending(X)
         # Add previous nehvi from pending points.
         return self._compute_qehvi(samples=samples, X=X) + self._prev_nehvi

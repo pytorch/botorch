@@ -831,7 +831,19 @@ class NoisyExpectedHypervolumeMixin(CachedCholeskyMCSamplerMixin):
             .view(self._batch_sample_shape)
         )
 
-    def forward(self, X: Tensor) -> tuple[Tensor, Tensor]:
+    def _compute_posterior_samples_and_concat_pending(
+        self, X: Tensor
+    ) -> tuple[Tensor, Tensor]:
+        r"""Get samples from the posterior, and concatenate uncached pending points.
+
+        Args:
+            X: `batch_shape x q x d` X Tensor pased into the `forward` method of an acqf
+
+        Returns:
+            A tuple containing samples of the latent function from the posterior, and
+            the `batch_shape x (q + num_uncached_pending) x d` X tensor including any
+            pending observations that have not been cached.
+        """
         # Manually concatenate pending points only if:
         # - pending points are not cached, or
         # - number of pending points is less than max_iep
