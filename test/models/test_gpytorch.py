@@ -155,12 +155,6 @@ class TestGPyTorchModel(BotorchTestCase):
             # test noise shape validation
             with self.assertRaises(BotorchTensorDimensionError):
                 model.posterior(test_X, observation_noise=torch.rand(2, **tkwargs))
-            # test conditioning on observations
-            cm = model.condition_on_observations(
-                torch.rand(2, 1, **tkwargs), torch.rand(2, 1, **tkwargs)
-            )
-            self.assertIsInstance(cm, SimpleGPyTorchModel)
-            self.assertEqual(cm.train_targets.shape, torch.Size([7]))
             # test subset_output
             with self.assertRaises(NotImplementedError):
                 model.subset_output([0])
@@ -255,20 +249,6 @@ class TestGPyTorchModel(BotorchTestCase):
                     ):
                         GPyTorchModel._validate_tensor_args(X, Y, Yvar, strict=strict)
 
-    def test_condition_on_observations_tensor_validation(self) -> None:
-        model = SimpleGPyTorchModel(torch.rand(5, 1), torch.randn(5, 1))
-        model.posterior(torch.rand(2, 1))  # evaluate the model to form caches.
-        # Outside of fantasize, the inputs are validated.
-        with self.assertWarnsRegex(
-            BotorchTensorDimensionWarning, "Non-strict enforcement of"
-        ):
-            model.condition_on_observations(torch.randn(2, 1), torch.randn(5, 2, 1))
-        # Inside of fantasize, the inputs are not validated.
-        with fantasize(), warnings.catch_warnings(record=True) as ws:
-            warnings.filterwarnings("always", category=BotorchTensorDimensionWarning)
-            model.condition_on_observations(torch.randn(2, 1), torch.randn(5, 2, 1))
-        self.assertFalse(any(w.category is BotorchTensorDimensionWarning for w in ws))
-
     def test_fantasize_flag(self):
         train_X = torch.rand(5, 1)
         train_Y = torch.sin(train_X)
@@ -358,12 +338,6 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             # test subset_output
             with self.assertRaises(NotImplementedError):
                 model.subset_output([0])
-            # test conditioning on observations
-            cm = model.condition_on_observations(
-                torch.rand(2, 1, **tkwargs), torch.rand(2, 2, **tkwargs)
-            )
-            self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
-            self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
             # test fantasize
             sampler = SobolQMCNormalSampler(sample_shape=torch.Size([2]))
             cm = model.fantasize(torch.rand(2, 1, **tkwargs), sampler=sampler)
@@ -401,6 +375,56 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
                             else expected_input_batch_shape + torch.Size([2])
                         ),
                     )
+
+    def test_condition_on_observations(self):
+        for dtype, use_octf in itertools.product(
+            (torch.float, torch.double), (False, True)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            octf = Standardize(m=1) if use_octf else None
+            train_X = torch.rand(5, 1, **tkwargs)
+            train_Y = torch.sin(train_X)
+            model = SimpleGPyTorchModel(train_X, train_Y, octf)
+
+            # must predict before conitioning on observations
+            model.posterior(torch.rand(2, 1, **tkwargs))
+
+            # test conditioning on observations
+            cm = model.condition_on_observations(
+                torch.rand(2, 1, **tkwargs), torch.rand(2, 1, **tkwargs)
+            )
+            self.assertIsInstance(cm, SimpleGPyTorchModel)
+            self.assertEqual(cm.train_targets.shape, torch.Size([7]))
+            model = SimpleGPyTorchModel(torch.rand(5, 1), torch.randn(5, 1))
+
+        model.posterior(torch.rand(2, 1))  # evaluate the model to form caches.
+        # Outside of fantasize, the inputs are validated.
+        with self.assertWarnsRegex(
+            BotorchTensorDimensionWarning, "Non-strict enforcement of"
+        ):
+            model.condition_on_observations(torch.randn(2, 1), torch.randn(5, 2, 1))
+        # Inside of fantasize, the inputs are not validated.
+        with fantasize(), warnings.catch_warnings(record=True) as ws:
+            warnings.filterwarnings("always", category=BotorchTensorDimensionWarning)
+            model.condition_on_observations(torch.randn(2, 1), torch.randn(5, 2, 1))
+        self.assertFalse(any(w.category is BotorchTensorDimensionWarning for w in ws))
+
+    def test_condition_on_observations_batched(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X = torch.rand(5, 1, **tkwargs)
+            train_Y = torch.cat([torch.sin(train_X), torch.cos(train_X)], dim=-1)
+            model = SimpleBatchedMultiOutputGPyTorchModel(train_X, train_Y)
+
+            # must predict before conitioning on observations
+            model.posterior(torch.rand(2, 1, **tkwargs))
+
+            # test conditioning on observations
+            cm = model.condition_on_observations(
+                torch.rand(2, 1, **tkwargs), torch.rand(2, 2, **tkwargs)
+            )
+            self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
+            self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
 
     def test_posterior_transform(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
@@ -564,11 +588,6 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             )
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
-            # conditioning is not implemented (see ModelListGP for tests)
-            with self.assertRaises(NotImplementedError):
-                model.condition_on_observations(
-                    X=torch.rand(2, 1, **tkwargs), Y=torch.rand(2, 2, **tkwargs)
-                )
 
     def test_input_transform(self):
         # test that the input transforms are applied properly to individual models
@@ -651,3 +670,23 @@ class TestModelListGPyTorchModel(BotorchTestCase):
         post_tf = ScalarizedPosteriorTransform(torch.ones(2, **tkwargs))
         post = model.posterior(torch.rand(3, 1, **tkwargs), posterior_transform=post_tf)
         self.assertEqual(post.mean.shape, torch.Size([3, 1]))
+
+    def test_condition_on_observations_model_list(self):
+        torch.manual_seed(12345)
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X1, train_X2 = (
+                torch.rand(5, 1, **tkwargs),
+                torch.rand(5, 1, **tkwargs),
+            )
+            train_Y1 = torch.sin(train_X1)
+            train_Y2 = torch.cos(train_X2)
+            m1 = SimpleGPyTorchModel(train_X1, train_Y1)
+            m2 = SimpleGPyTorchModel(train_X2, train_Y2)
+            model = SimpleModelListGPyTorchModel(m1, m2)
+
+            # conditioning is not implemented (see ModelListGP for tests)
+            with self.assertRaises(NotImplementedError):
+                model.condition_on_observations(
+                    X=torch.rand(2, 1, **tkwargs), Y=torch.rand(2, 2, **tkwargs)
+                )
