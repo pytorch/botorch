@@ -682,7 +682,7 @@ class TestFullyBayesianMultiTaskGP(BotorchTestCase):
                         )
                     self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
 
-    def test_condition_on_observation(self) -> None:
+    def test_condition_on_observations(self) -> None:
         # The following conditioned data shapes should work (output describes):
         # training data shape after cond(batch shape in output is req. in gpytorch)
         # X: num_models x n x d, Y: num_models x n x d --> num_models x n x d
