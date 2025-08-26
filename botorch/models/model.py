@@ -379,7 +379,7 @@ class FantasizeMixin(ABC):
             if observation_noise is not None:
                 kwargs["noise"] = observation_noise.expand(Y.shape[1:])
             return self.condition_on_observations(
-                X=self.transform_inputs(X),
+                X=X,
                 Y=Y,
                 **kwargs,
             )
@@ -395,9 +395,7 @@ class FantasizeMixin(ABC):
             Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
             if observation_noise is not None:
                 kwargs["noise"] = observation_noise.expand(Y_fantasized.shape[1:])
-            return self.condition_on_observations(
-                X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
-            )
+            return self.condition_on_observations(X=X, Y=Y_fantasized, **kwargs)
 
 
 class ModelList(Model):

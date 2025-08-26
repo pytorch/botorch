@@ -242,8 +242,8 @@ class GPyTorchModel(Model, ABC):
             >>> new_Y = torch.sin(new_X[:, :1]) + torch.cos(new_X[:, 1:])
             >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
+        X = self.transform_inputs(X)
         Yvar = noise
-
         if hasattr(self, "outcome_transform"):
             # pass the transformed data to get_fantasy_model below
             # (unless we've already trasnformed if BatchedMultiOutputGPyTorchModel)
