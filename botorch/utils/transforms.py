@@ -293,14 +293,10 @@ def t_batch_mode_transform(
                     f"Expected X to be `batch_shape x q={expected_q} x d`, but"
                     f" got X with shape {X.shape}."
                 )
+            X_original_shape = X.shape
             # add t-batch dim
             X = X if X.dim() > 2 else X.unsqueeze(0)
             output = method(acqf, X, *args, **kwargs)
-            if hasattr(acqf, "model") and is_ensemble(acqf.model):
-                # IDEA: this could be wrapped into SampleReducingMCAcquisitionFunction
-                output = (
-                    output.mean(dim=-1) if not acqf._log else logmeanexp(output, dim=-1)
-                )
             if assert_output_shape and not _verify_output_shape(
                 acqf=acqf,
                 X=X,
@@ -311,12 +307,68 @@ def t_batch_mode_transform(
                     "X, or the `model.batch_shape` in the case of acquisition "
                     "functions using batch models; but got output with shape "
                     f"{output.shape} for X with shape {X.shape}."
+                    + (
+                        ""
+                        if X_original_shape == X.shape
+                        else f" Note that `X.shape` was originally {X_original_shape} "
+                        "before the `t_batch_mode_transform` decorator added a batch "
+                        "dimension."
+                    )
                 )
             return output
 
         return decorated
 
     return decorator
+
+
+def average_over_ensemble_models(
+    method: Callable[[AcquisitionFunction, Any], Any],
+) -> Callable[[AcquisitionFunction, Any], Any]:
+    """Decorator for averaging acquisition values over ensemble models. For example,
+    if the model is an ensemble, `is_ensemble(model) == True` like for a SAAS model, the
+    acquisition value is averaged over the samples in the ensemble.
+
+    NOTE: If the class has a `_log` attribute, the acquisition value is averaged
+    using logmeanexp instead of mean so that the log of the averaged acquisition value
+    is averaged in a numerically stable way.
+
+    Args:
+        method: The method to be decorated, usually `forward`.
+
+    Returns:
+        The decorated method.
+
+     Example:
+        >>> # Without decorator, forward returns a `batch_shape x ensemble_shape` tensor
+        >>> class SimpleAcquisition:
+        ...     def forward(self, X):
+        ...         samples, obj = self._get_samples_and_objectives(X)
+        ...         # shape is `sample_sample x batch_shape x ensemble_shape x q`
+        ...         sample_acqvals = self._sample_forward(obj)
+        ...         # return shape is `batch_shape x ensemble_shape`
+        ...         return sample_acqvals.mean(dim=0).max(dim=-1)
+        ...
+        >>> # With decorator, forward returns a `batch_shape`-dim tensor
+        >>> class EnsembleAcquisition:
+        ...     @average_over_ensemble_models
+        ...     def forward(self, X):
+        ...         ... # same as above
+        ...         # return shape through decorator is `batch_shape`
+        ...         return sample_acqvals.mean(dim=0).max(dim=-1)
+    """
+
+    def decorated(acqf: AcquisitionFunction, X: Any, *args: Any, **kwargs: Any) -> Any:
+        output = method(acqf, X, *args, **kwargs)
+        if hasattr(acqf, "model") and is_ensemble(acqf.model):
+            output = (
+                output.mean(dim=-1)
+                if not getattr(acqf, "_log", False)
+                else logmeanexp(output, dim=-1)
+            )
+        return output
+
+    return decorated
 
 
 def concatenate_pending_points(
@@ -370,8 +422,3 @@ def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
 
     """
     return X.expand(X.shape[: -(Y.dim())] + Y.shape[:-2] + X.shape[-2:])
-
-
-def convert_to_target_pre_hook(module, *args):
-    r"""Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""
-    module.to(args[0][0])

@@ -33,8 +33,8 @@ class BoundedRiemannPosterior(Posterior):
         Args:
             borders: A tensor of shape `(n_buckets + 1,)` defining the boundaries of
                 the buckets. Must be monotonically increasing.
-            probabilities: A tensor of shape `(n_buckets,)` defining the probability
-                mass in each bucket. Must sum to 1.
+            probabilities: A tensor of shape `(..., n_buckets,)` defining the
+                probability mass in each bucket. Must sum to 1 in the last dim.
         """
 
         assert torch.allclose(
@@ -61,7 +61,7 @@ class BoundedRiemannPosterior(Posterior):
         all_lower = self.borders[:-1]
         all_upper = self.borders[1:]
         bucket_results = ag_integrate_fn(all_lower, all_upper)
-        return (bucket_results * (self.probabilities)).sum(-1)
+        return (bucket_results * (self.probabilities / (all_upper - all_lower))).sum(-1)
 
     def rsample(
         self,
@@ -107,7 +107,24 @@ class BoundedRiemannPosterior(Posterior):
         r"""The mean of the posterior distribution."""
         bucket_widths = self.borders[1:] - self.borders[:-1]
         bucket_means = self.borders[:-1] + bucket_widths / 2
-        return (bucket_means * (self.probabilities)).sum(-1, keepdim=True)
+        return (self.probabilities @ bucket_means).unsqueeze(-1)
+
+    @property
+    def mean_of_square(self) -> torch.Tensor:
+        """Computes E[x^2]."""
+        left_borders = self.borders[:-1]
+        right_borders = self.borders[1:]
+        bucket_mean_of_square = (
+            left_borders.square()
+            + right_borders.square()
+            + left_borders * right_borders
+        ) / 3.0
+        return (self.probabilities @ bucket_mean_of_square).unsqueeze(-1)
+
+    @property
+    def variance(self) -> torch.Tensor:
+        """Computes the variance via Var[x] = E[x^2] - E[x]^2."""
+        return self.mean_of_square - self.mean.square()
 
     def confidence_region(
         self, confidence_level: float = 0.95

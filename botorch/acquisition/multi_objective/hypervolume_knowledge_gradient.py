@@ -32,11 +32,12 @@ from botorch.acquisition.cost_aware import CostAwareUtility
 from botorch.acquisition.decoupled import DecoupledAcquisitionFunction
 from botorch.acquisition.knowledge_gradient import ProjectedAcquisitionFunction
 from botorch.acquisition.multi_objective.base import MultiObjectiveMCAcquisitionFunction
+from botorch.acquisition.multi_objective.logei import qLogExpectedHypervolumeImprovement
 from botorch.acquisition.multi_objective.monte_carlo import (
     qExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.exceptions.warnings import NumericsWarning
 from botorch.models.deterministic import PosteriorMeanModel
 from botorch.models.model import Model
@@ -47,7 +48,12 @@ from botorch.sampling.stochastic_samplers import StochasticSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,
 )
-from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
+from botorch.utils.safe_math import logdiffexp, logmeanexp
+from botorch.utils.transforms import (
+    average_over_ensemble_models,
+    match_batch_shape,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 
@@ -87,6 +93,7 @@ class qHypervolumeKnowledgeGradient(
         current_value: Tensor | None = None,
         use_posterior_mean: bool = True,
         cost_aware_utility: CostAwareUtility | None = None,
+        log: bool = False,
     ) -> None:
         r"""q-Hypervolume Knowledge Gradient.
 
@@ -129,6 +136,9 @@ class qHypervolumeKnowledgeGradient(
                 [Daulton2023hvkg]_ for details.
             cost_aware_utility: A CostAwareUtility specifying the cost function for
                 evaluating the `X` on the objectives indicated by `evaluation_mask`.
+            log: If True, then returns the log of the HVKG value. If True, then it
+                expects current_value to be in log-space and cost_aware_utility to
+                output log utilities.
         """
         if sampler is None:
             # base samples should be fixed for joint optimization over X, X_fantasies
@@ -166,6 +176,8 @@ class qHypervolumeKnowledgeGradient(
         self.cost_aware_utility = cost_aware_utility
         self._cost_sampler = None
 
+        self._log = log
+
     @property
     def cost_sampler(self):
         if self._cost_sampler is None:
@@ -181,6 +193,7 @@ class qHypervolumeKnowledgeGradient(
         return self._cost_sampler
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qKnowledgeGradient on the candidate set `X`.
 
@@ -237,6 +250,7 @@ class qHypervolumeKnowledgeGradient(
             objective=self.objective,
             sampler=self.inner_sampler,
             use_posterior_mean=self.use_posterior_mean,
+            log=self._log,
         )
 
         # make sure to propagate gradients to the fantasy model train inputs
@@ -254,9 +268,14 @@ class qHypervolumeKnowledgeGradient(
             values = value_function(X=X_fantasies.reshape(shape))  # num_fantasies x b
 
         if self.current_value is not None:
-            values = values - self.current_value
+            if self._log:
+                values = logdiffexp(self.current_value, values)
+            else:
+                values = values - self.current_value
 
         if self.cost_aware_utility is not None:
+            if self._log:
+                _check_log_utilities(self.cost_aware_utility)
             values = self.cost_aware_utility(
                 # exclude pending points
                 X=X_actual[..., :q, :],
@@ -266,7 +285,10 @@ class qHypervolumeKnowledgeGradient(
             )
 
         # return average over the fantasy samples
-        return values.mean(dim=0)
+        if self._log:
+            return logmeanexp(values, dim=0)
+        else:
+            return values.mean(dim=0)
 
     def get_augmented_q_batch_size(self, q: int) -> int:
         r"""Get augmented q batch size for one-shot optimization.
@@ -324,6 +346,7 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
         valfunc_cls: type[AcquisitionFunction] | None = None,
         valfunc_argfac: Callable[[Model], dict[str, Any]] | None = None,
         use_posterior_mean: bool = True,
+        log: bool = False,
         **kwargs: Any,
     ) -> None:
         r"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).
@@ -371,6 +394,9 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
             valfunc_argfac: An argument factory, i.e. callable that maps a `Model`
                 to a dictionary of kwargs for the terminal value function (e.g.
                 `best_f` for `ExpectedImprovement`).
+            log: If True, then returns the log of the HVKG value. If True, then it
+                expects current_value to be in log-space and cost_aware_utility to
+                output log utilities.
         """
 
         super().__init__(
@@ -387,6 +413,7 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
             current_value=current_value,
             use_posterior_mean=use_posterior_mean,
             cost_aware_utility=cost_aware_utility,
+            log=log,
         )
         self.project = project
         if kwargs.get("expand") is not None:
@@ -400,6 +427,7 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
         self.target_fidelities = target_fidelities
 
     @t_batch_mode_transform()
+    @average_over_ensemble_models
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qMultiFidelityKnowledgeGradient on the candidate set `X`.
 
@@ -459,6 +487,7 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
             valfunc_cls=self.valfunc_cls,
             valfunc_argfac=self.valfunc_argfac,
             use_posterior_mean=self.use_posterior_mean,
+            log=self._log,
         )
 
         # make sure to propagate gradients to the fantasy model train inputs
@@ -475,9 +504,15 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
             )
             values = value_function(X=X_fantasies.reshape(shape))  # num_fantasies x b
         if self.current_value is not None:
-            values = values - self.current_value
+            if self._log:
+                # Assumes current value is in log-space
+                values = logdiffexp(self.current_value, values)
+            else:
+                values = values - self.current_value
 
         if self.cost_aware_utility is not None:
+            if self._log:
+                _check_log_utilities(self.cost_aware_utility)
             values = self.cost_aware_utility(
                 # exclude pending points
                 X=X_actual[..., :q, :],
@@ -487,7 +522,7 @@ class qMultiFidelityHypervolumeKnowledgeGradient(qHypervolumeKnowledgeGradient):
             )
 
         # return average over the fantasy samples
-        return values.mean(dim=0)
+        return logmeanexp(values, dim=0) if self._log else values.mean(dim=0)
 
 
 def _get_hv_value_function(
@@ -499,6 +534,7 @@ def _get_hv_value_function(
     valfunc_cls: type[AcquisitionFunction] | None = None,
     valfunc_argfac: Callable[[Model], dict[str, Any]] | None = None,
     use_posterior_mean: bool = False,
+    log: bool = False,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function).
     This is a method for computing hypervolume.
@@ -512,7 +548,13 @@ def _get_hv_value_function(
             action="ignore",
             category=NumericsWarning,
         )
-        base_value_function = qExpectedHypervolumeImprovement(
+
+        base_value_function_class = (
+            qLogExpectedHypervolumeImprovement
+            if log
+            else qExpectedHypervolumeImprovement
+        )
+        base_value_function = base_value_function_class(
             model=model,
             ref_point=ref_point,
             partitioning=FastNondominatedPartitioning(
@@ -570,3 +612,11 @@ def _split_hvkg_fantasy_points(
     X_fantasies = X_fantasies.reshape(new_shape)
     # n_f x b x num_pareto x d
     return X_actual, X_fantasies
+
+
+def _check_log_utilities(cost_aware_utility: CostAwareUtility) -> None:
+    if not hasattr(cost_aware_utility, "_log") or not cost_aware_utility._log:
+        raise BotorchError(
+            "Cost-aware HVKG has _log=True and requires cost_aware_utility "
+            "to output log utilities."
+        )

@@ -235,8 +235,8 @@ class TestDatasets(BotorchTestCase):
                     self.assertIs(dataset._X, dataset2._X)
                     self.assertIs(dataset._Y, dataset2._Y)
                     self.assertIs(dataset._Yvar, dataset2._Yvar)
-                    self.assertIs(dataset.feature_names, dataset2.feature_names)
-                    self.assertIs(dataset.outcome_names, dataset2.outcome_names)
+                    self.assertEqual(dataset.feature_names, dataset2.feature_names)
+                    self.assertEqual(dataset.outcome_names, dataset2.outcome_names)
                 # test with mask
                 mask = torch.tensor([0, 1, 1], dtype=torch.bool)
                 if supervised:

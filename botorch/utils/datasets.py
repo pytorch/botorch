@@ -76,8 +76,8 @@ class SupervisedDataset:
         self._X = X
         self._Y = Y
         self._Yvar = Yvar
-        self.feature_names = feature_names
-        self.outcome_names = outcome_names
+        self.feature_names = feature_names.copy()
+        self.outcome_names = outcome_names.copy()
         self.group_indices = group_indices
         self.validate_init = validate_init
         if validate_init:
@@ -351,7 +351,7 @@ class MultiTaskDataset(SupervisedDataset):
         self.target_outcome_name = target_outcome_name
         self.task_feature_index = task_feature_index
         self._validate_datasets(datasets=datasets)
-        self.feature_names = self.datasets[target_outcome_name].feature_names
+        self.feature_names = self.datasets[target_outcome_name].feature_names.copy()
         self.outcome_names = [target_outcome_name]
 
         # Check if the datasets have identical feature sets.

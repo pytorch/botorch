@@ -29,6 +29,7 @@ from botorch.acquisition.monte_carlo import (
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
+    SampleReducingMCAcquisitionFunction,
 )
 from botorch.acquisition.multi_objective import (
     prune_inferior_points_multi_objective,
@@ -693,19 +694,23 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
             ),
         ]
 
-        for acqf in acquisition_functions:
-            for batch_shape in [[5], [6, 5, 2]]:
-                test_X = torch.rand(*batch_shape, 1, 4, **tkwargs)
-                # Testing that the t_batch_mode_transform works correctly for
-                # fully Bayesian models with log-space acquisition functions.
-                with patch.object(
-                    utils.transforms, "logmeanexp", wraps=logmeanexp
-                ) as mock:
-                    self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
-                    if acqf._log:
-                        mock.assert_called_once()
-                    else:
-                        mock.assert_not_called()
+        for acqf, batch_shape in itertools.product(
+            acquisition_functions, [[5], [6, 5, 2]]
+        ):
+            test_X = torch.rand(*batch_shape, 1, 4, **tkwargs)
+            # Testing that the `average_over_ensemble_models` decorator works
+            # correctly for fully Bayesian models with log-space acquisition
+            # functions.
+            with patch.object(utils.transforms, "logmeanexp", wraps=logmeanexp) as mock:
+                self.assertEqual(acqf(test_X).shape, torch.Size(batch_shape))
+                # The sample-reducing acquisition functions are using the
+                # `sample_reduction` to average over the ensembles.
+                if acqf._log and not isinstance(
+                    acqf, SampleReducingMCAcquisitionFunction
+                ):
+                    mock.assert_called_once()
+                else:
+                    mock.assert_not_called()
 
         # Test prune_inferior_points
         X_pruned = prune_inferior_points(model=model, X=train_X)
@@ -787,7 +792,7 @@ class TestSaasFullyBayesianSingleTaskGP(BotorchTestCase):
             else:
                 self.assertTrue(Yvar.equal(data_dict["train_Yvar"]))
 
-    def test_condition_on_observation(self) -> None:
+    def test_fbstgp_condition_on_observations(self) -> None:
         # The following conditioned data shapes should work (output describes):
         # training data shape after cond(batch shape in output is req. in gpytorch)
         # X: num_models x n x d, Y: num_models x n x d --> num_models x n x d

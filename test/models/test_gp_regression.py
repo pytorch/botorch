@@ -161,13 +161,23 @@ class TestGPRegressionBase(BotorchTestCase):
                 X = torch.rand(*input_batch_shape, 3, 1, **tkwargs)
 
                 if input_batch_shape == [3] and len(batch_shape) > 0:
-                    msg = (
-                        "Shape mismatch: objects cannot be broadcast to a single shape"
-                        if m == 1
-                        else "The trailing batch dimensions of X must match "
-                        "the trailing batch dimensions of the training inputs."
-                    )
-                    with self.assertRaisesRegex(RuntimeError, msg):
+                    if m == 1:
+                        # Combine both possible messages into a regex pattern
+                        bdcast_msg_1 = "Shape mismatch: objects cannot be broadcast to "
+                        "a single shape"
+                        bdcast_msg_2 = "Attempting to broadcast a dimension of length "
+                        f"{input_batch_shape[0]} at -1! "
+                        "Mismatching argument at index 1 had "
+                        f"torch.Size([{input_batch_shape[0]}]); "
+                        "but expected shape should be broadcastable to "
+                        f"[{batch_shape[0]}]"
+                        msg_pattern = r"({}|{})".format(bdcast_msg_1, bdcast_msg_2)
+                    else:
+                        msg_pattern = (
+                            "The trailing batch dimensions of X must match "
+                            "the trailing batch dimensions of the training inputs."
+                        )
+                    with self.assertRaisesRegex(RuntimeError, msg_pattern):
                         model.posterior(X, observation_noise=True)
                     continue
                 else:
