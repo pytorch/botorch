@@ -734,3 +734,95 @@ class TestModelListGPyTorchModel(BotorchTestCase):
                 conditioned_model.train_inputs[0],
                 expected_combined_inputs,
             )
+
+    def test_condition_on_observations_train_input_shapes(self):
+        """Comprehensive test for condition_on_observations functionality.
+
+        Tests input transform consistency, train/eval mode stability,
+        different transform settings, and batch shape handling.
+        """
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+
+            # Test 1: Train/eval mode stability with transform_on_train=True
+            train_X = torch.tensor([[0.0], [1.0]], **tkwargs)
+            train_Y = torch.tensor([[1.0], [2.0]], **tkwargs)
+            input_transform = SimpleInputTransform(transform_on_train=True)
+            model = SimpleGPyTorchModel(
+                train_X, train_Y, input_transform=input_transform
+            )
+
+            new_X = torch.tensor([[0.5]], **tkwargs)
+            new_Y = torch.tensor([[1.5]], **tkwargs)
+            _ = model.posterior(train_X)
+            conditioned_model = model.condition_on_observations(new_X, new_Y)
+
+            # Verify conditioned observations persist across train/eval modes
+            conditioned_model.eval()
+            self.assertEqual(conditioned_model.train_targets.shape[0], 3)
+            conditioned_model.train()
+            self.assertEqual(conditioned_model.train_targets.shape[0], 3)
+            self.assertEqual(conditioned_model.train_inputs[0].shape[0], 3)
+
+            # Test 2: Transform behavior with transform_on_train=False
+            model2 = SimpleGPyTorchModel(
+                train_X,
+                train_Y,
+                input_transform=SimpleInputTransform(transform_on_train=False),
+            )
+            _ = model2.posterior(train_X)
+            conditioned_model2 = model2.condition_on_observations(new_X, new_Y)
+            self.assertEqual(conditioned_model2.train_targets.shape[0], 3)
+
+            # Verify model can make predictions after conditioning
+            test_X = torch.tensor([[0.25]], **tkwargs)
+            posterior = conditioned_model2.posterior(test_X)
+            self.assertEqual(posterior.mean.shape, torch.Size([1, 1]))
+
+        # Test 3: Batch shape handling and broadcasting (double precision only)
+        tkwargs = {"device": self.device, "dtype": torch.double}
+
+        # Same ndim - should update _original_train_inputs
+        train_X = torch.rand(2, 2, **tkwargs)
+        train_Y = torch.rand(2, 1, **tkwargs)
+        model = SimpleGPyTorchModel(
+            train_X, train_Y, input_transform=SimpleInputTransform(True)
+        )
+        _ = model.posterior(train_X)
+
+        original_size = model._original_train_inputs.shape[0]
+        fantasy_model = model.condition_on_observations(
+            torch.rand(1, 2, **tkwargs), torch.rand(1, 1, **tkwargs)
+        )
+        self.assertEqual(
+            fantasy_model._original_train_inputs.shape[0], original_size + 1
+        )
+
+        # Different ndim - should NOT update _original_train_inputs
+        original_size = model._original_train_inputs.shape[0]
+        fantasy_model = model.condition_on_observations(
+            torch.rand(3, 2, 2, **tkwargs), torch.rand(3, 2, 1, **tkwargs)
+        )
+
+        # NOTE expected behavior is expand (2, 2) & (3, 2, 2) is expanded
+        # and then concatenated along dimension -2 --> (3, 4, 2)
+        self.assertEqual(
+            fantasy_model._original_train_inputs.shape, torch.Size([3, 4, 2])
+        )
+
+        # Test 4: Fantasy model behavior
+        model2 = SimpleGPyTorchModel(
+            train_X, train_Y, input_transform=SimpleInputTransform(True)
+        )
+        _ = model2.posterior(train_X)
+        original_size = model2._original_train_inputs.shape[0]
+
+        fantasy_model = model2.condition_on_observations(
+            torch.rand(1, 2, **tkwargs), torch.rand(1, 1, **tkwargs)
+        )
+
+        # Fantasy model gets data, original model does not
+        self.assertEqual(
+            fantasy_model._original_train_inputs.shape[0], original_size + 1
+        )
+        self.assertEqual(model2._original_train_inputs.shape[0], original_size)
