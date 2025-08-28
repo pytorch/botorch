@@ -242,11 +242,13 @@ class GPyTorchModel(Model, ABC):
             >>> new_Y = torch.sin(new_X[:, :1]) + torch.cos(new_X[:, 1:])
             >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
+        # pass the transformed data to get_fantasy_model below
+        # (unless we've already transformed if BatchedMultiOutputGPyTorchModel)
         X = self.transform_inputs(X)
+
         Yvar = noise
         if hasattr(self, "outcome_transform"):
-            # pass the transformed data to get_fantasy_model below
-            # (unless we've already trasnformed if BatchedMultiOutputGPyTorchModel)
+            # And do the same for the outcome transform, if it exists.
             if not isinstance(self, BatchedMultiOutputGPyTorchModel):
                 # `noise` is assumed to already be outcome-transformed.
                 Y, _ = self.outcome_transform(Y=Y, Yvar=Yvar, X=X)
@@ -260,9 +262,25 @@ class GPyTorchModel(Model, ABC):
             if Yvar is not None:
                 kwargs.update({"noise": Yvar.squeeze(-1)})
         # get_fantasy_model will properly copy any existing outcome transforms
-        # (since it deepcopies the original model)
+        # (since it deepcopies the original model))
+        fantasy_model = self.get_fantasy_model(inputs=X, targets=Y, **kwargs)
 
-        return self.get_fantasy_model(inputs=X, targets=Y, **kwargs)
+        # If we use an input transform, the fantasized data will not get added to
+        # the training data by default. We need to manually add it.
+        if hasattr(fantasy_model, "input_transform"):
+            # Broadcast tensors to compatible shape before concatenating
+            expand_shape = torch.broadcast_shapes(
+                X.shape[:-2], fantasy_model._original_train_inputs.shape[:-2]
+            )
+            X_expanded = X.expand(expand_shape + X.shape[-2:])
+            orig_expanded = fantasy_model._original_train_inputs.expand(
+                expand_shape + fantasy_model._original_train_inputs.shape[-2:]
+            )
+            fantasy_model._original_train_inputs = torch.cat(
+                [orig_expanded, X_expanded],
+                dim=-2,
+            ).detach()
+        return fantasy_model
 
 
 # pyre-fixme[13]: uninitialized attributes _num_outputs, _input_batch_shape,
