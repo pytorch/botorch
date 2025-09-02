@@ -42,7 +42,6 @@ from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.models.utils.assorted import get_task_value_remapping
 from botorch.models.utils.gpytorch_modules import (
     get_covar_module_with_dim_scaled_prior,
-    get_gaussian_likelihood_with_lognormal_prior,
     MIN_INFERRED_NOISE_LEVEL,
 )
 from botorch.posteriors.multitask import MultitaskGPPosterior
@@ -56,6 +55,7 @@ from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.index_kernel import IndexKernel
 from gpytorch.kernels.multitask_kernel import MultitaskKernel
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from gpytorch.likelihoods.hadamard_gaussian_likelihood import HadamardGaussianLikelihood
 from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.likelihoods.multitask_gaussian_likelihood import (
     MultitaskGaussianLikelihood,
@@ -212,10 +212,20 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel, FantasizeMixin):
         self._output_tasks = output_tasks
         self._num_outputs = len(output_tasks)
 
-        # TODO (T41270962): Support task-specific noise levels in likelihood
         if likelihood is None:
             if train_Yvar is None:
-                likelihood = get_gaussian_likelihood_with_lognormal_prior()
+                noise_prior = LogNormalPrior(loc=-4.0, scale=1.0)
+                likelihood = HadamardGaussianLikelihood(
+                    num_tasks=self.num_tasks,
+                    batch_shape=torch.Size(),
+                    noise_prior=noise_prior,
+                    noise_constraint=GreaterThan(
+                        MIN_INFERRED_NOISE_LEVEL,
+                        transform=None,
+                        initial_value=noise_prior.mode,
+                    ),
+                    task_feature_index=task_feature,
+                )
             else:
                 likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar.squeeze(-1))
 

@@ -30,6 +30,7 @@ from gpytorch.kernels import IndexKernel, MaternKernel, MultitaskKernel, RBFKern
 from gpytorch.likelihoods import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
+    HadamardGaussianLikelihood,
     MultitaskGaussianLikelihood,
 )
 from gpytorch.means import ConstantMean, MultitaskMean
@@ -154,7 +155,9 @@ class TestMultiTaskGP(BotorchTestCase):
             if fixed_noise:
                 self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
             else:
-                self.assertIsInstance(model.likelihood, GaussianLikelihood)
+                self.assertIsInstance(model.likelihood, HadamardGaussianLikelihood)
+                self.assertEqual(model.likelihood.noise.shape, torch.Size([2]))
+                self.assertEqual(model.likelihood.task_feature_index, 0)
             data_covar_module, task_covar_module = model.covar_module.kernels
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertIsInstance(data_covar_module, RBFKernel)
@@ -195,8 +198,8 @@ class TestMultiTaskGP(BotorchTestCase):
                     torch.tensor([0.05, 0.1], **tkwargs).repeat_interleave(2)
                 ).expand(3, 4, 4)
             else:
-                noise_covar = model.likelihood.noise_covar.noise * torch.eye(
-                    4, **tkwargs
+                noise_covar = torch.diag(
+                    model.likelihood.noise_covar.noise.repeat_interleave(2)
                 ).expand(3, 4, 4)
             expected_y_covar = posterior_f.covariance_matrix + noise_covar
             self.assertTrue(
@@ -337,7 +340,7 @@ class TestMultiTaskGP(BotorchTestCase):
             data_covar_module, task_covar_module = model.covar_module.kernels
             self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 1)
-            self.assertIsInstance(model.likelihood, GaussianLikelihood)
+            self.assertIsInstance(model.likelihood, HadamardGaussianLikelihood)
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertIsInstance(data_covar_module, RBFKernel)
             self.assertIsInstance(data_covar_module.lengthscale_prior, LogNormalPrior)
