@@ -56,8 +56,8 @@ Optimization simply use Ax.
 **Installation Requirements**
 - Python >= 3.10
 - PyTorch >= 2.0.1
-- gpytorch == 1.14
-- linear_operator == 0.6
+- gpytorch >= 1.14
+- linear_operator >= 0.6
 - pyro-ppl >= 1.8.4
 - scipy
 - multiple-dispatch
@@ -86,13 +86,11 @@ conda install botorch -c gpytorch -c conda-forge
 
 If you would like to try our bleeding edge features (and don't mind potentially
 running into the occasional bug here or there), you can install the latest
-development version directly from GitHub. If you want to also install the
-current `gpytorch` and `linear_operator` development versions, you will need
-to ensure that the `ALLOW_LATEST_GPYTORCH_LINOP` environment variable is set:
+development version directly from GitHub. You may also want to install the
+current `gpytorch` and `linear_operator` development versions:
 ```bash
 pip install --upgrade git+https://github.com/cornellius-gp/linear_operator.git
 pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
-export ALLOW_LATEST_GPYTORCH_LINOP=true
 pip install --upgrade git+https://github.com/pytorch/botorch.git
 ```
 
@@ -117,7 +115,6 @@ pip install -e .
 ```bash
 git clone https://github.com/pytorch/botorch.git
 cd botorch
-export ALLOW_BOTORCH_LATEST=true
 pip install -e ".[dev, tutorials]"
 ```
 
