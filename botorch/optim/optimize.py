@@ -1296,7 +1296,7 @@ def optimize_acqf_discrete(
     """
     if isinstance(acq_function, OneShotAcquisitionFunction):
         raise UnsupportedError(
-            "Discrete optimization is not supported forone-shot acquisition functions."
+            "Discrete optimization is not supported for one-shot acquisition functions."
         )
     if X_avoid is not None and unique:
         choices = _filter_invalid(X=choices, X_avoid=X_avoid)
