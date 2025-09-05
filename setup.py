@@ -15,7 +15,8 @@ REQUIRED_MINOR = 10
 
 # Requirements for testing, formatting, and tutorials
 PYMOO_REQUIRES = ["pymoo"]
-TEST_REQUIRES = ["pytest", "pytest-cov", "requests"] + PYMOO_REQUIRES
+PFN_REQUIRES = ["pfns4bo", "pfns"]
+TEST_REQUIRES = ["pytest", "pytest-cov", "requests"] + PYMOO_REQUIRES + ["pfns"]
 FMT_REQUIRES = ["flake8", "ufmt", "flake8-docstrings"]
 TUTORIALS_REQUIRES = [
     "cma",
@@ -110,5 +111,6 @@ setup(
         "test": TEST_REQUIRES,
         "tutorials": TUTORIALS_REQUIRES,
         "pymoo": PYMOO_REQUIRES,
+        "pfns": PFN_REQUIRES,
     },
 )
