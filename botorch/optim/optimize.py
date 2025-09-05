@@ -1122,12 +1122,12 @@ def optimize_acqf_mixed(
     # Check for existence of inter-point constraints
     # Code adapted from _validate_sequential_inputs
     if inequality_constraints is not None:
-        for i, constraint in enumerate(inequality_constraints):
-            if len(constraint[0].shape) > 1:
+        for i, (indices, _, _) in enumerate(inequality_constraints):
+            if indices.ndim > 1:
                 raise UnsupportedError(const_err_message.format(i, "linear inequality"))
     if equality_constraints is not None:
-        for i, constraint in enumerate(equality_constraints):
-            if len(constraint[0].shape) > 1:
+        for i, (indices, _, _) in enumerate(equality_constraints):
+            if indices.ndim > 1:
                 raise UnsupportedError(const_err_message.format(i, "linear equality"))
     if nonlinear_inequality_constraints is not None:
         for i, (_, intra_point) in enumerate(nonlinear_inequality_constraints):
