@@ -860,8 +860,6 @@ def optimize_acqf_mixed_alternating(
     discrete/categorical local search and continuous optimization via (L-BFGS)
     is performed for a fixed number of iterations.
 
-    NOTE: This method assumes that all categorical variables are
-    integer valued.
     The discrete dimensions that have more than
     `options.get("max_discrete_values", MAX_DISCRETE_VALUES)` values will
     be optimized using continuous relaxation.
