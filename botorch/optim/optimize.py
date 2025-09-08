@@ -1081,6 +1081,10 @@ def optimize_acqf_mixed(
             inequality constraints. The first element in the tuple is a callable
             representing a constraint of the form `callable(x) >= 0`. The `callable()`
             takes in an one-dimensional tensor of shape `d` and returns a scalar.
+            The second element is a boolean, indicating if it is an
+            intra-point or inter-point constraint (`True` for intra-point. `False` for
+            inter-point). Since inter-point constraints are not supported by this
+            method, this has to be `True` and raises an error if being `False`.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
