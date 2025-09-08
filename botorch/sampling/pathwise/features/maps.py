@@ -118,18 +118,45 @@ class DirectSumFeatureMap(FeatureMap, ModuleListMixin[FeatureMap]):
         self.output_transform = output_transform
 
     def forward(self, x: Tensor, **kwargs: Any) -> Tensor:
-        blocks = []
-        shape = self.raw_output_shape
-        ndim = len(shape)
+        # Collect the (possibly broadcasted) feature tensors in `blocks`.
+        # ``self.raw_output_shape`` encodes the *final* shape of the concatenated
+        # feature map.  For each individual ``feature_map`` we therefore need to
+        # (1) obtain its dense representation, (2) broadcast it so that its
+        # trailing dimensions match ``self.raw_output_shape`` and (3) rescale it
+        # if we replicate the same tensor multiple times (to keep ‖ϕ‖ roughly
+        # invariant).
+
+        blocks: list[Tensor] = []
+
+        shape = self.raw_output_shape              # target output shape
+        ndim = len(shape)                          # #feature dimensions incl. batch
+
         for feature_map in self:
+            # 1. Evaluate (dense) features for the current sub-map.
             block = feature_map(x, **kwargs).to_dense()
+
             block_ndim = len(feature_map.output_shape)
+
+            # 2. If this map has fewer *feature* dimensions than the direct sum
+            #    (e.g. vector-valued sub-map in a matrix-valued direct-sum) we have
+            #    to *tile* it along the missing leading feature dimensions so that
+            #    shapes line up for concatenation.
             if block_ndim < ndim:
+                # ``tile_shape`` tells us how many copies we need along every
+                # missing feature dimension (could be >1 for e.g. Kronecker sums).
                 tile_shape = shape[-ndim:-block_ndim]
+
+                # Rescale by 1/√k when we replicate the same block *k* times to
+                # avoid artificially inflating its norm (motivated by the fact
+                # that direct sums of orthogonal features preserve inner-products
+                # only up to such a scaling).
                 num_copies = prod(tile_shape)
                 if num_copies > 1:
-                    block = block * (num_copies**-0.5)
+                    block = block * (num_copies ** -0.5)
 
+                # ``multi_index`` inserts ``None`` (i.e. `None` in slice syntax)
+                # so that broadcasting expands the tensor along the new axes
+                # without additional memory allocations.
                 multi_index = (
                     ...,
                     *repeat(None, ndim - block_ndim),
@@ -138,12 +165,17 @@ class DirectSumFeatureMap(FeatureMap, ModuleListMixin[FeatureMap]):
                 block = block[multi_index].expand(
                     *block.shape[:-block_ndim], *tile_shape, *block.shape[-block_ndim:]
                 )
+
+            # 3. Append the (now correctly shaped) block to be concatenated later.
             blocks.append(block)
 
+        # Concatenate along the *last* axis (feature dimension).
         return torch.concat(blocks, dim=-1)
 
     @property
     def raw_output_shape(self) -> Size:
+    # If the container is empty (e.g. DirectSumFeatureMap([])), treat the
+    # output as 0-D until feature maps are added.
         if not self:
             return Size([])
 
@@ -204,13 +236,23 @@ class SparseDirectSumFeatureMap(DirectSumFeatureMap):
             block = feature_map(x, **kwargs)
             block_ndim = len(feature_map.output_shape)
             if block_ndim == ndim:
+                # Case 1: this sub-map already has the *max* feature-rank we’re
+                # going to emit.  We simply make sure it is stored sparsely:
+                #   – Convert `LinearOperator` → dense so that `.to_sparse()`
+                #     is available.
+                #   – If it is still dense, call `.to_sparse()`; otherwise keep
+                #     the sparse representation it already has.
                 block = block.to_dense() if isinstance(block, LinearOperator) else block
                 block = block if block.is_sparse else block.to_sparse()
             else:
+                # Case 2: lower-rank feature-map. Bring it up to `ndim` by
+                # slicing with `None` (adds singleton axes) so broadcasting will
+                # later expand it. We stay dense here because we’ll stuff the
+                # result into a block-diag sparse matrix at the very end.
                 multi_index = (
                     ...,
-                    *repeat(None, ndim - block_ndim),
-                    *repeat(slice(None), block_ndim),
+                    *repeat(None, ndim - block_ndim),  # adds missing dims
+                    *repeat(slice(None), block_ndim),  # keep existing dims
                 )
                 block = block.to_dense()[multi_index]
             blocks.append(block)

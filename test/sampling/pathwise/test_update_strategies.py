@@ -311,8 +311,9 @@ class TestGaussianUpdates(BotorchTestCase):
         simple_kernel = RBFKernel(ard_num_dims=3)
         model2.covar_module = simple_kernel  # Non-ProductKernel
 
-        update_paths2 = gaussian_update(model=model2, sample_values=sample_values)
-        self.assertIsNotNone(update_paths2)
+        import pytest
+        with pytest.raises(RuntimeError):
+            gaussian_update(model=model2, sample_values=sample_values)
 
         # Test kernel without active_dims to trigger active_dims assignment
         model3 = MultiTaskGP(train_X=train_X, train_Y=train_Y, task_feature=2)

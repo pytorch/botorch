@@ -149,55 +149,35 @@ def _draw_kernel_feature_paths_MultiTaskGP(
         else model._task_feature
     )
 
-    # Extract kernels from the product kernel structure
-    # model.covar_module is a ProductKernel
-    # containing data_covar_module * task_covar_module
+    # MultiTaskGP *always* wraps data_covar_module and task_covar_module in a
+    # ProductKernel (see MTGP implementation).  If that invariant is violated we
+    # raise an error rather than silently guessing how to proceed.
+
     from gpytorch.kernels import ProductKernel
 
-    if isinstance(model.covar_module, ProductKernel):
-        # Get the individual kernels from the product kernel
-        kernels = model.covar_module.kernels
+    if not isinstance(model.covar_module, ProductKernel):
+        raise RuntimeError(
+            "Expected `model.covar_module` to be a ProductKernel (data × task), "
+            "but found {type(model.covar_module).__name__}. If you are wrapping "
+            "kernels manually please combine them with gpytorch.kernels.ProductKernel "
+            "so the path-wise utilities can reason about the structure."
+        )
 
-        # Find data and task kernels based on their active_dims
-        data_kernel = None
-        task_kernel = None
+    # The product already represents data_kernel * task_kernel; we can pass it
+    # straight through to downstream routines.
+    combined_kernel = model.covar_module
 
-        for kernel in kernels:
-            if hasattr(kernel, "active_dims") and kernel.active_dims is not None:
-                if task_index in kernel.active_dims:
-                    task_kernel = deepcopy(kernel)
-                else:
-                    data_kernel = deepcopy(kernel)
-            else:
-                # If no active_dims, it's likely the data kernel
-                data_kernel = deepcopy(kernel)
-                data_kernel.active_dims = torch.LongTensor(
-                    [
-                        index
-                        for index in range(train_X.shape[-1])
-                        if index != task_index
-                    ],
-                    device=data_kernel.device,
-                )
-
-        # If we couldn't find the task kernel, create it based on the structure
-        if task_kernel is None:
-            from gpytorch.kernels import IndexKernel
-
-            task_kernel = IndexKernel(
-                num_tasks=model.num_tasks,
-                rank=model._rank,
-                active_dims=[task_index],
-            ).to(device=model.covar_module.device, dtype=model.covar_module.dtype)
-
-        # Set task kernel active dims correctly
-        task_kernel.active_dims = torch.tensor([task_index], device=task_kernel.device)
-
-        # Use the existing product kernel structure
-        combined_kernel = data_kernel * task_kernel
-    else:
-        # Fallback to using the original covar_module directly
-        combined_kernel = model.covar_module
+    # Ensure the data kernel inside the product has `active_dims` set; this is
+    # required downstream by `get_kernel_num_inputs`.  MTGPs created via the
+    # public constructor already do this, but if a user manually overwrote the
+    # `covar_module` we may need to patch it up here.
+    kernels = combined_kernel.kernels  # type: ignore[attr-defined]
+    for k in kernels:
+        if getattr(k, "active_dims", None) is None:
+            k.active_dims = torch.LongTensor(
+                [idx for idx in range(num_ambient_inputs) if idx != task_index],
+                device=k.device,
+            )
 
     return _draw_kernel_feature_paths_fallback(
         mean_module=model.mean_module,

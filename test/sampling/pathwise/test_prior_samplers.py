@@ -234,8 +234,9 @@ class TestDrawKernelFeaturePaths(BotorchTestCase):
         simple_kernel = RBFKernel(ard_num_dims=3)
         model2.covar_module = simple_kernel  # Non-ProductKernel
 
-        paths2 = draw_kernel_feature_paths(model2, sample_shape=Size([1]))
-        self.assertIsNotNone(paths2)
+        import pytest
+        with pytest.raises(RuntimeError):
+            draw_kernel_feature_paths(model2, sample_shape=Size([1]))
 
         # Test kernel without active_dims to trigger active_dims assignment
         model3 = MultiTaskGP(train_X=train_X, train_Y=train_Y, task_feature=2)

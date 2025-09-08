@@ -164,62 +164,34 @@ def _draw_kernel_feature_paths_MultiTaskGP(
     if noise_covariance is None:
         noise_covariance = likelihood.noise_covar(shape=points.shape[:-1])
 
-    # Prepare product kernel
+    # Determine total input dimensionality and identify the task-feature index.
     num_inputs = points.shape[-1]
-    # TODO: Changed `MultiTaskGP` to normalize the task feature in its constructor.
     task_index = (
-        num_inputs + model._task_feature
-        if model._task_feature < 0
-        else model._task_feature
+        num_inputs + model._task_feature if model._task_feature < 0 else model._task_feature
     )
 
-    # Extract kernels from the product kernel structure
-    # model.covar_module is a ProductKernel
-    # containing data_covar_module * task_covar_module
+    # MTGP should always provide a ProductKernel = data × task. Enforce that
+    # contract and surface actionable feedback if it is violated.
+
     from gpytorch.kernels import ProductKernel
 
-    if isinstance(model.covar_module, ProductKernel):
-        # Get the individual kernels from the product kernel
-        kernels = model.covar_module.kernels
-
-        # Find data and task kernels based on their active_dims
-        data_kernel = None
-        task_kernel = None
-
-        for kernel in kernels:
-            if hasattr(kernel, "active_dims") and kernel.active_dims is not None:
-                if task_index in kernel.active_dims:
-                    task_kernel = deepcopy(kernel)
-                else:
-                    data_kernel = deepcopy(kernel)
-            else:
-                # If no active_dims, it's likely the data kernel
-                data_kernel = deepcopy(kernel)
-                data_kernel.active_dims = torch.LongTensor(
-                    [index for index in range(num_inputs) if index != task_index],
-                    device=data_kernel.device,
-                )
-
-        # If we couldn't find the task kernel, create it based on the structure
-        if task_kernel is None:
-            from gpytorch.kernels import IndexKernel
-
-            task_kernel = IndexKernel(
-                num_tasks=model.num_tasks,
-                rank=model._rank,
-                active_dims=[task_index],
-            ).to(device=model.covar_module.device, dtype=model.covar_module.dtype)
-
-        # Set task kernel active dims correctly
-        task_kernel.active_dims = torch.LongTensor(
-            [task_index], device=task_kernel.device
+    if not isinstance(model.covar_module, ProductKernel):
+        raise RuntimeError(
+            "MultiTaskGP `covar_module` is expected to be a ProductKernel (data × task) "
+            f"but found {type(model.covar_module).__name__}. If you build a custom "
+            "MTGP variant please wrap the two kernels with gpytorch.kernels.ProductKernel."
         )
 
-        # Use the existing product kernel structure
-        combined_kernel = data_kernel * task_kernel
-    else:
-        # Fallback to using the original covar_module directly
-        combined_kernel = model.covar_module
+    combined_kernel = model.covar_module
+
+    # Ensure the data part of the product kernel has `active_dims` set; required
+    # by downstream helpers when calculating input dimensionality.
+    kernels = combined_kernel.kernels  # type: ignore[attr-defined]
+    for k in kernels:
+        if getattr(k, "active_dims", None) is None:
+            k.active_dims = torch.LongTensor(
+                [idx for idx in range(num_inputs) if idx != task_index], device=k.device
+            )
 
     # Return exact update using product kernel
     return _gaussian_update_exact(
