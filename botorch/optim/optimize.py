@@ -1055,6 +1055,9 @@ def optimize_acqf_mixed(
     For q > 1 this function always performs sequential greedy optimization (with
     proper conditioning on generated candidates).
 
+    NOTE: This method does not support the kind of "inter-point constraints" that
+    are supported by `optimize_acqf()`.
+
     Args:
         acq_function: An AcquisitionFunction
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`
@@ -1076,19 +1079,12 @@ def optimize_acqf_mixed(
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
         nonlinear_inequality_constraints: A list of tuples representing the nonlinear
             inequality constraints. The first element in the tuple is a callable
-            representing a constraint of the form `callable(x) >= 0`. In case of an
-            intra-point constraint, `callable()`takes in an one-dimensional tensor of
-            shape `d` and returns a scalar. In case of an inter-point constraint,
-            `callable()` takes a two dimensional tensor of shape `q x d` and again
-            returns a scalar. The second element is a boolean, indicating if it is an
+            representing a constraint of the form `callable(x) >= 0`. The `callable()`
+            takes in an one-dimensional tensor of shape `d` and returns a scalar.
+            The second element is a boolean, indicating if it is an
             intra-point or inter-point constraint (`True` for intra-point. `False` for
-            inter-point). For more information on intra-point vs inter-point
-            constraints, see the docstring of the `inequality_constraints` argument to
-            `optimize_acqf()`. The constraints will later be passed to the scipy
-            solver. You need to pass in `batch_initial_conditions` in this case.
-            Using non-linear inequality constraints also requires that `batch_limit`
-            is set to 1, which will be done automatically if not specified in
-            `options`.
+            inter-point). Since inter-point constraints are not supported by this
+            method, this has to be `True` and raises an error if being `False`.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
@@ -1123,6 +1119,27 @@ def optimize_acqf_mixed(
         - a tensor of associated acquisition values of dim `num_restarts`
             if `return_best_only=False` else a scalar acquisition value.
     """
+    const_err_message = (
+        "Inter-point constraints are not supported for sequential optimization. "
+        "But the {}th {} constraint is defined as inter-point."
+    )
+    # Check for existence of inter-point constraints
+    # Code adapted from _validate_sequential_inputs
+    if inequality_constraints is not None:
+        for i, (indices, _, _) in enumerate(inequality_constraints):
+            if indices.ndim > 1:
+                raise UnsupportedError(const_err_message.format(i, "linear inequality"))
+    if equality_constraints is not None:
+        for i, (indices, _, _) in enumerate(equality_constraints):
+            if indices.ndim > 1:
+                raise UnsupportedError(const_err_message.format(i, "linear equality"))
+    if nonlinear_inequality_constraints is not None:
+        for i, (_, intra_point) in enumerate(nonlinear_inequality_constraints):
+            if not intra_point:
+                raise UnsupportedError(
+                    const_err_message.format(i, "non-linear inequality")
+                )
+
     if not return_best_only and q > 1:
         raise NotImplementedError("`return_best_only=False` is only supported for q=1.")
 
@@ -1283,8 +1300,7 @@ def optimize_acqf_discrete(
     """
     if isinstance(acq_function, OneShotAcquisitionFunction):
         raise UnsupportedError(
-            "Discrete optimization is not supported for"
-            "one-shot acquisition functions."
+            "Discrete optimization is not supported for one-shot acquisition functions."
         )
     if X_avoid is not None and unique:
         choices = _filter_invalid(X=choices, X_avoid=X_avoid)

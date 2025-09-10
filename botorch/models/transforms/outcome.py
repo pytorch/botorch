@@ -511,13 +511,11 @@ class StratifiedStandardize(Standardize):
 
     def __init__(
         self,
+        task_values: Tensor,
         stratification_idx: int,
-        observed_task_values: Tensor,
-        all_task_values: Tensor,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         min_stdv: float = 1e-8,
-        dtype: torch.dtype = torch.double,
-        default_task_value: int | None = None,
+        # dtype: torch.dtype = torch.double,
     ) -> None:
         r"""Standardize outcomes (zero mean, unit variance) along stratification dim.
 
@@ -530,21 +528,13 @@ class StratifiedStandardize(Standardize):
             batch_shape: The batch_shape of the training targets.
             min_stddv: The minimum standard deviation for which to perform
                 standardization (if lower, only de-mean the data).
-            default_task_value: The default task value that unexpected tasks are
-                mapped to. This is used in `get_task_value_remapping`.
-
         """
         OutcomeTransform.__init__(self)
         self._stratification_idx = stratification_idx
-        observed_task_values = observed_task_values.unique(sorted=True)
-        self.strata_mapping = get_task_value_remapping(
-            observed_task_values=observed_task_values,
-            all_task_values=all_task_values.unique(sorted=True),
-            dtype=dtype,
-            default_task_value=default_task_value,
-        )
+        task_values = task_values.unique(sorted=True)
+        self.strata_mapping = get_task_value_remapping(task_values, dtype=torch.double)
         if self.strata_mapping is None:
-            self.strata_mapping = observed_task_values
+            self.strata_mapping = task_values
         n_strata = self.strata_mapping.shape[0]
         self._min_stdv = min_stdv
         self.register_buffer("means", torch.zeros(*batch_shape, n_strata, 1))

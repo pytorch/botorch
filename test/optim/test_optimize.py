@@ -1649,15 +1649,18 @@ class TestOptimizeAcqfList(BotorchTestCase):
                 mock_optimize_acqf_mixed.side_effect = side_effect
                 orig_candidates = candidate_rvs[0].clone()
                 # Wrap the set_X_pending method for checking that call arguments
-                with mock.patch.object(
-                    MockAcquisitionFunction,
-                    "set_X_pending",
-                    wraps=mock_acq_function_1.set_X_pending,
-                ) as mock_set_X_pending_1, mock.patch.object(
-                    MockAcquisitionFunction,
-                    "set_X_pending",
-                    wraps=mock_acq_function_2.set_X_pending,
-                ) as mock_set_X_pending_2:
+                with (
+                    mock.patch.object(
+                        MockAcquisitionFunction,
+                        "set_X_pending",
+                        wraps=mock_acq_function_1.set_X_pending,
+                    ) as mock_set_X_pending_1,
+                    mock.patch.object(
+                        MockAcquisitionFunction,
+                        "set_X_pending",
+                        wraps=mock_acq_function_2.set_X_pending,
+                    ) as mock_set_X_pending_2,
+                ):
                     candidates, _ = optimize_acqf_list(
                         acq_function_list=mock_acq_function_list[:num_acqf],
                         bounds=bounds,
@@ -1932,6 +1935,77 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
                 num_restarts=2,
                 raw_samples=10,
+            )
+
+    def test_optimize_acqf_mixed_inter_point_inequality_constraints(self):
+        mock_acq_function = MockAcquisitionFunction()
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            expected_regex="Inter-point constraints are not supported for sequential "
+            "optimization. But the 0th linear inequality constraint is defined "
+            "as inter-point.",
+        ):
+            optimize_acqf_mixed(
+                acq_function=mock_acq_function,
+                q=1,
+                fixed_features_list=[{0: 0.0}],
+                bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
+                num_restarts=2,
+                raw_samples=10,
+                inequality_constraints=[
+                    (  # Inter-point constraint: X[0, 0] - X[1, 0] >= 0
+                        torch.tensor([[0, 0], [1, 0]], dtype=torch.long),
+                        torch.tensor([1.0, -1.0]),
+                        0.0,
+                    )
+                ],
+            )
+
+    def test_optimize_acqf_mixed_inter_point_equality_constraints(self):
+        mock_acq_function = MockAcquisitionFunction()
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            expected_regex="Inter-point constraints are not supported for sequential "
+            "optimization. But the 0th linear equality constraint is defined "
+            "as inter-point.",
+        ):
+            optimize_acqf_mixed(
+                acq_function=mock_acq_function,
+                q=1,
+                fixed_features_list=[{0: 0.0}],
+                bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
+                num_restarts=2,
+                raw_samples=10,
+                equality_constraints=[
+                    (  # Inter-point constraint: X[0, 0] - X[1, 0] == 0
+                        torch.tensor([[0, 0], [1, 0]], dtype=torch.long),
+                        torch.tensor([1.0, -1.0]),
+                        0.0,
+                    )
+                ],
+            )
+
+    def test_optimize_acqf_mixed_inter_point_nonlinear_constraints(self):
+        mock_acq_function = MockAcquisitionFunction()
+        with self.assertRaisesRegex(
+            UnsupportedError,
+            expected_regex="Inter-point constraints are not supported for sequential "
+            "optimization. But the 0th non-linear inequality constraint is defined "
+            "as inter-point.",
+        ):
+            optimize_acqf_mixed(
+                acq_function=mock_acq_function,
+                q=1,
+                fixed_features_list=[{0: 0.0}],
+                bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
+                num_restarts=2,
+                raw_samples=10,
+                nonlinear_inequality_constraints=[
+                    (  # Inter-point constraint: sum of all points >= 0
+                        lambda X: X.sum(dim=(-1, -2)),
+                        False,  # False indicates inter-point constraint
+                    )
+                ],
             )
 
     def test_optimize_acqf_mixed_return_best_only_q2(self):
