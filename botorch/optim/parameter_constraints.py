@@ -18,14 +18,15 @@ import numpy as np
 import numpy.typing as npt
 import torch
 from botorch.exceptions.errors import CandidateGenerationError, UnsupportedError
-from scipy.optimize import Bounds
+from botorch.optim.utils import columnwise_clamp
+from scipy.optimize import Bounds, minimize
 from torch import Tensor
 
 
 ScipyConstraintDict = dict[
     str, Union[str, Callable[[np.ndarray], float], Callable[[np.ndarray], np.ndarray]]
 ]
-CONST_TOL = 1e-6
+CONST_TOL = 1e-8
 
 
 def make_scipy_bounds(
@@ -691,3 +692,69 @@ def evaluate_feasibility(
                 tolerance=tolerance,
             )
     return is_feasible
+
+
+def project_to_feasible_space_via_slsqp(
+    X: Tensor,
+    bounds: Tensor,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+) -> Tensor:
+    """Project X onto the feasible space by solving a quadratic program.
+
+    This uses SLSQP with gradients to solve the quadratic program.
+
+    Args:
+        X: A `(batch_shape x) n x d`-dim tensor of inptus.
+        bounds: A `2 x d`-dim tensor of lower and upper bounds.
+        inequality_constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
+            `coefficients` should be torch tensors. See the docstring of
+            `make_scipy_linear_constraints` for an example. Only intra-point
+            constraints are supported and `indices` should be a 1-d tensor.
+        equality_constraints: A list of tuples (indices, coefficients, rhs).
+
+    Returns:
+        A `(batch_shape x) n x d`-dim tensor of  projected values.
+    """
+    if inequality_constraints is None and equality_constraints is None:
+        return X
+    bounds_scipy = make_scipy_bounds(
+        X=X, lower_bounds=bounds[0], upper_bounds=bounds[1]
+    )
+    constraints = make_scipy_linear_constraints(
+        shapeX=X.shape,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+    )
+    # Define squared distance objective
+    X_np = X.flatten().detach().cpu().numpy()
+
+    def objective(x: np.ndarray):
+        return 0.5 * np.sum((x - X_np) ** 2)
+
+    def grad_objective(x: np.ndarray):
+        return x - X_np
+
+    x0 = (
+        columnwise_clamp(X=X, lower=bounds[0], upper=bounds[1], raise_on_violation=True)
+        .detach()
+        .cpu()
+        .numpy()
+        .flatten()
+    )
+    result = minimize(
+        fun=objective,
+        x0=x0,
+        method="SLSQP",
+        jac=grad_objective,
+        bounds=bounds_scipy,
+        constraints=constraints,
+        tol=CONST_TOL,
+    )
+
+    if not result.success:
+        raise RuntimeError(f"Optimization failed: {result.message}")
+
+    return torch.from_numpy(result.x).to(X).view(X.shape)
