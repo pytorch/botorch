@@ -802,39 +802,6 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
     "long-format" multi-task GP in the style of `MultiTaskGP`.
     """
 
-    def _map_tasks(self, task_values: Tensor) -> Tensor:
-        """Map raw task values to the task indices used by the model.
-
-        Args:
-            task_values: A tensor of task values.
-
-        Returns:
-            A tensor of task indices with the same shape as the input
-                tensor.
-        """
-        if self._task_mapper is None:
-            if not (
-                torch.all(0 <= task_values) and torch.all(task_values < self.num_tasks)
-            ):
-                raise ValueError(
-                    "Expected all task features in `X` to be between 0 and "
-                    f"self.num_tasks - 1. Got {task_values}."
-                )
-        else:
-            task_values = task_values.long()
-
-            unexpected_task_values = set(task_values.unique().tolist()).difference(
-                self._expected_task_values
-            )
-            if len(unexpected_task_values) > 0:
-                raise ValueError(
-                    "Received invalid raw task values. Expected raw value to be in"
-                    f" {self._expected_task_values}, but got unexpected task values:"
-                    f" {unexpected_task_values}."
-                )
-            task_values = self._task_mapper[task_values]
-        return task_values
-
     def _apply_noise(
         self,
         X: Tensor,
