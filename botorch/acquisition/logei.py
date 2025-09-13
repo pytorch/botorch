@@ -282,6 +282,7 @@ class qLogNoisyExpectedImprovement(
         tau_relu: float = TAU_RELU,
         marginalize_dim: int | None = None,
         incremental: bool = True,
+        infeasible_obj: Tensor | float | None = None,
     ) -> None:
         r"""q-Noisy Expected Improvement.
 
@@ -324,6 +325,9 @@ class qLogNoisyExpectedImprovement(
             incremental: Whether to compute incremental EI over the pending points
                 or compute EI of the joint batch improvement (including pending
                 points).
+            infeasible_obj: A Tensor to be used calculating the best objective when
+                no feasible points exist. If None, automatically calculate lower
+                bound on objective values from the GP posterior.
 
         TODO: similar to qNEHVI, when we are using sequential greedy candidate
         selection, we could incorporate pending points X_baseline and compute
@@ -333,6 +337,7 @@ class qLogNoisyExpectedImprovement(
         # TODO: separate out baseline variables initialization and other functions
         # in qNEI to avoid duplication of both code and work at runtime.
         self.incremental = incremental
+        self.infeasible_obj = infeasible_obj
 
         super().__init__(
             model=model,
@@ -570,6 +575,7 @@ class qLogNoisyExpectedImprovement(
             objective=self.objective,
             posterior_transform=self.posterior_transform,
             X_baseline=self.X_baseline,
+            infeasible_obj=self.infeasible_obj,
         )
 
 
