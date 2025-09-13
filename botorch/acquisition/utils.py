@@ -29,7 +29,10 @@ from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 from botorch.sampling.get_sampler import get_sampler
 from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
-from botorch.utils.objective import compute_feasibility_indicator
+from botorch.utils.objective import (
+    compute_feasibility_indicator,
+    compute_smoothed_feasibility_indicator,
+)
 from botorch.utils.sampling import optimize_posterior_samples
 from botorch.utils.transforms import is_ensemble, normalize_indices
 from gpytorch.models import GP
@@ -385,7 +388,24 @@ def prune_inferior_points(
         sampler=sampler,
         marginalize_dim=marginalize_dim,
     )
-    if infeas.any():
+    if infeas.all():
+        # if no points are feasible, keep the point closest to being feasible
+        with torch.no_grad():
+            posterior = model.posterior(X=X, posterior_transform=posterior_transform)
+        if sampler is None:
+            sampler = get_sampler(
+                posterior=posterior, sample_shape=torch.Size([num_samples])
+            )
+        samples = sampler(posterior)
+        # use the probability of feasibility as the objective for computing best points
+        obj_vals = compute_smoothed_feasibility_indicator(
+            constraints=constraints,
+            samples=samples,
+            eta=1e-3,
+            log=True,
+        )
+
+    elif infeas.any():
         # set infeasible points to worse than worst objective across all samples
         # Use clone() here to avoid deprecated `index_put_` on an expanded tensor
         obj_vals = obj_vals.clone()
