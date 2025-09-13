@@ -171,8 +171,9 @@ def _estimate_objective_lower_bound(
     posterior_transform: PosteriorTransform | None,
     X: Tensor,
 ) -> Tensor:
-    """Estimates a lower bound on the objective values by evaluating the model at convex
-    combinations of `X`, returning the 6-sigma lower bound of the computed statistics.
+    """Estimates a lower bound on the objective values by evaluating the at uniformly
+    random points in the bounding box of `X`, returning the 6-sigma lower bound of the
+    computed statistics.
 
     Args:
         model: A fitted model.
@@ -183,19 +184,20 @@ def _estimate_objective_lower_bound(
     Returns:
         A `m`-dimensional Tensor of lower bounds of the objectives.
     """
-    convex_weights = torch.rand(
-        32,
-        X.shape[-2],
-        dtype=X.dtype,
-        device=X.device,
-    )
-    weights_sum = convex_weights.sum(dim=0, keepdim=True)
-    convex_weights = convex_weights / weights_sum
+    # sample
+    # we do not have access to `bounds` here, so we infer the bounding box
+    # from data, expanding by 10% in each direction
+    X_lb = X.min(dim=-2)
+    X_ub = X.max(dim=-2)
+    X_range = X_ub - X_lb
+    X_padding = 0.1 * X_range
+    uniform_samples = torch.rand(32, X.shape[-1], dtype=X.dtype, device=X.device)
+    X_samples = X_lb - X_padding + uniform_samples * (X_range + X_padding)
     # infeasible cost M is such that -M < min_x f(x), thus
     # 0 < min_x f(x) - (-M), so we should take -M as a lower
     # bound on the best feasible objective
     return -get_infeasible_cost(
-        X=convex_weights @ X,
+        X=X_samples,
         model=model,
         objective=objective,
         posterior_transform=posterior_transform,
