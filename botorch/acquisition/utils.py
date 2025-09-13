@@ -184,7 +184,6 @@ def _estimate_objective_lower_bound(
     Returns:
         A `m`-dimensional Tensor of lower bounds of the objectives.
     """
-    # sample
     # we do not have access to `bounds` here, so we infer the bounding box
     # from data, expanding by 10% in each direction
     X_lb = X.min(dim=-2)
@@ -237,8 +236,18 @@ def get_infeasible_cost(
             return Y.squeeze(-1)
 
     posterior = model.posterior(X, posterior_transform=posterior_transform)
-    lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt(), X=X)
-    if lb.ndim < posterior.mean.ndim:
+    # We check both the upper and lower bound of the posterior, since the objective
+    # may be increasing or decreasing. For objectives that are neither (eg. absolute
+    # distance from a target), this should still provide a good bound.
+    lb = torch.stack(
+        [
+            objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt(), X=X),
+            objective(posterior.mean + 6 * posterior.variance.clamp_min(0).sqrt(), X=X),
+        ],
+        dim=0,
+    )
+
+    if lb.ndim - 1 < posterior.mean.ndim:
         lb = lb.unsqueeze(-1)
     # Take outcome-wise min. Looping in to handle batched models.
     while lb.dim() > 1:
