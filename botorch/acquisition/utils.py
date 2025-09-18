@@ -242,10 +242,11 @@ def get_infeasible_cost(
     # We check both the upper and lower bound of the posterior, since the objective
     # may be increasing or decreasing. For objectives that are neither (eg. absolute
     # distance from a target), this should still provide a good bound.
+    six_stdv = 6 * posterior.variance.clamp_min(0).sqrt()
     lb = torch.stack(
         [
-            objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt(), X=X),
-            objective(posterior.mean + 6 * posterior.variance.clamp_min(0).sqrt(), X=X),
+            objective(posterior.mean - six_stdv, X=X),
+            objective(posterior.mean + six_stdv, X=X),
         ],
         dim=0,
     )
