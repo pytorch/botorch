@@ -525,14 +525,18 @@ class StratifiedStandardize(Standardize):
         (including multi-task models that have a single output).
 
         Args:
-            task_values: `t`-dim tensor of task values.
-            stratification_idx: The index of the stratification dimension.
+            stratification_idx: The index of the stratification dimension in the
+                input tensor X.
+            observed_task_values: `t`-dim tensor of task values that were actually
+                observed in the training data.
+            all_task_values: `t`-dim tensor of all possible task values that could
+                appear in the dataset.
             batch_shape: The batch_shape of the training targets.
-            min_stddv: The minimum standard deviation for which to perform
+            min_stdv: The minimum standard deviation for which to perform
                 standardization (if lower, only de-mean the data).
+            dtype: The data type for internal computations.
             default_task_value: The default task value that unexpected tasks are
                 mapped to. This is used in `get_task_value_remapping`.
-
         """
         OutcomeTransform.__init__(self)
         self._stratification_idx = stratification_idx
