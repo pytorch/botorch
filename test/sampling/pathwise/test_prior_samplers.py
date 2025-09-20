@@ -235,6 +235,7 @@ class TestDrawKernelFeaturePaths(BotorchTestCase):
         model2.covar_module = simple_kernel  # Non-ProductKernel
 
         import pytest
+
         with pytest.raises(RuntimeError):
             draw_kernel_feature_paths(model2, sample_shape=Size([1]))
 

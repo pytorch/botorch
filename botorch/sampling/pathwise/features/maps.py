@@ -128,8 +128,8 @@ class DirectSumFeatureMap(FeatureMap, ModuleListMixin[FeatureMap]):
 
         blocks: list[Tensor] = []
 
-        shape = self.raw_output_shape              # target output shape
-        ndim = len(shape)                          # #feature dimensions incl. batch
+        shape = self.raw_output_shape  # target output shape
+        ndim = len(shape)  # #feature dimensions incl. batch
 
         for feature_map in self:
             # 1. Evaluate (dense) features for the current sub-map.
@@ -152,7 +152,7 @@ class DirectSumFeatureMap(FeatureMap, ModuleListMixin[FeatureMap]):
                 # only up to such a scaling).
                 num_copies = prod(tile_shape)
                 if num_copies > 1:
-                    block = block * (num_copies ** -0.5)
+                    block = block * (num_copies**-0.5)
 
                 # ``multi_index`` inserts ``None`` (i.e. `None` in slice syntax)
                 # so that broadcasting expands the tensor along the new axes
@@ -174,8 +174,8 @@ class DirectSumFeatureMap(FeatureMap, ModuleListMixin[FeatureMap]):
 
     @property
     def raw_output_shape(self) -> Size:
-    # If the container is empty (e.g. DirectSumFeatureMap([])), treat the
-    # output as 0-D until feature maps are added.
+        # If the container is empty (e.g. DirectSumFeatureMap([])), treat the
+        # output as 0-D until feature maps are added.
         if not self:
             return Size([])
 

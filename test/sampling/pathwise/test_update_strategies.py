@@ -312,6 +312,7 @@ class TestGaussianUpdates(BotorchTestCase):
         model2.covar_module = simple_kernel  # Non-ProductKernel
 
         import pytest
+
         with pytest.raises(RuntimeError):
             gaussian_update(model=model2, sample_values=sample_values)
 

@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from copy import deepcopy
 from types import NoneType
 from typing import Any
 
@@ -167,7 +166,9 @@ def _draw_kernel_feature_paths_MultiTaskGP(
     # Determine total input dimensionality and identify the task-feature index.
     num_inputs = points.shape[-1]
     task_index = (
-        num_inputs + model._task_feature if model._task_feature < 0 else model._task_feature
+        num_inputs + model._task_feature
+        if model._task_feature < 0
+        else model._task_feature
     )
 
     # MTGP should always provide a ProductKernel = data × task. Enforce that
@@ -177,9 +178,11 @@ def _draw_kernel_feature_paths_MultiTaskGP(
 
     if not isinstance(model.covar_module, ProductKernel):
         raise RuntimeError(
-            "MultiTaskGP `covar_module` is expected to be a ProductKernel (data × task) "
+            "MultiTaskGP `covar_module` is expected to be a ProductKernel "
+            "(data × task) "
             f"but found {type(model.covar_module).__name__}. If you build a custom "
-            "MTGP variant please wrap the two kernels with gpytorch.kernels.ProductKernel."
+            "MTGP variant please wrap the two kernels with "
+            "gpytorch.kernels.ProductKernel."
         )
 
     combined_kernel = model.covar_module
