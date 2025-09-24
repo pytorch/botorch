@@ -22,6 +22,7 @@ from botorch.optim.optimize import (
     _validate_sequential_inputs,
     OptimizeAcqfInputs,
 )
+from botorch.optim.parameter_constraints import evaluate_feasibility
 from botorch.optim.utils.acquisition_utils import fix_features, get_X_baseline
 from botorch.utils.sampling import (
     draw_sobol_samples,
@@ -108,7 +109,9 @@ def _setup_continuous_relaxation(
 
 
 def _filter_infeasible(
-    X: Tensor, inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
+    X: Tensor,
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None,
 ) -> Tensor:
     r"""Filters infeasible points from a set of points.
 
@@ -123,15 +126,23 @@ def _filter_infeasible(
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
             `coefficients` should be torch tensors. See the docstring of
             `make_scipy_linear_constraints` for an example.
+        equality_constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an equality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) == rhs`. `indices` and
+            `coefficients` should be torch tensors. Example:
+            `[(torch.tensor([1, 3]), torch.tensor([1.0, 0.5]), -0.1)]`
 
     Returns:
         The tensor `X` with infeasible points removed.
     """
-    if inequality_constraints is None:
-        return X
-    is_feasible = torch.ones(X.shape[:-1], device=X.device, dtype=torch.bool)
-    for idx, coef, rhs in inequality_constraints:
-        is_feasible &= (X[..., idx] * coef).sum(dim=-1) >= rhs
+    # X is reshaped to [n, 1, d] in order to be able to apply
+    # `evaluate_feasibility` which operates on the batch level
+    is_feasible = evaluate_feasibility(
+        X=X.unsqueeze(-2),
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+        nonlinear_inequality_constraints=None,
+    )
     return X[is_feasible]
 
 
@@ -385,8 +396,10 @@ def sample_feasible_points(
     all_points = torch.empty(
         0, bounds.shape[-1], device=bounds.device, dtype=bounds.dtype
     )
-    constraints = opt_inputs.inequality_constraints
-    if constraints is None:
+    if (
+        opt_inputs.inequality_constraints is None
+        and opt_inputs.equality_constraints is None
+    ):
         # Generate base points using Sobol.
         sobol_engine = SobolEngine(dimension=bounds.shape[-1], scramble=True)
 
@@ -398,9 +411,22 @@ def sample_feasible_points(
         # Generate base points using polytope sampler.
         # Since we may generate many times, we initialize the sampler with burn-in
         # to reduce the start-up cost for subsequent calls.
-        A, b = sparse_to_dense_constraints(d=bounds.shape[-1], constraints=constraints)
+        if opt_inputs.inequality_constraints is not None:
+            A, b = sparse_to_dense_constraints(
+                d=bounds.shape[-1], constraints=opt_inputs.inequality_constraints
+            )
+            ineqs = (-A, -b)
+        else:
+            ineqs = None
+        if opt_inputs.equality_constraints is not None:
+            A_eq, b_eq = sparse_to_dense_constraints(
+                d=bounds.shape[-1], constraints=opt_inputs.equality_constraints
+            )
+            eqs = (A_eq, b_eq)
+        else:
+            eqs = None
         polytope_sampler = HitAndRunPolytopeSampler(
-            bounds=bounds, inequality_constraints=(-A, -b)
+            bounds=bounds, inequality_constraints=ineqs, equality_constraints=eqs
         )
 
         def generator(n: int) -> Tensor:
@@ -423,7 +449,9 @@ def sample_feasible_points(
         )
         # Filter out infeasible points.
         feasible_points = _filter_infeasible(
-            X=base_points, inequality_constraints=constraints
+            X=base_points,
+            inequality_constraints=opt_inputs.inequality_constraints,
+            equality_constraints=opt_inputs.equality_constraints,
         )
         all_points = torch.cat([all_points, feasible_points], dim=0)
 
@@ -586,13 +614,16 @@ def generate_starting_points(
 
     # For each discrete dimension, map to the nearest allowed value
     x_init_candts = round_discrete_dims(X=x_init_candts, discrete_dims=discrete_dims)
+    x_init_candts = round_discrete_dims(X=x_init_candts, discrete_dims=cat_dims)
     x_init_candts = fix_features(
         X=x_init_candts,
         fixed_features=opt_inputs.fixed_features,
         replace_current_value=True,
     )
     x_init_candts = _filter_infeasible(
-        X=x_init_candts, inequality_constraints=opt_inputs.inequality_constraints
+        X=x_init_candts,
+        inequality_constraints=opt_inputs.inequality_constraints,
+        equality_constraints=opt_inputs.equality_constraints,
     )
 
     # If there are fewer than `num_restarts` feasible points, attempt to generate more.
@@ -675,6 +706,7 @@ def discrete_step(
                 x_neighbors_discrete = _filter_infeasible(
                     X=x_neighbors_discrete,
                     inequality_constraints=opt_inputs.inequality_constraints,
+                    equality_constraints=opt_inputs.equality_constraints,
                 )
                 neighbors.append(x_neighbors_discrete)
 
@@ -687,6 +719,7 @@ def discrete_step(
                 x_neighbors_cat = _filter_infeasible(
                     X=x_neighbors_cat,
                     inequality_constraints=opt_inputs.inequality_constraints,
+                    equality_constraints=opt_inputs.equality_constraints,
                 )
                 neighbors.append(x_neighbors_cat)
 
@@ -818,6 +851,7 @@ def optimize_acqf_mixed_alternating(
     sequential: bool = True,
     fixed_features: dict[int, float] | None = None,
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
 ) -> tuple[Tensor, Tensor]:
     r"""
     Optimizes acquisition function over mixed integer, categorical, and continuous
@@ -826,8 +860,6 @@ def optimize_acqf_mixed_alternating(
     discrete/categorical local search and continuous optimization via (L-BFGS)
     is performed for a fixed number of iterations.
 
-    NOTE: This method assumes that all categorical variables are
-    integer valued.
     The discrete dimensions that have more than
     `options.get("max_discrete_values", MAX_DISCRETE_VALUES)` values will
     be optimized using continuous relaxation.
@@ -882,6 +914,12 @@ def optimize_acqf_mixed_alternating(
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`. `indices` and
             `coefficients` should be torch tensors. See the docstring of
             `make_scipy_linear_constraints` for an example.
+        equality_constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an equality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) == rhs`. `indices` and
+            `coefficients` should be torch tensors. Example:
+            `[(torch.tensor([1, 3]), torch.tensor([1.0, 0.5]), -0.1)]` Equality
+            constraints can only be used with continuous degrees of freedom.
 
     Returns:
         A tuple of two tensors: a (q x d)-dim tensor of optimized points
@@ -933,6 +971,15 @@ def optimize_acqf_mixed_alternating(
             f"Received an unsupported option {unsupported_keys}. {SUPPORTED_OPTIONS=}."
         )
 
+    if equality_constraints is not None:
+        for indices, _, __ in equality_constraints:
+            # Raise an error if any index in indices is in discrete_dims or cat_dims
+            if any(idx in discrete_dims or idx in cat_dims for idx in indices.tolist()):
+                raise ValueError(
+                    "Equality constraints can only be used with continuous degrees "
+                    "of freedom."
+                )
+
     # Update discrete dims and post processing functions to account for any
     # dimensions that should be using continuous relaxation.
     discrete_dims, post_processing_func = _setup_continuous_relaxation(
@@ -951,7 +998,7 @@ def optimize_acqf_mixed_alternating(
         raw_samples=raw_samples,
         options=options,
         inequality_constraints=inequality_constraints,
-        equality_constraints=None,
+        equality_constraints=equality_constraints,
         nonlinear_inequality_constraints=None,
         fixed_features=fixed_features,
         post_processing_func=post_processing_func,

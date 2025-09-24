@@ -12,14 +12,11 @@ from functools import partial
 import torch
 from botorch import models
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models import ModelListGP, SingleTaskGP
-from botorch.models.deterministic import GenericDeterministicModel
-from botorch.sampling.pathwise import (
-    draw_kernel_feature_paths,
-    draw_matheron_paths,
-    MatheronPath,
-    PathList,
-)
+from botorch.models import ModelListGP, SingleTaskGP, SingleTaskVariationalGP
+from botorch.models.deterministic import MatheronPathModel
+from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
+from botorch.sampling.pathwise import draw_matheron_paths, MatheronPath, PathList
 from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 from botorch.utils.test_helpers import get_fully_bayesian_model
 from botorch.utils.testing import BotorchTestCase
@@ -398,7 +395,7 @@ class TestDrawMatheronPaths(BotorchTestCase):
         for model in (self.inferred_noise_gp, moo_model, model_list):
             path_model = get_matheron_path_model(model=model)
             self.assertFalse(path_model._is_ensemble)
-            self.assertIsInstance(path_model, GenericDeterministicModel)
+            self.assertIsInstance(path_model, MatheronPathModel)
             for X in (test_X, batch_test_X):
                 self.assertEqual(
                     model.posterior(X).mean.shape, path_model.posterior(X).mean.shape

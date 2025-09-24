@@ -6,11 +6,13 @@
 
 
 import os
+from logging import DEBUG, WARN
 from unittest.mock import MagicMock, mock_open, patch
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models.transforms.input import Normalize
 from botorch.utils.testing import BotorchTestCase
 from botorch_community.models.prior_fitted_network import PFNModel
 from botorch_community.models.utils.prior_fitted_network import (
@@ -50,9 +52,12 @@ class TestPriorFittedNetwork(BotorchTestCase):
             train_Yvar = torch.rand(10, 1, **tkwargs)
             test_X = torch.rand(5, 3, **tkwargs)
 
-            # Test that UnsupportedError is raised when train_Yvar is passed
-            with self.assertRaises(UnsupportedError):
+            with self.assertLogs(logger="botorch", level=DEBUG) as log:
                 PFNModel(train_X, train_Y, DummyPFN(), train_Yvar=train_Yvar)
+                self.assertIn(
+                    "train_Yvar provided but ignored for PFNModel.",
+                    log.output[0],
+                )
 
             train_Y_4d = torch.rand(10, 2, 2, 1, **tkwargs)
             with self.assertRaises(UnsupportedError):
@@ -72,8 +77,12 @@ class TestPriorFittedNetwork(BotorchTestCase):
 
             with self.assertRaises(RuntimeError):
                 pfn.posterior(test_X, output_indices=[0, 1])
-            with self.assertRaises(UnsupportedError):
+            with self.assertLogs(logger="botorch", level=WARN) as log:
                 pfn.posterior(test_X, observation_noise=True)
+                self.assertIn(
+                    "observation_noise is not supported for PFNModel",
+                    log.output[0],
+                )
             with self.assertRaises(UnsupportedError):
                 pfn.posterior(
                     test_X,
@@ -143,6 +152,16 @@ class TestPriorFittedNetwork(BotorchTestCase):
 
         self.assertEqual(posterior.probabilities.shape, torch.Size([2, 100]))
 
+    def test_input_transform(self):
+        model = PFNModel(
+            train_X=torch.rand(10, 3),
+            train_Y=torch.rand(10, 1),
+            input_transform=Normalize(d=3),
+            model=DummyPFN(),
+        )
+        self.assertIsInstance(model.input_transform, Normalize)
+        self.assertEqual(model.input_transform.bounds.shape, torch.Size([2, 3]))
+
 
 class TestPriorFittedNetworkUtils(BotorchTestCase):
     @patch("botorch_community.models.utils.prior_fitted_network.requests.get")
@@ -190,6 +209,13 @@ class TestPriorFittedNetworkUtils(BotorchTestCase):
         mock_torch_load.assert_called_once()
         mock_torch_save.assert_called_once()
         self.assertEqual(model, fake_model)
+
+        # Test loading in model init
+        model = PFNModel(
+            train_X=torch.rand(10, 3),
+            train_Y=torch.rand(10, 1),
+        )
+        self.assertEqual(model.pfn, fake_model)
 
     @patch("botorch_community.models.utils.prior_fitted_network.torch.load")
     @patch("botorch_community.models.utils.prior_fitted_network.os.path.exists")

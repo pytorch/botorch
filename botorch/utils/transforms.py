@@ -422,8 +422,3 @@ def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
 
     """
     return X.expand(X.shape[: -(Y.dim())] + Y.shape[:-2] + X.shape[-2:])
-
-
-def convert_to_target_pre_hook(module, *args):
-    r"""Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""
-    module.to(args[0][0])

@@ -66,7 +66,6 @@ class TestGetters(BotorchTestCase):
                     train_X=train_X,
                     train_Y=train_Y[:, :num_outputs],
                     input_transform=Normalize(d=2),
-                    outcome_transform=Standardize(m=num_outputs),
                 )
             )
 

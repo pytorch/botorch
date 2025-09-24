@@ -231,17 +231,24 @@ class GPyTorchModel(Model, ABC):
 
         Example:
             >>> train_X = torch.rand(20, 2)
-            >>> train_Y = torch.sin(train_X[:, 0]) + torch.cos(train_X[:, 1])
+            >>> train_Y = torch.sin(train_X[:, :1]) + torch.cos(train_X[:, 1:])
             >>> model = SingleTaskGP(train_X, train_Y)
+            >>> model.eval()
+            >>> test_X = torch.rand(10, 2)
+            # Need to evaluate once to fill test independent caches
+            # so that condition_on_observations works.
+            >>> model(test_X)
             >>> new_X = torch.rand(5, 2)
-            >>> new_Y = torch.sin(new_X[:, 0]) + torch.cos(new_X[:, 1])
+            >>> new_Y = torch.sin(new_X[:, :1]) + torch.cos(new_X[:, 1:])
             >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
-        Yvar = noise
+        # pass the transformed data to get_fantasy_model below
+        # (unless we've already transformed if BatchedMultiOutputGPyTorchModel)
+        X = self.transform_inputs(X)
 
+        Yvar = noise
         if hasattr(self, "outcome_transform"):
-            # pass the transformed data to get_fantasy_model below
-            # (unless we've already trasnformed if BatchedMultiOutputGPyTorchModel)
+            # And do the same for the outcome transform, if it exists.
             if not isinstance(self, BatchedMultiOutputGPyTorchModel):
                 # `noise` is assumed to already be outcome-transformed.
                 Y, _ = self.outcome_transform(Y=Y, Yvar=Yvar, X=X)
@@ -255,9 +262,25 @@ class GPyTorchModel(Model, ABC):
             if Yvar is not None:
                 kwargs.update({"noise": Yvar.squeeze(-1)})
         # get_fantasy_model will properly copy any existing outcome transforms
-        # (since it deepcopies the original model)
+        # (since it deepcopies the original model))
+        fantasy_model = self.get_fantasy_model(inputs=X, targets=Y, **kwargs)
 
-        return self.get_fantasy_model(inputs=X, targets=Y, **kwargs)
+        # If we use an input transform, the fantasized data will not get added to
+        # the training data by default. We need to manually add it.
+        if hasattr(fantasy_model, "input_transform"):
+            # Broadcast tensors to compatible shape before concatenating
+            expand_shape = torch.broadcast_shapes(
+                X.shape[:-2], fantasy_model._original_train_inputs.shape[:-2]
+            )
+            X_expanded = X.expand(expand_shape + X.shape[-2:])
+            orig_expanded = fantasy_model._original_train_inputs.expand(
+                expand_shape + fantasy_model._original_train_inputs.shape[-2:]
+            )
+            fantasy_model._original_train_inputs = torch.cat(
+                [orig_expanded, X_expanded],
+                dim=-2,
+            ).detach()
+        return fantasy_model
 
 
 # pyre-fixme[13]: uninitialized attributes _num_outputs, _input_batch_shape,
@@ -778,39 +801,6 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
     This class provides the `posterior` method to models that implement a
     "long-format" multi-task GP in the style of `MultiTaskGP`.
     """
-
-    def _map_tasks(self, task_values: Tensor) -> Tensor:
-        """Map raw task values to the task indices used by the model.
-
-        Args:
-            task_values: A tensor of task values.
-
-        Returns:
-            A tensor of task indices with the same shape as the input
-                tensor.
-        """
-        if self._task_mapper is None:
-            if not (
-                torch.all(0 <= task_values) and torch.all(task_values < self.num_tasks)
-            ):
-                raise ValueError(
-                    "Expected all task features in `X` to be between 0 and "
-                    f"self.num_tasks - 1. Got {task_values}."
-                )
-        else:
-            task_values = task_values.long()
-
-            unexpected_task_values = set(task_values.unique().tolist()).difference(
-                self._expected_task_values
-            )
-            if len(unexpected_task_values) > 0:
-                raise ValueError(
-                    "Received invalid raw task values. Expected raw value to be in"
-                    f" {self._expected_task_values}, but got unexpected task values:"
-                    f" {unexpected_task_values}."
-                )
-            task_values = self._task_mapper[task_values]
-        return task_values
 
     def _apply_noise(
         self,
