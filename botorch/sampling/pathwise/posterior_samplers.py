@@ -42,7 +42,7 @@ from botorch.utils.context_managers import delattr_ctx
 from botorch.utils.dispatcher import Dispatcher
 from gpytorch.models import ApproximateGP, ExactGP, GP
 from gpytorch.variational import _VariationalStrategy
-from torch import Size, Tensor
+from torch import Size
 
 DrawMatheronPaths = Dispatcher("draw_matheron_paths")
 

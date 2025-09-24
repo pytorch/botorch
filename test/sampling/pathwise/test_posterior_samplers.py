@@ -12,12 +12,11 @@ from functools import partial
 import torch
 from botorch import models
 from botorch.exceptions.errors import UnsupportedError
-from botorch.models import ModelListGP, SingleTaskGP, SingleTaskVariationalGP
+from botorch.models import ModelListGP, SingleTaskGP
 from botorch.models.deterministic import MatheronPathModel
-from botorch.models.transforms.input import Normalize
-from botorch.models.transforms.outcome import Standardize
 from botorch.sampling.pathwise import draw_matheron_paths, MatheronPath, PathList
 from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
+from botorch.sampling.pathwise.prior_samplers import draw_kernel_feature_paths
 from botorch.utils.test_helpers import get_fully_bayesian_model
 from botorch.utils.testing import BotorchTestCase
 from botorch.utils.transforms import is_ensemble
@@ -31,7 +30,6 @@ class TestGetMatheronPathModel(BotorchTestCase):
         from unittest.mock import patch
 
         from botorch.exceptions.errors import UnsupportedError
-        from botorch.models.deterministic import GenericDeterministicModel
         from botorch.sampling.pathwise.posterior_samplers import get_matheron_path_model
 
         # Test single output model
@@ -40,7 +38,7 @@ class TestGetMatheronPathModel(BotorchTestCase):
         sample_shape = Size([3])
 
         path_model = get_matheron_path_model(model, sample_shape=sample_shape)
-        self.assertIsInstance(path_model, GenericDeterministicModel)
+        self.assertIsInstance(path_model, MatheronPathModel)
         self.assertEqual(path_model.num_outputs, 1)
         self.assertTrue(path_model._is_ensemble)
 
@@ -56,8 +54,7 @@ class TestGetMatheronPathModel(BotorchTestCase):
         self.assertEqual(output.shape, (4, 1))
 
         # Test ModelListGP
-        batch_config = replace(config, batch_shape=Size([2]))
-        model_list = gen_module(models.ModelListGP, batch_config)
+        model_list = gen_module(models.ModelListGP, config)
         path_model = get_matheron_path_model(model_list)
         self.assertEqual(path_model.num_outputs, model_list.num_outputs)
 

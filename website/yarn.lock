@@ -3768,11 +3768,6 @@ color-space@^1.14.6:
     hsluv "^0.0.3"
     mumath "^3.3.4"
 
-color-space@^2.0.0:
-  version "2.3.2"
-  resolved "https://registry.yarnpkg.com/color-space/-/color-space-2.3.2.tgz#d8c72bab09ef26b98abebc58bc1586ce3073033d"
-  integrity sha512-BcKnbOEsOarCwyoLstcoEztwT0IJxqqQkNwDuA3a65sICvvHL2yoeV13psoDFh5IuiOMnIOKdQDwB4Mk3BypiA==
-
 colord@^2.9.3:
   version "2.9.3"
   resolved "https://registry.npmjs.org/colord/-/colord-2.9.3.tgz"
