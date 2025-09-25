@@ -695,7 +695,7 @@ class TestModelListGPyTorchModel(BotorchTestCase):
         """Test that input transforms are applied consistently in
          condition_on_observations.
 
-        This addresses https://github.com/pytorch/botorch/issues/2533:
+        This addresses https://github.com/meta-pytorch/botorch/issues/2533:
         inputs should be transformed when conditioning.
         """
         for dtype in (torch.float, torch.double):

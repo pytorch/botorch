@@ -166,7 +166,7 @@ def check_min_max_scaling(
             msg = "contained"
         if msg is not None:
             # NOTE: If you update this message, update the warning filters as well.
-            # See https://github.com/pytorch/botorch/pull/2508.
+            # See https://github.com/meta-pytorch/botorch/pull/2508.
             msg = (
                 f"Data (input features) is not {msg} to the unit cube. "
                 "Please consider min-max scaling the input data."
@@ -198,7 +198,7 @@ def check_standardization(
         if Y.shape[-2] <= 1:
             if mean_not_zero:
                 # NOTE: If you update this message, update the warning filters as well.
-                # See https://github.com/pytorch/botorch/pull/2508.
+                # See https://github.com/meta-pytorch/botorch/pull/2508.
                 msg = (
                     f"Data (outcome observations) is not standardized (mean = {Ymean})."
                     " Please consider scaling the input to zero mean and unit variance."
@@ -211,7 +211,7 @@ def check_standardization(
             std_not_one = torch.abs(Ystd - 1).max() > atol_std
             if mean_not_zero or std_not_one:
                 # NOTE: If you update this message, update the warning filters as well.
-                # See https://github.com/pytorch/botorch/pull/2508.
+                # See https://github.com/meta-pytorch/botorch/pull/2508.
                 msg = (
                     "Data (outcome observations) is not standardized "
                     f"(std = {Ystd}, mean = {Ymean})."

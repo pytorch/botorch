@@ -71,7 +71,7 @@ tutorials = [
 [project.urls]
 Homepage = "https://botorch.org"
 Documentation = "https://botorch.org"
-Repository = "https://github.com/pytorch/botorch"
+Repository = "https://github.com/meta-pytorch/botorch"
 
 [tool.setuptools.packages]
 find = {exclude = ["test", "test.*"]}
