@@ -9,7 +9,7 @@
 [![Test](https://github.com/meta-pytorch/botorch/workflows/Test/badge.svg)](https://github.com/meta-pytorch/botorch/actions?query=workflow%3ATest)
 [![Docs](https://github.com/meta-pytorch/botorch/workflows/Docs/badge.svg)](https://github.com/meta-pytorch/botorch/actions?query=workflow%3ADocs)
 [![Nightly](https://github.com/meta-pytorch/botorch/actions/workflows/nightly.yml/badge.svg)](https://github.com/meta-pytorch/botorch/actions?query=workflow%3ANightly)
-[![Codecov](https://img.shields.io/codecov/c/github/pytorch/botorch.svg)](https://codecov.io/github/pytorch/botorch)
+[![Codecov](https://img.shields.io/codecov/c/github/meta-pytorch/botorch.svg)](https://codecov.io/github/meta-pytorch/botorch)
 
 [![PyPI](https://img.shields.io/pypi/v/botorch.svg)](https://pypi.org/project/botorch)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
