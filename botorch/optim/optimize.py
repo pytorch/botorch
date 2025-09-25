@@ -238,7 +238,7 @@ def _validate_sequential_inputs(opt_inputs: OptimizeAcqfInputs) -> None:
                 )
 
     # TODO: Validate constraints if provided:
-    # https://github.com/pytorch/botorch/pull/1231
+    # https://github.com/meta-pytorch/botorch/pull/1231
     if opt_inputs.batch_initial_conditions is not None:
         raise UnsupportedError(
             "`batch_initial_conditions` is not supported for sequential "
