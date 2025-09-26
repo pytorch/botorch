@@ -179,9 +179,10 @@ class TestPriorFittedNetwork(BotorchTestCase):
 
         model = config.model.create_model()
 
+        state_dict = model.state_dict()
         checkpoint = {
             "config": config.to_dict(),
-            "model_state_dict": model.state_dict(),
+            "model_state_dict": state_dict,
         }
 
         loaded_model = PFNModel(
@@ -195,10 +196,10 @@ class TestPriorFittedNetwork(BotorchTestCase):
         loaded_state_dict = loaded_model.pfn.state_dict()
         self.assertEqual(
             sorted(loaded_state_dict.keys()),
-            sorted(model.state_dict().keys()),
+            sorted(state_dict.keys()),
         )
         for k in loaded_state_dict.keys():
-            self.assertTrue(torch.equal(loaded_state_dict[k], model.state_dict()[k]))
+            self.assertTrue(torch.equal(loaded_state_dict[k], state_dict[k]))
 
 
 class TestPriorFittedNetworkUtils(BotorchTestCase):
