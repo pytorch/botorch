@@ -27,6 +27,7 @@ from botorch_community.models.utils.prior_fitted_network import (
     ModelPaths,
 )
 from botorch_community.posteriors.riemann import BoundedRiemannPosterior
+from pfns.train import MainConfig  # @manual=//pytorch/PFNs:PFNs
 from torch import Tensor
 from torch.nn import Module
 
@@ -44,6 +45,7 @@ class PFNModel(Model):
         batch_first: bool = False,
         constant_model_kwargs: dict[str, Any] | None = None,
         input_transform: InputTransform | None = None,
+        load_training_checkpoint: bool = False,
     ) -> None:
         """Initialize a PFNModel.
 
@@ -71,6 +73,8 @@ class PFNModel(Model):
             constant_model_kwargs: A dictionary of model kwargs that
                 will be passed to the model in each forward pass.
             input_transform: A Botorch input transform.
+            load_training_checkpoint: Whether to load a training checkpoint as
+                produced by the PFNs training code, see github.com/automl/PFNs.
 
         """
         super().__init__()
@@ -78,6 +82,15 @@ class PFNModel(Model):
             model = download_model(
                 model_path=checkpoint_url,
             )
+
+        if load_training_checkpoint:
+            # the model is not an actual model, but a training checkpoint
+            # make a model out of it
+            checkpoint = model
+            config = MainConfig.from_dict(checkpoint["config"])
+            model = config.model.create_model()
+            model.load_state_dict(checkpoint["model_state_dict"])
+            model.eval()
 
         if train_Yvar is not None:
             logger.debug("train_Yvar provided but ignored for PFNModel.")
@@ -113,7 +126,7 @@ class PFNModel(Model):
 
         self.train_X = train_X  # shape: `b x n x d`
         self.train_Y = train_Y  # shape: `b x n`
-        self.pfn = model
+        self.pfn = model.to(train_X.device)
         self.batch_first = batch_first
         self.constant_model_kwargs = constant_model_kwargs
         if input_transform is not None:

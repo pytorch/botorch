@@ -42,6 +42,7 @@ test = [
     "pytest-cov",
     "requests",
     "pymoo",
+    "pfns"
 ]
 
 dev = [
