@@ -19,6 +19,8 @@ from botorch_community.models.utils.prior_fitted_network import (
     download_model,
     ModelPaths,
 )
+from pfns.model.transformer_config import CrossEntropyConfig, TransformerConfig
+from pfns.train import MainConfig, OptimizerConfig
 from torch import nn, Tensor
 
 
@@ -162,6 +164,42 @@ class TestPriorFittedNetwork(BotorchTestCase):
         self.assertIsInstance(model.input_transform, Normalize)
         self.assertEqual(model.input_transform.bounds.shape, torch.Size([2, 3]))
 
+    def test_unpack_checkpoint(self):
+        config = MainConfig(
+            priors=[],
+            optimizer=OptimizerConfig(
+                optimizer="adam",
+                lr=0.001,
+            ),
+            model=TransformerConfig(
+                criterion=CrossEntropyConfig(num_classes=3),
+            ),
+            batch_shape_sampler=None,
+        )
+
+        model = config.model.create_model()
+
+        checkpoint = {
+            "config": config.to_dict(),
+            "model_state_dict": model.state_dict(),
+        }
+
+        loaded_model = PFNModel(
+            train_X=torch.rand(10, 3),
+            train_Y=torch.rand(10, 1),
+            input_transform=Normalize(d=3),
+            model=checkpoint,
+            load_training_checkpoint=True,
+        )
+
+        loaded_state_dict = loaded_model.pfn.state_dict()
+        self.assertEqual(
+            sorted(loaded_state_dict.keys()),
+            sorted(model.state_dict().keys()),
+        )
+        for k in loaded_state_dict.keys():
+            self.assertTrue(torch.equal(loaded_state_dict[k], model.state_dict()[k]))
+
 
 class TestPriorFittedNetworkUtils(BotorchTestCase):
     @patch("botorch_community.models.utils.prior_fitted_network.requests.get")
@@ -215,7 +253,7 @@ class TestPriorFittedNetworkUtils(BotorchTestCase):
             train_X=torch.rand(10, 3),
             train_Y=torch.rand(10, 1),
         )
-        self.assertEqual(model.pfn, fake_model)
+        self.assertEqual(model.pfn, fake_model.to("cpu"))
 
     @patch("botorch_community.models.utils.prior_fitted_network.torch.load")
     @patch("botorch_community.models.utils.prior_fitted_network.os.path.exists")
