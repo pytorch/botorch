@@ -33,7 +33,7 @@ def make_scipy_bounds(
     lower_bounds: float | Tensor | None = None,
     upper_bounds: float | Tensor | None = None,
 ) -> Bounds | None:
-    r"""Creates a scipy Bounds object for optimziation
+    r"""Creates a scipy Bounds object for optimization
 
     Args:
         X: `... x d` tensor
