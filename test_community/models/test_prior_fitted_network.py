@@ -77,7 +77,7 @@ class TestPriorFittedNetwork(BotorchTestCase):
 
             pfn = PFNModel(train_X, train_Y, DummyPFN())
 
-            with self.assertRaises(RuntimeError):
+            with self.assertRaises(UnsupportedError):
                 pfn.posterior(test_X, output_indices=[0, 1])
             with self.assertLogs(logger="botorch", level=WARN) as log:
                 pfn.posterior(test_X, observation_noise=True)
@@ -93,10 +93,10 @@ class TestPriorFittedNetwork(BotorchTestCase):
                     ),
                 )
 
-            # q should be 1
+            # (b', b, d) prediction works as expected
             test_X = torch.rand(5, 4, 2, **tkwargs)
-            with self.assertRaises(UnsupportedError):
-                pfn.posterior(test_X)
+            post = pfn.posterior(test_X)
+            self.assertEqual(post.mean.shape, torch.Size([5, 4, 1]))
 
             # X dims should be 1 to 4
             test_X = torch.rand(5, 4, 2, 1, 2, **tkwargs)
@@ -125,8 +125,8 @@ class TestPriorFittedNetwork(BotorchTestCase):
         test_X = torch.rand(5, 1, 3, **tkwargs)
         posterior = pfn.posterior(test_X)
 
-        self.assertEqual(posterior.probabilities.shape, torch.Size([5, 100]))
-        self.assertEqual(posterior.mean.shape, torch.Size([5, 1]))
+        self.assertEqual(posterior.probabilities.shape, torch.Size([5, 1, 100]))
+        self.assertEqual(posterior.mean.shape, torch.Size([5, 1, 1]))
 
         # no shape basically
         test_X = torch.rand(3, **tkwargs)
@@ -134,25 +134,6 @@ class TestPriorFittedNetwork(BotorchTestCase):
 
         self.assertEqual(posterior.probabilities.shape, torch.Size([100]))
         self.assertEqual(posterior.mean.shape, torch.Size([1]))
-
-    def test_batching(self):
-        tkwargs = {"device": self.device, "dtype": torch.float}
-
-        # no q dimension
-        train_X = torch.rand(2, 10, 3, **tkwargs)
-        train_Y = torch.rand(2, 10, 1, **tkwargs)
-
-        pfn = PFNModel(train_X, train_Y, DummyPFN(n_buckets=100))
-
-        test_X = torch.rand(5, 2, 1, 3, **tkwargs)
-        posterior = pfn.posterior(test_X)
-
-        self.assertEqual(posterior.probabilities.shape, torch.Size([5, 2, 100]))
-
-        test_X = torch.rand(2, 1, 3, **tkwargs)
-        posterior = pfn.posterior(test_X)
-
-        self.assertEqual(posterior.probabilities.shape, torch.Size([2, 100]))
 
     def test_input_transform(self):
         model = PFNModel(
