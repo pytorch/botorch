@@ -18,15 +18,16 @@ from typing import Any, Optional, Union
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import UnsupportedError
-
 from botorch.logging import logger
 from botorch.models.model import Model
 from botorch.models.transforms.input import InputTransform
+from botorch.utils.transforms import match_batch_shape
 from botorch_community.models.utils.prior_fitted_network import (
     download_model,
     ModelPaths,
 )
 from botorch_community.posteriors.riemann import BoundedRiemannPosterior
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from pfns.train import MainConfig  # @manual=//pytorch/PFNs:PFNs
 from torch import Tensor
 from torch.nn import Module
@@ -58,7 +59,7 @@ class PFNModel(Model):
 
         Args:
             train_X: A `n x d` tensor of training features.
-            train_Y: A `n x m` tensor of training observations.
+            train_Y: A `n x 1` tensor of training observations.
             model: A pre-trained PFN model with the following
                 forward(train_X, train_Y, X) -> logit predictions of shape
                 `n x b x c` where c is the number of discrete buckets
@@ -95,40 +96,35 @@ class PFNModel(Model):
         if train_Yvar is not None:
             logger.debug("train_Yvar provided but ignored for PFNModel.")
 
-        if not (1 <= train_Y.dim() <= 3):
-            raise UnsupportedError("train_Y must be 1- to 3-dimensional.")
+        if train_Y.dim() != 2:
+            raise UnsupportedError("train_Y must be 2-dimensional.")
 
-        if not (2 <= train_X.dim() <= 3):
-            raise UnsupportedError("train_X must be 2- to 3-dimensional.")
+        if train_X.dim() != 2:
+            raise UnsupportedError("train_X must be 2-dimensional.")
 
-        if train_Y.dim() == train_X.dim():
-            if train_Y.shape[-1] > 1:
-                raise UnsupportedError("Only 1 target allowed for PFNModel.")
-            train_Y = train_Y.squeeze(-1)
+        if train_Y.shape[-1] > 1:
+            raise UnsupportedError("Only 1 target allowed for PFNModel.")
 
-        if (len(train_X.shape) != len(train_Y.shape) + 1) or (
-            train_Y.shape != train_X.shape[:-1]
-        ):
+        if train_X.shape[0] != train_Y.shape[0]:
             raise UnsupportedError(
-                "train_X and train_Y must have the same shape except "
-                "for the last dimension."
+                "train_X and train_Y must have the same number of rows."
             )
-
-        if len(train_X.shape) == 2:
-            # adding batch dimension
-            train_X = train_X.unsqueeze(0)
-            train_Y = train_Y.unsqueeze(0)
 
         with torch.no_grad():
             self.transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
             )
 
-        self.train_X = train_X  # shape: `b x n x d`
-        self.train_Y = train_Y  # shape: `b x n`
-        self.pfn = model.to(train_X.device)
+        self.train_X = train_X  # shape: (n, d)
+        self.train_Y = train_Y  # shape: (n, 1)
+        # Downstream botorch tooling expects a likelihood to be specified,
+        # so here we use a FixedNoiseGaussianLikelihood that is unused.
+        if train_Yvar is None:
+            train_Yvar = torch.zeros_like(train_Y)
+        self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
+        self.pfn = model.to(device=train_X.device)
         self.batch_first = batch_first
-        self.constant_model_kwargs = constant_model_kwargs
+        self.constant_model_kwargs = constant_model_kwargs or {}
         if input_transform is not None:
             self.input_transform = input_transform
 
@@ -146,23 +142,19 @@ class PFNModel(Model):
             any `model.forward` or `model.likelihood` calls.
 
         Args:
-            X: A `b'? x b? x q x d`-dim Tensor, where `d` is the dimension of the
-                feature space, `q` is the number of points considered jointly,
-                and `b` is the batch dimension.
-                We only allow `q=1` for PFNModel, so q can also be omitted, i.e.
-                `b x d`-dim Tensor.
-            **Currently not supported for PFNModel**.
+            X: A b? x q? x d`-dim Tensor, where `d` is the dimension of the
+                feature space.
             output_indices: **Currenlty not supported for PFNModel.**
             observation_noise: **Currently not supported for PFNModel**.
             posterior_transform: **Currently not supported for PFNModel**.
 
         Returns:
-            A `BoundedRiemannPosterior` object, representing a batch of `b` joint
-            distributions over `q` points and `m` outputs each.
+            A `BoundedRiemannPosterior`, representing a batch of b? x q?`
+            distributions.
         """
         self.pfn.eval()
         if output_indices is not None:
-            raise RuntimeError(
+            raise UnsupportedError(
                 "output_indices is not None. PFNModel should not "
                 "be a multi-output model."
             )
@@ -173,60 +165,54 @@ class PFNModel(Model):
         if posterior_transform is not None:
             raise UnsupportedError("posterior_transform is not supported for PFNModel.")
 
-        if not (1 <= len(X.shape) <= 4):
-            raise UnsupportedError("X must be 1- to 4-dimensional.")
+        orig_X_shape = X.shape  # X has shape b? x q? x d
+        X = self.prepare_X(X)  # shape (b, q, d)
+        train_X = match_batch_shape(self.transformed_X, X)  # shape (b, n, d)
+        train_Y = match_batch_shape(self.train_Y, X)  # shape (b, n, 1)
 
-        # X has shape b'? x b? x q? x d
-
-        orig_X_shape = X.shape
-        q_in_orig_X_shape = len(X.shape) > 2
-
-        if len(X.shape) == 1:
-            X = X.unsqueeze(0).unsqueeze(0).unsqueeze(0)  # shape `b'=1 x b=1 x q=1 x d`
-        elif len(X.shape) == 2:
-            X = X.unsqueeze(1).unsqueeze(1)  # shape `b' x b=1 x q=1 x d`
-        elif len(X.shape) == 3:
-            if self.train_X.shape[0] == 1:
-                X = X.unsqueeze(1)  # shape `b' x b=1 x q x d`
-            else:
-                X = X.unsqueeze(0)  # shape `b'=1 x b x q x d`
-
-        # X has shape `b' x b x q x d`
-
-        if X.shape[2] != 1:
-            raise UnsupportedError("Only q=1 is supported for PFNModel.")
-
-        # X has shape `b' x b x q=1 x d`
-        X = self.transform_inputs(X)
-        train_X = self.transformed_X  # shape `b x n x d`
-        train_Y = self.train_Y  # shape `b x n`
-        folded_X = X.transpose(0, 2).squeeze(0)  # shape `b x b' x d
-
-        constant_model_kwargs = self.constant_model_kwargs or {}
-
-        if self.batch_first:
-            logits = self.pfn(
-                train_X.float(),
-                train_X.float(),
-                folded_X.float(),
-                **constant_model_kwargs,
-            ).transpose(0, 1)
-        else:
-            logits = self.pfn(
-                train_X.float().transpose(0, 1),
-                train_Y.float().transpose(0, 1),
-                folded_X.float().transpose(0, 1),
-                **constant_model_kwargs,
-            )
-
-        # logits shape `b' x b x logits_dim`
-
-        logits = logits.view(
+        probabilities = self.pfn_predict(
+            X=X, train_X=train_X, train_Y=train_Y
+        )  # (b, q, num_buckets)
+        probabilities = probabilities.view(
             *orig_X_shape[:-1], -1
-        )  # orig shape w/o q but logits_dim at end: `b'? x b? x q? x logits_dim`
-        if q_in_orig_X_shape:
-            logits = logits.squeeze(-2)  # shape `b'? x b? x logits_dim`
+        )  # (b?, q?, num_buckets)
 
-        probabilities = logits.softmax(dim=-1)
+        # Get posterior with the right dtype
+        borders = self.pfn.criterion.borders.to(X.dtype)
+        return BoundedRiemannPosterior(
+            borders=borders,
+            probabilities=probabilities,
+        )
 
-        return BoundedRiemannPosterior(self.pfn.criterion.borders, probabilities)
+    def prepare_X(self, X: Tensor) -> Tensor:
+        if len(X.shape) > 3:
+            raise UnsupportedError(f"X must be at most 3-d, got {X.shape}.")
+        while len(X.shape) < 3:
+            X = X.unsqueeze(0)
+
+        X = self.transform_inputs(X)  # shape (b , q, d)
+        return X
+
+    def pfn_predict(self, X: Tensor, train_X: Tensor, train_Y: Tensor) -> Tensor:
+        """
+        X has shape (b, q, d)
+        train_X has shape (b, n, d)
+        train_Y has shape (b, n, 1)
+        """
+        if not self.batch_first:
+            X = X.transpose(0, 1)  # shape (q, b, d)
+            train_X = train_X.transpose(0, 1)  # shape (n, b, d)
+            train_Y = train_Y.transpose(0, 1)  # shape (n, b, 1)
+
+        logits = self.pfn(
+            train_X.float(),
+            train_Y.float(),
+            X.float(),
+            **self.constant_model_kwargs,
+        )
+        if not self.batch_first:
+            logits = logits.transpose(0, 1)  # shape (b, q, num_buckets)
+        logits = logits.to(X.dtype)
+
+        probabilities = logits.softmax(dim=-1)  # shape (b, q, num_buckets)
+        return probabilities
