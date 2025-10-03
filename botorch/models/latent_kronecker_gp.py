@@ -24,17 +24,20 @@ References
 """
 
 import contextlib
+import warnings
 from typing import Any
 
 import torch
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.warnings import InputDataWarning
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import FantasizeMixin, Model
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.latent_kronecker import LatentKroneckerGPPosterior
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -427,3 +430,64 @@ class LatentKroneckerGP(GPyTorchModel, ExactGP, FantasizeMixin):
         raise NotImplementedError(
             f"Conditioning currently not supported for {self.__class__.__name__}"
         )
+
+    @classmethod
+    def construct_inputs(cls, training_data: SupervisedDataset) -> dict[str, Any]:
+        """
+        Constructs the input tensors for LatentKroneckerGP from a SupervisedDataset.
+
+        This method processes the provided training data to extract and organize the
+        features and targets into the required format for the LatentKroneckerGP model.
+        It factorizes inputs from the product space into the factors X and T.
+        The matching output Y values are assembled by mapping observed values to their
+        corresponding positions and filling missing values with NaN.
+
+        Args:
+            training_data: A SupervisedDataset containing training inputs and outputs.
+
+        Returns:
+            A dictionary with keys `train_X`, `train_T`, and `train_Y`, where:
+                - `train_X`: The unique feature values (excluding the T dimension).
+                - `train_T`: The unique feature values of the T dimension.
+                - `train_Y`: The outputs aligned with the Cartesian product of
+                    `train_X` and `train_T`, with missing values filled as NaN.
+        """
+        model_inputs = super().construct_inputs(training_data=training_data)
+
+        if "train_Yvar" in model_inputs:
+            warnings.warn(
+                "Ignoring Yvar values in provided training data, because "
+                "they are currently not supported by LatentKroneckerGP.",
+                InputDataWarning,
+                stacklevel=2,
+            )
+
+        t_idx = training_data.feature_names.index("step")
+        x_idx = [i for i in range(len(training_data.feature_names)) if i != t_idx]
+
+        # Factorize product space into factors X and T by finding unique values
+        train_X, x_idx = model_inputs["train_X"][..., x_idx].unique(
+            sorted=True, return_inverse=True, dim=-2
+        )
+        train_T, t_idx = model_inputs["train_X"][..., [t_idx]].unique(
+            sorted=True, return_inverse=True, dim=-2
+        )
+
+        # Initialize train_Y with NaN for the full Cartesian product
+        batch_shape = train_X.shape[:-2]
+        n_x = train_X.shape[-2]
+        n_t = train_T.shape[-2]
+        train_Y = torch.full(
+            (*batch_shape, n_x * n_t, 1),
+            torch.nan,
+            dtype=model_inputs["train_Y"].dtype,
+            device=model_inputs["train_Y"].device,
+        )
+
+        # Convert 2D indices to 1D indices
+        y_idx = x_idx * n_t + t_idx
+        # Map original observations to their positions in the Cartesian product
+        train_Y[..., y_idx, :] = model_inputs["train_Y"]
+        train_Y = train_Y.reshape(*batch_shape, n_x, n_t)
+
+        return {"train_X": train_X, "train_T": train_T, "train_Y": train_Y}

@@ -10,10 +10,11 @@ import warnings
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.errors import BotorchTensorDimensionError
-from botorch.exceptions.warnings import OptimizationWarning
+from botorch.exceptions.warnings import InputDataWarning, OptimizationWarning
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.latent_kronecker_gp import LatentKroneckerGP
 from botorch.models.transforms import Normalize, Standardize
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.testing import BotorchTestCase, get_random_data
 from botorch.utils.types import DEFAULT
 from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
@@ -38,7 +39,7 @@ def _get_data_with_missing_entries(
     mask[torch.randperm(n_train * t)[: n_train * t // 2]] = False
     train_Y[..., ~mask.reshape(n_train, t)] = torch.nan
 
-    return train_X, train_T, train_Y
+    return train_X, train_T, train_Y, mask
 
 
 class TestLatentKroneckerGP(BotorchTestCase):
@@ -71,7 +72,7 @@ class TestLatentKroneckerGP(BotorchTestCase):
                 intf = None
                 octf = None
 
-            train_X, train_T, train_Y = _get_data_with_missing_entries(
+            train_X, train_T, train_Y, mask = _get_data_with_missing_entries(
                 n_train=n_train, d=d, t=t, batch_shape=batch_shape, tkwargs=tkwargs
             )
 
@@ -85,8 +86,7 @@ class TestLatentKroneckerGP(BotorchTestCase):
             model.to(**tkwargs)
 
             # test init
-            mask_valid = torch.isfinite(train_Y.reshape(-1, n_train, t)[0]).flatten()
-            train_Y_flat = train_Y.reshape(*batch_shape, -1)[..., mask_valid]
+            train_Y_flat = train_Y.reshape(*batch_shape, -1)[..., mask]
             if use_transforms:
                 self.assertIsInstance(model.input_transform, Normalize)
                 self.assertIsInstance(model.outcome_transform, Standardize)
@@ -124,7 +124,7 @@ class TestLatentKroneckerGP(BotorchTestCase):
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
 
-            train_X, train_T, train_Y = _get_data_with_missing_entries(
+            train_X, train_T, train_Y, _ = _get_data_with_missing_entries(
                 n_train=n_train, d=d, t=t, batch_shape=batch_shape, tkwargs=tkwargs
             )
 
@@ -230,7 +230,7 @@ class TestLatentKroneckerGP(BotorchTestCase):
                 intf = None
                 octf = None
 
-            train_X, train_T, train_Y = _get_data_with_missing_entries(
+            train_X, train_T, train_Y, _ = _get_data_with_missing_entries(
                 n_train=n_train, d=d, t=t, batch_shape=batch_shape, tkwargs=tkwargs
             )
 
@@ -271,7 +271,7 @@ class TestLatentKroneckerGP(BotorchTestCase):
             intf = None
             octf = None
 
-        train_X, train_T, train_Y = _get_data_with_missing_entries(
+        train_X, train_T, train_Y, _ = _get_data_with_missing_entries(
             n_train=n_train, d=d, t=t, batch_shape=batch_shape, tkwargs=tkwargs
         )
 
@@ -441,7 +441,7 @@ class TestLatentKroneckerGP(BotorchTestCase):
                 intf = None
                 octf = None
 
-            train_X, train_T, train_Y = _get_data_with_missing_entries(
+            train_X, train_T, train_Y, _ = _get_data_with_missing_entries(
                 n_train=n_train, d=d, t=t, batch_shape=batch_shape, tkwargs=tkwargs
             )
 
@@ -507,7 +507,7 @@ class TestLatentKroneckerGP(BotorchTestCase):
         batch_shape = torch.Size([])
         tkwargs = {"device": self.device, "dtype": torch.double}
 
-        train_X, train_T, train_Y = _get_data_with_missing_entries(
+        train_X, train_T, train_Y, _ = _get_data_with_missing_entries(
             n_train=10, d=1, t=1, batch_shape=batch_shape, tkwargs=tkwargs
         )
 
@@ -525,7 +525,7 @@ class TestLatentKroneckerGP(BotorchTestCase):
         batch_shape = torch.Size([])
         tkwargs = {"device": self.device, "dtype": torch.double}
 
-        train_X, train_T, train_Y = _get_data_with_missing_entries(
+        train_X, train_T, train_Y, _ = _get_data_with_missing_entries(
             n_train=10, d=1, t=1, batch_shape=batch_shape, tkwargs=tkwargs
         )
 
@@ -558,3 +558,63 @@ class TestLatentKroneckerGP(BotorchTestCase):
         err_msg = f"Only GaussianLikelihood currently supported for {cls_name}"
         with self.assertRaisesRegex(NotImplementedError, err_msg):
             model.posterior(train_X)
+
+    def test_construct_inputs(self) -> None:
+        # This test relies on the fact that the random (missing) data generation
+        # does not remove all occurrences of a particular X or T value. Therefore,
+        # we fix the random seed and set n_train and t to slightly larger values.
+
+        torch.manual_seed(12345)
+        for batch_shape, n_train, d, t, dtype in itertools.product(
+            (  # batch_shape
+                torch.Size([]),
+                torch.Size([1]),
+                torch.Size([2]),
+                torch.Size([2, 3]),
+            ),
+            (15,),  # n_train
+            (1, 2),  # d
+            (10,),  # t
+            (torch.float, torch.double),  # dtype
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+
+            train_X, train_T, train_Y, mask = _get_data_with_missing_entries(
+                n_train=n_train, d=d, t=t, batch_shape=batch_shape, tkwargs=tkwargs
+            )
+
+            train_X_supervised = torch.cat(
+                [
+                    train_X.repeat_interleave(t, dim=-2),
+                    train_T.repeat(*([1] * len(batch_shape)), n_train, 1),
+                ],
+                dim=-1,
+            )
+            train_Y_supervised = train_Y.reshape(*batch_shape, n_train * t, 1)
+
+            # randomly permute data to test robustness to non-contiguous data
+            idx = torch.randperm(n_train * t, device=self.device)
+            train_X_supervised = train_X_supervised[..., idx, :][..., mask[idx], :]
+            train_Y_supervised = train_Y_supervised[..., idx, :][..., mask[idx], :]
+
+            dataset = SupervisedDataset(
+                X=train_X_supervised,
+                Y=train_Y_supervised,
+                Yvar=train_Y_supervised,  # just to check warning
+                feature_names=[f"x_{i}" for i in range(d)] + ["step"],
+                outcome_names=["y"],
+            )
+
+            w_msg = "Ignoring Yvar values in provided training data, because "
+            w_msg += "they are currently not supported by LatentKroneckerGP."
+            with self.assertWarnsRegex(InputDataWarning, w_msg):
+                model_inputs = LatentKroneckerGP.construct_inputs(dataset)
+
+            # this test generates train_X and train_T in sorted order
+            # the data is randomly permuted before passing to construct_inputs
+            # construct_inputs sorts the data, so we expect the results to be equal
+            self.assertAllClose(model_inputs["train_X"], train_X, atol=0.0)
+            self.assertAllClose(model_inputs["train_T"], train_T, atol=0.0)
+            self.assertAllClose(
+                model_inputs["train_Y"], train_Y, atol=0.0, equal_nan=True
+            )
