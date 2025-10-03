@@ -23,7 +23,7 @@ from botorch.models.higher_order_gp import HigherOrderGP
 from botorch.models.map_saas import (
     add_saas_prior,
     AdditiveMapSaasSingleTaskGP,
-    EnsembleMapSaasGP,
+    EnsembleMapSaasSingleTaskGP,
 )
 from botorch.models.model import ModelList
 from botorch.models.model_list_gp_regression import ModelListGP
@@ -36,9 +36,7 @@ __all__ = [
     "AffineDeterministicModel",
     "AffineFidelityCostModel",
     "ApproximateGPyTorchModel",
-    "EnsembleMapSaasGP",
-    "SaasFullyBayesianSingleTaskGP",
-    "SaasFullyBayesianMultiTaskGP",
+    "EnsembleMapSaasSingleTaskGP",
     "GenericDeterministicModel",
     "HigherOrderGP",
     "KroneckerMultiTaskGP",
@@ -49,6 +47,8 @@ __all__ = [
     "PairwiseGP",
     "PairwiseLaplaceMarginalLogLikelihood",
     "PosteriorMeanModel",
+    "SaasFullyBayesianMultiTaskGP",
+    "SaasFullyBayesianSingleTaskGP",
     "SingleTaskGP",
     "SingleTaskMultiFidelityGP",
     "SingleTaskVariationalGP",
