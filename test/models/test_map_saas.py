@@ -22,7 +22,7 @@ from botorch.models import SaasFullyBayesianSingleTaskGP, SingleTaskGP
 from botorch.models.map_saas import (
     add_saas_prior,
     AdditiveMapSaasSingleTaskGP,
-    EnsembleMapSaasGP,
+    EnsembleMapSaasSingleTaskGP,
     get_additive_map_saas_covar_module,
     get_gaussian_likelihood_with_gamma_prior,
     get_mean_module_with_normal_prior,
@@ -527,7 +527,7 @@ class TestMapSaas(BotorchTestCase):
                 }
             else:
                 extra_inputs = {}
-            model = EnsembleMapSaasGP(
+            model = EnsembleMapSaasSingleTaskGP(
                 train_X=train_X, train_Y=train_Y, num_taus=num_taus, **extra_inputs
             )
             sample_all_priors(model)  # Checks that the prior is configured correctly.
@@ -553,16 +553,20 @@ class TestMapSaas(BotorchTestCase):
 
     def test_ensemble_map_saas_validation(self) -> None:
         with self.assertRaisesRegex(ValueError, "Expected taus to be of shape"):
-            EnsembleMapSaasGP(
+            EnsembleMapSaasSingleTaskGP(
                 train_X=torch.rand(5, 3),
                 train_Y=torch.rand(5, 1),
                 num_taus=3,
                 taus=torch.rand(2),
             )
         with self.assertRaisesRegex(UnsupportedError, "only supports single-output"):
-            EnsembleMapSaasGP(train_X=torch.rand(5, 3), train_Y=torch.rand(5, 2))
+            EnsembleMapSaasSingleTaskGP(
+                train_X=torch.rand(5, 3), train_Y=torch.rand(5, 2)
+            )
         with self.assertRaisesRegex(UnsupportedError, "only supports 2D inputs"):
-            EnsembleMapSaasGP(train_X=torch.rand(2, 5, 3), train_Y=torch.rand(2, 5, 1))
+            EnsembleMapSaasSingleTaskGP(
+                train_X=torch.rand(2, 5, 3), train_Y=torch.rand(2, 5, 1)
+            )
 
 
 class TestAdditiveMapSaasSingleTaskGP(BotorchTestCase):
