@@ -16,6 +16,8 @@ from botorch.models.utils.gpytorch_modules import (
 )
 from botorch.posteriors.fully_bayesian import GaussianMixturePosterior, MCMC_DIM
 from botorch.utils.constraints import LogTransformedInterval
+from botorch.utils.containers import BotorchContainer
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.types import _DefaultType, DEFAULT
 from gpytorch.constraints import Interval
 from gpytorch.kernels import AdditiveKernel, Kernel, MaternKernel, ScaleKernel
@@ -561,3 +563,19 @@ class EnsembleMapSaasSingleTaskGP(SingleTaskGP):
             **kwargs,
         )
         return GaussianMixturePosterior(distribution=posterior.distribution)
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        training_data: SupervisedDataset,
+        *,
+        num_taus: int = 4,
+    ) -> dict[str, BotorchContainer | Tensor]:
+        r"""Construct `Model` keyword arguments from a dict of `SupervisedDataset`.
+
+        Args:
+            training_data: A `SupervisedDataset` containing the training data.
+            num_taus: Number of taus to use in the ensemble (4 if omitted).
+        """
+        base_inputs = super().construct_inputs(training_data=training_data)
+        return {**base_inputs, "num_taus": num_taus}

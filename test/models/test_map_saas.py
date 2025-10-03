@@ -34,6 +34,7 @@ from botorch.posteriors.fully_bayesian import GaussianMixturePosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.test_utils.mock import mock_optimize
 from botorch.utils.constraints import LogTransformedInterval
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.constraints import Interval
 from gpytorch.kernels import AdditiveKernel, MaternKernel, ScaleKernel
@@ -567,6 +568,56 @@ class TestMapSaas(BotorchTestCase):
             EnsembleMapSaasSingleTaskGP(
                 train_X=torch.rand(2, 5, 3), train_Y=torch.rand(2, 5, 1)
             )
+
+    def test_ensemble_map_saas_construct_inputs(self) -> None:
+        """Test the construct_inputs class method for EnsembleMapSaasSingleTaskGP."""
+
+        train_X, train_Y, _ = self._get_data()
+        training_data = SupervisedDataset(
+            X=train_X, Y=train_Y, feature_names=["x1", "x2", "x3"], outcome_names=["y"]
+        )
+
+        # Test with default num_taus
+        inputs_default = EnsembleMapSaasSingleTaskGP.construct_inputs(
+            training_data=training_data
+        )
+        self.assertIn("num_taus", inputs_default)
+        self.assertEqual(inputs_default["num_taus"], 4)
+        self.assertIn("train_X", inputs_default)
+        self.assertIn("train_Y", inputs_default)
+        self.assertAllClose(inputs_default["train_X"], train_X)
+        self.assertAllClose(inputs_default["train_Y"], train_Y)
+
+        # Test with custom num_taus
+        custom_num_taus = 6
+        inputs_custom = EnsembleMapSaasSingleTaskGP.construct_inputs(
+            training_data=training_data, num_taus=custom_num_taus
+        )
+        self.assertIn("num_taus", inputs_custom)
+        self.assertEqual(inputs_custom["num_taus"], custom_num_taus)
+        self.assertIn("train_X", inputs_custom)
+        self.assertIn("train_Y", inputs_custom)
+        self.assertAllClose(inputs_custom["train_X"], train_X)
+        self.assertAllClose(inputs_custom["train_Y"], train_Y)
+
+        # Test with train_Yvar in the dataset
+        train_Yvar = 0.1 * torch.rand_like(train_Y)
+        training_data_with_yvar = SupervisedDataset(
+            X=train_X,
+            Y=train_Y,
+            Yvar=train_Yvar,
+            feature_names=["x1", "x2", "x3"],
+            outcome_names=["y"],
+        )
+        inputs_with_yvar = EnsembleMapSaasSingleTaskGP.construct_inputs(
+            training_data=training_data_with_yvar, num_taus=3
+        )
+        self.assertIn("train_Yvar", inputs_with_yvar)
+        self.assertAllClose(inputs_with_yvar["train_Yvar"], train_Yvar)
+        self.assertEqual(inputs_with_yvar["num_taus"], 3)
+        model_with_yvar = EnsembleMapSaasSingleTaskGP(**inputs_with_yvar)
+        self.assertIsInstance(model_with_yvar, EnsembleMapSaasSingleTaskGP)
+        self.assertEqual(model_with_yvar.batch_shape, torch.Size([3]))
 
 
 class TestAdditiveMapSaasSingleTaskGP(BotorchTestCase):
