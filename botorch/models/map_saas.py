@@ -39,9 +39,9 @@ class SaasPriorHelper:
         Args:
             tau: Value of the global shrinkage parameter. If `None`, the tau will be
                 a free parameter and inferred from the data.
-                Tau can be a tensor for batched models, like `EnsembleMapSaasGP`,
-                where each batch has a different sparsity prior. If tau is a tensor,
-                it must have shape `batch_shape`.
+                Tau can be a tensor for batched models, like
+                `EnsembleMapSaasSingleTaskGP`, where each batch has a different
+                sparsity prior. If tau is a tensor, it must have shape `batch_shape`.
         """
         self._tau = torch.as_tensor(tau) if tau is not None else None
 
@@ -427,7 +427,7 @@ class AdditiveMapSaasSingleTaskGP(SingleTaskGP):
         self.to(dtype=train_X.dtype, device=train_X.device)
 
 
-class EnsembleMapSaasGP(SingleTaskGP):
+class EnsembleMapSaasSingleTaskGP(SingleTaskGP):
     _is_ensemble = True
 
     def __init__(
@@ -440,9 +440,9 @@ class EnsembleMapSaasGP(SingleTaskGP):
         outcome_transform: OutcomeTransform | _DefaultType | None = DEFAULT,
         input_transform: InputTransform | None = None,
     ) -> None:
-        """Instantiates an ``EnsembleMapSaasGP``, which is a batched ensemble of
-        ``SingleTaskGP``s with the Matern-5/2 kernel and a SAAS prior. The model is
-        intended to be trained with ``ExactMarginalLogLikelihood`` and
+        """Instantiates an ``EnsembleMapSaasSingleTaskGP``, which is a batched
+        ensemble of ``SingleTaskGP``s with the Matern-5/2 kernel and a SAAS prior.
+        The model is intended to be trained with ``ExactMarginalLogLikelihood`` and
         ``fit_gpytorch_mll``. Under the hood, the model is equivalent to a
         multi-output ``BatchedMultiOutputGPyTorchModel``, but it produces a
         ``MixtureGaussiaPosterior``, which leads to ensembling of the model outputs.
