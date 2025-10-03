@@ -6,6 +6,7 @@
 
 r"""
 References
+
 .. [lin2025scalable]
     J. A. Lin, S. Ament, M. Balandat, D. Eriksson, J. M. Hernández-Lobato, E. Bakshy.
     Scalable Gaussian Processes with Latent Kronecker Structure.
