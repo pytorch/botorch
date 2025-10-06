@@ -6,6 +6,7 @@
 
 import itertools
 import warnings
+from functools import partial
 
 import torch
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
@@ -24,7 +25,11 @@ from botorch.models.gpytorch import (
 from botorch.models.model import FantasizeMixin
 from botorch.models.multitask import MultiTaskGP
 from botorch.models.transforms import Standardize
-from botorch.models.transforms.input import ChainedInputTransform, InputTransform
+from botorch.models.transforms.input import (
+    ChainedInputTransform,
+    InputTransform,
+    NumericToCategoricalEncoding,
+)
 from botorch.models.utils import fantasize
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.normal import SobolQMCNormalSampler
@@ -38,6 +43,8 @@ from gpytorch.means import ConstantMean
 from gpytorch.models import ExactGP, IndependentModelList
 from gpytorch.settings import trace_mode
 from torch import Tensor
+
+from torch.nn.functional import one_hot
 
 
 class SimpleInputTransform(InputTransform, torch.nn.Module):
@@ -690,6 +697,46 @@ class TestModelListGPyTorchModel(BotorchTestCase):
                 model.condition_on_observations(
                     X=torch.rand(2, 1, **tkwargs), Y=torch.rand(2, 2, **tkwargs)
                 )
+
+    def test_condition_on_observations_input_transform_shape_manipulation(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+
+            # Create data
+            X = torch.rand(12, 2, **tkwargs) * 2
+            Y = 1 - (X - 0.5).norm(dim=-1, keepdim=True)
+            Y += 0.1 * torch.rand_like(Y)
+            # Add a categorical feature
+            new_col = torch.randint(0, 3, (X.shape[0], 1), **tkwargs)
+            X = torch.cat([X, new_col], dim=1)
+
+            train_X = X[:10]
+            train_Y = Y[:10]
+
+            condition_X = X[10:]
+            condition_Y = Y[10:]
+
+            # setup transform and model
+            input_transform = NumericToCategoricalEncoding(
+                dim=3,
+                categorical_features={2: 3},
+                encoders={2: partial(one_hot, num_classes=3)},
+            )
+
+            model = SimpleGPyTorchModel(
+                train_X, train_Y, input_transform=input_transform
+            )
+            model.eval()
+            _ = model.posterior(train_X)
+
+            conditioned_model = model.condition_on_observations(
+                condition_X, condition_Y
+            )
+
+            # why is `original_train_inputs` a tensor and `train_inputs` a list?
+            # is this due to this helper model `SimpleGPyTorchModel`?
+            self.assertAllClose(conditioned_model._original_train_inputs, X)
+            self.assertAllClose(conditioned_model.train_inputs[0], input_transform(X))
 
     def test_condition_on_observations_input_transform_consistency(self):
         """Test that input transforms are applied consistently in
