@@ -732,9 +732,6 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             conditioned_model = model.condition_on_observations(
                 condition_X, condition_Y
             )
-
-            # why is `original_train_inputs` a tensor and `train_inputs` a list?
-            # is this due to this helper model `SimpleGPyTorchModel`?
             self.assertAllClose(conditioned_model._original_train_inputs, X)
             self.assertAllClose(conditioned_model.train_inputs[0], input_transform(X))
 
