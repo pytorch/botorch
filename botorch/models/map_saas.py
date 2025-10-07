@@ -403,8 +403,15 @@ class AdditiveMapSaasSingleTaskGP(SingleTaskGP):
             if train_Yvar is None
             else None
         )
+        if input_transform is not None:
+            with torch.no_grad():
+                transformed_X = input_transform(train_X)
+            ard_num_dims = transformed_X.shape[-1]
+        else:
+            ard_num_dims = train_X.shape[-1]
+
         covar_module = get_additive_map_saas_covar_module(
-            ard_num_dims=train_X.shape[-1],
+            ard_num_dims=ard_num_dims,
             num_taus=num_taus,
             batch_shape=self._aug_batch_shape,
             # Need to pass dtype and device at initialization of the covar_module

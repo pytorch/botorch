@@ -7,6 +7,7 @@
 import itertools
 import math
 import pickle
+from functools import partial
 from itertools import product
 from typing import Any
 from unittest import mock
@@ -27,7 +28,12 @@ from botorch.models.map_saas import (
     get_gaussian_likelihood_with_gamma_prior,
     get_mean_module_with_normal_prior,
 )
-from botorch.models.transforms.input import AppendFeatures, FilterFeatures, Normalize
+from botorch.models.transforms.input import (
+    AppendFeatures,
+    FilterFeatures,
+    Normalize,
+    NumericToCategoricalEncoding,
+)
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim.utils import get_parameters_and_bounds, sample_all_priors
 from botorch.posteriors.fully_bayesian import GaussianMixturePosterior
@@ -43,6 +49,7 @@ from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior, HalfCauchyPrior, NormalPrior
 from torch import Tensor
+from torch.nn.functional import one_hot
 
 
 class TestMapSaas(BotorchTestCase):
@@ -646,6 +653,30 @@ class TestAdditiveMapSaasSingleTaskGP(BotorchTestCase):
                 train_Yvar=train_Yvar,
             )
         return train_X, train_Y, train_Yvar, model
+
+    def test_input_transform_dimensions(self) -> None:
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            # Create data
+            X = torch.rand(12, 2, **tkwargs) * 2
+            Y = 1 - (X - 0.5).norm(dim=-1, keepdim=True)
+            Y += 0.1 * torch.rand_like(Y)
+            # Add a categorical feature
+            new_col = torch.randint(0, 3, (X.shape[0], 1), **tkwargs)
+            X = torch.cat([X, new_col], dim=1)
+
+            input_transform = NumericToCategoricalEncoding(
+                dim=3,
+                categorical_features={2: 3},
+                encoders={2: partial(one_hot, num_classes=3)},
+            )
+
+            model = AdditiveMapSaasSingleTaskGP(
+                train_X=X,
+                train_Y=Y,
+                input_transform=input_transform,
+            )
+            self.assertEqual(model.covar_module.kernels[0].base_kernel.ard_num_dims, 5)
 
     def test_construct_mean_module(self) -> None:
         tkwargs = {"device": self.device, "dtype": torch.double}
