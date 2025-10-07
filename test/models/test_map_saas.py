@@ -676,8 +676,7 @@ class TestAdditiveMapSaasSingleTaskGP(BotorchTestCase):
                 train_Y=Y,
                 input_transform=input_transform,
             )
-            print(model.covar_module)
-            assert model.covar_module.kernels[0].base_kernel.ard_num_dims == 5
+            self.assertEqual(model.covar_module.kernels[0].base_kernel.ard_num_dims, 5)
 
     def test_construct_mean_module(self) -> None:
         tkwargs = {"device": self.device, "dtype": torch.double}
