@@ -250,8 +250,9 @@ def get_infeasible_cost(
         ],
         dim=0,
     )
+    lb = lb.min(dim=0).values
 
-    if lb.ndim - 1 < posterior.mean.ndim:
+    if lb.ndim < posterior.mean.ndim:
         lb = lb.unsqueeze(-1)
     # Take outcome-wise min. Looping in to handle batched models.
     while lb.dim() > 1:
