@@ -191,8 +191,8 @@ def _estimate_objective_lower_bound(
     """
     # we do not have access to `bounds` here, so we infer the bounding box
     # from data, expanding by 10% in each direction
-    X_lb = X.min(dim=-2)
-    X_ub = X.max(dim=-2)
+    X_lb = X.min(dim=-2).values
+    X_ub = X.max(dim=-2).values
     X_range = X_ub - X_lb
     X_padding = 0.1 * X_range
     uniform_samples = torch.rand(32, X.shape[-1], dtype=X.dtype, device=X.device)
