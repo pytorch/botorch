@@ -145,7 +145,7 @@ class InputTransform(Module, ABC):
         """
         if self.transform_on_train:
             # We need to disable learning of bounds / affine coefficients here.
-            # See why: https://github.com/pytorch/botorch/issues/1078.
+            # See why: https://github.com/meta-pytorch/botorch/issues/1078.
             if hasattr(self, "learn_coefficients"):
                 learn_coefficients = self.learn_coefficients
                 self.learn_coefficients = False

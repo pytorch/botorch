@@ -12,7 +12,6 @@ from typing import Any
 from unittest import mock
 
 import torch
-
 from botorch.exceptions import UnsupportedError
 from botorch.fit import (
     fit_gpytorch_mll,
@@ -23,6 +22,7 @@ from botorch.models import SaasFullyBayesianSingleTaskGP, SingleTaskGP
 from botorch.models.map_saas import (
     add_saas_prior,
     AdditiveMapSaasSingleTaskGP,
+    EnsembleMapSaasSingleTaskGP,
     get_additive_map_saas_covar_module,
     get_gaussian_likelihood_with_gamma_prior,
     get_mean_module_with_normal_prior,
@@ -30,8 +30,11 @@ from botorch.models.map_saas import (
 from botorch.models.transforms.input import AppendFeatures, FilterFeatures, Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim.utils import get_parameters_and_bounds, sample_all_priors
+from botorch.posteriors.fully_bayesian import GaussianMixturePosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.test_utils.mock import mock_optimize
 from botorch.utils.constraints import LogTransformedInterval
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.constraints import Interval
 from gpytorch.kernels import AdditiveKernel, MaternKernel, ScaleKernel
@@ -509,6 +512,112 @@ class TestMapSaas(BotorchTestCase):
                     ),
                     atol=1e-3,
                 )
+
+    @mock_optimize
+    def test_emsemble_map_saas(self) -> None:
+        train_X, train_Y, test_X = self._get_data()
+        d = train_X.shape[-1]
+        num_taus = 8
+        for with_options in (False, True):
+            if with_options:
+                extra_inputs = {
+                    "train_Yvar": 0.1 * torch.rand_like(train_Y),
+                    "taus": torch.rand(num_taus).to(train_X),
+                    "input_transform": Normalize(d=d),
+                    "outcome_transform": None,
+                }
+            else:
+                extra_inputs = {}
+            model = EnsembleMapSaasSingleTaskGP(
+                train_X=train_X, train_Y=train_Y, num_taus=num_taus, **extra_inputs
+            )
+            sample_all_priors(model)  # Checks that the prior is configured correctly.
+            mll = ExactMarginalLogLikelihood(model=model, likelihood=model.likelihood)
+            fit_gpytorch_mll(mll)
+            self.assertIsInstance(model.covar_module, ScaleKernel)
+            self.assertIsInstance(model.covar_module.base_kernel, MaternKernel)
+            self.assertEqual(
+                model.covar_module.base_kernel.lengthscale.shape,
+                torch.Size([num_taus, 1, d]),
+            )
+            self.assertEqual(model.batch_shape, torch.Size([num_taus]))
+            posterior = model.posterior(test_X)
+            self.assertIsInstance(posterior, GaussianMixturePosterior)
+            if with_options:
+                self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
+                self.assertIsInstance(model.input_transform, Normalize)
+                self.assertFalse(hasattr(model, "outcome_transform"))
+            else:
+                self.assertIsInstance(model.likelihood, GaussianLikelihood)
+                self.assertIsInstance(model.outcome_transform, Standardize)
+                self.assertFalse(hasattr(model, "input_transform"))
+
+    def test_ensemble_map_saas_validation(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Expected taus to be of shape"):
+            EnsembleMapSaasSingleTaskGP(
+                train_X=torch.rand(5, 3),
+                train_Y=torch.rand(5, 1),
+                num_taus=3,
+                taus=torch.rand(2),
+            )
+        with self.assertRaisesRegex(UnsupportedError, "only supports single-output"):
+            EnsembleMapSaasSingleTaskGP(
+                train_X=torch.rand(5, 3), train_Y=torch.rand(5, 2)
+            )
+        with self.assertRaisesRegex(UnsupportedError, "only supports 2D inputs"):
+            EnsembleMapSaasSingleTaskGP(
+                train_X=torch.rand(2, 5, 3), train_Y=torch.rand(2, 5, 1)
+            )
+
+    def test_ensemble_map_saas_construct_inputs(self) -> None:
+        """Test the construct_inputs class method for EnsembleMapSaasSingleTaskGP."""
+
+        train_X, train_Y, _ = self._get_data()
+        training_data = SupervisedDataset(
+            X=train_X, Y=train_Y, feature_names=["x1", "x2", "x3"], outcome_names=["y"]
+        )
+
+        # Test with default num_taus
+        inputs_default = EnsembleMapSaasSingleTaskGP.construct_inputs(
+            training_data=training_data
+        )
+        self.assertIn("num_taus", inputs_default)
+        self.assertEqual(inputs_default["num_taus"], 4)
+        self.assertIn("train_X", inputs_default)
+        self.assertIn("train_Y", inputs_default)
+        self.assertAllClose(inputs_default["train_X"], train_X)
+        self.assertAllClose(inputs_default["train_Y"], train_Y)
+
+        # Test with custom num_taus
+        custom_num_taus = 6
+        inputs_custom = EnsembleMapSaasSingleTaskGP.construct_inputs(
+            training_data=training_data, num_taus=custom_num_taus
+        )
+        self.assertIn("num_taus", inputs_custom)
+        self.assertEqual(inputs_custom["num_taus"], custom_num_taus)
+        self.assertIn("train_X", inputs_custom)
+        self.assertIn("train_Y", inputs_custom)
+        self.assertAllClose(inputs_custom["train_X"], train_X)
+        self.assertAllClose(inputs_custom["train_Y"], train_Y)
+
+        # Test with train_Yvar in the dataset
+        train_Yvar = 0.1 * torch.rand_like(train_Y)
+        training_data_with_yvar = SupervisedDataset(
+            X=train_X,
+            Y=train_Y,
+            Yvar=train_Yvar,
+            feature_names=["x1", "x2", "x3"],
+            outcome_names=["y"],
+        )
+        inputs_with_yvar = EnsembleMapSaasSingleTaskGP.construct_inputs(
+            training_data=training_data_with_yvar, num_taus=3
+        )
+        self.assertIn("train_Yvar", inputs_with_yvar)
+        self.assertAllClose(inputs_with_yvar["train_Yvar"], train_Yvar)
+        self.assertEqual(inputs_with_yvar["num_taus"], 3)
+        model_with_yvar = EnsembleMapSaasSingleTaskGP(**inputs_with_yvar)
+        self.assertIsInstance(model_with_yvar, EnsembleMapSaasSingleTaskGP)
+        self.assertEqual(model_with_yvar.batch_shape, torch.Size([3]))
 
 
 class TestAdditiveMapSaasSingleTaskGP(BotorchTestCase):

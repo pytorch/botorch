@@ -166,7 +166,7 @@ def check_min_max_scaling(
             msg = "contained"
         if msg is not None:
             # NOTE: If you update this message, update the warning filters as well.
-            # See https://github.com/pytorch/botorch/pull/2508.
+            # See https://github.com/meta-pytorch/botorch/pull/2508.
             msg = (
                 f"Data (input features) is not {msg} to the unit cube. "
                 "Please consider min-max scaling the input data."
@@ -198,7 +198,7 @@ def check_standardization(
         if Y.shape[-2] <= 1:
             if mean_not_zero:
                 # NOTE: If you update this message, update the warning filters as well.
-                # See https://github.com/pytorch/botorch/pull/2508.
+                # See https://github.com/meta-pytorch/botorch/pull/2508.
                 msg = (
                     f"Data (outcome observations) is not standardized (mean = {Ymean})."
                     " Please consider scaling the input to zero mean and unit variance."
@@ -211,7 +211,7 @@ def check_standardization(
             std_not_one = torch.abs(Ystd - 1).max() > atol_std
             if mean_not_zero or std_not_one:
                 # NOTE: If you update this message, update the warning filters as well.
-                # See https://github.com/pytorch/botorch/pull/2508.
+                # See https://github.com/meta-pytorch/botorch/pull/2508.
                 msg = (
                     "Data (outcome observations) is not standardized "
                     f"(std = {Ystd}, mean = {Ymean})."
@@ -405,13 +405,20 @@ class fantasize(_Flag):
     _state: bool = False
 
 
-def get_task_value_remapping(task_values: Tensor, dtype: torch.dtype) -> Tensor | None:
-    """Construct an mapping of discrete task values to contiguous int-valued floats.
+def get_task_value_remapping(
+    observed_task_values: Tensor,
+    all_task_values: Tensor,
+    dtype: torch.dtype,
+    default_task_value: int | None,
+) -> Tensor | None:
+    """Construct an mapping of observed task values to contiguous int-valued floats.
 
     Args:
-        task_values: A sorted long-valued tensor of task values.
+        observed_task_values: A sorted long-valued tensor of task values.
+        all_task_values: A sorted long-valued tensor of task values.
         dtype: The dtype of the model inputs (e.g. `X`), which the new
             task values should have mapped to (e.g. float, double).
+        default_task_value: The default task value to use for missing task values.
 
     Returns:
         A tensor of shape `task_values.max() + 1` that maps task values
@@ -425,17 +432,31 @@ def get_task_value_remapping(task_values: Tensor, dtype: torch.dtype) -> Tensor 
     if dtype not in (torch.float, torch.double):
         raise ValueError(f"dtype must be torch.float or torch.double, but got {dtype}.")
     task_range = torch.arange(
-        len(task_values), dtype=task_values.dtype, device=task_values.device
+        len(observed_task_values),
+        dtype=all_task_values.dtype,
+        device=all_task_values.device,
     )
     mapper = None
-    if not torch.equal(task_values, task_range):
+
+    if default_task_value is None:
+        fill_value = float("nan")
+    else:
+        mask = observed_task_values == default_task_value
+        if not mask.any():
+            fill_value = float("nan")
+        else:
+            idx = mask.nonzero().item()
+            fill_value = task_range[idx]
+    # if not all tasks are observed or they are not contiguous integers
+    # then map them to contiguous integers
+    if not torch.equal(task_range, all_task_values):
         # Create a tensor that maps task values to new task values.
         # The number of tasks should be small, so this should be quite efficient.
         mapper = torch.full(
-            (int(task_values.max().item()) + 1,),
-            float("nan"),
+            (int(all_task_values.max().item()) + 1,),
+            fill_value,
             dtype=dtype,
-            device=task_values.device,
+            device=all_task_values.device,
         )
-        mapper[task_values] = task_range.to(dtype=dtype)
+        mapper[observed_task_values] = task_range.to(dtype=dtype)
     return mapper
