@@ -155,6 +155,13 @@ def compute_best_feasible_objective(
             raise ValueError(
                 "Must specify `X_baseline` when no feasible observation exists."
             )
+        warnings.warn(
+            "When all training points are infeasible, it is better to use "
+            "q(Log)ProbabilityOfFeasibility.",
+            BotorchWarning,
+            stacklevel=2,
+        )
+
         infeasible_value = _estimate_objective_lower_bound(
             model=model,
             objective=objective,
@@ -329,14 +336,6 @@ def _prune_inferior_shared_processing(
         samples=samples,
         marginalize_dim=marginalize_dim,
     )
-
-    if infeas.all():
-        warnings.warn(
-            "When all training points are infeasible, it is better to use "
-            "q(Log)ProbabilityOfFeasibility.",
-            BotorchWarning,
-            stacklevel=2,
-        )
 
     return max_points, obj_vals, infeas
 

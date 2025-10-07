@@ -589,23 +589,6 @@ class TestQLogNoisyExpectedImprovement(BotorchTestCase):
                 self.assertTrue(torch.equal(acqf.X_baseline, X_baseline[[-1]]))
                 self.assertEqual(kwargs["marginalize_dim"], -3)
 
-                # test warning if all samples are infeasible
-                samples3 = samples[:-1]
-                mm = MockModel(
-                    MockPosterior(
-                        samples=samples3,
-                    )
-                )
-                with self.assertWarnsRegex(BotorchWarning, "ProbabilityOfFeasibility"):
-                    acqf = qLogNoisyExpectedImprovement(
-                        model=mm,
-                        X_baseline=X_baseline[:-1],
-                        prune_baseline=True,
-                        cache_root=False,
-                        objective=mc_obj,
-                        constraints=constraints,
-                    )
-
     def test_cache_root(self):
         sample_cached_path = (
             "botorch.acquisition.cached_cholesky.sample_cached_cholesky"
