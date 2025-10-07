@@ -11,6 +11,7 @@ Utilities for acquisition functions.
 from __future__ import annotations
 
 import math
+import warnings
 from collections.abc import Callable
 
 import torch
@@ -24,6 +25,7 @@ from botorch.exceptions.errors import (
     DeprecationError,
     UnsupportedError,
 )
+from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.fully_bayesian import MCMC_DIM
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
@@ -327,6 +329,15 @@ def _prune_inferior_shared_processing(
         samples=samples,
         marginalize_dim=marginalize_dim,
     )
+
+    if infeas.all():
+        warnings.warn(
+            "When all training points are infeasible, it is better to use "
+            "q(Log)ProbabilityOfFeasibility.",
+            BotorchWarning,
+            stacklevel=2,
+        )
+
     return max_points, obj_vals, infeas
 
 
