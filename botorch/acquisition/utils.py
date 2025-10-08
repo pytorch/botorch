@@ -198,11 +198,13 @@ def _estimate_objective_lower_bound(
     """
     # we do not have access to `bounds` here, so we infer the bounding box
     # from data, expanding by 10% in each direction
-    X_lb = X.min(dim=-2).values
-    X_ub = X.max(dim=-2).values
+    X_lb = X.min(dim=-2, keepdim=True).values
+    X_ub = X.max(dim=-2, keepdim=True).values
     X_range = X_ub - X_lb
     X_padding = 0.1 * X_range
-    uniform_samples = torch.rand(32, X.shape[-1], dtype=X.dtype, device=X.device)
+    uniform_samples = torch.rand(
+        *X.shape[:-2], 32, X.shape[-1], dtype=X.dtype, device=X.device
+    )
     X_samples = X_lb - X_padding + uniform_samples * (X_range + 2 * X_padding)
     # infeasible cost M is such that -M < min_x f(x), thus
     # 0 < min_x f(x) - (-M), so we should take -M as a lower
