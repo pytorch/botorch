@@ -19,7 +19,7 @@ from botorch.fit import (
     get_fitted_map_saas_ensemble,
     get_fitted_map_saas_model,
 )
-from botorch.models import SaasFullyBayesianSingleTaskGP, SingleTaskGP
+from botorch.models import SingleTaskGP
 from botorch.models.map_saas import (
     add_saas_prior,
     AdditiveMapSaasSingleTaskGP,
@@ -299,93 +299,21 @@ class TestMapSaas(BotorchTestCase):
             self.assertTrue(loss < loss_short)
 
     def test_get_saas_ensemble(self) -> None:
-        for infer_noise, taus in itertools.product([True, False], [None, [0.1, 0.2]]):
-            tkwargs = {"device": self.device, "dtype": torch.double}
-            train_X, train_Y, _ = self._get_data_hardcoded(**tkwargs)
-            d = train_X.shape[-1]
-            train_Yvar = (
-                None
-                if infer_noise
-                else 0.1 * torch.arange(len(train_X), **tkwargs).unsqueeze(-1)
+        train_X, train_Y, _ = self._get_data_hardcoded(device=self.device)
+        with self.assertWarnsRegex(
+            DeprecationWarning, "EnsembleMapSaasSingleTaskGP"
+        ), mock.patch("botorch.fit.fit_gpytorch_mll") as mock_fit:
+            model = get_fitted_map_saas_ensemble(
+                train_X=train_X,
+                train_Y=train_Y,
+                input_transform=Normalize(d=train_X.shape[-1]),
+                outcome_transform=Standardize(m=1, batch_shape=torch.Size([4])),
+                optimizer_kwargs={"options": {"maxiter": 3}},
             )
-            # Fit without specifying tau
-            with torch.random.fork_rng():
-                torch.manual_seed(0)
-                model = get_fitted_map_saas_ensemble(
-                    train_X=train_X,
-                    train_Y=train_Y,
-                    train_Yvar=train_Yvar,
-                    input_transform=Normalize(d=d),
-                    outcome_transform=Standardize(m=1),
-                    taus=taus,
-                )
-            self.assertIsInstance(model, SaasFullyBayesianSingleTaskGP)
-            num_taus = 4 if taus is None else len(taus)
-            self.assertEqual(
-                model.covar_module.base_kernel.lengthscale.shape,
-                torch.Size([num_taus, 1, d]),
-            )
-            self.assertEqual(model.batch_shape, torch.Size([num_taus]))
-            # Make sure the lengthscales are reasonable
-            self.assertGreater(
-                model.covar_module.base_kernel.lengthscale[..., 1:].min(), 50
-            )
-            self.assertLess(
-                model.covar_module.base_kernel.lengthscale[..., 0].max(), 10
-            )
-
-            # testing optimizer_options: short optimization run with maxiter = 3
-            with torch.random.fork_rng():
-                torch.manual_seed(0)
-                fit_gpytorch_mll_mock = mock.Mock(wraps=fit_gpytorch_mll)
-                with mock.patch(
-                    "botorch.fit.fit_gpytorch_mll",
-                    new=fit_gpytorch_mll_mock,
-                ):
-                    maxiter = 3
-                    model_short = get_fitted_map_saas_ensemble(
-                        train_X=train_X,
-                        train_Y=train_Y,
-                        train_Yvar=train_Yvar,
-                        input_transform=Normalize(d=d),
-                        outcome_transform=Standardize(m=1),
-                        taus=taus,
-                        optimizer_kwargs={"options": {"maxiter": maxiter}},
-                    )
-                    kwargs = fit_gpytorch_mll_mock.call_args.kwargs
-                    # fit_gpytorch_mll has "option" kwarg, not "optimizer_options"
-                    self.assertEqual(
-                        kwargs["optimizer_kwargs"]["options"]["maxiter"], maxiter
-                    )
-
-            # compute sum of marginal likelihoods of ensemble after short run
-            # NOTE: We can't put MLL in train mode here since
-            # SaasFullyBayesianSingleTaskGP requires NUTS for training.
-            mll_short = ExactMarginalLogLikelihood(
-                model=model_short, likelihood=model_short.likelihood
-            )
-            train_inputs = mll_short.model.train_inputs
-            train_targets = mll_short.model.train_targets
-            loss_short = -mll_short(model_short(*train_inputs), train_targets)
-            # compute sum of marginal likelihoods of ensemble after standard run
-            mll = ExactMarginalLogLikelihood(model=model, likelihood=model.likelihood)
-            # reusing train_inputs and train_targets, since the transforms are the same
-            loss = -mll(model(*train_inputs), train_targets)
-            # the longer running optimization should have smaller loss than the shorter
-            self.assertLess((loss - loss_short).max(), 0.0)
-
-            # test error message
-            with self.assertRaisesRegex(
-                ValueError, "if you only specify one value of tau"
-            ):
-                model_short = get_fitted_map_saas_ensemble(
-                    train_X=train_X,
-                    train_Y=train_Y,
-                    train_Yvar=train_Yvar,
-                    input_transform=Normalize(d=d),
-                    outcome_transform=Standardize(m=1),
-                    taus=[0.1],
-                )
+        self.assertEqual(
+            mock_fit.call_args.kwargs["optimizer_kwargs"], {"options": {"maxiter": 3}}
+        )
+        self.assertIsInstance(model, EnsembleMapSaasSingleTaskGP)
 
     def test_input_transform_in_train(self) -> None:
         train_X, train_Y, test_X = self._get_data()
@@ -522,7 +450,7 @@ class TestMapSaas(BotorchTestCase):
 
     @mock_optimize
     def test_emsemble_map_saas(self) -> None:
-        train_X, train_Y, test_X = self._get_data()
+        train_X, train_Y, test_X = self._get_data(device=self.device)
         d = train_X.shape[-1]
         num_taus = 8
         for with_options in (False, True):
