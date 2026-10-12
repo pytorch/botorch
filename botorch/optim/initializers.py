@@ -707,6 +707,8 @@ def gen_one_shot_hvkg_initial_conditions(
 
     is_mf_hvkg = isinstance(acq_function, qMultiFidelityHypervolumeKnowledgeGradient)
     inner_fixed_features = fixed_features
+    inner_inequality_constraints = inequality_constraints
+    inner_equality_constraints = equality_constraints
     if is_mf_hvkg:
         dim = bounds.shape[-1]
         # normalize to non-negative indices
@@ -732,6 +734,17 @@ def gen_one_shot_hvkg_initial_conditions(
                 for k, v in fixed_features.items()
                 if k in non_fidelity_dims
             }
+        # the same for the linear constraints
+        inner_inequality_constraints = _constraints_on_non_fidelity_dims(
+            constraints=inequality_constraints,
+            target_fidelities=target_fidelities,
+            non_fidelity_dims=non_fidelity_dims,
+        )
+        inner_equality_constraints = _constraints_on_non_fidelity_dims(
+            constraints=equality_constraints,
+            target_fidelities=target_fidelities,
+            non_fidelity_dims=non_fidelity_dims,
+        )
 
     num_optim_restarts = int(round(num_restarts * (1 - frac_random)))
     fantasy_cands, fantasy_vals = optimize_acqf(
@@ -743,8 +756,8 @@ def gen_one_shot_hvkg_initial_conditions(
         fixed_features=inner_fixed_features,
         return_best_only=False,
         options=options,
-        inequality_constraints=inequality_constraints,
-        equality_constraints=equality_constraints,
+        inequality_constraints=inner_inequality_constraints,
+        equality_constraints=inner_equality_constraints,
         sequential=False,
     )
     # sampling from the optimizers
@@ -832,6 +845,55 @@ def gen_one_shot_hvkg_initial_conditions(
         return torch.cat(all_ics, dim=0)
 
     return base_ics
+
+
+def _constraints_on_non_fidelity_dims(
+    constraints: list[tuple[Tensor, Tensor, float]] | None,
+    target_fidelities: dict[int, float],
+    non_fidelity_dims: list[int],
+) -> list[tuple[Tensor, Tensor, float]] | None:
+    r"""Restrict linear constraints to the non-fidelity columns.
+
+    The fidelity columns are fixed to their target fidelities, so their terms are
+    moved to the right hand side. Constraints on fidelity columns only are dropped.
+
+    Args:
+        constraints: A list of tuples ``(indices, coefficients, rhs)`` of
+            constraints on the columns of the full space (``indices`` must be
+            one-dimensional), or None.
+        target_fidelities: A dictionary mapping the (non-negative) indices of the
+            fidelity columns to their target fidelities.
+        non_fidelity_dims: The indices of the non-fidelity columns, in order.
+
+    Returns:
+        The constraints on the non-fidelity columns, indexed by their position in
+        ``non_fidelity_dims``, or None if there are none.
+    """
+    if constraints is None:
+        return None
+    new_constraints = []
+    for indices, coefficients, rhs in constraints:
+        if indices.dim() != 1:
+            raise UnsupportedError(
+                "Inter-point constraints are not supported for "
+                "`qMultiFidelityHypervolumeKnowledgeGradient`."
+            )
+        keep = [k for k, i in enumerate(indices.tolist()) if i in non_fidelity_dims]
+        for k, i in enumerate(indices.tolist()):
+            if i in target_fidelities:
+                rhs = rhs - coefficients[k].item() * target_fidelities[i]
+        if keep:
+            new_indices = [non_fidelity_dims.index(indices[k].item()) for k in keep]
+            new_constraints.append(
+                (
+                    torch.tensor(
+                        new_indices, dtype=indices.dtype, device=indices.device
+                    ),
+                    coefficients[keep],
+                    rhs,
+                )
+            )
+    return new_constraints or None
 
 
 def gen_value_function_initial_conditions(
