@@ -14,7 +14,11 @@ from typing import Any
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
-from botorch.models.gpytorch import GPyTorchModel, ModelListGPyTorchModel
+from botorch.models.gpytorch import (
+    BatchedMultiOutputGPyTorchModel,
+    GPyTorchModel,
+    ModelListGPyTorchModel,
+)
 from botorch.models.model import FantasizeMixin
 from gpytorch.models import IndependentModelList
 from torch import Tensor
@@ -108,15 +112,29 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel, FantasizeMixin):
         i = 0
         for model in self.models:
             j = i + model.num_outputs
-            # The observations of the outputs of multi-output (multi-task) models
-            # are stacked along the data dimension.
-            X_i = torch.cat([X[k] for k in range(i, j)], dim=-2)
-            Y_i = torch.cat([Y[..., k : k + 1] for k in range(i, j)], dim=-2)
-            kwargs_i = kwargs
-            if noise is not None:
-                noise_i = torch.cat(
-                    [noise[..., k : k + 1] for k in range(i, j)], dim=-2
+            if isinstance(model, BatchedMultiOutputGPyTorchModel) and j - i > 1:
+                # A batched multi-output model observes all of its outputs at the
+                # same inputs, so its observations are ``n' x num_outputs``.
+                X_i = X[i]
+                if not all(torch.equal(X[k], X_i) for k in range(i + 1, j)):
+                    raise BotorchTensorDimensionError(
+                        "The inputs of the outputs of a batched multi-output "
+                        "sub-model must be the same."
+                    )
+                Y_i = Y[..., i:j]
+                noise_i = None if noise is None else noise[..., i:j]
+            else:
+                # The observations of the outputs of multi-task models are stacked
+                # along the data dimension.
+                X_i = torch.cat([X[k] for k in range(i, j)], dim=-2)
+                Y_i = torch.cat([Y[..., k : k + 1] for k in range(i, j)], dim=-2)
+                noise_i = (
+                    None
+                    if noise is None
+                    else torch.cat([noise[..., k : k + 1] for k in range(i, j)], dim=-2)
                 )
+            kwargs_i = kwargs
+            if noise_i is not None:
                 if hasattr(model, "outcome_transform"):
                     # The sub-models expect the noise in the transformed space.
                     _, noise_i = model.outcome_transform(
