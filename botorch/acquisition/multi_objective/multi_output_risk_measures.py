@@ -520,7 +520,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         pad_size = self.n_w if self.pad_to_n_w else max([_.shape[0] for _ in mvar_set])
         padded_mvar_list = []
         for mvar_ in mvar_set:
-            if self.expectation:
+            if self.expectation and not samples.requires_grad:
                 padded_mvar_list.append(mvar_.mean(dim=0))
             else:
                 # Repeat the last entry to make ``mvar_set`` ``pad_size x m``.
@@ -533,6 +533,16 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             mvars = self.make_differentiable(
                 prepared_samples=prepared_samples, mvars=mvars
             )
+            if self.expectation:
+                # Average each MVaR set, excluding the padding.
+                set_sizes = torch.tensor(
+                    [mvar_.shape[0] for mvar_ in mvar_set], device=mvars.device
+                ).unsqueeze(-1)
+                is_padding = torch.arange(pad_size, device=mvars.device) >= set_sizes
+                mvars = (
+                    mvars.masked_fill(is_padding.unsqueeze(-1), 0.0).sum(dim=-2)
+                    / set_sizes
+                )
         return mvars.view(*batch_shape, -1, m)
 
 
