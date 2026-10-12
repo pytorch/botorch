@@ -172,6 +172,9 @@ class TestDTLZ(
             self.assertEqual(f.num_objectives, 2)
             self.assertEqual(f.dim, 5)
             self.assertEqual(f.k, 4)
+        # the last objective of DTLZ7 is a function of the other objectives
+        with self.assertRaisesRegex(ValueError, "at least two objectives"):
+            DTLZ7(dim=3, num_objectives=1)
 
     def test_gen_pareto_front(self):
         for dtype in (torch.float, torch.double):

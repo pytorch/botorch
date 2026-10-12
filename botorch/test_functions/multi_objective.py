@@ -587,6 +587,35 @@ class DTLZ7(DTLZ):
 
     _ref_val = 15.0
 
+    def __init__(
+        self,
+        dim: int,
+        num_objectives: int = 2,
+        noise_std: None | float | list[float] = None,
+        negate: bool = False,
+        dtype: torch.dtype = torch.double,
+    ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension of the function.
+            num_objectives: Must be at least two and less than dim.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+            dtype: The dtype that is used for the bounds of the function.
+        """
+        if num_objectives < 2:
+            # The last objective is a function of the other objectives.
+            raise ValueError(
+                f"DTLZ7 requires at least two objectives, but got {num_objectives}."
+            )
+        super().__init__(
+            dim=dim,
+            num_objectives=num_objectives,
+            noise_std=noise_std,
+            negate=negate,
+            dtype=dtype,
+        )
+
     def _evaluate_true(self, X):
         f = []
         for i in range(0, self.num_objectives - 1):
