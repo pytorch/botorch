@@ -278,6 +278,12 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 in general be much larger than the alternative. See ``forward`` for
                 more details on the return shape.
                 NOTE: this is only relevant if ``expectation=False``.
+                NOTE: The padding repeats MVaR values, which does not change exact
+                hypervolume improvements (e.g., of qEHVI), but changes their smooth
+                approximations (e.g., of qLogEHVI and qLogNEHVI). Unless
+                ``pad_to_n_w=True``, the value of a candidate set under such an
+                acquisition function therefore depends slightly on the sizes of the
+                MVaR sets of the other candidate sets in the same t-batch.
             filter_dominated: If True, returns the non-dominated subset of
                 alpha level points (this is MVaR as defined by [Prekopa2012MVaR]_).
                 Disabling this will make it faster, and may be preferable if
