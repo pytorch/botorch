@@ -20,6 +20,9 @@ from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
     qHypervolumeKnowledgeGradient,
     qMultiFidelityHypervolumeKnowledgeGradient,
 )
+from botorch.acquisition.multi_objective.monte_carlo import (
+    qExpectedHypervolumeImprovement,
+)
 from botorch.acquisition.multi_objective.objective import (
     GenericMCMultiOutputObjective,
     IdentityMCMultiOutputObjective,
@@ -169,6 +172,21 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                         expand=lambda X: X,
                         **mf_kwargs,
                     )
+                # test custom value functions raise exception
+                for valfunc_kwargs in (
+                    {"valfunc_cls": qExpectedHypervolumeImprovement},
+                    {"valfunc_argfac": lambda model: {}},
+                ):
+                    with self.assertRaisesRegex(
+                        NotImplementedError,
+                        "Custom value functions .* are not currently supported",
+                    ):
+                        acqf_class(
+                            model=model,
+                            ref_point=ref_point,
+                            **valfunc_kwargs,
+                            **mf_kwargs,
+                        )
 
     def test_evaluate_q_hvkg_cost_aware_utilities(self):
         tkwargs = {"device": self.device, "dtype": torch.double}
