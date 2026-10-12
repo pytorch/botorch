@@ -1265,6 +1265,52 @@ class TestGenOneShotHVKGInitialConditions(BotorchTestCase):
                             == n_value * hvkg.num_pseudo_points
                         )
 
+    def test_gen_one_shot_hvkg_initial_conditions_mf(self):
+        # The fantasy designs of qMFHVKG are optimized over the non-fidelity
+        # columns. Target fidelities with negative indices and fixed features
+        # after a fidelity column must be mapped to these columns.
+        tkwargs = {"device": self.device, "dtype": torch.double}
+        train_X = torch.rand(10, 3, **tkwargs)
+        train_Y = torch.stack([train_X.sum(-1), (1 - train_X).prod(-1)], dim=-1)
+        model = ModelListGP(
+            *(SingleTaskGP(train_X, train_Y[:, i : i + 1]) for i in range(2))
+        )
+        bounds = torch.stack([torch.zeros(3, **tkwargs), torch.ones(3, **tkwargs)])
+        q = 1
+        for target_fidelities, fixed_features, fidelity_col in (
+            ({-1: 1.0}, None, 2),
+            ({2: 1.0}, {0: 0.5}, 2),
+            ({0: 1.0}, {1: 0.5}, 0),
+            ({0: 1.0}, {0: 0.3, 2: 0.5}, 0),
+        ):
+            acqf = qMultiFidelityHypervolumeKnowledgeGradient(
+                model=model,
+                ref_point=torch.zeros(2, **tkwargs),
+                target_fidelities=target_fidelities,
+                num_fantasies=2,
+                num_pareto=2,
+            )
+            ics = gen_one_shot_hvkg_initial_conditions(
+                acq_function=acqf,
+                bounds=bounds,
+                q=q,
+                num_restarts=2,
+                raw_samples=16,
+                fixed_features=fixed_features,
+                # all restarts use optimized fantasy designs
+                options={
+                    "frac_random": 0.1,
+                    "num_inner_restarts": 2,
+                    "raw_inner_samples": 16,
+                },
+            )
+            self.assertEqual(ics.shape, torch.Size([2, q + 4, 3]))
+            # the fantasy designs are at the target fidelity
+            self.assertTrue((ics[:, q:, fidelity_col] == 1.0).all())
+            for col, value in (fixed_features or {}).items():
+                if col != fidelity_col:
+                    self.assertTrue((ics[..., col] == value).all())
+
 
 class TestGenValueFunctionInitialConditions(BotorchTestCase):
     def test_gen_value_function_initial_conditions(self):

@@ -706,9 +706,15 @@ def gen_one_shot_hvkg_initial_conditions(
     )
 
     is_mf_hvkg = isinstance(acq_function, qMultiFidelityHypervolumeKnowledgeGradient)
+    inner_fixed_features = fixed_features
     if is_mf_hvkg:
         dim = bounds.shape[-1]
-        fidelity_dims, fidelity_targets = zip(*acq_function.target_fidelities.items())
+        # normalize to non-negative indices
+        target_fidelities = {
+            k if k >= 0 else dim + k: v
+            for k, v in acq_function.target_fidelities.items()
+        }
+        fidelity_dims, fidelity_targets = zip(*target_fidelities.items())
         value_function = FixedFeatureAcquisitionFunction(
             acq_function=value_function,
             d=dim,
@@ -716,7 +722,16 @@ def gen_one_shot_hvkg_initial_conditions(
             values=fidelity_targets,
         )
 
-        non_fidelity_dims = list(set(range(dim)) - set(fidelity_dims))
+        non_fidelity_dims = [i for i in range(dim) if i not in fidelity_dims]
+        # The fantasy designs are optimized over the non-fidelity columns only, so
+        # map the fixed features to the indices of these columns (the fidelity
+        # columns are fixed to the target fidelities).
+        if fixed_features is not None:
+            inner_fixed_features = {
+                non_fidelity_dims.index(k): v
+                for k, v in fixed_features.items()
+                if k in non_fidelity_dims
+            }
 
     num_optim_restarts = int(round(num_restarts * (1 - frac_random)))
     fantasy_cands, fantasy_vals = optimize_acqf(
@@ -725,7 +740,7 @@ def gen_one_shot_hvkg_initial_conditions(
         q=acq_function.num_pareto,
         num_restarts=options.get("num_inner_restarts", 20),
         raw_samples=options.get("raw_inner_samples", 1024),
-        fixed_features=fixed_features,
+        fixed_features=inner_fixed_features,
         return_best_only=False,
         options=options,
         inequality_constraints=inequality_constraints,
