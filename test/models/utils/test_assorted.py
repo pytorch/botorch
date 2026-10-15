@@ -140,6 +140,17 @@ class TestInputDataChecks(BotorchTestCase):
             check_min_max_scaling(X=X, ignore_dims=[0, 1, 2])
         self.assertFalse(any(issubclass(w.category, InputDataWarning) for w in ws))
 
+    def test_check_min_max_scaling_empty(self):
+        for shape in ((0, 3), (2, 0, 3)):
+            X = torch.empty(shape, device=self.device)
+            for strict in (False, True):
+                with self.subTest(shape=shape, strict=strict):
+                    with warnings.catch_warnings(record=True) as ws:
+                        warnings.simplefilter("always", InputDataWarning)
+                        check_min_max_scaling(X=X, strict=strict)
+                        check_min_max_scaling(X=X, strict=strict, raise_on_fail=True)
+                    self.assertFalse(ws)
+
     def test_check_standardization(self):
         # Ensure that it is not filtered out.
         warnings.filterwarnings("always", category=InputDataWarning)

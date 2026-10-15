@@ -158,7 +158,7 @@ def check_min_max_scaling(
     """
     ignore_dims = ignore_dims or []
     check_dims = list(set(range(X.shape[-1])) - set(ignore_dims))
-    if len(check_dims) == 0:
+    if len(check_dims) == 0 or X.numel() == 0:
         return None
 
     with torch.no_grad():
