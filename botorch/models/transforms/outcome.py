@@ -376,7 +376,7 @@ class Standardize(OutcomeTransform):
         nlzd_idcs = normalize_indices(idcs, d=self._m)
         new_outputs = None
         if self._outputs is not None:
-            # The positions of the transformed outputs in the subset.
+            # map the transformed outputs to their positions in the subset
             new_outputs = [j for j, i in enumerate(nlzd_idcs) if i in self._outputs]
         new_tf = self.__class__(
             m=new_m,
@@ -775,7 +775,7 @@ class Log(OutcomeTransform):
                     f"Negative indexing not supported for {self.__class__.__name__} "
                     "when subsetting outputs and only transforming some outputs."
                 )
-            # The positions of the transformed outputs in the subset.
+            # map the transformed outputs to their positions in the subset
             new_outputs = [j for j, i in enumerate(idcs) if i in self._outputs]
         new_tf = self.__class__(outputs=new_outputs)
         if not self.training:
@@ -935,7 +935,7 @@ class Power(OutcomeTransform):
                     f"Negative indexing not supported for {self.__class__.__name__} "
                     "when subsetting outputs and only transforming some outputs."
                 )
-            # The positions of the transformed outputs in the subset.
+            # map the transformed outputs to their positions in the subset
             new_outputs = [j for j, i in enumerate(idcs) if i in self._outputs]
         new_tf = self.__class__(power=self.power, outputs=new_outputs)
         if not self.training:
@@ -1069,7 +1069,7 @@ class Bilog(OutcomeTransform):
                     f"Negative indexing not supported for {self.__class__.__name__} "
                     "when subsetting outputs and only transforming some outputs."
                 )
-            # The positions of the transformed outputs in the subset.
+            # map the transformed outputs to their positions in the subset
             new_outputs = [j for j, i in enumerate(idcs) if i in self._outputs]
         new_tf = self.__class__(outputs=new_outputs)
         if not self.training:
