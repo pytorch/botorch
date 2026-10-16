@@ -518,6 +518,42 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                         )
                     )
 
+    def test_evaluate_q_hvkg_t_batches(self):
+        # Each t-batch must be evaluated on its own fantasy designs, so that the
+        # value of a t-batch does not depend on the other t-batches.
+        tkwargs = {"device": self.device, "dtype": torch.double}
+        train_X = torch.rand(8, 2, **tkwargs)
+        train_Y = torch.stack([train_X.sum(-1), (1 - train_X).prod(-1)], dim=-1)
+        model = ModelListGP(
+            *(SingleTaskGP(train_X, train_Y[:, i : i + 1]) for i in range(2))
+        )
+        for acqf_class in (
+            qHypervolumeKnowledgeGradient,
+            qMultiFidelityHypervolumeKnowledgeGradient,
+        ):
+            if acqf_class == qMultiFidelityHypervolumeKnowledgeGradient:
+                mf_kwargs = {"target_fidelities": {-1: 1.0}}
+            else:
+                mf_kwargs = {}
+            acqf = acqf_class(
+                model=model,
+                ref_point=torch.zeros(2, **tkwargs),
+                num_fantasies=2,
+                num_pareto=2,
+                **mf_kwargs,
+            )
+            X = torch.rand(3, 1 + acqf.num_pseudo_points, 2, **tkwargs)
+            X_perturbed = X.clone()
+            X_perturbed[1:, 1:] = torch.rand(2, acqf.num_pseudo_points, 2, **tkwargs)
+            with torch.no_grad():
+                val = acqf(X)
+                val_single = torch.cat([acqf(X[i : i + 1]) for i in range(3)])
+                val_perturbed = acqf(X_perturbed)
+            self.assertAllClose(val, val_single)
+            # changing the fantasy designs of t-batches 1 and 2 must not change
+            # the value of t-batch 0
+            self.assertAllClose(val_perturbed[0], val[0])
+
     def test_split_hvkg_fantasy_points(self):
         d = 4
         for dtype, batch_shape, n_f, num_pareto, q in product(
@@ -530,11 +566,16 @@ class TestHypervolumeKnowledgeGradient(BotorchTestCase):
                 X=X, n_f=n_f, num_pareto=num_pareto
             )
             self.assertTrue(torch.equal(X_actual, X[..., :q, :]))
-            self.assertTrue(
-                torch.equal(
-                    X_fant, X[..., q:, :].reshape(n_f, *batch_shape, num_pareto, d)
-                )
+            self.assertEqual(
+                X_fant.shape, torch.Size([n_f, *batch_shape, num_pareto, d])
             )
+            # the i-th block of `num_pareto` points of each t-batch contains the
+            # designs of the i-th fantasy model of that t-batch
+            for i in range(n_f):
+                start = q + i * num_pareto
+                self.assertTrue(
+                    torch.equal(X_fant[i], X[..., start : start + num_pareto, :])
+                )
         # test two many fantasies
         X = torch.rand(10, d, device=self.device)
         n_f = 100
