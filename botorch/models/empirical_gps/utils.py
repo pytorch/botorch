@@ -673,7 +673,22 @@ def project_psd(A: Tensor, min_eigval: float = 0.0) -> Tensor:
     Returns:
         A_psd: (N, N) symmetric PSD matrix closest to A in Frobenius norm.
     """
-    # Eigendecomposition (A should be symmetric, eigh is appropriate)
+    A = (A + A.mT) * 0.5
+    eigenvalues = torch.linalg.eigvalsh(A)
+    if bool((eigenvalues >= min_eigval).all()):
+        # The projection is the identity throughout this open region, even
+        # when eigenvalues repeat and eigenvector derivatives are singular.
+        return A
+    if bool((eigenvalues < min_eigval).all()):
+        return A * 0 + min_eigval * torch.eye(
+            A.shape[-1], device=A.device, dtype=A.dtype
+        )
+    if torch.is_grad_enabled() and A.requires_grad:
+        from botorch.models.empirical_gps._spectral import smooth_psd_floor
+
+        return smooth_psd_floor(A, min_eigval)
+
+    # Eigendecomposition for value-only evaluation.
     eigvals, eigvecs = torch.linalg.eigh(A)
 
     # Clamp negative eigenvalues
