@@ -18,14 +18,17 @@ References
 from __future__ import annotations
 
 import math
+import operator
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
-from copy import copy, deepcopy
+from copy import deepcopy
 from functools import partial
+from numbers import Integral
 from typing import Any, cast, Self
 from warnings import warn
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.model import Model
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
@@ -61,17 +64,40 @@ class RelevancePursuitMixin(ABC):
             support: The indices of the features in the support, subset of range(dim).
         """
 
+        if isinstance(dim, bool) or not isinstance(dim, Integral) or dim < 0:
+            raise ValueError("dim must be a nonnegative integer.")
         self.dim = dim
-        self._support = support if support is not None else []
+        self._support = self._validate_indices([] if support is None else support)
         # Assumption: sparse_parameter is initialized in sparse representation
         self._is_sparse = True
         self._expansion_modifier = None
         self._contraction_modifier = None
 
+    def _validate_indices(self, indices: list[int]) -> list[int]:
+        """Copy and validate support indices before changing model state."""
+        result = []
+        for i in indices:
+            if isinstance(i, bool) or (
+                isinstance(i, Tensor) and (i.ndim != 0 or i.dtype == torch.bool)
+            ):
+                raise ValueError("Support indices must be integers.")
+            try:
+                index = operator.index(i)
+            except TypeError as error:
+                raise ValueError("Support indices must be integers.") from error
+            if not 0 <= index < self.dim:
+                raise ValueError(
+                    f"Support indices must be integers in [0, {self.dim})."
+                )
+            result.append(index)
+        if len(set(result)) != len(result):
+            raise ValueError("Support indices must be unique.")
+        return result
+
     @property
     @abstractmethod
     def sparse_parameter(self) -> Parameter:
-        """The sparse parameter, required to have a single indexing dimension."""
+        """The sparse parameter, indexed along its final dimension."""
         pass  # pragma: no cover
 
     @abstractmethod
@@ -125,7 +151,10 @@ class RelevancePursuitMixin(ABC):
         """
         if not self.is_sparse:
             self.set_sparse_parameter(
-                torch.nn.Parameter(self.sparse_parameter[self.support])
+                torch.nn.Parameter(
+                    self.sparse_parameter[..., self.support],
+                    requires_grad=self.sparse_parameter.requires_grad,
+                )
             )
             self._is_sparse = True
         return self
@@ -137,23 +166,14 @@ class RelevancePursuitMixin(ABC):
             The current object in its dense representation.
         """
         if self.is_sparse:
-            dtype = self.sparse_parameter.dtype
-            device = self.sparse_parameter.device
-            zero = torch.tensor(
-                0.0,
-                dtype=dtype,
-                device=device,
-            )
-            dense_parameter = [
-                (
-                    self.sparse_parameter[self.support.index(i)]
-                    if i in self.support
-                    else zero
+            parameter = self.sparse_parameter
+            dense_parameter = parameter.new_zeros(*parameter.shape[:-1], self.dim)
+            dense_parameter[..., self.support] = parameter
+            self.set_sparse_parameter(
+                torch.nn.Parameter(
+                    dense_parameter, requires_grad=parameter.requires_grad
                 )
-                for i in range(self.dim)
-            ]
-            dense_parameter = torch.tensor(dense_parameter, dtype=dtype, device=device)
-            self.set_sparse_parameter(torch.nn.Parameter(dense_parameter))
+            )
             self._is_sparse = False
         return self
 
@@ -167,23 +187,21 @@ class RelevancePursuitMixin(ABC):
         Returns:
             The current object, updated with the expanded support.
         """
+        indices = self._validate_indices(indices)
         for i in indices:
             if i in self.support:
                 raise ValueError(f"Feature {i} already in the support.")
 
-        self.support.extend(indices)
-        # we need to add the parameter in the sparse representation
         if self.is_sparse:
+            parameter = self.sparse_parameter
+            added = parameter.new_zeros(*parameter.shape[:-1], len(indices))
             self.set_sparse_parameter(
-                torch.nn.Parameter(
-                    torch.cat(
-                        (
-                            self.sparse_parameter,
-                            torch.zeros(len(indices)).to(self.sparse_parameter),
-                        )
-                    )
+                Parameter(
+                    torch.cat((parameter, added), dim=-1),
+                    requires_grad=parameter.requires_grad,
                 )
             )
+        self._support.extend(indices)
         return self
 
     def contract_support(self, indices: list[int]) -> Self:
@@ -196,23 +214,20 @@ class RelevancePursuitMixin(ABC):
         Returns:
             The current object, updated with the contracted support.
         """
-        # indices into the sparse representation of features to *keep*
-        sparse_indices = list(range(len(self.support)))
-        original_support = copy(self.support)
+        indices = self._validate_indices(indices)
         for i in indices:
             if i not in self.support:
                 raise ValueError(f"Feature {i} is not in support.")
-            sparse_indices.remove(original_support.index(i))
-            self.support.remove(i)
-
-        # we need to remove the parameter in the sparse representation
+        keep = [j for j, i in enumerate(self.support) if i not in indices]
         if self.is_sparse:
-            self.set_sparse_parameter(Parameter(self.sparse_parameter[sparse_indices]))
+            parameter = self.sparse_parameter
+            self.set_sparse_parameter(
+                Parameter(parameter[..., keep], requires_grad=parameter.requires_grad)
+            )
         else:
-            requires_grad = self.sparse_parameter.requires_grad
-            self.sparse_parameter.requires_grad_(False)
-            self.sparse_parameter[indices] = 0.0
-            self.sparse_parameter.requires_grad_(requires_grad)  # restore
+            with torch.no_grad():
+                self.sparse_parameter[..., indices] = 0.0
+        self._support = [self.support[j] for j in keep]
         return self
 
     # support initialization helpers
@@ -232,16 +247,18 @@ class RelevancePursuitMixin(ABC):
         Returns:
             The current object with empty support, representation unchanged.
         """
-        self._support = []
-        requires_grad = self.sparse_parameter.requires_grad
         if self.is_sparse:
+            parameter = self.sparse_parameter
             self.set_sparse_parameter(
-                torch.nn.Parameter(torch.tensor([]).to(self.sparse_parameter))
+                Parameter(
+                    parameter.new_empty(*parameter.shape[:-1], 0),
+                    requires_grad=parameter.requires_grad,
+                )
             )
         else:
-            self.sparse_parameter.requires_grad_(False)
-            self.sparse_parameter[:] = 0.0
-        self.sparse_parameter.requires_grad_(requires_grad)
+            with torch.no_grad():
+                self.sparse_parameter.zero_()
+        self._support = []
         return self
 
     # the following two methods are the only ones that are specific to the marginal
@@ -276,7 +293,15 @@ class RelevancePursuitMixin(ABC):
         if len(self.support) == self.dim or n <= 0:
             return False
 
+        if self.sparse_parameter.ndim != 1:
+            raise UnsupportedError(
+                "Discrete support ranking does not support batch parameters."
+            )
         g = self.expansion_objective(mll)
+        if g.ndim != 1:
+            raise UnsupportedError(
+                "Discrete support ranking requires unbatched objective values."
+            )
 
         modifier = modifier if modifier is not None else self._expansion_modifier
         if modifier is not None:
@@ -335,7 +360,7 @@ class RelevancePursuitMixin(ABC):
                 Y,
                 *(model.transform_inputs(X=t_in) for t_in in model.train_inputs),
             ),
-        ).backward()  # evaluation
+        ).sum().backward()  # evaluation
         self.sparse_parameter.requires_grad_(requires_grad)
 
         g = self.sparse_parameter.grad
@@ -349,7 +374,7 @@ class RelevancePursuitMixin(ABC):
         if is_sparse:
             self.to_sparse()
 
-        return g[~self.is_active]  # only need the inactive parameters
+        return g[..., ~self.is_active]  # only need the inactive parameters
 
     def support_contraction(
         self,
@@ -376,6 +401,10 @@ class RelevancePursuitMixin(ABC):
         if len(self.support) == 0 or n <= 0:
             return False
 
+        if self.sparse_parameter.ndim != 1:
+            raise UnsupportedError(
+                "Discrete support ranking does not support batch parameters."
+            )
         is_sparse = self.is_sparse
         self.to_sparse()
         x = self.sparse_parameter
@@ -518,6 +547,10 @@ def forward_relevance_pursuit(
         The relevance pursuit module after forward relevance pursuit optimization, and
         a list of models with different supports that were optimized.
     """
+    if sparse_module.sparse_parameter.ndim != 1:
+        raise UnsupportedError(
+            "Discrete support ranking does not support batch parameters."
+        )
     sparse_module.remove_support()
     if initial_support is not None:
         sparse_module.expand_support(initial_support)
@@ -635,6 +668,10 @@ def backward_relevance_pursuit(
         The relevance pursuit module after forward relevance pursuit optimization, and
         a list of models with different supports that were optimized.
     """
+    if sparse_module.sparse_parameter.ndim != 1:
+        raise UnsupportedError(
+            "Discrete support ranking does not support batch parameters."
+        )
     if initial_support is not None:
         sparse_module.remove_support()
         sparse_module.expand_support(initial_support)
@@ -736,6 +773,10 @@ def get_posterior_over_support(
         if prior_mean_of_support is None:
             raise ValueError(
                 "`log_support_prior` and `prior_mean_of_support` cannot both be None."
+            )
+        if not math.isfinite(prior_mean_of_support) or prior_mean_of_support <= 0:
+            raise ValueError(
+                "prior_mean_of_support must be finite and strictly positive."
             )
         log_support_prior = partial(_exp_log_pdf, mean=prior_mean_of_support)
 
