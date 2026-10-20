@@ -1113,60 +1113,64 @@ def optimize_acqf_list(
     base_X_pendings = [
         getattr(acq_function, "X_pending", None) for acq_function in acq_function_list
     ]
-    for acq_function, base_X_pending in zip(acq_function_list, base_X_pendings):
-        if candidate_list:
-            acq_function.set_X_pending(
-                torch.cat([base_X_pending, candidates], dim=-2)
-                if base_X_pending is not None
-                else candidates
-            )
-        if fixed_features_list:
-            candidate, acq_value = optimize_acqf_mixed(
-                acq_function=acq_function,
-                bounds=bounds,
-                q=1,
-                num_restarts=num_restarts,
-                raw_samples=raw_samples,
-                options=options or {},
-                inequality_constraints=inequality_constraints,
-                equality_constraints=equality_constraints,
-                nonlinear_inequality_constraints=nonlinear_inequality_constraints,
-                fixed_features_list=fixed_features_list,
-                post_processing_func=post_processing_func,
-                ic_generator=ic_generator,
-                ic_gen_kwargs=ic_gen_kwargs,
-                return_acq_values=return_acq_values,
-                retry_on_optimization_warning=retry_on_optimization_warning,
-            )
-        else:
-            ic_gen_kwargs = ic_gen_kwargs or {}
-            candidate, acq_value = optimize_acqf(
-                acq_function=acq_function,
-                bounds=bounds,
-                q=1,
-                num_restarts=num_restarts,
-                raw_samples=raw_samples,
-                options=options or {},
-                inequality_constraints=inequality_constraints,
-                equality_constraints=equality_constraints,
-                nonlinear_inequality_constraints=nonlinear_inequality_constraints,
-                fixed_features=fixed_features,
-                post_processing_func=post_processing_func,
-                return_best_only=True,
-                return_acq_values=return_acq_values,
-                sequential=False,
-                ic_generator=ic_generator,
-                retry_on_optimization_warning=retry_on_optimization_warning,
-                **ic_gen_kwargs,
-            )
-        candidate_list.append(candidate)
-        if return_acq_values:
-            acq_value_list.append(acq_value)
-        candidates = torch.cat(candidate_list, dim=-2)
-    # Reset the acquisition functions to their original X_pending state. The
-    # first one has not been modified.
-    for acq_function, base_X_pending in zip(acq_function_list[1:], base_X_pendings[1:]):
-        acq_function.set_X_pending(base_X_pending)
+    try:
+        for acq_function, base_X_pending in zip(acq_function_list, base_X_pendings):
+            if candidate_list:
+                acq_function.set_X_pending(
+                    torch.cat([base_X_pending, candidates], dim=-2)
+                    if base_X_pending is not None
+                    else candidates
+                )
+            if fixed_features_list:
+                candidate, acq_value = optimize_acqf_mixed(
+                    acq_function=acq_function,
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options=options or {},
+                    inequality_constraints=inequality_constraints,
+                    equality_constraints=equality_constraints,
+                    nonlinear_inequality_constraints=nonlinear_inequality_constraints,
+                    fixed_features_list=fixed_features_list,
+                    post_processing_func=post_processing_func,
+                    ic_generator=ic_generator,
+                    ic_gen_kwargs=ic_gen_kwargs,
+                    return_acq_values=return_acq_values,
+                    retry_on_optimization_warning=retry_on_optimization_warning,
+                )
+            else:
+                ic_gen_kwargs = ic_gen_kwargs or {}
+                candidate, acq_value = optimize_acqf(
+                    acq_function=acq_function,
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options=options or {},
+                    inequality_constraints=inequality_constraints,
+                    equality_constraints=equality_constraints,
+                    nonlinear_inequality_constraints=nonlinear_inequality_constraints,
+                    fixed_features=fixed_features,
+                    post_processing_func=post_processing_func,
+                    return_best_only=True,
+                    return_acq_values=return_acq_values,
+                    sequential=False,
+                    ic_generator=ic_generator,
+                    retry_on_optimization_warning=retry_on_optimization_warning,
+                    **ic_gen_kwargs,
+                )
+            candidate_list.append(candidate)
+            if return_acq_values:
+                acq_value_list.append(acq_value)
+            candidates = torch.cat(candidate_list, dim=-2)
+    finally:
+        # Reset the acquisition functions to their original X_pending state. The
+        # first one has not been modified.
+        for acq_function, base_X_pending in zip(
+            acq_function_list[1:], base_X_pendings[1:]
+        ):
+            acq_function.set_X_pending(base_X_pending)
     if not return_acq_values:
         return candidates, None
     return candidates, torch.stack(acq_value_list)

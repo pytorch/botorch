@@ -2640,6 +2640,38 @@ class TestOptimizeAcqfList(BotorchTestCase):
         for acq_function, base_X_pending in zip(acq_functions[1:], base_X_pendings[1:]):
             self.assertTrue(torch.equal(acq_function.X_pending, base_X_pending))
 
+    def test_optimize_acqf_list_restores_pending_on_error(self):
+        bounds = torch.stack([torch.zeros(2), torch.ones(2)])
+        for fixed_features_list in (None, [{0: 0.5}]):
+            for pending in (None, torch.full((1, 2), 0.25)):
+                with self.subTest(fixed=fixed_features_list, pending=pending):
+                    acquisitions = [MockAcquisitionFunction() for _ in range(3)]
+                    for acquisition in acquisitions:
+                        acquisition.set_X_pending(pending)
+                    originals = [acquisition.X_pending for acquisition in acquisitions]
+                    optimizer = (
+                        "optimize_acqf_mixed"
+                        if fixed_features_list
+                        else "optimize_acqf"
+                    )
+                    with mock.patch(
+                        f"botorch.optim.optimize.{optimizer}",
+                        side_effect=[
+                            (torch.full((1, 2), 0.5), torch.tensor(0.0)),
+                            RuntimeError("deliberate optimizer failure"),
+                        ],
+                    ):
+                        with self.assertRaisesRegex(RuntimeError, "deliberate"):
+                            optimize_acqf_list(
+                                acquisitions,
+                                bounds,
+                                num_restarts=2,
+                                raw_samples=4,
+                                fixed_features_list=fixed_features_list,
+                            )
+                    for acquisition, original in zip(acquisitions, originals):
+                        self.assertIs(acquisition.X_pending, original)
+
     def test_optimize_acqf_list_empty_list(self):
         with self.assertRaises(ValueError):
             optimize_acqf_list(
