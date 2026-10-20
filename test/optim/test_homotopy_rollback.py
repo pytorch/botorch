@@ -12,6 +12,44 @@ from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 
 
 class TestHomotopyFailureRollback(BotorchTestCase):
+    def test_reset_callback_failure_preserves_primary_error(self):
+        for primary_failure in (False, True):
+            with self.subTest(primary_failure=primary_failure):
+                parameter = torch.nn.Parameter(torch.tensor(1.7))
+                original = parameter.item()
+
+                def callback():
+                    if parameter.item() == original:
+                        raise RuntimeError("reset callback failure")
+
+                homotopy = Homotopy(
+                    [HomotopyParameter(parameter, FixedHomotopySchedule([1.0, 0.5]))],
+                    callbacks=[callback],
+                )
+                acquisition = MockAcquisitionFunction()
+                expected = (
+                    "primary optimizer failure"
+                    if primary_failure
+                    else "reset callback failure"
+                )
+                with mock.patch(
+                    "botorch.optim.optimize_homotopy.optimize_acqf",
+                    side_effect=RuntimeError("primary optimizer failure")
+                    if primary_failure
+                    else None,
+                    return_value=(torch.tensor([[[0.3]]]), torch.tensor([1.0])),
+                ):
+                    with self.assertRaisesRegex(RuntimeError, expected):
+                        optimize_acqf_homotopy(
+                            acquisition,
+                            bounds=torch.tensor([[0.0], [1.0]]),
+                            q=1,
+                            num_restarts=1,
+                            raw_samples=4,
+                            homotopy=homotopy,
+                        )
+                self.assertEqual(parameter.item(), original)
+
     def test_optimization_failure_restores_parameters_and_pending(self):
         for q in (1, 2):
             for with_pending in (False, True):
