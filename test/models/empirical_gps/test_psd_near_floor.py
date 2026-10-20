@@ -174,18 +174,38 @@ def test_gap_projector_retains_explicit_nondifferentiable_threshold_error(device
 def test_float32_public_projection_classifies_promoted_matrix(
     device, sign, differentiable
 ):
-    # These rotations produce actual float32 matrices with a mixed spectrum.
-    # On the audited LAPACK/cuSOLVER versions, float32 eigvalsh instead puts
-    # all eigenvalues on the sign's side of the floor, incorrectly selecting
-    # the identity (sign=+1) or constant (sign=-1) fast path. The promoted
-    # matrix is the independent oracle, irrespective of platform eig rounding.
-    generator = torch.Generator(device=device).manual_seed(3 if device == "cpu" else 0)
-    basis, _ = torch.linalg.qr(
-        torch.randn(4, 4, dtype=torch.double, device=device, generator=generator)
+    # Freeze the actual float32 input bits from an audited rotation. This
+    # keeps the mixed spectrum stable across QR implementations/platforms.
+    value = sign * torch.tensor(
+        [
+            [
+                1.5666307210922241,
+                -0.382068932056427,
+                -0.03425976634025574,
+                -0.4736507833003998,
+            ],
+            [
+                -0.382068932056427,
+                0.197843998670578,
+                0.24863938987255096,
+                0.35323911905288696,
+            ],
+            [
+                -0.03425976634025574,
+                0.24863938987255096,
+                0.5523788928985596,
+                0.5561136603355408,
+            ],
+            [
+                -0.4736507833003998,
+                0.35323911905288696,
+                0.5561136603355408,
+                0.6831463575363159,
+            ],
+        ],
+        dtype=torch.float32,
+        device=device,
     )
-    value = (
-        basis @ torch.diag(basis.new_tensor([0.0, 0.0, sign, 2 * sign])) @ basis.mT
-    ).float()
     value.requires_grad_(differentiable)
     promoted = (value.detach().double() + value.detach().double().mT) * 0.5
     eigenvalues, vectors = torch.linalg.eigh(promoted)
