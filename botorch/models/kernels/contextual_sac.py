@@ -67,10 +67,13 @@ class SACKernel(Kernel):
                     "num of parameters needs to be same across all contexts"
                 )
 
-        self._indexers = {
-            context: torch.tensor(active_params, device=self.device)
-            for context, active_params in self.decomposition.items()
-        }
+        self._indexer_buffer_names = {}
+        for i, (context, active_params) in enumerate(self.decomposition.items()):
+            name = f"_context_indices_{i}"
+            self.register_buffer(
+                name, torch.tensor(active_params, device=self.device), persistent=False
+            )
+            self._indexer_buffer_names[context] = name
 
         self.base_kernel = get_covar_module_with_dim_scaled_prior(
             ard_num_dims=num_param,
@@ -87,6 +90,13 @@ class SACKernel(Kernel):
     @property
     def device(self) -> torch.device | None:
         return self._device
+
+    @property
+    def _indexers(self) -> dict[str, Tensor]:
+        return {
+            context: getattr(self, name)
+            for context, name in self._indexer_buffer_names.items()
+        }
 
     def forward(
         self,
