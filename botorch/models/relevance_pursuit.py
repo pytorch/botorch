@@ -342,39 +342,48 @@ class RelevancePursuitMixin(ABC):
             The gradient of the marginal likelihood with respect to the inactive
             sparse parameters.
         """
-        # evaluate gradient of the sparse parameter
-        is_sparse = self.is_sparse  # in order to restore the original representation
-        self.to_dense()  # need the parameter in its dense parameterization
-
-        requires_grad = self.sparse_parameter.requires_grad
-        self.sparse_parameter.requires_grad_(True)
-        if self.sparse_parameter.grad is not None:
-            self.sparse_parameter.grad.zero_()
-        mll.train()  # NOTE: this changes model.train_inputs
-        model = mll.model
-        X, Y = model.train_inputs[0], model.train_targets
-        cast(
-            Tensor,
-            mll(
-                mll.model(X),
-                Y,
-                *(model.transform_inputs(X=t_in) for t_in in model.train_inputs),
-            ),
-        ).sum().backward()  # evaluation
-        self.sparse_parameter.requires_grad_(requires_grad)
-
-        g = self.sparse_parameter.grad
-        if g is None:
-            raise ValueError(
-                "The gradient of the sparse_parameter is None, most likely "
-                "because the passed marginal likelihood is not a function of the "
-                "sparse_parameter."
-            )
-
-        if is_sparse:
-            self.to_sparse()
-
-        return g[..., ~self.is_active]  # only need the inactive parameters
+        original_parameter = self.sparse_parameter
+        original_gradient = original_parameter.grad
+        is_sparse = self.is_sparse
+        requires_grad = original_parameter.requires_grad
+        completed = False
+        try:
+            self.to_dense()  # need the parameter in its dense parameterization
+            self.sparse_parameter.requires_grad_(True)
+            # A stale zero gradient must not hide a missing dependency on rho.
+            self.sparse_parameter.grad = None
+            mll.train()  # NOTE: this changes model.train_inputs
+            model = mll.model
+            X, Y = model.train_inputs[0], model.train_targets
+            cast(
+                Tensor,
+                mll(
+                    model(X),
+                    Y,
+                    *(model.transform_inputs(X=t_in) for t_in in model.train_inputs),
+                ),
+            ).sum().backward()
+            g = self.sparse_parameter.grad
+            if g is None:
+                raise ValueError(
+                    "The gradient of the sparse_parameter is None, most likely "
+                    "because the passed marginal likelihood is not a function of the "
+                    "sparse_parameter."
+                )
+            result = g[..., ~self.is_active]
+            completed = True
+            return result
+        finally:
+            if completed:
+                self.sparse_parameter.requires_grad_(requires_grad)
+                if is_sparse:
+                    self.to_sparse()
+            else:
+                if self.sparse_parameter is not original_parameter:
+                    self.set_sparse_parameter(original_parameter)
+                self._is_sparse = is_sparse
+                self.sparse_parameter.requires_grad_(requires_grad)
+                self.sparse_parameter.grad = original_gradient
 
     def support_contraction(
         self,

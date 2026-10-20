@@ -357,6 +357,62 @@ class TestRelevancePursuitCorrectness(BotorchTestCase):
         self.assertIs(mll.likelihood, model.likelihood)
         self.assertEqual(model.likelihood.noise_covar.support, [1])
 
+    def test_failed_sparse_gradient_restores_representation_and_trainability(self):
+        X, Y = self._data()
+        for dense in (False, True):
+            for frozen in (False, True):
+                for stage in ("model", "mll", "backward", "none"):
+                    with self.subTest(dense=dense, frozen=frozen, stage=stage):
+                        likelihood = SparseOutlierGaussianLikelihood(
+                            HomoskedasticNoise().to(X),
+                            dim=5,
+                            outlier_indices=[2],
+                            convex_parameterization=False,
+                        )
+                        model = SingleTaskGP(
+                            X, Y, likelihood=likelihood, outcome_transform=None
+                        )
+                        noise = likelihood.noise_covar
+                        if dense:
+                            noise.to_dense()
+                        noise.raw_rho.requires_grad_(not frozen)
+                        noise.raw_rho.grad = torch.full_like(noise.raw_rho, 0.7)
+                        parameter = noise.raw_rho
+                        values, gradient, support = (
+                            parameter.clone(),
+                            parameter.grad.clone(),
+                            list(noise.support),
+                        )
+                        mll = ExactMarginalLogLikelihood(likelihood, model)
+                        if stage == "none":
+                            other = SingleTaskGP(X, Y, outcome_transform=None)
+                            mll = ExactMarginalLogLikelihood(other.likelihood, other)
+                            context = patch.object(noise, "_expansion_modifier", None)
+                            exception, message = ValueError, "gradient.*is None"
+                        elif stage == "backward":
+                            context = patch.object(
+                                torch.Tensor,
+                                "backward",
+                                side_effect=RuntimeError("injected backward failure"),
+                            )
+                            exception, message = RuntimeError, "injected"
+                        else:
+                            target = model if stage == "model" else mll
+                            context = patch.object(
+                                target,
+                                "forward",
+                                side_effect=RuntimeError("injected evaluation failure"),
+                            )
+                            exception, message = RuntimeError, "injected"
+                        with context, self.assertRaisesRegex(exception, message):
+                            noise._sparse_parameter_gradient(mll)
+                        self.assertIs(noise.raw_rho, parameter)
+                        self.assertEqual(noise.is_sparse, not dense)
+                        self.assertEqual(noise.support, support)
+                        self.assertEqual(noise.raw_rho.requires_grad, not frozen)
+                        self.assertAllClose(noise.raw_rho, values)
+                        self.assertAllClose(noise.raw_rho.grad, gradient)
+
     def test_batched_discrete_ranking_rejects_without_mutation(self):
         noise = self._noise(batch=(2,), support=[2])
         parameter, support = noise.raw_rho, list(noise.support)

@@ -249,8 +249,11 @@ class SparseOutlierNoise(Noise, RelevancePursuitMixin):
         NOTE: We can't use the property setter @sparse_parameter.setter because of
         the special way PyTorch treats Parameter types, including custom setters.
         """
-        self.raw_rho = torch.nn.Parameter(
-            value.to(self.raw_rho), requires_grad=value.requires_grad
+        converted = value.to(self.raw_rho)
+        self.raw_rho = (
+            converted
+            if isinstance(converted, Parameter)
+            else Parameter(converted, requires_grad=value.requires_grad)
         )
 
     @property
