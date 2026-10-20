@@ -27,15 +27,24 @@ class ContextualKernelTest(BotorchTestCase):
         for device in (torch.device("cuda"), torch.device("cpu")):
             with self.subTest(device=device):
                 kernel.to(device)
-                x = torch.rand(3, 4, device=device, dtype=torch.double, requires_grad=True)
-                z = torch.rand(2, 4, device=device, dtype=torch.double, requires_grad=True)
+                x = torch.rand(
+                    3, 4, device=device, dtype=torch.double, requires_grad=True
+                )
+                z = torch.rand(
+                    2, 4, device=device, dtype=torch.double, requires_grad=True
+                )
                 actual = kernel(x, z).to_dense()
+                self.assertEqual(kernel.device, x.device)
                 expected = sum(
-                    kernel.kernel_dict[context](x[..., indices], z[..., indices]).to_dense()
+                    kernel.kernel_dict[context](
+                        x[..., indices], z[..., indices]
+                    ).to_dense()
                     for context, indices in decomposition.items()
                 )
                 self.assertAllClose(actual, expected)
-                actual_grad = torch.autograd.grad(actual.square().sum(), (x, z), retain_graph=True)
+                actual_grad = torch.autograd.grad(
+                    actual.square().sum(), (x, z), retain_graph=True
+                )
                 expected_grad = torch.autograd.grad(expected.square().sum(), (x, z))
                 for actual_value, expected_value in zip(actual_grad, expected_grad):
                     self.assertAllClose(actual_value, expected_value)

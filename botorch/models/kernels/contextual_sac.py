@@ -89,7 +89,8 @@ class SACKernel(Kernel):
 
     @property
     def device(self) -> torch.device | None:
-        return self._device
+        parameter = next(self.parameters(), None)
+        return self._device if parameter is None else parameter.device
 
     @property
     def _indexers(self) -> dict[str, Tensor]:
