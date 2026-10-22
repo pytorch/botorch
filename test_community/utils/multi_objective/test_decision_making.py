@@ -8,12 +8,45 @@ from unittest import skipUnless
 import torch
 from botorch.utils.testing import BotorchTestCase
 from botorch_community.utils.multi_objective.decision_making import (
+    _pareto_tiled,
     knee_region,
     select_preferred,
 )
 
 
 class TestDecisionMaking(BotorchTestCase):
+    def test_tiled_dominance_preserves_duplicates_and_batch_order(self) -> None:
+        costs = torch.tensor(
+            [[0.0, 1.0], [0.2, 0.4], [0.2, 0.4], [1.0, 0.0], [2.0, 2.0], [0.4, 0.2]],
+            dtype=torch.double,
+            device=self.device,
+        )
+        batch = torch.stack((costs, costs.flip(0))).unsqueeze(0)
+        expected = torch.tensor(
+            [
+                [
+                    [True, True, False, True, False, True],
+                    [True, False, True, True, False, True],
+                ]
+            ],
+            device=self.device,
+        )
+        for budget in (1, 32, 128, 1024):
+            self.assertTrue(
+                torch.equal(_pareto_tiled(batch, max_bytes=budget), expected)
+            )
+
+    def test_large_front_matches_cpu_reference(self) -> None:
+        generator = torch.Generator().manual_seed(18)
+        costs = torch.rand(2, 1025, 3, generator=generator, dtype=torch.double)
+        costs[:, 100] = costs[:, 0]
+        reference = knee_region(costs, maximize=False)
+        self.assertTrue(
+            torch.equal(
+                knee_region(costs.to(self.device), maximize=False).cpu(), reference
+            )
+        )
+
     def front(self, dtype: torch.dtype = torch.double) -> torch.Tensor:
         return torch.tensor(
             [[0.0, 1.0], [0.2, 0.4], [0.4, 0.2], [1.0, 0.0]],

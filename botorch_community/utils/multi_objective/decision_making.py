@@ -43,8 +43,51 @@ def _alpha(alpha: float) -> float:
     return float(alpha)
 
 
+_CUDA_COMPARISON_BYTES = 4 * 1024**2
+
+
+def _pareto_tiled(costs: Tensor, *, max_bytes: int = _CUDA_COMPARISON_BYTES) -> Tensor:
+    """Compare finite costs in tiles, keeping the first duplicate.
+
+    The budget sizes comparison tiles, not total allocator/process memory.
+    Unlike a point-by-point GPU loop, no data-dependent host synchronizations
+    are required. Batch, target and source dimensions can all be tiled.
+    """
+    n, m = costs.shape[-2:]
+    flat = costs.reshape(-1, n, m)
+    # Two objective comparisons plus reduced pair masks are live in stages.
+    capacity = max(1, max_bytes // (m + 4))
+    batch_step = min(flat.shape[0], max(1, capacity // n))
+    source_step = min(n, max(1, capacity // batch_step))
+    target_step = min(n, max(1, capacity // (batch_step * source_step)))
+    result = torch.empty(flat.shape[:-1], dtype=torch.bool, device=costs.device)
+    indices = torch.arange(n, device=costs.device)
+    for b in range(0, flat.shape[0], batch_step):
+        batch = flat[b : b + batch_step]
+        for i in range(0, n, target_step):
+            targets = batch[:, i : i + target_step].unsqueeze(-2)
+            dominated = torch.zeros(
+                targets.shape[:2], dtype=torch.bool, device=costs.device
+            )
+            for j in range(0, n, source_step):
+                sources = batch[:, j : j + source_step].unsqueeze(-3)
+                no_worse = (sources <= targets).all(dim=-1)
+                strict = (sources < targets).any(dim=-1)
+                earlier = indices[j : j + source_step].unsqueeze(0) < indices[
+                    i : i + target_step
+                ].unsqueeze(-1)
+                dominated |= (no_worse & (strict | earlier)).any(dim=-1)
+            result[b : b + batch_step, i : i + target_step] = ~dominated
+    return result.reshape(costs.shape[:-1])
+
+
 def _pareto(costs: Tensor) -> Tensor:
-    # Reuse upstream's memory-bounded dominance and duplicate handling.
+    n, m = costs.shape[-2:]
+    pairs = math.prod(costs.shape[:-2]) * n**2
+    if costs.is_cuda and (
+        n > 1000 or pairs * max(costs.element_size(), m + 4) > _CUDA_COMPARISON_BYTES
+    ):
+        return _pareto_tiled(costs)
     return is_non_dominated(costs, maximize=False, deduplicate=True)
 
 

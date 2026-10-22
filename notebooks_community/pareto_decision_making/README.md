@@ -24,7 +24,8 @@ tests, 18 initial upstream selector CPU/CUDA tests, and 144 exact mask/index
 comparisons across both library CUDA facades. The external HITL repository's
 complete suite passed 1,250 tests, with 11 runtime skips and one
 collection-skipped module; five new replay tests and static paper checks
-passed. Full LaTeX and Docusaurus builds were not performed.
+passed. Full LaTeX was not rebuilt. Complete Docusaurus builds subsequently
+passed locally and on GitHub Actions.
 
 The expanded selector/FPBI/harness CPU check passed 36 tests and ten subtests,
 with ten CUDA tests skipped in that environment (46 test functions). A
@@ -35,6 +36,19 @@ exact parity. These validate the later port, not a rerun of old performance
 measurements on new FPBI module bytes. See the
 [FPBI port validation record](evidence/validation/fpbi-port-validation.json)
 and [current check summary](evidence/validation/current-upstream-checks.json).
+
+Installable previews are available for
+[OpenBO 0.1.1rc1](https://github.com/M-Colley/openbo/releases/tag/openbo-v0.1.1rc1)
+and [Rust previews](https://github.com/M-Colley/botorch-rust/releases),
+with an [isolated feature PR](https://github.com/M-Colley/botorch-rust/pull/4).
+Both have installed-wheel checks and source/RECORD verification. The native
+wheel targets Windows x64 with CPython 3.11+ ABI compatibility; native
+compatibility on other operating systems has not been established here.
+Rust CI exposed a checkout-relative subprocess test and an eager optional
+SciPy import in the first preview. The follow-up fixes use the installed
+package path and import SciPy only for sampling; a blocked-SciPy geometry
+regression and the original checkout's 25 focused tests pass. Failed CI and
+the first preview remain part of the release history.
 
 ## What did not improve
 
@@ -130,7 +144,37 @@ See [summary with ranges](evidence/fpbi/summary.csv),
 favor vectorized population evaluation. They are not a general optimizer
 ranking, noisy BO experiment or global-optimality certificate.
 
-### Selector runtime and memory
+### Fitted noisy-data GP follow-up
+
+An additional 36 runs use shared fitted `SingleTaskGP` models: 24 training
+points for the 2D cases, 48 for the sphere, independent Gaussian observation
+noise with SD 2% of each known analytic outcome range, and three seeds.
+Training data, fitted model, feasible domain and posterior-mean output cap
+are shared by the three arms. Fit time and separate true-outcome audits are
+excluded from front-generation time and query budgets.
+
+| Case | FPBI true HV ratio | Budget-matched NSGA-II true HV ratio | FPBI seconds | NSGA-II seconds |
+| --- | ---: | ---: | ---: | ---: |
+| Convex 2D | 0.9264 | 0.9485 | 0.8855 | 0.0945 |
+| Concave 2D | 0.8525 | 0.8743 | 0.9410 | 0.0801 |
+| Constrained 2D | 0.8940 | 0.9234 | 0.8414 | 0.0888 |
+| Sphere 3D | 0.4835 | 0.6810 | 6.2143 | 0.5103 |
+
+No complete run failed. NSGA-II again had better median true HV and IGD
+on all four cases; FPBI was slower here. Known analytic ranges support
+benchmark normalization and capping. Predicted HV is reported separately
+and can overstate true quality. Across case medians, held-out latent 95%
+interval coverage was approximately 84–93%, so uncertainty is not a safety
+certificate. These are fitted-surrogate front-generation diagnostics,
+without an acquisition loop or evidence of human benefit. See
+[raw runs](evidence/fitted-gp-benchmark/runs.json),
+[summary](evidence/fitted-gp-benchmark/summary.csv), and the
+[recorded protocol](evidence/fitted-gp-benchmark/protocol.json).
+The exact measured harness is preserved in that evidence folder. The maintained
+harness later gained a failure-path guard: a successful fixed-budget NSGA-II
+run remains reportable when FPBI fails, with no invented budget ratio.
+
+### Historical selector runtime and memory
 
 All 396 indices and 79,104 knee-mask entries match exactly in 48 paired
 function configurations. Full selection improved in 11/12 CPU and 4/12 CUDA
@@ -146,12 +190,33 @@ the full selector above. See [all paired timings and allocator counts](evidence/
 [protocol](evidence/selector/protocol.json). This was one machine, two warmups,
 five repetitions and observed independent background workloads. The results
 are descriptive ranges, not isolated-machine or cross-hardware speed claims.
-No implementation path was retuned after seeing the results.
+No implementation path was retuned within that historical experiment.
 
 The baseline is the earlier Torch prototype; the measured candidate is the
-vectorized upstream selector. The archived `after.py.txt` hash matches
-`botorch_community/utils/multi_objective/decision_making.py` at packaging
-time. The later upstream FPBI port is a separate module.
+vectorized upstream selector before the following GPU correction. The archived
+`after.py.txt` preserves that measured version; its hash is not the hash of
+the current selector. The upstream FPBI port is a separate module.
+
+### GPU correction and measured follow-up
+
+The current selector compares large CUDA fronts in tiles with a 4 MiB
+comparison-tile budget, avoiding the old per-point dispatch latency. This
+budget does not bound total allocator or process memory. CPU and small CUDA
+fronts retain the existing dispatch. Both new 48-configuration paired
+experiments preserved every index and mask exactly.
+
+Against the previous upstream version, full selection at `(1,1024,3)` fell
+from 93.10 to 2.58 ms (float32, 36.1x) and 145.98 to 5.64 ms (float64,
+25.9x). Incremental live allocation rose to about 3.62 MB. In a separate
+direct comparison with the original prototype, these large-front cases
+were 1.23x and 1.46x faster, with lower allocation than that prototype.
+Some other configurations were slower; small unchanged paths also show
+timing variation. Independent background work was observed. These timings
+describe this machine and protocol, rather than a universal speed claim.
+See [previous-version comparison](evidence/selector-optimization/report.md),
+[original-prototype comparison](evidence/selector-optimization-vs-original/report.md),
+their raw repeats/protocols/source snapshots, and the
+[follow-up checksum index](evidence/followup-file-hashes.json).
 
 ## Applicable uses
 
@@ -184,17 +249,15 @@ python -m notebooks_community.pareto_decision_making.experiments.benchmark_selec
 Check each harness's `--help` and current tests before running. Use fresh
 output directories. The FPBI command runs the **later upstream port**, not
 the historical OpenBO package. The selector command loads the checked-out
-candidate, whose hash matched the archived measured candidate at packaging
-time. Preserve or check those hashes if reproducing later. Changed software,
+candidate. The historical and corrected versions have separate recorded
+hashes. Preserve or check those hashes if reproducing later. Changed software,
 hardware or background load can change timings.
 
 The combined current CPU check can be repeated with:
 
 ```bash
-python -m pytest test_community/utils/multi_objective/test_decision_making.py \
-  test_community/utils/multi_objective/test_fpbi.py \
-  test_community/utils/multi_objective/test_fpbi_benchmark.py \
-  test_community/utils/multi_objective/test_selector_benchmark.py -q
+python -m pytest test_community/utils/multi_objective/ \
+  test_community/scripts/test_convert_ipynb_to_mdx.py -q
 ```
 
 ## Historical provenance and source snapshots
@@ -204,7 +267,11 @@ invocation with the candidate package staged separately from the repository
 root, matching the installed-package import boundary used by CI. The two
 benchmark tests now load their uninstalled experiment scripts by explicit
 file path. That check passed 36 tests and 10 subtests, with 10 CUDA skips.
-This is one Windows CPU check; the complete upstream CI matrix is pending.
+The subsequent six-job Windows/Linux/macOS x Python 3.11/3.14 matrix passed,
+as did executed-notebook and full Docusaurus builds at
+[commit 829ca09](https://github.com/M-Colley/botorch/actions/runs/39738627474).
+That run preceded the GPU correction and fitted-GP/pilot additions; the final
+commit is validated separately. CI does not exercise CUDA hardware.
 
 The [checksum index](evidence/packaged-file-hashes.json) verifies copied source
 snapshots against the original provenance hashes. Historical Python sources
@@ -229,34 +296,54 @@ published file. Original source snapshots retain exact bytes and their
 original source hashes. Reproduction helper hashes captured during packaging
 are labeled separately from the measurement-time provenance.
 
-## External replay data and dependencies
+## Public replay data and exact reproduction
 
-The selection replay is **not a standalone upstream runnable experiment**.
-It depends on the external
-[HITL robustness repository](https://github.com/M-Colley/hitl-mobo-robustness-tests),
-including `scripts/analyse_boba_adaptations.py`, `scripts/replay_mo_front.py`
-and their helper dependencies. Raw MOBO archives are not bundled here and
-may not be available from a repository clone; obtain the 100 CSVs listed in
-[the sanitized provenance](evidence/selection/provenance.json) from the
-authors or an accessible archive. Their filenames and original SHA256 hashes
-allow identity checks. Summary CSVs alone cannot recreate the original choices.
+The complete standalone artifact is now public:
+[selection-replay-v1.0.0](https://github.com/M-Colley/hitl-mobo-robustness-tests/releases/tag/selection-replay-v1.0.0).
+The ZIP SHA256 is
+`06366a5e1adffccc8e7e97b95ac0a7198cf8dad721ae7d968def226d589a6409`;
+artifact commit is `56b4ffcbc8d692beca9e9ceb008fc6d9454264c1`.
+It contains all 100 exact synthetic CSV archives, the historical selector,
+helper-source closure, pinned environment, portable runner, reference results
+and checksums. No participant data are included.
 
-After obtaining that repository and its logs, restore the historical replay
-source to its `scripts/replay_schmitt_decisions.py`, and provide a compatible
-OpenBO checkout. From the external repository root, with sibling checkout
-layout, run:
+Extract the ZIP, follow its README/environment requirements, then run from
+the extracted artifact directory:
 
 ```bash
-python scripts/replay_schmitt_decisions.py --input-dir output-boba-mo-halo \
-  --openbo-src ../openbo/src --output-dir replay-results-new --run
+python run_replay.py --verify-only
+python run_replay.py --output-dir ../replay-results-new
 ```
 
-The historical helper source hashes are recorded in
-`evidence/selection/reproduction-helper-hashes.json`; the numerical versions
-and original selector hashes are in the provenance. The complete external
-suite command was `python -m pytest tests/ -q --durations=10`; the focused
-command was `python -m pytest tests/test_replay_schmitt_decisions.py -q`.
-See [validation status](evidence/selection/validation.json) and
-[archive integrity](evidence/selection/archive_integrity.json). This bundle
-does not package participant data, raw MOBO log archives or generated website
-MDX files.
+The archive's README is authoritative for the exact runner options. A fresh
+extraction reproduced all 98,100 scored rows and five reference reports
+exactly, with zero new objective evaluations and zero GP fits. Anonymous
+download and the ZIP checksum were independently verified. The published
+environment was Windows x86-64 CPU/Python 3.15.0; numeric portability to
+other environments is a separate question. The upstream compact evidence
+remains a summary/source bundle; the release supplies the complete raw data.
+
+## Fitted-GP experiment and private human-feedback pilot
+
+Run the fitted-GP experiment from the repository root, using the development
+environment and optional `pymoo` dependency:
+
+```bash
+python -m notebooks_community.pareto_decision_making.experiments.benchmark_gp_fpbi \
+  --output-dir fitted-gp-results-new
+```
+
+The defaults record all four cases, three seeds and three arms before
+measuring results. Model fitting uses noisy observations. Front generation
+uses posterior means; held-out latent coverage and true front quality are
+audited separately. Protocol/source hashes and failure effort are retained.
+
+The [human-feedback protocol](experiments/human_feedback_protocol.md) and
+[pilot CLI](experiments/human_feedback_pilot.py) support a private, method-blind
+one-person choice exercise with a repeated question and abstention. Run
+`python -m notebooks_community.pareto_decision_making.experiments.human_feedback_pilot --help`
+for interactive/template usage. No real human responses or human-benefit
+results are packaged. Automated pilot tests use explicitly synthetic choices.
+This validates input, logging and consistency analysis; a real study or
+closed-loop acquisition comparison still requires actual participants and
+an application-specific protocol.

@@ -50,10 +50,7 @@ jobs:
       - name: Run decision and converter regressions
         run: >-
           python -m pytest -ra
-          test_community/utils/multi_objective/test_decision_making.py
-          test_community/utils/multi_objective/test_fpbi.py
-          test_community/utils/multi_objective/test_fpbi_benchmark.py
-          test_community/utils/multi_objective/test_selector_benchmark.py
+          test_community/utils/multi_objective/
           test_community/scripts/test_convert_ipynb_to_mdx.py
           --junitxml=decision-tests.xml
       - uses: actions/upload-artifact@v4
