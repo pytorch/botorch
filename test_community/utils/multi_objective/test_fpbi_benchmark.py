@@ -5,20 +5,32 @@
 
 """Accounting, metric references and actual upstream comparator checks."""
 
+import importlib.util
 import math
+import sys
+from pathlib import Path
 
 import pytest
 import torch
-from notebooks_community.pareto_decision_making.experiments.benchmark_fpbi import (
-    CASES,
-    checked_front,
-    common_cap,
-    CountedModel,
-    matched_generations,
-    quality_metrics,
-    run_fpbi,
-    run_nsga,
+
+_SCRIPT = (
+    Path(__file__).resolve().parents[3]
+    / "notebooks_community/pareto_decision_making/experiments/benchmark_fpbi.py"
 )
+# Notebook experiments are repository files, not installed Python packages.
+_SPEC = importlib.util.spec_from_file_location("fpbi_benchmark_under_test", _SCRIPT)
+assert _SPEC is not None and _SPEC.loader is not None
+_EXPERIMENT = importlib.util.module_from_spec(_SPEC)
+sys.modules[_SPEC.name] = _EXPERIMENT
+_SPEC.loader.exec_module(_EXPERIMENT)
+CASES = _EXPERIMENT.CASES
+checked_front = _EXPERIMENT.checked_front
+common_cap = _EXPERIMENT.common_cap
+CountedModel = _EXPERIMENT.CountedModel
+matched_generations = _EXPERIMENT.matched_generations
+quality_metrics = _EXPERIMENT.quality_metrics
+run_fpbi = _EXPERIMENT.run_fpbi
+run_nsga = _EXPERIMENT.run_nsga
 
 
 def config():

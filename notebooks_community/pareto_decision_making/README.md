@@ -199,6 +199,13 @@ python -m pytest test_community/utils/multi_objective/test_decision_making.py \
 
 ## Historical provenance and source snapshots
 
+An additional 22 October 2026 audit exercised the console `pytest`
+invocation with the candidate package staged separately from the repository
+root, matching the installed-package import boundary used by CI. The two
+benchmark tests now load their uninstalled experiment scripts by explicit
+file path. That check passed 36 tests and 10 subtests, with 10 CUDA skips.
+This is one Windows CPU check; the complete upstream CI matrix is pending.
+
 The [checksum index](evidence/packaged-file-hashes.json) verifies copied source
 snapshots against the original provenance hashes. Historical Python sources
 use `.py.txt` names to keep formatting, linting and test discovery from changing

@@ -5,12 +5,25 @@
 
 """Check benchmark accounting and synchronization-independent CPU behavior."""
 
+import importlib.util
+import sys
+from pathlib import Path
+
 import torch
-from notebooks_community.pareto_decision_making.experiments.benchmark_selector import (
-    compare_outputs,
-    make_inputs,
-    measure,
+
+_SCRIPT = (
+    Path(__file__).resolve().parents[3]
+    / "notebooks_community/pareto_decision_making/experiments/benchmark_selector.py"
 )
+# Load the uninstalled experiment without adding the repository to sys.path.
+_SPEC = importlib.util.spec_from_file_location("selector_benchmark_under_test", _SCRIPT)
+assert _SPEC is not None and _SPEC.loader is not None
+_EXPERIMENT = importlib.util.module_from_spec(_SPEC)
+sys.modules[_SPEC.name] = _EXPERIMENT
+_SPEC.loader.exec_module(_EXPERIMENT)
+compare_outputs = _EXPERIMENT.compare_outputs
+make_inputs = _EXPERIMENT.make_inputs
+measure = _EXPERIMENT.measure
 
 
 def test_identical_seed_cast_and_transfer_inputs_are_reproducible():
